@@ -10,7 +10,8 @@ export function loadById<T>(getter: GetFetcher<T>, seed: T[], id: string): Promi
 }
 
 export function createRemoteList<T extends { id: string }>(fetcher: Fetcher<T>, seed: T[]) {
-	let items = $state<T[]>(seed);
+	// Salin seed agar mutasi mergeById tidak mencemari array global (mis. dari trade.ts)
+	let items = $state<T[]>([...seed]);
 	let loading = $state(true);
 	let error = $state('');
 
