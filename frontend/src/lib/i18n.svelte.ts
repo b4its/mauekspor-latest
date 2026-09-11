@@ -6,6 +6,12 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Halaman tidak ditemukan': { id: 'Halaman tidak ditemukan', en: 'Page not found' },
+	'Terjadi kesalahan': { id: 'Terjadi kesalahan', en: 'An error occurred' },
+	'Halaman yang Anda cari tidak ada atau telah dipindahkan.': { id: 'Halaman yang Anda cari tidak ada atau telah dipindahkan.', en: 'The page you are looking for does not exist or has been moved.' },
+	'Maaf, terjadi kesalahan. Silakan coba lagi atau hubungi dukungan.': { id: 'Maaf, terjadi kesalahan. Silakan coba lagi atau hubungi dukungan.', en: 'Sorry, an error occurred. Please try again or contact support.' },
+	'Kembali ke Dashboard': { id: 'Kembali ke Dashboard', en: 'Back to Dashboard' },
+	'Detail kesalahan': { id: 'Detail kesalahan', en: 'Error details' },
 	'Runs': { id: 'Run', en: 'Runs' },
 	'terverifikasi': { id: 'terverifikasi', en: 'verified' },
 	'Jepang': { id: 'Jepang', en: 'Japan' },
