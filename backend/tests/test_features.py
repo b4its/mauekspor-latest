@@ -469,8 +469,10 @@ def test_costing_compare_and_xlsx_exports():
         data = r.json()["data"]
         assert data["count"] == len(costing_ids)
         assert data["recommendation"] and data["recommendation"]["costingId"]
-        # ids kosong -> 422
-        assert c.post("/api/v1/costing/compare/", json={"ids": []}).status_code == 422
+        # ids kosong -> 422 + pesan Inggris
+        r = c.post("/api/v1/costing/compare/", json={"ids": []})
+        assert r.status_code == 422
+        assert "ids are required" in r.json()["message"]
 
         # Automations: run menaikkan runs + membuat notifikasi
         auto = next(a for a in c.get("/api/v1/automations/").json()["data"] if a["id"] == "AUT-LABEL-BLOCKER")
