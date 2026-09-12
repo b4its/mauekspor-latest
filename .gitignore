@@ -32,3 +32,6 @@ guideline/
 
 # Logs
 *.log
+# Coverage artifacts
+backend/.coverage
+backend/**/,cover
