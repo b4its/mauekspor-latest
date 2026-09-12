@@ -115,3 +115,49 @@ def test_snapshot_product_dengan_enrichment():
     db.insert("product_enrichments", {"id": "EN-1", "productId": "P-1", "hsCode": "0901.21"})
     snapshot = compliance.snapshot_product({"id": "P-1", "name": "Kopi", "category": "Food"})
     assert snapshot["id"] == "P-1"
+
+def test_parse_json_list_jsondecodeerror():
+    assert compliance._parse_json_list('[bukan]') is None
+    assert compliance._parse_json_list('{bukan}') is None
+
+
+def test_check_ingredient_empty_keywords_dilewati(monkeypatch):
+    # Negara tanpa forbidden_keywords (regulasi tanpa keywords)
+    from app.data import countries
+    # DE tidak memiliki regulasi Ingredient -> issues kosong
+    product = {"name": "Rattan", "description": "rotan mentah"}
+    issues = compliance.check_ingredient_compliance(product, "DE")
+    assert len(issues) == 0
+
+
+def test_product_changed_true_false():
+    product = {"id": "P-1", "name": "Kopi", "updatedAt": "2026-01-01"}
+    snapshot = {"id": "P-1", "name": "Kopi", "updatedAt": "2026-01-01"}
+    assert not compliance.product_changed(product, snapshot)
+    product["updatedAt"] = "2026-01-02"
+    assert compliance.product_changed(product, snapshot)
+
+
+def test_product_changed_snapshot_none():
+    assert compliance.product_changed({"id": "P-1"}, None) is False
+
+
+def test_ai_judge_returns_parsed(monkeypatch):
+    monkeypatch.setattr(compliance.ai, "configured", lambda: True)
+    monkeypatch.setattr(compliance.ai, "complete", lambda *a, **k: '[{"type": "Label", "severity": "major"}]')
+    issues = compliance._ai_judge("ingredient", {"name": "X"}, "JP", [], [])
+    assert len(issues) == 1
+    assert issues[0]["type"] == "Label"
+
+
+def test_generate_recommendations_ai_text(monkeypatch):
+    monkeypatch.setattr(compliance.ai, "complete", lambda *a, **k: "1. Perbaiki label. 2. Perbaiki kemasan.")
+    text = compliance.generate_recommendations([{"type": "Label", "required_value": "JP label", "severity": "major"}])
+    assert "Perbaiki" in text
+    assert len(text.strip()) > 10
+
+
+def test_snapshot_regulations_mengembalikan_list():
+    from app.data import countries
+    regs = compliance.snapshot_regulations("JP")
+    assert isinstance(regs, list)
