@@ -1931,6 +1931,11 @@ if (typeof window !== 'undefined') {
 
 export const i18n = $state<{ locale: Locale }>({ locale: initial });
 
+/** Apakah kunci tersedia di kamus (berguna untuk validasi data-driven labels). */
+export function hasKey(key: string): boolean {
+	return key in dictionary;
+}
+
 /** Terjemahkan label (kunci kamus; kalau tidak ada, kembalikan aslinya). */
 export function t(key: string): string {
 	const entry = dictionary[key];
