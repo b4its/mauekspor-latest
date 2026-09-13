@@ -27,6 +27,7 @@
 
 	let hasProfile = $state(true);
 	let summaryCounts = $state<DashboardSummary['counts'] | null>(null);
+	let summaryError = $state('');
 
 	$effect(() => {
 		profiles.load();
@@ -41,8 +42,11 @@
 			.then((res) => {
 				hasProfile = res.data.has_business_profile;
 				summaryCounts = res.data.counts;
+				summaryError = '';
 			})
-			.catch(() => {});
+			.catch((err) => {
+				summaryError = t('Gagal memuat ringkasan dashboard.');
+			});
 	});
 
 	let profile = $derived(profiles.items[0]);
@@ -149,6 +153,9 @@
 </svelte:head>
 
 <AppShell title="Dashboard" eyebrow={t('Export workspace home')}>
+	{#if summaryError}
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{summaryError}</p>
+	{/if}
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-5 sm:p-6 md:p-8">
 		<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start">
 			<div>
@@ -177,6 +184,14 @@
 	</Card>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+		{#if products.loading && projects.loading}
+			{#each [1,2,3,4,5,6] as _}
+				<div class="animate-pulse rounded-lg border bg-muted/30 p-5">
+					<div class="mb-2 h-3 w-16 rounded bg-muted-foreground/20"></div>
+					<div class="h-8 w-20 rounded bg-muted-foreground/20"></div>
+				</div>
+			{/each}
+		{:else}
 		<a href="/products" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
 				<CardContent class="p-5">
@@ -231,6 +246,7 @@
 				</CardContent>
 			</Card>
 		</a>
+	{/if}
 	</div>
 
 	<!-- Quick Actions -->
