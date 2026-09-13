@@ -33,6 +33,7 @@
 	import UserCogIcon from '@lucide/svelte/icons/user-cog';
 	import BellIcon from '@lucide/svelte/icons/bell';
 	import PlugIcon from '@lucide/svelte/icons/plug';
+	import { logout } from '$lib/stores/session.svelte';
 	import LayoutTemplateIcon from '@lucide/svelte/icons/layout-template';
 	import WorkflowIcon from '@lucide/svelte/icons/workflow';
 	import BookIcon from '@lucide/svelte/icons/book';
@@ -321,9 +322,9 @@
 							</DropdownMenu.Item>
 						</DropdownMenu.Group>
 						<DropdownMenu.Separator />
-						<DropdownMenu.Item>
+						<DropdownMenu.Item onclick={() => { logout(); window.location.href = '/login'; }}>
 							{#snippet child({ props })}
-								<a {...props} href="/login">
+								<a {...props}>
 									<LogOutIcon class="text-muted-foreground" />
 									{t('Logout')}
 								</a>

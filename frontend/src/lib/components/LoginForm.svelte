@@ -62,7 +62,7 @@
 					<Field>
 						<div class="flex items-center">
 							<FieldLabel for="password-{id}">{t('Kata sandi')}</FieldLabel>
-							<a href="##" class="ms-auto text-sm text-[#0b3d91] underline-offset-4 hover:underline dark:text-[#5ea1ff]">
+							<a href="#" onclick={(e) => e.preventDefault()} class="ms-auto text-sm text-[#0b3d91] underline-offset-4 hover:underline dark:text-[#5ea1ff]">
 								{t('Lupa password?')}
 							</a>
 						</div>
@@ -89,7 +89,7 @@
 		</Card.Content>
 	</Card.Root>
 	<FieldDescription class="px-6 text-center">
-		{t('Dengan melanjutkan, Anda menyetujui')} <a href="##" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Ketentuan Layanan')}</a>
-		{t('dan')} <a href="##" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Kebijakan Privasi')}</a> {t('kami.')}
+		{t('Dengan melanjutkan, Anda menyetujui')} <a href="/about" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Ketentuan Layanan')}</a>
+		{t('dan')} <a href="/about" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Kebijakan Privasi')}</a> {t('kami.')}
 	</FieldDescription>
 </div>

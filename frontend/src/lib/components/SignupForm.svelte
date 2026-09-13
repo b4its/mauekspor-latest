@@ -124,7 +124,7 @@
 		</Card.Content>
 	</Card.Root>
 	<Field.Description class="px-6 text-center">
-		{t('Dengan melanjutkan, Anda menyetujui')} <a href="##" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Ketentuan Layanan')}</a>
-		{t('dan')} <a href="##" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Kebijakan Privasi')}</a> {t('kami.')}
+		{t('Dengan melanjutkan, Anda menyetujui')} <a href="/about" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Ketentuan Layanan')}</a>
+		{t('dan')} <a href="/about" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Kebijakan Privasi')}</a> {t('kami.')}
 	</Field.Description>
 </div>

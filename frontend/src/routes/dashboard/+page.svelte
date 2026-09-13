@@ -233,6 +233,34 @@
 		</a>
 	</div>
 
+	<!-- Quick Actions -->
+	<Card class="bg-gradient-to-br from-primary/5 to-secondary/20 shadow-sm">
+		<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
+			<div>
+				<Badge variant="secondary">{t('Aksi Cepat')}</Badge>
+				<CardTitle class="mt-2 text-xl font-bold tracking-tight">{t('Langkah selanjutnya')}</CardTitle>
+			</div>
+		</CardHeader>
+		<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+			<Button href="/products/new" class="h-auto flex-col gap-2 py-5 text-left">
+				<span class="text-lg font-bold">{t('+ Produk Baru')}</span>
+				<small class="font-normal text-muted-foreground">{t('Tambah produk untuk analisis')}</small>
+			</Button>
+			<Button href="/catalogs/create" variant="secondary" class="h-auto flex-col gap-2 py-5 text-left">
+				<span class="text-lg font-bold">{t('Buat Katalog')}</span>
+				<small class="font-normal text-muted-foreground">{t('Publikasikan produk Anda')}</small>
+			</Button>
+			<Button href="/marketing" variant="secondary" class="h-auto flex-col gap-2 py-5 text-left">
+				<span class="text-lg font-bold">{t('Analisis Pasar')}</span>
+				<small class="font-normal text-muted-foreground">{t('Market intelligence + pricing')}</small>
+			</Button>
+			<Button href="/buyer-requests" variant="secondary" class="h-auto flex-col gap-2 py-5 text-left">
+				<span class="text-lg font-bold">{t('Permintaan Buyer')}</span>
+				<small class="font-normal text-muted-foreground">{t('Cocokkan dengan katalog Anda')}</small>
+			</Button>
+		</CardContent>
+	</Card>
+
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card>
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
