@@ -4,7 +4,71 @@
 
 > Status saat ini: **berfungsi penuh dengan backend.** Frontend adalah antarmuka kerja lengkap yang terhubung ke backend FastAPI (list, detail, form create, dan action/button di semua modul memakai `src/lib/api/*.ts`; mock di `src/lib/data/trade.ts` hanya fallback saat API tak tersedia). Backend punya auth JWT (refresh rotation), RBAC, audit log, dan persistensi SQLite. Fitur inti ExportReadyAI telah diadaptasi lengkap: **enrichment produk (HS code + SKU)**, **Market Intelligence**, **Pricing Calculator (EXW/FOB/CIF)**, **Costing nyata + exchange rate + PDF**, **Export Analysis dengan compliance check, snapshot produk/regulasi, reanalyze, compare, dan rekomendasi regulasi 10 bagian (ID/EN)**, **master data negara + regulasi + HS codes (6.941 kode)**, **katalog dengan gambar + varian + AI description + listing publik**, **buyer request matching**, **forwarder profile + review + rekomendasi + statistik**, **buyer profile**, **educational CRUD + upload file**, dan **chat sessions + suggestions**. Modul AI berjalan dua mode: `mock` (default) dan `remote` (OpenAI-compatible via `MAUEKSPOR_AI_MODE=remote`).
 
+## ✨ Penjelasan untuk Orang Awam (Tanpa Jargon Teknis)
+
+> Bagian ini khusus untuk yang **bukan programmer** — pemilik usaha, tim UMKM, atau siapa saja yang ingin paham "MauEkspor itu apa sih?" dengan bahasa sehari-hari.
+
+### MauEkspor itu seperti apa? 🚢
+
+Bayangkan Anda punya usaha ekspor kecil. Selama ini urusan ekspor biasanya berantakan:
+
+- Data produk ada di **Excel**,
+- Chat buyer ada di **WhatsApp**,
+- Dokumen dan invoice tersebar di **email**,
+- Jadwal pengiriman ada di **catatan tempel**.
+
+MauEkspor menyatukan semuanya ke **satu "meja kerja" digital**. Semua data — produk, pembeli, penawaran harga, dokumen, sampai pengiriman — ada di satu tempat yang rapi, dan saling terhubung otomatis.
+
+### Analogi sederhana
+
+| Bagian | Analogi | Artinya |
+|---|---|---|
+| **Tampilan (frontend)** | Ruang tamu restoran | Yang Anda lihat dan klik di layar — halaman, tombol, tabel |
+| **Mesin (backend)** | Dapur restoran | Bagian belakang yang mengolah data, menyimpan, dan menghitung — tidak terlihat, tapi semua kerjaan di sini |
+| **Database** | Gudang penyimpanan | Tempat semua data tersimpan permanen (SQLite) |
+| **API** | Menu pesanan | "Bahasa perantara" yang menghubungkan ruang tamu dan dapur — tampilan meminta data, mesin mengirimkannya |
+
+### Fitur-fitur dalam bahasa manusia
+
+1. **Profil usaha** — isi data perusahaan & sertifikasi sekali, dipakai di mana-mana.
+2. **Data produk** — catat spesifikasi produk (berat, kemasan, kode HS). Kode HS itu seperti "nomor KTP" internasional untuk barang, supaya bea cukai mengenali barang Anda.
+3. **Analisis pasar** — sistem memberi tahu: "Kalau kirim kopi ke Jepang, ini aturannya, ini sertifikat yang dibutuhkan, ini peluangnya." Semua dibantu AI.
+4. **Hitung harga (costing)** — tinggal masukkan modal & target untung, sistem menghitung harga jual otomatis, termasuk ongkos kirim. Istilah **EXW/FOB/CIF** itu cuma "sejauh mana ongkos & tanggung jawab Anda" — dari pabrik, sampai pelabuhan, sampai ke pembeli.
+5. **Katalog digital** — tampilkan produk Anda rapi seperti toko online, lengkap dengan foto dan varian.
+6. **RFQ & quotation** — buyer kirim permintaan (RFQ), Anda balas dengan penawaran harga (quotation), jadi order.
+7. **Dokumen & pengiriman** — sistem bantu siapkan invoice, packing list, dan lacak status kiriman sampai tiba.
+8. **AI Copilot (chat)** — tanya-tanya seperti ke asisten: "Ringkas risiko ekspor ke Jepang" — dijawab otomatis.
+
+### Peran pengguna
+
+- **Eksportir / UMKM** — pemakai utama: mengelola produk, analisis, penawaran, pengiriman.
+- **Buyer** — pembeli yang mengirim kebutuhan dan melihat katalog.
+- **Forwarder** — jasa pengiriman/logistik yang muncul di rekomendasi rute.
+- **Admin** — mengatur akun, paket, dan dukungan.
+
+### Istilah teknis yang sering muncul (versi sederhana)
+
+- **Login / autentikasi** — sistem memastikan hanya orang yang berhak yang bisa masuk, lewat email + kata sandi. Data login diacak (dihash) sehingga aman.
+- **Peran & izin (RBAC)** — tiap orang hanya melihat & mengubah bagian yang jadi urusannya. Admin bisa semua; buyer tidak bisa mengubah data produk Anda.
+- **Log audit** — catatan siapa melakukan apa, kapan. Berguna kalau ada masalah, bisa ditelusuri.
+- **Mode AI mock vs remote** — mode *mock* memakai jawaban contoh (tanpa biaya, untuk demo); mode *remote* memakai AI sungguhan (OpenAI) kalau sudah siap.
+- **Unit test** — "pemeriksaan kesehatan" otomatis untuk memastikan semua fitur tetap berfungsi setiap kali ada perubahan. Proyek ini punya ratusan pemeriksaan seperti itu, jadi perubahan tidak merusak yang lain.
+
+### Cara memakai (untuk pemakai biasa)
+
+1. Buka aplikasi (di komputer: `http://localhost:5173`).
+2. Login dengan akun yang diberikan admin.
+3. Mulai dari **Dashboard** — lihat ringkasan, lalu ikuti checklist "kesiapan ekspor".
+4. Isi **profil bisnis**, lalu **tambahkan produk**.
+5. Gunakan **AI** untuk analisis pasar & hitung harga.
+6. Kelola **order, dokumen, dan pengiriman** sampai selesai.
+
+> Kalau ada bagian yang masih membingungkan, tanya lewat **Chat Copilot** di dalam aplikasi — dijawab langsung.
+
+---
+
 ## Daftar Isi
+- [Penjelasan untuk Orang Awam](#-penjelasan-untuk-orang-awam-tanpa-jargon-teknis)
 - [Tentang Proyek](#tentang-proyek)
 - [Arsitektur](#arsitektur)
 - [Tech Stack](#tech-stack)
