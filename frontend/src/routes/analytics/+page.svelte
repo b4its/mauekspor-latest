@@ -60,12 +60,12 @@
 			.then((res) => {
 				metrics = seedMetrics.map((seed) => res.data.find((m) => m.label === seed.label) ?? seed);
 			})
-			.catch(() => {});
+			.catch(() => { error = t('Gagal memuat metrik analytics.'); });
 		getAnalyticsLanes()
 			.then((res) => {
 				lanes = res.data.length ? res.data : seedLanes;
 			})
-			.catch(() => {});
+			.catch(() => { error = t('Gagal memuat lane analytics.'); });
 	});
 
 	async function handleRefresh() {
