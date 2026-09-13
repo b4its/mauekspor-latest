@@ -7,6 +7,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { statusTone } from '$lib/utils/format';
+	import { uploadComplianceEvidence } from '$lib/api/compliance';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
@@ -19,13 +20,23 @@
 
 	let displayStatus = $derived(verified ? 'Verified' : uploaded ? 'Evidence Uploaded' : data.requirement.status);
 
-	function uploadEvidence() {
+	async function uploadEvidence() {
 		error = '';
 		if (evidenceNote.trim().length < 8) {
 			error = t('Tambahkan catatan evidence minimal 8 karakter.');
 			return;
 		}
 		uploaded = true;
+		try {
+			await uploadComplianceEvidence({
+				requirementId: data.requirement.id,
+				note: evidenceNote.trim(),
+				fileName: fileName.trim() || undefined
+			});
+		} catch {
+			error = t('Gagal menyimpan bukti ke backend.');
+			uploaded = false;
+		}
 	}
 
 	function verifyEvidence() {

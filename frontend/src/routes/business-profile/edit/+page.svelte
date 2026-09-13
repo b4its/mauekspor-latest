@@ -5,19 +5,39 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { businessProfiles } from '$lib/data/trade';
-	import { updateBusinessProfile } from '$lib/api/business-profile';
+	import { businessProfiles as seedProfiles } from '$lib/data/trade';
+	import { listBusinessProfiles, updateBusinessProfile } from '$lib/api/business-profile';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { t } from '$lib/i18n.svelte';
 
-	let profile = $state(businessProfiles[0]);
-	let companyName = $state(profile.companyName);
-	let address = $state(profile.address);
-	let productionCapacity = $state(profile.productionCapacity);
-	let yearEstablished = $state(String(profile.yearEstablished));
+	let profiles = createRemoteList(listBusinessProfiles, seedProfiles);
+	$effect(() => {
+		profiles.load();
+	});
+
+	let loaded = $state(false);
+	let companyName = $state(seedProfiles[0].companyName);
+	let address = $state(seedProfiles[0].address);
+	let productionCapacity = $state(seedProfiles[0].productionCapacity);
+	let yearEstablished = $state(String(seedProfiles[0].yearEstablished));
 	let saved = $state(false);
 	let saving = $state(false);
 	let error = $state('');
 
+	// Isi form dari profil backend saat sudah dimuat (fallback ke seed bila API tak tersedia)
+	$effect(() => {
+		const p = profiles.items[0];
+		if (!p) return;
+		if (!loaded) {
+			companyName = p.companyName;
+			address = p.address;
+			productionCapacity = p.productionCapacity;
+			yearEstablished = String(p.yearEstablished);
+			loaded = true;
+		}
+	});
+
+	let profile = $derived(profiles.items[0] ?? seedProfiles[0]);
 	let valid = $derived(companyName.trim().length > 2 && address.trim().length > 3 && Number(yearEstablished) > 1900);
 
 	async function save() {

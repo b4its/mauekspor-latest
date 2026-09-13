@@ -6,7 +6,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { updateShipmentMilestone } from '$lib/api/shipments';
+	import { updateShipmentMilestone, resolveShipmentException } from '$lib/api/shipments';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
@@ -27,10 +27,14 @@
 		}
 		resolving = true;
 		try {
-			await updateShipmentMilestone(data.shipment.id, 'Booking Requested');
+			await resolveShipmentException({
+				shipmentId: data.shipment.id,
+				note: exceptionNote.trim(),
+				owner: 'Operations'
+			});
 			resolved = true;
 		} catch {
-			error = t('Gagal memperbarui milestone.');
+			error = t('Gagal menyelesaikan exception.');
 		} finally {
 			resolving = false;
 		}

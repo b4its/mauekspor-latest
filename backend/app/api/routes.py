@@ -127,12 +127,18 @@ def _issue_tokens(user: dict, response: Response) -> tuple[str, str]:
 def register(payload: sc.RegisterPayload, response: Response):
     if db.get_by("users", email=str(payload.email)):
         raise HTTPException(409, "Email already registered")
+    # Role tidak boleh Admin saat self-register (Admin hanya via /auth/register-admin/).
+    # Sama seperti referensi ExportReadyAI yang hanya membolehkan UMKM mendaftar sendiri.
+    from app.core.permissions import ROLES
+    role = payload.role or "Exporter"
+    if role not in ROLES or role == "Admin":
+        raise HTTPException(400, "Role not allowed for self-registration")
     user = db.insert("users", {
         "id": db.gen_id("users", "U"),
         "email": str(payload.email),
         "fullName": payload.name,
         "name": payload.name,
-        "role": payload.role,
+        "role": role,
         "organization": payload.organization,
         "password": hash_password(payload.password),
         "status": "Active",
@@ -375,9 +381,10 @@ def export_costing_xlsx():
 
 @router.get("/audit/export.xlsx")
 def export_audit_xlsx():
-    rows = [["time", "actor", "action", "detail"]]
-    for a in db.all("audit"):
-        rows.append([a.get("time"), a.get("actor"), a.get("action"), a.get("detail")])
+    rows = [["time", "actor", "action", "module", "entity", "severity", "detail"]]
+    for a in db.all("audit_events"):
+        rows.append([a.get("time"), a.get("actor"), a.get("action"), a.get("module"),
+                     a.get("entity"), a.get("severity"), a.get("detail")])
     return _xlsx_response(rows, "Audit", "audit.xlsx")
 
 
@@ -1332,12 +1339,23 @@ def get_public_catalog(catalog_id: str):
     record = db.get("catalogs", catalog_id)
     if not record or str(record.get("status", "")).lower() != "published":
         raise HTTPException(404, "Published catalog not found")
-    record["images"] = db.find("catalog_images", catalogId=catalog_id)
-    record["variantTypes"] = db.find("catalog_variant_types", catalogId=catalog_id)
+    return _catalog_detail(record, catalog_id)
+
+
+def _catalog_detail(record: dict, catalog_id: str) -> dict:
+    """Kembalikan detail katalog (gambar, varian, penjual) TANPA menyimpan field turunan ke db.
+
+    Field `images`/`variantTypes`/`sellerName` hanya disertakan pada respons,
+    agar nilai `images` (jumlah) yang tersimpan di record tetap utuh.
+    """
+    out = _serialize(record)
+    out["images"] = db.find("catalog_images", catalogId=catalog_id)
+    out["variantTypes"] = db.find("catalog_variant_types", catalogId=catalog_id)
     product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else None
     if product:
-        record["sellerName"] = record.get("owner", "") or product.get("origin", "")
-    return _one(record)
+        out["sellerName"] = record.get("owner", "") or product.get("origin", "")
+        out["productName"] = product.get("name", "")
+    return {"data": out, "meta": {}}
 
 
 @router.get("/catalogs/{catalog_id}/")
@@ -1345,12 +1363,7 @@ def get_catalog(catalog_id: str):
     record = db.get("catalogs", catalog_id)
     if not record:
         raise HTTPException(404, "Catalog not found")
-    record["images"] = db.find("catalog_images", catalogId=catalog_id)
-    record["variantTypes"] = db.find("catalog_variant_types", catalogId=catalog_id)
-    product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else None
-    if product:
-        record["sellerName"] = record.get("owner", "") or product.get("origin", "")
-    return _one(record)
+    return _catalog_detail(record, catalog_id)
 
 
 @router.post("/catalogs/")
@@ -1446,7 +1459,9 @@ def list_catalog_images(catalog_id: str):
     record = db.get("catalogs", catalog_id)
     if not record:
         raise HTTPException(404, "Catalog not found")
-    return _list_query("catalog_images")
+    # Filter khusus milik katalog ini (bukan semua gambar dari seluruh katalog)
+    items = db.find("catalog_images", catalogId=catalog_id)
+    return {"data": [_serialize(r) for r in items], "meta": {}}
 
 
 @router.post("/catalogs/{catalog_id}/images/")
@@ -3378,13 +3393,19 @@ def delete_analysis(analysis_id: str):
 
 
 @router.get("/export-analysis/{analysis_id}/regulation-recommendations/")
-def get_regulation_recommendations(analysis_id: str, language: str = "id"):
+def get_regulation_recommendations(analysis_id: str, request: Request, language: str = ""):
     from app.services import compliance as compliance_svc
     from app.data.countries import resolve_country
 
     record = db.get("export_analyses", analysis_id)
     if not record:
         raise HTTPException(404, "Export analysis not found")
+    # Bahasa dari query `language`, fallback ke header `Accept-Language` (paritas ExportReadyAI-fe)
+    if not language:
+        header_lang = (request.headers.get("accept-language") or "").split(",")[0].strip().lower()
+        language = {"in": "id"}.get(header_lang, header_lang) if header_lang in {"id", "in", "en"} else ""
+    if not language:
+        language = "id"
     country_code = resolve_country(str(record.get("countryCode") or record.get("destination", "")))
     cached = db.get_by("regulation_recommendations", analysisId=analysis_id, language=language)
     if cached:
@@ -3452,24 +3473,58 @@ def run_regulation_check(analysis_id: str, payload: dict | None = None):
 # ----------------------------------------------------------------------------
 @router.get("/countries/")
 def list_countries(region: str = "", search: str = ""):
-    from app.data.countries import get_countries
+    from app.data.countries import get_countries, get_regulations
     items = get_countries()
+    # Gabungkan negara buatan admin (tersimpan di db) agar ikut tampil
+    known = {c["country_code"] for c in items}
+    for dbc in db.all("countries"):
+        code = str(dbc.get("country_code", ""))
+        if code and code not in known:
+            items.append({
+                "country_code": code,
+                "country_name": dbc.get("country_name", code),
+                "region": dbc.get("region", ""),
+            })
+            known.add(code)
     if region:
         items = [c for c in items if c["region"].lower() == region.lower()]
     if search:
         items = [c for c in items if search.lower() in (c["country_name"] + c["country_code"]).lower()]
     for item in items:
-        item["regulationsCount"] = len([r for r in db.all("countries") if False])  # placeholder
+        code = item["country_code"]
+        static_regs = get_regulations(code)
+        db_regs = [r for r in db.all("regulations") if str(r.get("countryCode", "")) == code]
+        item["regulationsCount"] = len(static_regs) + len(db_regs)
     return {"data": items, "meta": {}}
 
 
 @router.get("/countries/{country_code}/")
 def get_country_detail(country_code: str):
     from app.data.countries import get_country, get_regulations
-    country = get_country(country_code)
+    code = country_code.upper()
+    country = get_country(code)
+    if not country:
+        dbc = db.get_by("countries", country_code=code)
+        if dbc:
+            country = {
+                "country_code": dbc["country_code"],
+                "country_name": dbc.get("country_name", code),
+                "region": dbc.get("region", ""),
+            }
     if not country:
         raise HTTPException(404, "Country not found")
-    regs = get_regulations(country_code)
+    # Regulasi statis + regulasi buatan admin (db)
+    regs = list(get_regulations(code))
+    for r in db.all("regulations"):
+        if str(r.get("countryCode", "")) == code:
+            regs.append({
+                "id": r.get("id"),
+                "country_code": code,
+                "rule_category": r.get("ruleCategory", ""),
+                "forbidden_keywords": r.get("forbiddenKeywords", ""),
+                "required_specs": r.get("requiredSpecs", ""),
+                "description_rule": r.get("descriptionRule", ""),
+            })
     by_category: dict[str, list] = {}
     for r in regs:
         by_category.setdefault(r["rule_category"], []).append(r)
@@ -3628,7 +3683,20 @@ def admin_delete_country(country_code: str):
 @router.get("/admin/countries/{country_code}/regulations/")
 def admin_list_regulations(country_code: str, rule_category: str = ""):
     from app.data.countries import get_regulations
-    items = get_regulations(country_code)
+    code = country_code.upper()
+    items: list[dict] = []
+    for i, r in enumerate(get_regulations(code)):
+        items.append({**r, "id": f"static-{i}"})
+    for r in db.all("regulations"):
+        if str(r.get("countryCode", "")) == code:
+            items.append({
+                "id": r.get("id"),
+                "country_code": code,
+                "rule_category": r.get("ruleCategory", ""),
+                "forbidden_keywords": r.get("forbiddenKeywords", ""),
+                "required_specs": r.get("requiredSpecs", ""),
+                "description_rule": r.get("descriptionRule", ""),
+            })
     if rule_category:
         items = [r for r in items if r["rule_category"].lower() == rule_category.lower()]
     return {"data": items, "meta": {}}
@@ -3637,11 +3705,15 @@ def admin_list_regulations(country_code: str, rule_category: str = ""):
 @router.post("/admin/countries/{country_code}/regulations/create/")
 def admin_create_regulation(country_code: str, payload: sc.CreateRegulationPayload):
     from app.data.countries import get_country
-    if not get_country(country_code):
+    code = country_code.upper()
+    # Negara bisa berasal dari master data statis ATAU buatan admin (tersimpan di db)
+    static = get_country(code)
+    db_country = db.get_by("countries", country_code=code)
+    if not static and not db_country:
         raise HTTPException(404, "Country not found")
     record = db.insert("regulations", {
         "id": db.gen_id("regulations", "REG"),
-        "countryCode": country_code.upper(),
+        "countryCode": code,
         "ruleCategory": payload.rule_category,
         "forbiddenKeywords": payload.forbidden_keywords,
         "requiredSpecs": payload.required_specs,
@@ -3670,7 +3742,6 @@ def admin_delete_regulation(regulation_id: str):
     if not record:
         raise HTTPException(404, "Regulation not found")
     db.delete("regulations", regulation_id)
-    db.delete("countries", regulation_id)
     return {"data": {"status": "deleted"}, "meta": {}}
 
 
