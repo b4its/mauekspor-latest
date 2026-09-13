@@ -557,3 +557,47 @@ def test_dashboard_summary_menyertakan_rincian_role():
         assert "buyer_requests_pending" in counts
         assert "educational_modules" in counts
         assert "educational_articles" in counts
+
+
+def test_buyer_request_matched_umkm_dan_pilih_katalog():
+    """Alur Buyer: matching -> matched-umkm -> pilih katalog -> close request.
+
+    Diadaptasi dari alur ExportReadyAI-fe buyer-requests/[id] (SelectCatalogModal).
+    """
+    from app import db as app_db
+    with TestClient(app) as c:
+        _login(c)
+        # siapkan produk + katalog published + buyer request
+        prod = c.post("/api/v1/products/", json={"name": "Kopi Gayo", "category": "Food & Beverage", "origin": "Aceh"}).json()["data"]
+        cat = c.post("/api/v1/catalogs/", json={
+            "title": "Katalog Kopi", "productId": prod["id"], "targetMarket": "JP", "moq": "100",
+        }).json()["data"]
+        c.post(f"/api/v1/catalogs/{cat['id']}/publish/")
+        buyers = c.get("/api/v1/buyers/").json()["data"]
+        req = c.post("/api/v1/buyer-requests/", json={
+            "subject": "Permintaan kopi untuk Jepang",
+            "buyerId": buyers[0]["id"], "productId": prod["id"],
+            "destination": "Japan", "quantity": "1000", "deadline": "2026-12-31",
+            "product_category": "Makanan Olahan",
+        }).json()["data"]
+
+        # matching
+        matched = c.post(f"/api/v1/buyer-requests/{req['id']}/match/")
+        assert matched.status_code == 200
+        assert matched.json()["data"]["status"] == "Matched"
+
+        # matched-umkm memperkaya data kontak
+        umkm = c.get(f"/api/v1/buyer-requests/{req['id']}/matched-umkm/")
+        assert umkm.status_code == 200
+        assert umkm.json()["data"]  # setidaknya satu match
+
+        # pilih katalog -> close request dengan selected_catalog + umkm
+        match = umkm.json()["data"][0]
+        closed = c.patch(f"/api/v1/buyer-requests/{req['id']}/status/", json={
+            "status": "Closed",
+            "selected_catalog_id": match.get("catalogId", cat["id"]),
+            "umkm_id": match.get("umkm_id", ""),
+        })
+        assert closed.status_code == 200
+        assert closed.json()["data"]["status"] == "Closed"
+        assert closed.json()["data"]["selectedCatalog"] == match.get("catalogId", cat["id"])
