@@ -235,12 +235,12 @@ Detail per-modul (data model, halaman, endpoint) ada di dokumentasi Obsidian: [`
 | Product enrichment (HS code + SKU) | ✅ Selesai — `POST /products/{id}/enrich/` dengan HS loader (6941 kode) + SKU deterministik + fallback pencarian |
 | Market Intelligence (AI) | ✅ Selesai — `GET/POST /products/{id}/ai/market-intelligence/` + per katalog; termasuk rekomendasi forwarder per negara |
 | Pricing Calculator (AI) | ✅ Selesai — `GET/POST /products/{id}/ai/pricing/` EXW/FOB/CIF + breakdown + kurs |
-| Costing nyata | ✅ Selesai — kalkulasi EXW/FOB/CIF (trucking, dokumen, freight per region, asuransi) + kapasitas kontainer + `GET /costing/{id}/pdf/` |
+| Costing nyata | ✅ Selesai — kalkulasi EXW/FOB/CIF (trucking, dokumen, freight per region, asuransi) + kapasitas kontainer **dari dimensi & berat produk** + **AI container optimization** + `GET /costing/{id}/pdf/` |
 | Exchange rate service | ✅ Selesai — auto-fetch 24 jam (exchangerate-api), manual/refresh, fallback 15800 |
-| Export Analysis | ✅ Selesai — create (compliance checker bahan/spesifikasi/kemasan), snapshot produk & regulasi, reanalyze, compare 2-5 negara, rekomendasi regulasi 10 bagian (ID/EN + cache) |
+| Export Analysis | ✅ Selesai — create (compliance checker bahan/spesifikasi/kemasan), snapshot produk & regulasi, **analisis dari snapshot (historis)**, reanalyze, compare 2-5 negara, rekomendasi regulasi 10 bagian (ID/EN + cache) |
 | Master data | ✅ Selesai — `GET /countries/` + detail regulasi; `GET /hs-codes/` + autocomplete; admin CRUD negara/regulasi/HS + import CSV |
-| Katalog | ✅ Selesai — CRUD, publish/unpublish, gambar (list/add/update/delete), varian (type + option, 8 predefined), AI description, MI & pricing, listing publik & forwarder |
-| Buyer request matching | ✅ Selesai — skor berbobot (kategori 35%, HS 30%, spesifikasi 25%, kapabilitas 5%, volume 5%), status, matched-catalogs/umkm |
+| Katalog | ✅ Selesai — CRUD, publish/unpublish, gambar (list/add/update/delete), varian (type + option, 8 predefined), AI description, MI & pricing, listing publik + **detail publik** & forwarder |
+| Buyer request matching | ✅ Selesai — skor berbobot (kategori 35%, HS 30%, spesifikasi 25%, kapabilitas 5%, volume 5%), status, matched-catalogs/umkm, **alur Buyer pilih katalog → close request** |
 | Forwarder | ✅ Selesai — profil (create/me/update), review (CRUD + auto-recalc rating), rekomendasi, statistik |
 | Buyer profile | ✅ Selesai — profil importer (create/me/update) |
 | Chat Copilot | ✅ Selesai — sessions CRUD, suggestions, balasan AI per konteks |
