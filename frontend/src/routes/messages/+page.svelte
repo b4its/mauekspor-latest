@@ -8,6 +8,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { listMessages, sendMessage, resolveMessageThread } from '$lib/api/messages';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Email', 'WhatsApp', 'Portal', 'Internal'];
@@ -97,6 +98,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if threads.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{threads.error}</p>
+	{/if}
+
 	{#if sent}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Pesan terkirim.')}</strong>
@@ -115,27 +120,49 @@
 		<Input bind:value={query} type="search" placeholder={t('Cari thread, pihak, partisipan...')} class="w-[min(390px,100%)]" />
 	</div>
 
-	<div class="grid gap-4">
-		{#each filteredThreads as thread}
-			<Card>
-				<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
-					<div class="min-w-0 flex-1">
-						<Badge variant={toneVariant(statusTone(resolved || resolvedId === thread.id ? 'Resolved' : thread.status))}>{t(resolved || resolvedId === thread.id ? 'Selesai' : trStatus(thread.status))}</Badge>
-						<h3 class="mt-2 text-lg font-bold tracking-tight">{thread.subject}</h3>
-						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{thread.lastMessage}</p>
-						<small class="block text-xs text-muted-foreground">{thread.party} · {thread.channel} · {thread.time}</small>
-					</div>
-					<aside class="grid justify-items-end gap-2 whitespace-nowrap">
-						<strong class="text-sm font-bold">{thread.linkedTo}</strong>
-						<span class="block text-sm text-muted-foreground">{thread.participants.join(', ')}</span>
-						<Button variant="outline" size="sm" onclick={() => handleResolve(thread.id)}>{resolvedId === thread.id ? t('Selesai') : t('Selesaikan')}</Button>
-					</aside>
-				</CardContent>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
-				{t('Tidak ada thread pesan yang cocok dengan pencarian.')}
-			</div>
-		{/each}
-	</div>
+	{#if threads.loading}
+		<div class="grid gap-4">
+			{#each Array(5) as _}
+				<Card>
+					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
+						<div class="min-w-0 flex-1">
+							<Skeleton class="h-5 w-24" />
+							<Skeleton class="mt-2 h-6 w-3/4" />
+							<Skeleton class="mt-1 h-4 w-full" />
+							<Skeleton class="mt-1 h-4 w-1/3" />
+						</div>
+						<aside class="grid justify-items-end gap-2 whitespace-nowrap">
+							<Skeleton class="h-5 w-20" />
+							<Skeleton class="h-4 w-28" />
+							<Skeleton class="h-9 w-24" />
+						</aside>
+					</CardContent>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4">
+			{#each filteredThreads as thread}
+				<Card>
+					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
+						<div class="min-w-0 flex-1">
+							<Badge variant={toneVariant(statusTone(resolved || resolvedId === thread.id ? 'Resolved' : thread.status))}>{t(resolved || resolvedId === thread.id ? 'Selesai' : trStatus(thread.status))}</Badge>
+							<h3 class="mt-2 text-lg font-bold tracking-tight">{thread.subject}</h3>
+							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{thread.lastMessage}</p>
+							<small class="block text-xs text-muted-foreground">{thread.party} · {thread.channel} · {thread.time}</small>
+						</div>
+						<aside class="grid justify-items-end gap-2 whitespace-nowrap">
+							<strong class="text-sm font-bold">{thread.linkedTo}</strong>
+							<span class="block text-sm text-muted-foreground">{thread.participants.join(', ')}</span>
+							<Button variant="outline" size="sm" onclick={() => handleResolve(thread.id)}>{resolvedId === thread.id ? t('Selesai') : t('Selesaikan')}</Button>
+						</aside>
+					</CardContent>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
+					{t('Tidak ada thread pesan yang cocok dengan pencarian.')}
+				</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

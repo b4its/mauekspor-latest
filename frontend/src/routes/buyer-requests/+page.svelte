@@ -7,6 +7,7 @@
 	import { buyerRequests as seedRequests, buyers, products } from '$lib/data/trade';
 	import { listBuyerRequests } from '$lib/api/buyer-requests';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -80,8 +81,37 @@
 		<Input bind:value={query} type="search" placeholder={t('Search subject, destination, product...')} class="max-w-xs" />
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredRequests as request}
+	{#if requests.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{requests.error}</p>
+	{/if}
+
+	{#if requests.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
+					<div class="flex items-center justify-between gap-3">
+						<Skeleton class="h-5 w-16" />
+						<Skeleton class="h-4 w-12" />
+					</div>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-2 h-4 w-full" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+					</div>
+					<div class="mt-4 flex flex-wrap gap-2">
+						<Skeleton class="h-5 w-20 rounded-full" />
+						<Skeleton class="h-5 w-14 rounded-full" />
+						<Skeleton class="h-5 w-16 rounded-full" />
+					</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredRequests as request}
 			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 				<a href={`/buyer-requests/${request.id}`} class="block h-full p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
@@ -107,4 +137,5 @@
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No buyer request matched your filter.')}</div>
 		{/each}
 	</div>
+{/if}
 </AppShell>

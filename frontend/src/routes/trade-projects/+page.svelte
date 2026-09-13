@@ -6,6 +6,7 @@
 	import { projects as seedProjects } from '$lib/data/trade';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -54,24 +55,46 @@
 		</CardHeader>
 
 		<CardContent class="mt-6 grid gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
-			{#each filtered as project}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-					<a href={`/trade-projects/${project.id}`} class="grid h-full gap-4 p-5 no-underline">
+			{#if projects.error}
+				<p class="col-span-full rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{projects.error}</p>
+			{/if}
+			{#if projects.loading}
+				{#each Array(6) as _}
+					<Card class="p-5">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(project.risk))}>{project.risk} {t('risk')}</Badge>
-							<strong class="text-2xl font-bold tracking-tight">{project.readiness}%</strong>
+							<Skeleton class="h-5 w-20" />
+							<Skeleton class="h-7 w-12" />
 						</div>
-						<h3 class="text-2xl font-bold tracking-tight">{project.name}</h3>
-						<p class="text-sm text-muted-foreground">{project.product}</p>
-						<div class="grid grid-cols-2 gap-2">
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Buyer')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.buyer}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Destination')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.country}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Stage')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.stage}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(project.value)}</strong></div>
+						<Skeleton class="mt-4 h-7 w-3/4" />
+						<Skeleton class="mt-2 h-4 w-1/2" />
+						<div class="mt-4 grid grid-cols-2 gap-2">
+							<Skeleton class="h-14 w-full rounded-lg" />
+							<Skeleton class="h-14 w-full rounded-lg" />
+							<Skeleton class="h-14 w-full rounded-lg" />
+							<Skeleton class="h-14 w-full rounded-lg" />
 						</div>
-					</a>
-				</Card>
-			{/each}
+					</Card>
+				{/each}
+			{:else}
+				{#each filtered as project}
+					<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+						<a href={`/trade-projects/${project.id}`} class="grid h-full gap-4 p-5 no-underline">
+							<div class="flex items-center justify-between gap-3">
+								<Badge variant={toneVariant(statusTone(project.risk))}>{project.risk} {t('risk')}</Badge>
+								<strong class="text-2xl font-bold tracking-tight">{project.readiness}%</strong>
+							</div>
+							<h3 class="text-2xl font-bold tracking-tight">{project.name}</h3>
+							<p class="text-sm text-muted-foreground">{project.product}</p>
+							<div class="grid grid-cols-2 gap-2">
+								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Buyer')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.buyer}</strong></div>
+								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Destination')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.country}</strong></div>
+								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Stage')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.stage}</strong></div>
+								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(project.value)}</strong></div>
+							</div>
+						</a>
+					</Card>
+				{/each}
+			{/if}
 		</CardContent>
 	</Card>
 </AppShell>

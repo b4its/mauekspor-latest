@@ -6,6 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { calendarEvents as seedCalendarEvents, projects as seedProjects } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { listCalendarEvents } from '$lib/api/calendar';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { statusTone } from '$lib/utils/format';
@@ -100,6 +101,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if events.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{events.error}</p>
+	{/if}
+
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Calendar event created.')}</strong>
@@ -117,27 +122,49 @@
 		<Input bind:value={query} type="search" placeholder={t('Search event, owner, status...')} class="w-[min(390px,100%)]" />
 	</div>
 
-	<div class="grid gap-4">
-		{#each filteredEvents as event}
-			<Card>
-				<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
-					<div class="grid min-w-32 place-items-center gap-1 rounded-lg border bg-muted/40 p-3 text-center">
-						<strong class="text-base font-bold tracking-tight">{event.date}</strong>
-						<span class="text-xs text-muted-foreground">{event.time}</span>
-					</div>
-					<div class="min-w-0 flex-1">
-						<Badge variant={toneVariant(statusTone(done || doneEventId === event.id ? 'Done' : event.status))}>{done || doneEventId === event.id ? 'Done' : event.status}</Badge>
-						<h3 class="mt-2 text-lg font-bold tracking-tight">{event.title}</h3>
-						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
-						<small class="block text-xs text-muted-foreground">{event.type} · {projectName(event.projectId)} · {event.owner}</small>
-					</div>
-					<Button variant="outline" onclick={() => handleDone(event.id)}>{t('Mark done')}</Button>
-				</CardContent>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
-				{t('No calendar event matched your search.')}
-			</div>
-		{/each}
-	</div>
+	{#if events.loading}
+		<div class="grid gap-4">
+			{#each Array(5) as _}
+				<Card>
+					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
+						<div class="grid min-w-32 place-items-center gap-1 rounded-lg border bg-muted/40 p-3 text-center">
+							<Skeleton class="h-5 w-20" />
+							<Skeleton class="h-4 w-14" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<Skeleton class="h-5 w-24" />
+							<Skeleton class="mt-2 h-6 w-3/4" />
+							<Skeleton class="mt-1 h-4 w-full" />
+							<Skeleton class="mt-1 h-4 w-1/2" />
+						</div>
+						<Skeleton class="h-9 w-24" />
+					</CardContent>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4">
+			{#each filteredEvents as event}
+				<Card>
+					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
+						<div class="grid min-w-32 place-items-center gap-1 rounded-lg border bg-muted/40 p-3 text-center">
+							<strong class="text-base font-bold tracking-tight">{event.date}</strong>
+							<span class="text-xs text-muted-foreground">{event.time}</span>
+						</div>
+						<div class="min-w-0 flex-1">
+							<Badge variant={toneVariant(statusTone(done || doneEventId === event.id ? 'Done' : event.status))}>{done || doneEventId === event.id ? 'Done' : event.status}</Badge>
+							<h3 class="mt-2 text-lg font-bold tracking-tight">{event.title}</h3>
+							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
+							<small class="block text-xs text-muted-foreground">{event.type} · {projectName(event.projectId)} · {event.owner}</small>
+						</div>
+						<Button variant="outline" onclick={() => handleDone(event.id)}>{t('Mark done')}</Button>
+					</CardContent>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
+					{t('No calendar event matched your search.')}
+				</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

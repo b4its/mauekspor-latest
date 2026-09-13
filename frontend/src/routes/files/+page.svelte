@@ -8,6 +8,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { uploadFileAsset, uploadFileBinary, verifyFileAsset, listFiles, fileDownloadUrl } from '$lib/api/files';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Document', 'Certificate', 'Image', 'Evidence', 'Report'];
@@ -108,6 +109,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if files.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{files.error}</p>
+	{/if}
+
 	{#if uploaded}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('File berhasil diunggah.')}</strong>
@@ -126,41 +131,69 @@
 		<Input bind:value={query} type="search" placeholder={t('Cari file, tag, pemilik...')} class="w-[min(390px,100%)]" />
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredFiles as file}
-			<Card class="gap-4">
-				<div class="flex items-center justify-between gap-3">
-					<Badge variant={toneVariant(statusTone(verified || verifiedId === file.id ? 'Verified' : file.status))}>{verified || verifiedId === file.id ? t('Terverifikasi') : trStatus(file.status)}</Badge>
-					<strong class="text-sm font-bold text-muted-foreground">{trType(file.type)}</strong>
-				</div>
-				<CardHeader class="p-0">
-					<CardTitle class="text-xl font-bold tracking-tight">{file.name}</CardTitle>
-					<CardDescription>{projectName(file.projectId)} · {file.owner}</CardDescription>
-				</CardHeader>
-				<CardContent class="grid gap-3 p-0">
+	{#if files.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5 gap-4">
+					<div class="flex items-center justify-between gap-3">
+						<Skeleton class="h-5 w-20" />
+						<Skeleton class="h-5 w-16" />
+					</div>
+					<Skeleton class="mt-2 h-6 w-3/4" />
+					<Skeleton class="h-4 w-1/2" />
 					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.updatedAt}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Ukuran')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.size}</strong>
-						</div>
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
 					<div class="flex flex-wrap gap-2">
-						{#each file.tags as tag}
-							<span class="rounded-full border bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{tag}</span>
-						{/each}
+						<Skeleton class="h-5 w-16 rounded-full" />
+						<Skeleton class="h-5 w-20 rounded-full" />
+						<Skeleton class="h-5 w-14 rounded-full" />
 					</div>
-				</CardContent>
-				<div class="flex flex-wrap items-center gap-2">
-				{#if file.storageName}
-					<a href={fileDownloadUrl(file.id)} target="_blank" rel="noopener" class="text-sm font-bold text-primary no-underline hover:underline">{t('Unduh')}</a>
-				{/if}
-				<Button variant="outline" onclick={() => handleVerify(file.id)}>{verifiedId === file.id ? t('Terverifikasi') : t('Verifikasi file')}</Button>
-			</div>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada file yang cocok dengan pencarian.')}</div>
-		{/each}
-	</div>
+					<div class="flex flex-wrap items-center gap-2">
+						<Skeleton class="h-9 w-20" />
+						<Skeleton class="h-9 w-28" />
+					</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredFiles as file}
+				<Card class="gap-4">
+					<div class="flex items-center justify-between gap-3">
+						<Badge variant={toneVariant(statusTone(verified || verifiedId === file.id ? 'Verified' : file.status))}>{verified || verifiedId === file.id ? t('Terverifikasi') : trStatus(file.status)}</Badge>
+						<strong class="text-sm font-bold text-muted-foreground">{trType(file.type)}</strong>
+					</div>
+					<CardHeader class="p-0">
+						<CardTitle class="text-xl font-bold tracking-tight">{file.name}</CardTitle>
+						<CardDescription>{projectName(file.projectId)} · {file.owner}</CardDescription>
+					</CardHeader>
+					<CardContent class="grid gap-3 p-0">
+						<div class="grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.updatedAt}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Ukuran')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.size}</strong>
+							</div>
+						</div>
+						<div class="flex flex-wrap gap-2">
+							{#each file.tags as tag}
+								<span class="rounded-full border bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{tag}</span>
+							{/each}
+						</div>
+					</CardContent>
+					<div class="flex flex-wrap items-center gap-2">
+					{#if file.storageName}
+						<a href={fileDownloadUrl(file.id)} target="_blank" rel="noopener" class="text-sm font-bold text-primary no-underline hover:underline">{t('Unduh')}</a>
+					{/if}
+					<Button variant="outline" onclick={() => handleVerify(file.id)}>{verifiedId === file.id ? t('Terverifikasi') : t('Verifikasi file')}</Button>
+				</div>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada file yang cocok dengan pencarian.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

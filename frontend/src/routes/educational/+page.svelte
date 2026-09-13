@@ -9,6 +9,7 @@
 	import { listEducationalModules } from '$lib/api/educational';
 	import { listEducationalArticles } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -96,37 +97,66 @@
 		<Input bind:value={query} type="search" placeholder={t('Cari modul atau artikel...')} class="max-w-xs" />
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredModules as module}
-			<a href={`/educational/modules/${module.id}`} class="block no-underline">
-				<Card class="grid h-full gap-3 p-5 shadow-sm transition-transform hover:-translate-y-1">
-					<div class="flex items-center justify-between gap-2">
-						<Badge variant={toneVariant(statusTone(module.status))}>{trStatus(module.status)}</Badge>
-						<strong class="text-2xl font-bold tracking-tight">{module.completion}%</strong>
+	{#if modules.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{modules.error}</p>
+	{/if}
+
+	{#if modules.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
+					<div class="flex items-center justify-between gap-3">
+						<Skeleton class="h-5 w-20" />
+						<Skeleton class="h-7 w-12" />
 					</div>
-					<h3 class="text-xl font-bold tracking-tight">{module.title}</h3>
-					<p class="text-sm leading-relaxed text-muted-foreground">{module.summary}</p>
-					<div class="grid gap-2.5 sm:grid-cols-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Level')} <strong class="mt-1 block text-sm font-bold text-foreground">{module.level}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Pelajaran')} <strong class="mt-1 block text-sm font-bold text-foreground">{lessonCount(module.id)}</strong>
-						</div>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-2 h-4 w-full" />
+					<div class="mt-4 grid gap-2.5 sm:grid-cols-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-					<Progress value={module.completion} />
-					<span class="inline-flex items-center gap-1.5 text-sm font-bold text-primary">
-						<PlayCircleIcon class="size-4" />
-						{module.completion > 0 ? t('Lanjutkan belajar') : t('Mulai belajar')}
-					</span>
+					<Skeleton class="mt-4 h-2 w-full" />
+					<Skeleton class="mt-4 h-5 w-32" />
 				</Card>
-			</a>
-		{:else}
-			<div class="grid place-items-center rounded-xl border border-dashed bg-muted/20 p-10 text-sm font-semibold text-muted-foreground md:col-span-2 xl:col-span-3">
-				{t('Tidak ada modul yang cocok dengan filter.')}
-			</div>
-		{/each}
-	</div>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredModules as module}
+				<a href={`/educational/modules/${module.id}`} class="block no-underline">
+					<Card class="grid h-full gap-3 p-5 shadow-sm transition-transform hover:-translate-y-1">
+						<div class="flex items-center justify-between gap-2">
+							<Badge variant={toneVariant(statusTone(module.status))}>{trStatus(module.status)}</Badge>
+							<strong class="text-2xl font-bold tracking-tight">{module.completion}%</strong>
+						</div>
+						<h3 class="text-xl font-bold tracking-tight">{module.title}</h3>
+						<p class="text-sm leading-relaxed text-muted-foreground">{module.summary}</p>
+						<div class="grid gap-2.5 sm:grid-cols-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Level')} <strong class="mt-1 block text-sm font-bold text-foreground">{module.level}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Pelajaran')} <strong class="mt-1 block text-sm font-bold text-foreground">{lessonCount(module.id)}</strong>
+							</div>
+						</div>
+						<Progress value={module.completion} />
+						<span class="inline-flex items-center gap-1.5 text-sm font-bold text-primary">
+							<PlayCircleIcon class="size-4" />
+							{module.completion > 0 ? t('Lanjutkan belajar') : t('Mulai belajar')}
+						</span>
+					</Card>
+				</a>
+			{:else}
+				<div class="grid place-items-center rounded-xl border border-dashed bg-muted/20 p-10 text-sm font-semibold text-muted-foreground md:col-span-2 xl:col-span-3">
+					{t('Tidak ada modul yang cocok dengan filter.')}
+				</div>
+			{/each}
+		</div>
+	{/if}
+
+	{#if articles.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{articles.error}</p>
+	{/if}
 
 	<Card class="mt-4">
 		<CardHeader class="flex-row items-center justify-between gap-3">
@@ -137,18 +167,33 @@
 			<Badge variant="secondary">{articles.items.length} {t('diterbitkan')}</Badge>
 		</CardHeader>
 		<CardContent class="grid gap-2">
-			{#each articles.items as article}
-				<a class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5 no-underline transition-colors hover:bg-muted/60" href={`/educational/articles/${article.id}`}>
-					<div>
-						<strong class="block text-sm font-bold">{article.title}</strong>
-						<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.summary}</span>
+			{#if articles.loading}
+				{#each Array(4) as _}
+					<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5">
+						<div class="min-w-0 flex-1">
+							<Skeleton class="h-5 w-3/4" />
+							<Skeleton class="mt-2 h-4 w-1/2" />
+						</div>
+						<div class="grid justify-items-end gap-1.5">
+							<Skeleton class="h-5 w-16 rounded-full" />
+							<Skeleton class="h-4 w-14" />
+						</div>
 					</div>
-					<div class="grid justify-items-end gap-1.5">
-						<Badge variant={toneVariant(statusTone(article.status))}>{trStatus(article.status)}</Badge>
-						<small class="text-xs font-semibold text-muted-foreground">{article.readMinutes} {t('menit baca')}</small>
-					</div>
-				</a>
-			{/each}
+				{/each}
+			{:else}
+				{#each articles.items as article}
+					<a class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5 no-underline transition-colors hover:bg-muted/60" href={`/educational/articles/${article.id}`}>
+						<div>
+							<strong class="block text-sm font-bold">{article.title}</strong>
+							<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.summary}</span>
+						</div>
+						<div class="grid justify-items-end gap-1.5">
+							<Badge variant={toneVariant(statusTone(article.status))}>{trStatus(article.status)}</Badge>
+							<small class="text-xs font-semibold text-muted-foreground">{article.readMinutes} {t('menit baca')}</small>
+						</div>
+					</a>
+				{/each}
+			{/if}
 		</CardContent>
 	</Card>
 </AppShell>
