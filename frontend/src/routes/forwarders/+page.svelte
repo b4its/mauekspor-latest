@@ -7,6 +7,7 @@
 	import { forwarders as seedForwarders } from '$lib/data/trade';
 	import { listForwarders } from '$lib/api/forwarders';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -66,28 +67,55 @@
 		<Input bind:value={query} type="search" placeholder={t('Search forwarder, lane, coverage...')} class="max-w-xs" />
 	</div>
 
+	{#if forwarders.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{forwarders.error}</p>
+	{/if}
+
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredForwarders as forwarder}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/forwarders/${forwarder.id}`} class="grid h-full gap-3 p-5 no-underline">
+		{#if forwarders.loading}
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(forwarder.status))}>{forwarder.status}</Badge>
-						<span class="text-sm text-muted-foreground">{forwarder.mode}</span>
+						<Skeleton class="h-5 w-24" />
+						<Skeleton class="h-4 w-16" />
 					</div>
-					<h3 class="text-2xl font-bold tracking-tight">{forwarder.name}</h3>
-					<p class="text-sm text-muted-foreground">{forwarder.coverage}</p>
-					<div class="grid gap-2 sm:grid-cols-3">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('On-time')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.onTimeRate}%</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Quote speed')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.quoteSpeed}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lanes')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.lanes.length}</strong></div>
+					<Skeleton class="mt-2 h-7 w-3/4" />
+					<Skeleton class="mt-1 h-4 w-1/2" />
+					<div class="mt-4 grid gap-2 sm:grid-cols-3">
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
 					</div>
-					<div class="flex flex-wrap gap-2">
-						{#each forwarder.lanes as lane}<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{lane}</span>{/each}
+					<div class="mt-4 flex flex-wrap gap-2">
+						<Skeleton class="h-5 w-16 rounded-full" />
+						<Skeleton class="h-5 w-20 rounded-full" />
+						<Skeleton class="h-5 w-14 rounded-full" />
 					</div>
-				</a>
-			</Card>
+				</Card>
+			{/each}
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No forwarder matched your filter.')}</div>
-		{/each}
+			{#each filteredForwarders as forwarder}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/forwarders/${forwarder.id}`} class="grid h-full gap-3 p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(forwarder.status))}>{forwarder.status}</Badge>
+							<span class="text-sm text-muted-foreground">{forwarder.mode}</span>
+						</div>
+						<h3 class="text-2xl font-bold tracking-tight">{forwarder.name}</h3>
+						<p class="text-sm text-muted-foreground">{forwarder.coverage}</p>
+						<div class="grid gap-2 sm:grid-cols-3">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('On-time')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.onTimeRate}%</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Quote speed')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.quoteSpeed}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lanes')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.lanes.length}</strong></div>
+						</div>
+						<div class="flex flex-wrap gap-2">
+							{#each forwarder.lanes as lane}<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{lane}</span>{/each}
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No forwarder matched your filter.')}</div>
+			{/each}
+		{/if}
 	</div>
 </AppShell>

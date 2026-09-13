@@ -8,6 +8,7 @@
 	import { listCatalogs, deleteCatalog } from '$lib/api/catalogs';
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -123,43 +124,66 @@
 		</Card>
 	</div>
 
+	{#if catalogs.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{catalogs.error}</p>
+	{/if}
+
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredCatalogs as catalog}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/catalogs/${catalog.id}`} class="block h-full p-5 no-underline">
+		{#if catalogs.loading}
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(catalog.status))}>{catalog.status}</Badge>
-						<strong class="text-2xl font-bold tracking-tight">{catalog.readiness}%</strong>
+						<Skeleton class="h-5 w-24" />
+						<Skeleton class="h-8 w-16" />
 					</div>
-					<h3 class="mt-4 text-2xl font-bold tracking-tight">{catalog.title}</h3>
-					<p class="mt-1 text-sm text-muted-foreground">{productName(catalog.productId)}</p>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-1 h-4 w-1/2" />
 					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Market')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.targetMarket}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('MOQ')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.moq}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Lead time')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.leadTime}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Images')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.images}</strong>
-						</div>
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
 					</div>
-					<div class="mt-3 flex items-center justify-end gap-2">
-						<Button size="sm" variant="outline" href={`/catalogs/${catalog.id}/edit`}>{t('Edit')}</Button>
-						<Button size="sm" variant="destructive" disabled={deleting === catalog.id} onclick={(e) => { e.preventDefault(); removeCatalog(catalog.id, catalog.title); }}>
-							{deleting === catalog.id ? '...' : 'Hapus'}
-						</Button>
-					</div>
-				</a>
-			</Card>
+				</Card>
+			{/each}
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
-				{t('No catalog matched your search.')}
-			</div>
-		{/each}
+			{#each filteredCatalogs as catalog}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/catalogs/${catalog.id}`} class="block h-full p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(catalog.status))}>{catalog.status}</Badge>
+							<strong class="text-2xl font-bold tracking-tight">{catalog.readiness}%</strong>
+						</div>
+						<h3 class="mt-4 text-2xl font-bold tracking-tight">{catalog.title}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{productName(catalog.productId)}</p>
+						<div class="mt-4 grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Market')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.targetMarket}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('MOQ')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.moq}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Lead time')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.leadTime}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Images')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.images}</strong>
+							</div>
+						</div>
+						<div class="mt-3 flex items-center justify-end gap-2">
+							<Button size="sm" variant="outline" href={`/catalogs/${catalog.id}/edit`}>{t('Edit')}</Button>
+							<Button size="sm" variant="destructive" disabled={deleting === catalog.id} onclick={(e) => { e.preventDefault(); removeCatalog(catalog.id, catalog.title); }}>
+								{deleting === catalog.id ? '...' : 'Hapus'}
+							</Button>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
+					{t('No catalog matched your search.')}
+				</div>
+			{/each}
+		{/if}
 	</div>
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>

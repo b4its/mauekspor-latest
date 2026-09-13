@@ -10,6 +10,7 @@ import { Button } from '$lib/components/ui/button/index.js';
 import { listTradeProjects } from '$lib/api/trade-projects';
 import { csvExportUrl } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -175,31 +176,57 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Margin rata-rata')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{averageMargin}%</strong></CardContent></Card>
 	</div>
 
+	{#if costingScenarios.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{costingScenarios.error}</p>
+	{/if}
+
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredScenarios as scenario}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<label class="block h-full p-5">
+		{#if costingScenarios.loading}
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
 						<div class="flex items-center gap-2">
-							<Checkbox checked={selected.includes(scenario.id)} onCheckedChange={() => toggleSelect(scenario.id)} />
-							<Badge variant={toneVariant(statusTone(scenario.status))}>{scenario.status}</Badge>
+							<Skeleton class="h-4 w-4 rounded" />
+							<Skeleton class="h-5 w-24" />
 						</div>
-						<strong class="text-2xl font-bold tracking-tight">{scenario.confidence}%</strong>
+						<Skeleton class="h-8 w-16" />
 					</div>
-					<a href={`/costing/${scenario.id}`} class="no-underline">
-						<h3 class="mt-3 text-2xl font-bold tracking-tight">{scenario.title}</h3>
-						<p class="mt-1 text-sm text-muted-foreground">{projectName(scenario.projectId)}</p>
-						<div class="mt-4 grid grid-cols-2 gap-2">
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.incoterm}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Tujuan')}<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.destination}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">FOB<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.fobPrice)}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Landed')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.landedCost)}</strong></div>
-						</div>
-					</a>
-				</label>
-			</Card>
+					<Skeleton class="mt-3 h-7 w-3/4" />
+					<Skeleton class="mt-1 h-4 w-1/2" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+					</div>
+				</Card>
+			{/each}
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada skenario costing yang cocok dengan pencarian.')}</div>
-		{/each}
+			{#each filteredScenarios as scenario}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<label class="block h-full p-5">
+						<div class="flex items-center justify-between gap-3">
+							<div class="flex items-center gap-2">
+								<Checkbox checked={selected.includes(scenario.id)} onCheckedChange={() => toggleSelect(scenario.id)} />
+								<Badge variant={toneVariant(statusTone(scenario.status))}>{scenario.status}</Badge>
+							</div>
+							<strong class="text-2xl font-bold tracking-tight">{scenario.confidence}%</strong>
+						</div>
+						<a href={`/costing/${scenario.id}`} class="no-underline">
+							<h3 class="mt-3 text-2xl font-bold tracking-tight">{scenario.title}</h3>
+							<p class="mt-1 text-sm text-muted-foreground">{projectName(scenario.projectId)}</p>
+							<div class="mt-4 grid grid-cols-2 gap-2">
+								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.incoterm}</strong></div>
+								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Tujuan')}<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.destination}</strong></div>
+								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">FOB<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.fobPrice)}</strong></div>
+								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Landed')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.landedCost)}</strong></div>
+							</div>
+						</a>
+					</label>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada skenario costing yang cocok dengan pencarian.')}</div>
+			{/each}
+		{/if}
 	</div>
 </AppShell>

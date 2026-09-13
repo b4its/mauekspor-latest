@@ -8,6 +8,7 @@
 import { listExportAnalyses } from '$lib/api/export-analysis';
 import { csvExportUrl } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -70,28 +71,51 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		<Input bind:value={query} type="search" placeholder={t('Cari produk, tujuan, HS...')} class="max-w-xs" />
 	</div>
 
+	{#if exportAnalyses.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{exportAnalyses.error}</p>
+	{/if}
+
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredAnalyses as analysis}
-			<Card class="p-5">
-				<div class="flex items-center justify-between gap-3">
-					<Badge variant={toneVariant(statusTone(analysis.status))}>{trStatus(analysis.status)}</Badge>
-					<strong class="text-2xl font-bold tracking-tight">{analysis.score}</strong>
-				</div>
-				<h3 class="mt-3 text-2xl font-bold tracking-tight">{analysis.productName}</h3>
-				<p class="mt-1 text-sm text-muted-foreground">{analysis.destination} - HS {analysis.hsCode}</p>
-				<div class="mt-4 grid grid-cols-2 gap-2">
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Keyakinan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.confidence}%</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Permintaan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.marketDemand}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bea masuk')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.duties.split(' ')[0]}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pembatasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.restrictions.length}</strong></div>
-				</div>
-				<div class="mt-4 flex flex-wrap gap-3">
-					<Button variant="ghost" size="sm" href={`/export-analysis/${analysis.id}`}>{t('Buka analisis')}</Button>
-					<Button variant="outline" size="sm" href={`/export-analysis/${analysis.id}/regulation-recommendations`}>{t('Rekomendasi')}</Button>
-				</div>
-			</Card>
+		{#if exportAnalyses.loading}
+			{#each Array(6) as _}
+				<Card class="p-5">
+					<div class="flex items-center justify-between gap-3">
+						<Skeleton class="h-5 w-24" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+					<Skeleton class="mt-3 h-7 w-3/4" />
+					<Skeleton class="mt-1 h-4 w-1/2" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+					</div>
+				</Card>
+			{/each}
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada analisis yang cocok dengan filter.')}</div>
-		{/each}
+			{#each filteredAnalyses as analysis}
+				<Card class="p-5">
+					<div class="flex items-center justify-between gap-3">
+						<Badge variant={toneVariant(statusTone(analysis.status))}>{trStatus(analysis.status)}</Badge>
+						<strong class="text-2xl font-bold tracking-tight">{analysis.score}</strong>
+					</div>
+					<h3 class="mt-3 text-2xl font-bold tracking-tight">{analysis.productName}</h3>
+					<p class="mt-1 text-sm text-muted-foreground">{analysis.destination} - HS {analysis.hsCode}</p>
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Keyakinan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.confidence}%</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Permintaan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.marketDemand}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bea masuk')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.duties.split(' ')[0]}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pembatasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.restrictions.length}</strong></div>
+					</div>
+					<div class="mt-4 flex flex-wrap gap-3">
+						<Button variant="ghost" size="sm" href={`/export-analysis/${analysis.id}`}>{t('Buka analisis')}</Button>
+						<Button variant="outline" size="sm" href={`/export-analysis/${analysis.id}/regulation-recommendations`}>{t('Rekomendasi')}</Button>
+					</div>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada analisis yang cocok dengan filter.')}</div>
+			{/each}
+		{/if}
 	</div>
 </AppShell>
