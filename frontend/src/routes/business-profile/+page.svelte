@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { businessProfiles as seedProfiles } from '$lib/data/trade';
-	import { listBusinessProfiles } from '$lib/api/business-profile';
+	import { listBusinessProfiles, updateCertifications } from '$lib/api/business-profile';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
@@ -16,6 +16,23 @@
 	});
 	let profile = $derived(profiles.items[0] ?? seedProfiles[0]);
 	const certOptions = ['Halal', 'ISO 22000', 'HACCP', 'SVLK', 'Organic', 'Origin declaration', 'Nutrition facts'];
+	let saving = $state(false);
+	let certSaved = $state(false);
+	let certError = $state('');
+
+	async function saveCerts() {
+		saving = true;
+		certError = '';
+		certSaved = false;
+		try {
+			await updateCertifications(profile.id, profile.certifications);
+			certSaved = true;
+		} catch {
+			certError = t('Gagal menyimpan sertifikasi.');
+		} finally {
+			saving = false;
+		}
+	}
 
 	function trCert(c: string) {
 		return t(c === 'Organic' ? 'Organik' : c === 'Origin declaration' ? 'Deklarasi asal' : c === 'Nutrition facts' ? 'Informasi nilai gizi' : c);
@@ -103,6 +120,17 @@
 						<span class="text-sm font-bold">{trCert(cert)}</span>
 					</label>
 				{/each}
+				<div class="sm:col-span-2 mt-1">
+					<Button size="sm" onclick={saveCerts} disabled={saving}>
+						{saving ? t('Menyimpan...') : t('Simpan sertifikasi')}
+					</Button>
+					{#if certSaved}
+						<span class="ml-2 text-xs font-bold text-emerald-600">{t('Tersimpan')} ✓</span>
+					{/if}
+					{#if certError}
+						<span class="ml-2 text-xs font-bold text-destructive">{certError}</span>
+					{/if}
+				</div>
 			</CardContent>
 		</Card>
 
