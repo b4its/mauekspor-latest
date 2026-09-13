@@ -182,7 +182,7 @@
 					</div>
 					<div class="rounded-xl border border-[#0b3d91]/10 bg-white p-4 dark:border-white/10 dark:bg-[#0a1730]">
 						<strong class="block text-3xl font-bold tracking-tight text-[#0b3d91] dark:text-[#5ea1ff]">${(pipelineValue / 1000).toFixed(0)}k</strong>
-						<span class="mt-1.5 block text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Demo pipeline')}</span>
+						<span class="mt-1.5 block text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Nilai pipeline')}</span>
 					</div>
 				</div>
 
@@ -227,9 +227,57 @@
 				<GlobeIcon class="size-6 text-[#1e63d6]" />
 				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Pasar Global')}</span>
 			</div>
-		</section>
+</section>
 
-		<section id="features" class="grid gap-6 py-8">
+	<!-- Pain Points & Solutions -->
+	<section class="grid gap-6 rounded-3xl border border-[#0b3d91]/10 bg-gradient-to-br from-white to-[#f0f5ff] p-8 dark:border-white/10 dark:from-[#0a1730] dark:to-[#0c1f3d]" data-aos="fade-up">
+		<div class="max-w-2xl">
+			<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Masalah & Solusi')}</Badge>
+			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Ekspor tidak harus serumit itu.')}</h2>
+		</div>
+		<div class="grid gap-4 md:grid-cols-2">
+			<div class="rounded-2xl border border-red-200 bg-red-50/60 p-6 dark:border-red-900/30 dark:bg-red-950/20" data-aos="fade-right">
+				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-red-600 dark:text-red-400">
+					<span class="text-2xl">✗</span> {t('Masalah')}
+				</h3>
+				<ul class="mt-4 grid gap-3">
+					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
+						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
+						{t('Data produk tercecer di spreadsheet, chat, dan email — tidak ada satu sumber kebenaran.')}
+					</li>
+					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
+						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
+						{t('Analisis pasar dan kepatuhan memakan waktu berminggu-minggu karena riset manual per negara.')}
+					</li>
+					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
+						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
+						{t('Penawaran harga tidak konsisten — kalkulasi EXW/FOB/CIF sering salah dan dokumen tidak terintegrasi.')}
+					</li>
+				</ul>
+			</div>
+			<div class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 dark:border-emerald-900/30 dark:bg-emerald-950/20" data-aos="fade-left">
+				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
+					<span class="text-2xl">✓</span> {t('Solusi MauEkspor')}
+				</h3>
+				<ul class="mt-4 grid gap-3">
+					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
+						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
+						{t('Satu workspace terstruktur: produk, katalog, analisis, dan dokumen dalam satu tempat sinkron.')}
+					</li>
+					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
+						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
+						{t('Analisis kepatuhan AI dengan snapshot produk, perbandingan negara, dan rekomendasi 10-bagian per tujuan.')}
+					</li>
+					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
+						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
+						{t('Costing EXW/FOB/CIF otomatis, PDF siap kirim, dan kalkulasi kapasitas kontainer dari dimensi produk nyata.')}
+					</li>
+				</ul>
+			</div>
+		</div>
+	</section>
+
+	<section id="features" class="grid gap-6 py-8">
 			<div class="max-w-2xl" data-aos="fade-up">
 				<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Kapabilitas')}</Badge>
 				<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Semua yang tim ekspor butuhkan, dalam satu tempat.')}</h2>
@@ -281,9 +329,40 @@
 					</Card>
 				{/each}
 			</div>
-		</section>
+</section>
 
-		<section id="workflow" class="grid gap-6 rounded-3xl bg-gradient-to-br from-[#0b3d91] to-[#123b7a] p-8 text-white">
+	<!-- Use Cases -->
+	<section class="grid gap-6 rounded-3xl border border-[#0b3d91]/10 bg-white p-8 dark:border-white/10 dark:bg-[#0a1730]" data-aos="fade-up">
+		<div class="max-w-2xl">
+			<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Studi Kasus')}</Badge>
+			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Dari kopi, furnitur, hingga produk olahan.')}</h2>
+		</div>
+		<div class="grid gap-4 md:grid-cols-3">
+			<Card class="border-[#0b3d91]/10 dark:border-white/10" data-aos="fade-up">
+				<CardContent class="grid gap-3 pt-(--card-spacing)">
+					<Badge class="w-fit bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{t('Pertama Kali')}</Badge>
+					<h4 class="text-lg font-bold">{t('Eksportir Pemula')}</h4>
+					<p class="text-sm leading-relaxed text-muted-foreground">{t('UMKM kopi Gayo pertama kali ekspor ke Jepang. MauEkspor memandu dari HS code, analisis pasar, hingga dokumen pengiriman — semuanya dalam 3 minggu.')}</p>
+				</CardContent>
+			</Card>
+			<Card class="border-[#0b3d91]/10 dark:border-white/10" data-aos="fade-up" data-aos-delay="100">
+				<CardContent class="grid gap-3 pt-(--card-spacing)">
+					<Badge class="w-fit bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">{t('Skala UKM')}</Badge>
+					<h4 class="text-lg font-bold">{t('Produsen Makanan Olahan')}</h4>
+					<p class="text-sm leading-relaxed text-muted-foreground">{t('Produsen keripik singkong menggunakan katalog digital dan buyer-request matching untuk menjangkau buyer di Eropa dan Timur Tengah tanpa perantara.')}</p>
+				</CardContent>
+			</Card>
+			<Card class="border-[#0b3d91]/10 dark:border-white/10" data-aos="fade-up" data-aos-delay="200">
+				<CardContent class="grid gap-3 pt-(--card-spacing)">
+					<Badge class="w-fit bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">{t('Kerajinan & Mebel')}</Badge>
+					<h4 class="text-lg font-bold">{t('Eksportir Furnitur')}</h4>
+					<p class="text-sm leading-relaxed text-muted-foreground">{t('Eksportir mebel Jepara memanfaatkan costing container dan forwarder recommendations untuk memberikan penawaran FOB yang kompetitif ke buyer Australia.')}</p>
+				</CardContent>
+			</Card>
+		</div>
+	</section>
+
+	<section id="workflow" class="grid gap-6 rounded-3xl bg-gradient-to-br from-[#0b3d91] to-[#123b7a] p-8 text-white">
 			<div class="max-w-2xl" data-aos="fade-up">
 				<Badge variant="outline" class="border-white/30 text-white">{t('Cara Kerja')}</Badge>
 				<h2 class="mt-3 font-display text-4xl font-black tracking-tight md:text-5xl">{t('Tiga langkah dari ide hingga invoice.')}</h2>
@@ -334,10 +413,41 @@
 					</Card>
 				{/each}
 			</div>
-		</section>
+</section>
 
-		<section
-			class="flex flex-wrap items-center justify-between gap-6 rounded-3xl border border-[#0b3d91]/10 bg-gradient-to-br from-white to-[#dbe9ff] p-8 dark:border-white/10 dark:from-[#0a1730] dark:to-[#0c2450]"
+	<!-- Vision & Mission -->
+	<section class="grid gap-6 rounded-3xl bg-gradient-to-br from-[#0a1f4a] to-[#0c3060] p-8 text-white shadow-sm dark:from-[#040d1f] dark:to-[#0a1730]" data-aos="fade-up">
+		<div class="grid gap-6 md:grid-cols-2">
+			<div>
+				<Badge variant="outline" class="border-white/30 text-white">{t('Visi')}</Badge>
+				<h3 class="mt-4 font-display text-3xl font-black tracking-tight md:text-4xl">{t('Menyederhanakan ekspor untuk setiap UMKM Indonesia.')}</h3>
+				<p class="mt-4 leading-relaxed text-white/75">
+					{t('Kami percaya bahwa potensi ekspor UMKM Indonesia terhambat oleh kompleksitas administrasi, bukan oleh kualitas produk. MauEkspor hadir sebagai sistem operasi dagang yang menyatukan data, analisis, dan eksekusi dalam satu workspace yang terstruktur.')}
+				</p>
+			</div>
+			<div class="grid content-start gap-4">
+				<Badge variant="outline" class="border-white/30 text-white">{t('Misi')}</Badge>
+				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
+					<span class="text-2xl">🎯</span>
+					<h4 class="mt-2 text-lg font-bold">{t('Kesiapan Produk')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Data produk terstruktur, kode HS otomatis, dan enrichment berbasis AI sebagai fondasi setiap alur ekspor.')}</p>
+				</div>
+				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
+					<span class="text-2xl">🔍</span>
+					<h4 class="mt-2 text-lg font-bold">{t('Analisis Cerdas')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Market intelligence, compliance check, dan perbandingan negara dalam hitungan detik — bukan minggu.')}</p>
+				</div>
+				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
+					<span class="text-2xl">🚀</span>
+					<h4 class="mt-2 text-lg font-bold">{t('Eksekusi Terpadu')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Dari costing dan katalog digital hingga dokumen dan milestone pengiriman — semua terintegrasi.')}</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section
+		class="flex flex-wrap items-center justify-between gap-6 rounded-3xl border border-[#0b3d91]/10 bg-gradient-to-br from-white to-[#dbe9ff] p-8 dark:border-white/10 dark:from-[#0a1730] dark:to-[#0c2450]"
 			data-aos="zoom-in"
 		>
 			<div>
