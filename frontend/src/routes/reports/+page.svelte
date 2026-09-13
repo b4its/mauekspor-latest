@@ -8,6 +8,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { listReports, generateReport } from '$lib/api/reports';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Executive', 'Compliance', 'Financial', 'Shipment'];
@@ -78,6 +79,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if reports.error}
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{reports.error}</p>
+	{/if}
+
 	{#if generated}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Laporan berhasil dibuat.')}</strong>
@@ -94,26 +99,47 @@
 		<Input bind:value={query} type="search" placeholder={t('Cari laporan, pemilik, jenis...')} class="w-[min(390px,100%)]" />
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredReports as report}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/reports/${report.id}`} class="block h-full p-5 no-underline">
+	{#if reports.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(report.status))}>{report.status}</Badge>
-						<strong class="text-sm font-bold tracking-tight">{report.type}</strong>
+						<Skeleton class="h-5 w-24" />
+						<Skeleton class="h-5 w-16 rounded-full" />
 					</div>
-					<h3 class="mt-3 text-2xl font-bold tracking-tight">{report.title}</h3>
-					<p class="mt-1 text-sm text-muted-foreground">{report.period} · {report.owner}</p>
+					<Skeleton class="mt-3 h-7 w-3/4" />
+					<Skeleton class="mt-1 h-4 w-1/2" />
 					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.sections.length}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Wawasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.insights.length}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Updated')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.updatedAt}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ID Laporan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.id}</strong></div>
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada laporan yang cocok dengan pencarian.')}</div>
-		{/each}
-	</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredReports as report}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/reports/${report.id}`} class="block h-full p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(report.status))}>{report.status}</Badge>
+							<strong class="text-sm font-bold tracking-tight">{report.type}</strong>
+						</div>
+						<h3 class="mt-3 text-2xl font-bold tracking-tight">{report.title}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{report.period} · {report.owner}</p>
+						<div class="mt-4 grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.sections.length}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Wawasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.insights.length}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Updated')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.updatedAt}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ID Laporan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.id}</strong></div>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada laporan yang cocok dengan pencarian.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

@@ -10,6 +10,7 @@
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Booking Requested', 'Customs Submitted', 'Loaded', 'Exception'];
@@ -91,6 +92,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if shipments.error}
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{shipments.error}</p>
+	{/if}
+
 	{#if quoteRequested}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Freight RFQ draft ready.')}</strong>
@@ -113,30 +118,52 @@
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Average progress')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{averageProgress}%</strong></CardContent></Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredShipments as shipment}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/shipments/${shipment.id}`} class="grid h-full gap-3 p-5 no-underline">
+	{#if shipments.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(shipment.status))}>{shipment.status}</Badge>
-						<strong class="text-2xl font-bold tracking-tight">{shipment.progress}%</strong>
+						<Skeleton class="h-5 w-24" />
+						<Skeleton class="h-8 w-16" />
 					</div>
-					<h3 class="text-2xl font-bold tracking-tight">{shipment.route}</h3>
-					<p class="text-sm text-muted-foreground">{projectName(shipment.projectId)}</p>
-					<Progress value={shipment.progress} />
-					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Forwarder')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.forwarder}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Mode')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.mode}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Booking')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.bookingNo}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ETA')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.eta}</strong></div>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-1 h-4 w-1/2" />
+					<Skeleton class="mt-3 h-2 w-full" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-					{#if shipment.exception}
-						<div class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{shipment.exception}</div>
-					{/if}
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No shipment matched your search.')}</div>
-		{/each}
-	</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredShipments as shipment}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/shipments/${shipment.id}`} class="grid h-full gap-3 p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(shipment.status))}>{shipment.status}</Badge>
+							<strong class="text-2xl font-bold tracking-tight">{shipment.progress}%</strong>
+						</div>
+						<h3 class="text-2xl font-bold tracking-tight">{shipment.route}</h3>
+						<p class="text-sm text-muted-foreground">{projectName(shipment.projectId)}</p>
+						<Progress value={shipment.progress} />
+						<div class="grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Forwarder')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.forwarder}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Mode')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.mode}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Booking')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.bookingNo}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ETA')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.eta}</strong></div>
+						</div>
+						{#if shipment.exception}
+							<div class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{shipment.exception}</div>
+						{/if}
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No shipment matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

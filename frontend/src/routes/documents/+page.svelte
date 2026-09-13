@@ -9,6 +9,7 @@
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Ready', 'Needs Review', 'Approved', 'Missing'];
@@ -97,6 +98,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if tradeDocuments.error}
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{tradeDocuments.error}</p>
+	{/if}
+
 	{#if generated}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Draf siap dibuat.')}</strong>
@@ -136,34 +141,55 @@
 		</Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredDocuments as document}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/documents/${document.id}`} class="block h-full p-5 no-underline">
+	{#if tradeDocuments.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(document.status))}>{document.status}</Badge>
-						<strong class="text-3xl font-bold tracking-tight">{document.validationScore}%</strong>
+						<Skeleton class="h-5 w-24" />
+						<Skeleton class="h-8 w-16" />
 					</div>
-					<h3 class="mt-4 text-xl font-bold tracking-tight">{document.type}</h3>
-					<p class="mt-1 text-sm text-muted-foreground">{projectName(document.projectId)}</p>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-1 h-4 w-1/2" />
 					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('ID')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.id}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Version')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.version}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.owner}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.updatedAt}</strong>
-						</div>
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No document matched your search.')}</div>
-		{/each}
-	</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredDocuments as document}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/documents/${document.id}`} class="block h-full p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(document.status))}>{document.status}</Badge>
+							<strong class="text-3xl font-bold tracking-tight">{document.validationScore}%</strong>
+						</div>
+						<h3 class="mt-4 text-xl font-bold tracking-tight">{document.type}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{projectName(document.projectId)}</p>
+						<div class="mt-4 grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('ID')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.id}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Version')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.version}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.owner}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.updatedAt}</strong>
+							</div>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No document matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

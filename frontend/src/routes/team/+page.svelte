@@ -9,6 +9,7 @@
 	import { listTeamMembers, inviteTeamMember, updateTeamMemberRole } from '$lib/api/team';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Admin', 'Operations', 'Compliance', 'Finance', 'Sales'];
@@ -93,6 +94,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if teamMembers.error}
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{teamMembers.error}</p>
+	{/if}
+
 	{#if invited}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Team invitation sent.')}</strong>
@@ -131,36 +136,63 @@
 		</Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredMembers as member}
-			<Card class="grid gap-4">
-				<CardContent class="grid gap-4 p-5">
-					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(member.status))}>{member.status}</Badge>
-						<strong class="text-sm font-bold text-muted-foreground">{member.role}</strong>
-					</div>
-					<h3 class="text-xl font-bold tracking-tight">{member.name}</h3>
-					<p class="text-sm text-muted-foreground">{member.email}</p>
-					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Last active')} <strong class="mt-1 block text-sm font-bold text-foreground">{member.lastActive}</strong>
+	{#if teamMembers.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="grid gap-4">
+					<CardContent class="grid gap-4 p-5">
+						<div class="flex items-center justify-between gap-3">
+							<Skeleton class="h-5 w-20" />
+							<Skeleton class="h-5 w-16 rounded-full" />
 						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Workload')} <strong class="mt-1 block text-sm font-bold text-foreground">{member.workload}%</strong>
+						<Skeleton class="h-7 w-3/4" />
+						<Skeleton class="h-4 w-1/2" />
+						<div class="grid grid-cols-2 gap-2">
+							<Skeleton class="h-14 w-full rounded-lg" />
+							<Skeleton class="h-14 w-full rounded-lg" />
 						</div>
-					</div>
-					<div class="flex flex-wrap gap-2">
-						{#each member.permissions as permission}
-							<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{permission}</span>
-						{/each}
-					</div>
-					<Button variant="outline" onclick={() => handleUpdateRole(member)} disabled={updatingRole === member.id}>{updatingRole === member.id ? t('Updating...') : t('Update role')}</Button>
-				</CardContent>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
-				{t('No team member matched your search.')}
-			</div>
-		{/each}
-	</div>
+						<div class="flex flex-wrap gap-2">
+							<Skeleton class="h-5 w-16 rounded-full" />
+							<Skeleton class="h-5 w-20 rounded-full" />
+							<Skeleton class="h-5 w-14 rounded-full" />
+						</div>
+						<Skeleton class="h-9 w-full" />
+					</CardContent>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredMembers as member}
+				<Card class="grid gap-4">
+					<CardContent class="grid gap-4 p-5">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(member.status))}>{member.status}</Badge>
+							<strong class="text-sm font-bold text-muted-foreground">{member.role}</strong>
+						</div>
+						<h3 class="text-xl font-bold tracking-tight">{member.name}</h3>
+						<p class="text-sm text-muted-foreground">{member.email}</p>
+						<div class="grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Last active')} <strong class="mt-1 block text-sm font-bold text-foreground">{member.lastActive}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Workload')} <strong class="mt-1 block text-sm font-bold text-foreground">{member.workload}%</strong>
+							</div>
+						</div>
+						<div class="flex flex-wrap gap-2">
+							{#each member.permissions as permission}
+								<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{permission}</span>
+							{/each}
+						</div>
+						<Button variant="outline" onclick={() => handleUpdateRole(member)} disabled={updatingRole === member.id}>{updatingRole === member.id ? t('Updating...') : t('Update role')}</Button>
+					</CardContent>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
+					{t('No team member matched your search.')}
+				</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

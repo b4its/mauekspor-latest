@@ -9,6 +9,7 @@
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { requestSupplierEvidence } from '$lib/api/suppliers';
 	import { t } from '$lib/i18n.svelte';
 
@@ -84,6 +85,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if suppliers.error}
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{suppliers.error}</p>
+	{/if}
+
 	{#if requested}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Permintaan bukti dikirim ke backend.')}</strong>
@@ -105,26 +110,47 @@
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Avg capability')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{avgCapability}%</strong></CardContent></Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredSuppliers as supplier}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/suppliers/${supplier.id}`} class="grid h-full gap-3 p-5 no-underline">
+	{#if suppliers.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(supplier.status))}>{supplier.status}</Badge>
-						<strong class="text-2xl font-bold tracking-tight">{supplier.capabilityScore}%</strong>
+						<Skeleton class="h-5 w-24" />
+						<Skeleton class="h-8 w-16" />
 					</div>
-					<h3 class="text-2xl font-bold tracking-tight">{supplier.name}</h3>
-					<p class="text-sm text-muted-foreground">{supplier.category} · {supplier.location}</p>
-					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Products')}<strong class="mt-1 block text-sm font-bold text-foreground">{productNames(supplier.productIds)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Capacity')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.capacity}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lead time')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.leadTime}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next audit')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.nextAudit}</strong></div>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-1 h-4 w-1/2" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
+						<Skeleton class="h-16 w-full rounded-lg" />
 					</div>
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No supplier matched your search.')}</div>
-		{/each}
-	</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredSuppliers as supplier}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/suppliers/${supplier.id}`} class="grid h-full gap-3 p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(supplier.status))}>{supplier.status}</Badge>
+							<strong class="text-2xl font-bold tracking-tight">{supplier.capabilityScore}%</strong>
+						</div>
+						<h3 class="text-2xl font-bold tracking-tight">{supplier.name}</h3>
+						<p class="text-sm text-muted-foreground">{supplier.category} · {supplier.location}</p>
+						<div class="grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Products')}<strong class="mt-1 block text-sm font-bold text-foreground">{productNames(supplier.productIds)}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Capacity')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.capacity}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lead time')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.leadTime}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next audit')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.nextAudit}</strong></div>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No supplier matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

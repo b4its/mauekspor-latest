@@ -7,6 +7,7 @@
 	import { userAccounts as seedUsers } from '$lib/data/trade';
 	import { listUsers, deleteUser } from '$lib/api/users';
 	import { statusTone } from '$lib/utils/format';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import type { UserAccount } from '$lib/data/trade';
 
@@ -124,7 +125,20 @@
 			<span>{t('User')}</span><span>{t('Role')}</span><span>{t('Status')}</span><span>{t('Created')}</span><span class="hidden lg:block"></span>
 		</div>
 		{#if loading}
-			<div class="p-6 text-center font-semibold text-muted-foreground">{t('Memuat...')}</div>
+			{#each Array(5) as _}
+				<div class="grid grid-cols-2 items-center gap-3 rounded-lg border-b p-3 md:grid-cols-4 lg:grid-cols-5">
+					<div class="grid min-w-0 gap-1">
+						<Skeleton class="h-4 w-32" />
+						<Skeleton class="h-3 w-24" />
+					</div>
+					<Skeleton class="h-5 w-16 rounded-full" />
+					<Skeleton class="h-5 w-14 rounded-full" />
+					<Skeleton class="hidden h-4 w-20 md:block" />
+					<div class="grid justify-end gap-2">
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</div>
+			{/each}
 		{:else}
 			{#each users as user}
 				<div class="grid grid-cols-2 items-center gap-3 rounded-lg border-b p-3 text-sm transition-colors last:border-b-0 hover:bg-muted/40 md:grid-cols-4 lg:grid-cols-5">
