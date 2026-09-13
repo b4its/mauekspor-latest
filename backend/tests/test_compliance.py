@@ -161,3 +161,27 @@ def test_snapshot_regulations_mengembalikan_list():
     from app.data import countries
     regs = compliance.snapshot_regulations("JP")
     assert isinstance(regs, list)
+
+
+def test_analyze_product_from_snapshot():
+    snapshot = {
+        "name": "Kopi Gayo",
+        "description": "kopi dengan pewarna buatan",
+        "material_composition": "pewarna buatan",
+        "quality_specs": {},
+        "packaging": "",
+    }
+    result = compliance.analyze_product_from_snapshot(snapshot, "JP")
+    assert "issues" in result
+    assert "score" in result
+    assert "grade" in result
+    assert 0 <= result["score"] <= 100
+    # pewarna buatan terdeteksi di regulasi JP Ingredient -> ada issue critical
+    ingredient = [i for i in result["issues"] if i["type"] == "Ingredient"]
+    assert any("pewarna" in (i.get("your_value") or "").lower() for i in ingredient)
+
+
+def test_analyze_product_from_snapshot_kosong():
+    result = compliance.analyze_product_from_snapshot({}, "JP")
+    assert "issues" in result
+    assert "score" in result

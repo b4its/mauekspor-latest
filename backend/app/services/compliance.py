@@ -290,6 +290,42 @@ def analyze_product_compliance(product: dict, country_code: str) -> dict[str, An
     }
 
 
+def analyze_product_from_snapshot(product_snapshot: dict, country_code: str) -> dict[str, Any]:
+    """Jalankan compliance check dari data snapshot produk (historis).
+
+    Diadaptasi dari ExportReadyAI ComplianceAIService.analyze_product_from_snapshot:
+    memungkinkan analisis terhadap kondisi produk pada saat snapshot diambil,
+    bukan data produk live yang mungkin sudah berubah.
+    """
+    issues = []
+    issues += check_ingredient_compliance(
+        {
+            "name": product_snapshot.get("name", ""),
+            "description": product_snapshot.get("description", ""),
+            "material_composition": product_snapshot.get("material_composition", ""),
+        },
+        country_code,
+    )
+    issues += check_specification_compliance(
+        {
+            "name": product_snapshot.get("name", ""),
+            "quality_specs": product_snapshot.get("quality_specs", {}),
+        },
+        country_code,
+    )
+    issues += check_packaging_compliance(
+        {"name": product_snapshot.get("name", ""), "packaging": product_snapshot.get("packaging", "")},
+        country_code,
+    )
+    score, grade = calculate_readiness_score(issues)
+    return {
+        "issues": issues,
+        "score": score,
+        "grade": grade,
+        "recommendations": generate_recommendations(issues),
+    }
+
+
 def snapshot_product(product: dict) -> dict[str, Any]:
     """Buat snapshot produk + enrichment pada saat analisis."""
     enriched = db.get_by("product_enrichments", productId=str(product.get("id", "")))
