@@ -15,7 +15,7 @@
 	let fx = $state<ExchangeRate | null>(null);
 
 	type Line = { category: string; label: string; amount: number };
-	type Container = { capacity_20ft?: number; capacity_40ft?: number; utilization_note?: string; tips?: string[] };
+	type Container = { capacity_20ft?: number; capacity_40ft?: number; utilization_note?: string; tips?: string[]; ai_tips?: string };
 
 	let lines = $derived((data.scenario.lines ?? []) as Line[]);
 	let container = $derived((data.scenario.container ?? null) as Container | null);
@@ -173,6 +173,12 @@
 						{#each container.tips as tip}
 							<p class="rounded-lg border bg-primary/10 p-3 text-xs">• {tip}</p>
 						{/each}
+					{/if}
+					{#if container.ai_tips}
+						<div class="rounded-lg border border-primary/30 bg-primary/10 p-3">
+							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">AI Optimization</span>
+							<p class="mt-1 whitespace-pre-line text-xs leading-relaxed">{container.ai_tips}</p>
+						</div>
 					{/if}
 				</CardContent>
 			</Card>

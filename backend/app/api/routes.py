@@ -1311,6 +1311,23 @@ def list_public_catalogs(search: str = "", tag: str = "", min_price: float = 0, 
     return {"data": items, "meta": {}}
 
 
+@router.get("/catalogs/public/{catalog_id}/")
+def get_public_catalog(catalog_id: str):
+    """Detail katalog publik — hanya katalog berstatus Published.
+
+    Diadaptasi dari ExportReadyAI-fe `catalogs/public/{id}` (PublicCatalogDetailView).
+    """
+    record = db.get("catalogs", catalog_id)
+    if not record or str(record.get("status", "")).lower() != "published":
+        raise HTTPException(404, "Published catalog not found")
+    record["images"] = db.find("catalog_images", catalogId=catalog_id)
+    record["variantTypes"] = db.find("catalog_variant_types", catalogId=catalog_id)
+    product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else None
+    if product:
+        record["sellerName"] = record.get("owner", "") or product.get("origin", "")
+    return _one(record)
+
+
 @router.get("/catalogs/{catalog_id}/")
 def get_catalog(catalog_id: str):
     record = db.get("catalogs", catalog_id)
@@ -1765,6 +1782,32 @@ def get_costing(costing_id: str):
     return _one(record)
 
 
+
+def _product_container_inputs(product: dict | None) -> tuple[float, float, dict | None]:
+    """Ekstrak volume (m3), berat (kg), dan dimensi (cm) dari produk untuk costing.
+
+    Diadaptasi dari ContainerOptimizerService ExportReadyAI (PBI-BE-M4-09):
+    kapasitas kontainer dihitung dari dimensi L×W×H produk.
+    """
+    if not product:
+        return 0.0, 0.0, None
+    dims = product.get("dimensions_l_w_h") or {}
+    l = dims.get("l") or dims.get("length")
+    w = dims.get("w") or dims.get("width")
+    h = dims.get("h") or dims.get("height")
+    volume_m3 = 0.0
+    try:
+        if l and w and h:
+            volume_m3 = round(float(l) * float(w) * float(h) / 1_000_000, 4)
+    except (TypeError, ValueError):
+        volume_m3 = 0.0
+    weight_kg = 0.0
+    try:
+        weight_kg = float(product.get("weight_net") or product.get("netWeight") or 0)
+    except (TypeError, ValueError):
+        weight_kg = 0.0
+    return volume_m3, weight_kg, dims
+
 @router.post("/costing/")
 def create_costing(payload: sc.CreateCostingPayload):
     from app.services import pricing as pricing_svc
@@ -1780,15 +1823,29 @@ def create_costing(payload: sc.CreateCostingPayload):
     if not cogs:
         cogs = float((product or {}).get("cogsPerUnitIdr") or 10000)
 
+    volume_m3, weight_kg, dims = _product_container_inputs(product)
     calc = pricing_svc.calculate_full_costing(
         cogs_idr=float(cogs or 0),
         packing_cost_idr=float(packing or 0),
         margin_percent=float(margin or 20),
         destination=str(payload.destination),
         distance_km=float(distance or 200),
-        product_volume_m3=0,
-        product_weight_kg=0,
+        product_volume_m3=volume_m3,
+        product_weight_kg=weight_kg,
     )
+    container = calc["container"]
+    if dims and (dims.get("l") or dims.get("length")) and (dims.get("w") or dims.get("width")) and (dims.get("h") or dims.get("height")):
+        container = pricing_svc.calculate_container_capacity_from_dimensions(
+            dims.get("l") or dims.get("length"),
+            dims.get("w") or dims.get("width"),
+            dims.get("h") or dims.get("height"),
+            weight_kg or None,
+        )
+        ai_tips = pricing_svc.ai_container_optimization(
+            (product or {}).get("name", ""), dims, container["capacity_20ft"], weight_kg or None
+        )
+        if ai_tips:
+            container["ai_tips"] = ai_tips
     data.update({
         "id": db.gen_id("costing", "CST"),
         "margin": margin,
@@ -1804,7 +1861,7 @@ def create_costing(payload: sc.CreateCostingPayload):
         "profit": round(calc["exwPrice"] - (cogs + packing) / calc["exchangeRate"], 2),
         "confidence": 84,
         "lines": calc["lines"],
-        "container": calc["container"],
+        "container": container,
         "risks": ["Freight estimate not converted to booking"] if not payload.destination else [],
         "updatedAt": "now",
     })
@@ -1827,20 +1884,37 @@ def update_costing(costing_id: str, payload: sc.UpdateCostingPayload):
     cogs = record.get("cogs_per_unit_idr") or record.get("cogsPerUnitIdr") or 0
     packing = record.get("packing_cost_idr") or record.get("packingCostIdr") or 0
     distance = record.get("distance_km") or record.get("distanceKm") or 200
+    linked_product = db.get("products", str(record.get("productId") or "")) if record.get("productId") else None
+    volume_m3, weight_kg, dims = _product_container_inputs(linked_product)
     calc = pricing_svc.calculate_full_costing(
         cogs_idr=float(cogs or 0),
         packing_cost_idr=float(packing or 0),
         margin_percent=float(margin or 20),
         destination=str(record.get("destination", "")),
         distance_km=float(distance or 200),
+        product_volume_m3=volume_m3,
+        product_weight_kg=weight_kg,
     )
+    container = calc["container"]
+    if dims and (dims.get("l") or dims.get("length")) and (dims.get("w") or dims.get("width")) and (dims.get("h") or dims.get("height")):
+        container = pricing_svc.calculate_container_capacity_from_dimensions(
+            dims.get("l") or dims.get("length"),
+            dims.get("w") or dims.get("width"),
+            dims.get("h") or dims.get("height"),
+            weight_kg or None,
+        )
+        ai_tips = pricing_svc.ai_container_optimization(
+            (linked_product or {}).get("name", ""), dims, container["capacity_20ft"], weight_kg or None
+        )
+        if ai_tips:
+            container["ai_tips"] = ai_tips
     record.update({
         "exchangeRate": calc["exchangeRate"],
         "exwPrice": calc["exwPrice"],
         "fobPrice": calc["fobPrice"],
         "cifPrice": calc["cifPrice"],
         "lines": calc["lines"],
-        "container": calc["container"],
+        "container": container,
         "status": "Ready",
         "updatedAt": "now",
     })
@@ -1867,13 +1941,30 @@ def recalculate_costing(costing_id: str):
     cogs = record.get("cogs_per_unit_idr") or record.get("cogsPerUnitIdr") or record.get("cogs", 0)
     packing = record.get("packing_cost_idr") or record.get("packingCostIdr") or 0
     distance = record.get("distance_km") or record.get("distanceKm") or 200
+    linked_product = db.get("products", str(record.get("productId") or "")) if record.get("productId") else None
+    volume_m3, weight_kg, dims = _product_container_inputs(linked_product)
     calc = pricing_svc.calculate_full_costing(
         cogs_idr=float(cogs or 0),
         packing_cost_idr=float(packing or 0),
         margin_percent=float(margin or 20),
         destination=str(record.get("destination", "")),
         distance_km=float(distance or 200),
+        product_volume_m3=volume_m3,
+        product_weight_kg=weight_kg,
     )
+    container = calc["container"]
+    if dims and (dims.get("l") or dims.get("length")) and (dims.get("w") or dims.get("width")) and (dims.get("h") or dims.get("height")):
+        container = pricing_svc.calculate_container_capacity_from_dimensions(
+            dims.get("l") or dims.get("length"),
+            dims.get("w") or dims.get("width"),
+            dims.get("h") or dims.get("height"),
+            weight_kg or None,
+        )
+        ai_tips = pricing_svc.ai_container_optimization(
+            (linked_product or {}).get("name", ""), dims, container["capacity_20ft"], weight_kg or None
+        )
+        if ai_tips:
+            container["ai_tips"] = ai_tips
     record["status"] = "Ready"
     record["confidence"] = max(record.get("confidence", 0), 84)
     record["exchangeRate"] = calc["exchangeRate"]

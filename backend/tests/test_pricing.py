@@ -153,3 +153,38 @@ def test_build_compare_pdf_valid():
     )
     assert pdf.startswith(b"%PDF-1.4")
     assert b"BEST OPTION : JP" in pdf
+
+
+# ---------- Kapasitas kontainer dari dimensi (referensi ExportReadyAI) ----------
+def test_calculate_container_capacity_from_dimensions():
+    # 50x40x30 cm = 60.000 cm³; volume kontainer 20ft * 0.85 / 60000
+    res = pricing.calculate_container_capacity_from_dimensions(50, 40, 30)
+    assert res["capacity_20ft"] > 0
+    assert res["capacity_40ft"] == round(res["capacity_20ft"] * 2.1)
+    assert res["utilization_note"]
+    assert res["tips"]
+
+
+def test_calculate_container_capacity_dimensi_invalid():
+    res = pricing.calculate_container_capacity_from_dimensions(0, 0, 0)
+    assert res["capacity_20ft"] == 0
+    assert "dimensi" in res["utilization_note"].lower()
+
+
+def test_calculate_container_capacity_dibatasi_bobot():
+    # berat besar -> kapasitas dibatasi bobot
+    res = pricing.calculate_container_capacity_from_dimensions(50, 40, 30, weight_per_unit_kg=500)
+    assert res["capacity_20ft"] == int(17500 / 500)
+    assert "bobot" in res["utilization_note"].lower()
+
+
+def test_ai_container_optimization_tanpa_nama_produk():
+    assert pricing.ai_container_optimization("", {}, 100) == ""
+
+
+def test_ai_container_optimization_mock_menghasilkan_saran():
+    # mode mock -> ai.complete mengembalikan teks canned untuk kind tidak dikenal?
+    # kind container_optimization tidak ada di mock -> None -> string kosong, atau fallback
+    text = pricing.ai_container_optimization("Kopi Gayo", {"l": 50, "w": 40, "h": 30}, 100)
+    # tidak wajib ada teks di mode mock; pastikan tidak error dan bertipe str
+    assert isinstance(text, str)

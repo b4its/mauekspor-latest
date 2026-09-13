@@ -149,6 +149,97 @@ def container_capacity(product_volume_m3: float, product_weight_kg: float) -> di
     }
 
 
+def calculate_container_capacity_from_dimensions(
+    length_cm: float, width_cm: float, height_cm: float, weight_per_unit_kg: float | None = None
+) -> dict[str, Any]:
+    """Kapasitas kontainer 20ft dari dimensi produk (L×W×H cm).
+
+    Diadaptasi dari ContainerOptimizerService ExportReadyAI (PBI-BE-M4-09):
+    estimasi 3D bin packing sederhana dengan utilisasi ruang 85% + batas bobot
+    kontainer 20ft (17.500 kg), plus catatan/tips optimasi.
+    """
+    try:
+        length_cm = float(length_cm or 0)
+        width_cm = float(width_cm or 0)
+        height_cm = float(height_cm or 0)
+    except (TypeError, ValueError):
+        length_cm = width_cm = height_cm = 0
+
+    volume_cm3 = length_cm * width_cm * height_cm
+    if volume_cm3 <= 0:
+        return {
+            "capacity_20ft": 0,
+            "capacity_40ft": 0,
+            "utilization_note": "Lengkapi dimensi produk (L×W×H) untuk estimasi kapasitas kontainer.",
+            "tips": ["Lengkapi dimensi produk (L×W×H) untuk estimasi kapasitas kontainer."],
+        }
+
+    # 20ft container internal: 5.90 × 2.35 × 2.39 m (dalam cm)
+    container_volume_cm3 = 590 * 235 * 239
+    capacity = int(container_volume_cm3 * 0.85 / volume_cm3)
+
+    notes = ""
+    if weight_per_unit_kg:
+        try:
+            weight = float(weight_per_unit_kg)
+        except (TypeError, ValueError):
+            weight = 0
+        if weight > 0:
+            weight_capacity = int(17500 / weight)
+            if weight_capacity < capacity:
+                capacity = weight_capacity
+                notes = f"Dibatasi bobot: maks {capacity} unit ({weight} kg/unit)"
+
+    if capacity < 500:
+        notes += (" | " if notes else "") + "Tip: kurangi tinggi produk 1-2cm untuk +50-100 unit"
+    elif capacity < 1000:
+        notes += (" | " if notes else "") + "Tip: optimalkan pola susun untuk utilisasi maksimal"
+
+    return {
+        "capacity_20ft": capacity,
+        "capacity_40ft": round(capacity * 2.1),
+        "utilization_note": notes or "Efisiensi pengepakan baik",
+        "tips": [notes] if notes else ["Dimensi efisien untuk pemanfaatan volume kontainer."],
+    }
+
+
+def ai_container_optimization(
+    product_name: str,
+    dimensions_lwh: dict | None,
+    capacity: int,
+    weight_per_unit: float | None = None,
+) -> str:
+    """Saran optimasi kontainer berbasis AI (2-3 tips praktis).
+
+    Diadaptasi dari ContainerOptimizerService.get_ai_container_optimization
+    ExportReadyAI. Mengembalikan string kosong bila AI tak tersedia.
+    """
+    if not product_name:
+        return ""
+    dims = dimensions_lwh or {}
+    l = dims.get("l") or dims.get("length") or 0
+    w = dims.get("w") or dims.get("width") or 0
+    h = dims.get("h") or dims.get("height") or 0
+    weight_info = f", berat {weight_per_unit} kg/unit" if weight_per_unit else ""
+    user = (
+        "PRODUK: " + str(product_name) + "\n"
+        "DIMENSI: " + str(l) + "cm × " + str(w) + "cm × " + str(h) + "cm" + str(weight_info) + "\n"
+        "KAPASITAS KALKULASI: " + str(capacity) + " units per 20ft container\n\n"
+        "Berikan 2-3 saran PRAKTIS untuk:\n"
+        "1. Optimasi packaging (cara lipat/susun yang lebih efisien)\n"
+        "2. Peningkatan kapasitas (perubahan dimensi atau material)\n"
+        "3. Cost saving opportunities (bulk packaging, pallet configuration)"
+    )
+    text = ai.complete(
+        "Kamu adalah konsultan packaging & logistik ekspor untuk UMKM. "
+        "Expertise: container optimization, packaging efficiency, freight cost reduction. "
+        "Berikan saran realistis yang mudah diimplementasikan.",
+        user,
+        kind="container_optimization",
+    )
+    return (text or "").strip()
+
+
 # ---------------------------------------------------------------------------
 # Rekomendasi AI pricing
 # ---------------------------------------------------------------------------

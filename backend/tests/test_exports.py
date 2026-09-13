@@ -87,3 +87,32 @@ def test_export_audit_xlsx():
         token = _login(c)
         res = c.get("/api/v1/audit/export.xlsx", headers={"Authorization": f"Bearer {token}"})
         assert res.status_code == 200
+
+
+def test_public_catalog_detail():
+    with TestClient(app) as c:
+        token = _login(c)
+        # buat katalog + publish
+        created = c.post("/api/v1/catalogs/", json={
+            "title": "Katalog Publik", "productId": "PRD-COF-001",
+            "targetMarket": "JP", "moq": "100",
+        }, headers={"Authorization": f"Bearer {token}"})
+        assert created.status_code == 200
+        cid = created.json()["data"]["id"]
+        c.post(f"/api/v1/catalogs/{cid}/publish/", headers={"Authorization": f"Bearer {token}"})
+
+        # detail publik tanpa auth (public endpoint)
+        pub = c.get(f"/api/v1/catalogs/public/{cid}/")
+        assert pub.status_code == 200
+        assert pub.json()["data"]["id"] == cid
+
+
+def test_public_catalog_detail_katalog_draft_404():
+    with TestClient(app) as c:
+        token = _login(c)
+        created = c.post("/api/v1/catalogs/", json={
+            "title": "Katalog Draft", "productId": "PRD-COF-001",
+            "targetMarket": "JP", "moq": "100",
+        }, headers={"Authorization": f"Bearer {token}"})
+        cid = created.json()["data"]["id"]  # status Draft
+        assert c.get(f"/api/v1/catalogs/public/{cid}/").status_code == 404
