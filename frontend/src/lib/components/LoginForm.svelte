@@ -62,9 +62,7 @@
 					<Field>
 						<div class="flex items-center">
 							<FieldLabel for="password-{id}">{t('Kata sandi')}</FieldLabel>
-							<a href="#" onclick={(e) => e.preventDefault()} class="ms-auto text-sm text-[#0b3d91] underline-offset-4 hover:underline dark:text-[#5ea1ff]">
-								{t('Lupa password?')}
-							</a>
+							<span class="ms-auto text-sm text-muted-foreground">{t('Lupa password? Hubungi admin')}</span>
 						</div>
 						<Input id="password-{id}" type="password" placeholder={t('Minimum 8 karakter')} bind:value={password} required />
 					</Field>

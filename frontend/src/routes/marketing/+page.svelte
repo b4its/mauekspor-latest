@@ -4,6 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
+	import PackageIcon from '@lucide/svelte/icons/package';
 	import { products as seedProducts } from '$lib/data/trade';
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -13,12 +14,24 @@
 	import { t } from '$lib/i18n.svelte';
 
 	let products = createRemoteList<Product>(listProducts, seedProducts);
-products.load();
+	$effect(() => {
+		products.load();
+	});
 
 	let tab = $state<'mi' | 'pricing'>('mi');
 	let search = $state('');
 	let category = $state('All');
 	let selectedProduct = $state<Product | null>(null);
+	let page = $state(1);
+	const PER_PAGE = 12;
+	let loadError = $state('');
+
+	$effect(() => {
+		// Reset halaman saat filter berubah
+		search;
+		category;
+		page = 1;
+	});
 
 	// Market Intelligence state
 	let mi = $state<MarketIntelligence | null>(null);
@@ -41,6 +54,8 @@ products.load();
 				(search === '' || p.name.toLowerCase().includes(search.toLowerCase()))
 		)
 	);
+	const totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
+	const paged = $derived(filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE));
 
 	function openProduct(p: Product) {
 		selectedProduct = p;
@@ -116,6 +131,27 @@ products.load();
 		<Button variant={tab === 'pricing' ? 'default' : 'outline'} onclick={() => (tab = 'pricing')}>{t('Kalkulator Pricing')}</Button>
 	</div>
 
+	<!-- Tab description banners -->
+	{#if tab === 'mi'}
+		<Card class="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20">
+			<CardContent class="flex items-center gap-3 p-4">
+				<span class="text-2xl">🌍</span>
+				<p class="text-sm leading-relaxed text-muted-foreground">
+					{t('Market Intelligence menganalisis peluang pasar untuk produk Anda — negara yang direkomendasikan, tren, kompetisi, dan forwarder potensial. Pilih produk lalu klik untuk memulai.')}
+				</p>
+			</CardContent>
+		</Card>
+	{:else}
+		<Card class="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20">
+			<CardContent class="flex items-center gap-3 p-4">
+				<span class="text-2xl">💰</span>
+				<p class="text-sm leading-relaxed text-muted-foreground">
+					{t('Kalkulator Pricing menghitung harga EXW, FOB, dan CIF berdasarkan HPP, margin target, dan kurs terkini. Pilih produk, isi parameter, lalu hitung.')}
+				</p>
+			</CardContent>
+		</Card>
+	{/if}
+
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
@@ -133,19 +169,59 @@ products.load();
 				<CardDescription>{filtered.length} {t('produk')}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-				{#each filtered as product}
-					<button
-						class="rounded-xl border bg-muted/30 p-4 text-left transition-colors hover:bg-muted/60"
-						onclick={() => openProduct(product)}
-					>
-						<div class="flex items-center justify-between gap-2">
-							<strong class="text-sm">{product.name}</strong>
-							<Badge variant={product.status === 'Enriched' ? 'default' : 'secondary'}>{t(product.status === 'Enriched' ? 'Diperkaya' : 'Draf')}</Badge>
+				{#if filtered.length === 0}
+					<div class="col-span-full flex flex-col items-center gap-3 py-12 text-center">
+						<PackageIcon class="size-12 text-muted-foreground/50" />
+						<p class="font-bold text-muted-foreground">{t('Belum ada produk.')}</p>
+						<Button href="/products/new" variant="outline">{t('Tambah produk')}</Button>
+					</div>
+				{:else}
+					{#each paged as product}
+						<button
+							class="rounded-xl border bg-muted/30 p-4 text-left transition-all hover:shadow-md hover:border-ring/40"
+							onclick={() => openProduct(product)}
+						>
+							<div class="flex items-center justify-between gap-2">
+								<strong class="text-sm">{product.name}</strong>
+								<Badge variant={product.status === 'Enriched' ? 'default' : 'secondary'}>
+									{product.status === 'Enriched' ? '✨ ' + t('Diperkaya') : t('Draf')}
+								</Badge>
+							</div>
+							<span class="mt-1 block text-xs text-muted-foreground">{product.category}</span>
+							<div class="mt-2 flex flex-wrap gap-1.5">
+								<span class="rounded-full border bg-background/60 px-2 py-0.5 text-[10px] font-bold text-muted-foreground">HS {product.hs === 'TBD' ? '—' : product.hs}</span>
+								{#if product.sku}
+									<span class="rounded-full border bg-background/60 px-2 py-0.5 text-[10px] font-bold text-muted-foreground">SKU {product.sku}</span>
+								{/if}
+							</div>
+							<div class="mt-2 flex items-center justify-between">
+								<span class="text-xs font-bold text-muted-foreground">{t('Kesiapan')}</span>
+								<span class="text-xs font-bold">{product.readiness}%</span>
+							</div>
+							<div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+								<div class="h-full rounded-full transition-all" class:bg-green-500={product.readiness >= 80} class:bg-amber-500={product.readiness >= 50 && product.readiness < 80} class:bg-red-500={product.readiness < 50} style="width: {product.readiness}%"></div>
+							</div>
+							<div class="mt-3 flex gap-1.5">
+								<Badge variant="outline" class="text-[10px]">{tab === 'mi' ? t('Analisis') : t('Hitung')}</Badge>
+							</div>
+						</button>
+					{/each}
+
+					<!-- Pagination -->
+					{#if totalPages > 1}
+						<div class="col-span-full mt-2 flex items-center justify-center gap-2">
+							<Button size="sm" variant="outline" disabled={page <= 1} onclick={() => page = Math.max(1, page - 1)}>
+								{t('Sebelumnya')}
+							</Button>
+							<span class="text-xs font-bold text-muted-foreground">
+								{page} / {totalPages}
+							</span>
+							<Button size="sm" variant="outline" disabled={page >= totalPages} onclick={() => page = Math.min(totalPages, page + 1)}>
+								{t('Selanjutnya')}
+							</Button>
 						</div>
-						<span class="mt-1 block text-xs text-muted-foreground">{product.category} · HS {product.hs}</span>
-						<span class="mt-1 block text-xs font-bold text-muted-foreground">{t('Kesiapan')} {product.readiness}%</span>
-					</button>
-				{/each}
+					{/if}
+				{/if}
 			</CardContent>
 		</Card>
 
