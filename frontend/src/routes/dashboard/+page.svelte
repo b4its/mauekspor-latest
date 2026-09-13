@@ -14,6 +14,7 @@
 	import { listEducationalModulesV2 } from '$lib/api/educational';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	let profiles = createRemoteList(listBusinessProfiles, seedProfiles);
@@ -186,9 +187,9 @@
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		{#if products.loading && projects.loading}
 			{#each [1,2,3,4,5,6] as _}
-				<div class="animate-pulse rounded-lg border bg-muted/30 p-5">
-					<div class="mb-2 h-3 w-16 rounded bg-muted-foreground/20"></div>
-					<div class="h-8 w-20 rounded bg-muted-foreground/20"></div>
+				<div class="rounded-lg border bg-muted/30 p-5">
+					<Skeleton class="mb-2 h-3 w-16" />
+					<Skeleton class="h-8 w-20" />
 				</div>
 			{/each}
 		{:else}
