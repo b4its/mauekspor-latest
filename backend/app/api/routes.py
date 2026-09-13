@@ -871,17 +871,29 @@ def dashboard_summary():
     for u in users:
         role_counts[str(u.get("role", "Exporter"))] = role_counts.get(str(u.get("role", "Exporter")), 0) + 1
     has_profile = any(p.get("owner") or p.get("companyName") for p in profiles)
+    published_cats = [c for c in catalogs if str(c.get("status", "")).lower() == "published"]
+    product_ids_in_catalog = {str(c.get("productId", "")) for c in catalogs if c.get("productId")}
+    products_without_catalog = [p for p in products if str(p.get("id", "")) not in product_ids_in_catalog]
+    open_requests = [r for r in requests if str(r.get("status", "")).lower() in {"open", "new"}]
+    edu_modules = db.all("educational_modules")
+    edu_articles = db.all("educational_articles")
     return {"data": {
         "role": (admin or {}).get("role", "Exporter"),
         "has_business_profile": has_profile,
         "business_profile": profiles[0] if profiles else None,
         "counts": {
             "products": len(products),
+            "products_without_catalog": len(products_without_catalog),
             "catalogs": len(catalogs),
+            "catalogs_published": len(published_cats),
+            "catalogs_draft": len(catalogs) - len(published_cats),
             "buyer_requests": len(requests),
+            "buyer_requests_pending": len(open_requests),
             "business_profiles": len(profiles),
             "users": len(users),
             "users_by_role": role_counts,
+            "educational_modules": len(edu_modules),
+            "educational_articles": len(edu_articles),
         },
     }, "meta": {}}
 

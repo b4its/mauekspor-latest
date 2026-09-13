@@ -7,11 +7,17 @@ export type DashboardSummary = {
 	business_profile?: BusinessProfile | null;
 	counts: {
 		products: number;
+		products_without_catalog: number;
 		catalogs: number;
+		catalogs_published: number;
+		catalogs_draft: number;
 		buyer_requests: number;
+		buyer_requests_pending: number;
 		business_profiles: number;
 		users: number;
 		users_by_role: Record<string, number>;
+		educational_modules: number;
+		educational_articles: number;
 	};
 };
 

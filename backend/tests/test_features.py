@@ -543,3 +543,17 @@ def test_costing_compare_and_xlsx_exports():
             import zipfile
             names = zipfile.ZipFile(io.BytesIO(r.content)).namelist()
             assert "xl/workbook.xml" in names and "xl/worksheets/sheet1.xml" in names
+
+
+def test_dashboard_summary_menyertakan_rincian_role():
+    with TestClient(app) as c:
+        _login(c)
+        r = c.get("/api/v1/business-profiles/dashboard/summary/")
+        assert r.status_code == 200
+        counts = r.json()["data"]["counts"]
+        assert "products_without_catalog" in counts
+        assert "catalogs_published" in counts
+        assert "catalogs_draft" in counts
+        assert "buyer_requests_pending" in counts
+        assert "educational_modules" in counts
+        assert "educational_articles" in counts
