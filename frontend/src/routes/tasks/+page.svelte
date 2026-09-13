@@ -8,6 +8,7 @@
 	import { listTasks } from '$lib/api/tasks';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { assignTask } from '$lib/api/tasks';
 	import { t } from '$lib/i18n.svelte';
@@ -82,6 +83,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if workTasks.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{workTasks.error}</p>
+	{/if}
+
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4"><strong class="block">{t('Task created.')}</strong><span class="block text-sm text-muted-foreground">{t('Tugas dibuat di backend.')}</span></div>
 	{/if}
@@ -107,23 +112,44 @@
 		</Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredTasks as task}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/tasks/${task.id}`} class="block h-full p-5 no-underline">
-					<div class="flex items-center justify-between gap-3"><Badge variant={toneVariant(statusTone(task.status))}>{task.status}</Badge><strong class="text-sm font-bold">{task.priority}</strong></div>
-					<h3 class="mt-4 text-2xl font-bold tracking-tight">{task.title}</h3>
-					<p class="mt-2 text-sm text-muted-foreground">{task.module} · {projectName(task.projectId)}</p>
-					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.owner}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.due}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Checklist')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.checklist.filter((item) => item.done).length}/{task.checklist.length}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Priority')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.priority}</strong></div>
+	{#if workTasks.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
+					<div class="flex items-center justify-between gap-3">
+						<Skeleton class="h-5 w-20" />
+						<Skeleton class="h-5 w-14" />
 					</div>
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No task matched your search.')}</div>
-		{/each}
-	</div>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-2 h-4 w-1/2" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+					</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredTasks as task}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/tasks/${task.id}`} class="block h-full p-5 no-underline">
+						<div class="flex items-center justify-between gap-3"><Badge variant={toneVariant(statusTone(task.status))}>{task.status}</Badge><strong class="text-sm font-bold">{task.priority}</strong></div>
+						<h3 class="mt-4 text-2xl font-bold tracking-tight">{task.title}</h3>
+						<p class="mt-2 text-sm text-muted-foreground">{task.module} · {projectName(task.projectId)}</p>
+						<div class="mt-4 grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.owner}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.due}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Checklist')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.checklist.filter((item) => item.done).length}/{task.checklist.length}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Priority')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.priority}</strong></div>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No task matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

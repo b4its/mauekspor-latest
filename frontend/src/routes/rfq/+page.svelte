@@ -7,6 +7,7 @@
 	import { rfqs as seedRFQs } from '$lib/data/trade';
 	import { listRFQs, createRFQ } from '$lib/api/rfq';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -89,6 +90,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if rfqs.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{rfqs.error}</p>
+	{/if}
+
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('RFQ draft ready.')}</strong>
@@ -106,34 +111,55 @@
 		<Input bind:value={query} type="search" placeholder={t('Search buyer, product, destination...')} class="w-[min(390px,100%)]" />
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredRFQs as rfq}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/rfq/${rfq.id}`} class="block h-full p-5 no-underline">
+	{#if rfqs.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(rfq.status))}>{rfq.status}</Badge>
-						<strong class="text-3xl font-bold tracking-tight">{rfq.matchScore}%</strong>
+						<Skeleton class="h-5 w-16" />
+						<Skeleton class="h-7 w-12" />
 					</div>
-					<h3 class="mt-4 text-xl font-bold tracking-tight">{rfq.product}</h3>
-					<p class="mt-1 text-sm text-muted-foreground">{rfq.buyer} - {rfq.destination}</p>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-2 h-4 w-1/2" />
 					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('RFQ')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.id}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Quantity')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.quantity}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.incoterm}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.deadline}</strong>
-						</div>
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No RFQ matched your search.')}</div>
-		{/each}
-	</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredRFQs as rfq}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/rfq/${rfq.id}`} class="block h-full p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(rfq.status))}>{rfq.status}</Badge>
+							<strong class="text-3xl font-bold tracking-tight">{rfq.matchScore}%</strong>
+						</div>
+						<h3 class="mt-4 text-xl font-bold tracking-tight">{rfq.product}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{rfq.buyer} - {rfq.destination}</p>
+						<div class="mt-4 grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('RFQ')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.id}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Quantity')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.quantity}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.incoterm}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.deadline}</strong>
+							</div>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No RFQ matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

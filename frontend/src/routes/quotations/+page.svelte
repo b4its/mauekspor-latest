@@ -7,6 +7,7 @@
 	import { quotations as seedQuotations } from '$lib/data/trade';
 	import { listQuotations, createQuotation } from '$lib/api/quotations';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -83,6 +84,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if quotations.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{quotations.error}</p>
+	{/if}
+
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Quotation draft ready.')}</strong>
@@ -99,26 +104,47 @@
 		<Input bind:value={query} type="search" placeholder={t('Search quotation, buyer, incoterm...')} class="w-[min(390px,100%)]" />
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredQuotations as quote}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/quotations/${quote.id}`} class="grid h-full gap-4 p-5 no-underline">
+	{#if quotations.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(quote.status))}>{quote.status}</Badge>
-						<strong class="text-2xl font-bold tracking-tight">{quote.margin}%</strong>
+						<Skeleton class="h-5 w-20" />
+						<Skeleton class="h-7 w-12" />
 					</div>
-					<h3 class="text-2xl font-bold tracking-tight">{quote.id}</h3>
-					<p class="text-sm text-muted-foreground">{quote.supplier} to {quote.buyer}</p>
-					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(quote.value)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.incoterm}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('RFQ')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.rfqId}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Valid until')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.validUntil}</strong></div>
+					<Skeleton class="mt-4 h-7 w-1/2" />
+					<Skeleton class="mt-2 h-4 w-2/3" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No quotation matched your search.')}</div>
-		{/each}
-	</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredQuotations as quote}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/quotations/${quote.id}`} class="grid h-full gap-4 p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(quote.status))}>{quote.status}</Badge>
+							<strong class="text-2xl font-bold tracking-tight">{quote.margin}%</strong>
+						</div>
+						<h3 class="text-2xl font-bold tracking-tight">{quote.id}</h3>
+						<p class="text-sm text-muted-foreground">{quote.supplier} to {quote.buyer}</p>
+						<div class="grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(quote.value)}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.incoterm}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('RFQ')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.rfqId}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Valid until')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.validUntil}</strong></div>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No quotation matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

@@ -8,6 +8,7 @@
 	import { listMarketInsights, createMarketInsight } from '$lib/api/markets';
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -95,6 +96,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if marketInsights.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{marketInsights.error}</p>
+	{/if}
+
 	{#if generated}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Market insight draft ready.')}</strong>
@@ -133,34 +138,55 @@
 		</Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredMarkets as market}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/markets/${market.id}`} class="block h-full p-5 no-underline">
+	{#if marketInsights.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(market.status))}>{market.status}</Badge>
-						<strong class="text-3xl font-bold tracking-tight">{market.marketScore}%</strong>
+						<Skeleton class="h-5 w-20" />
+						<Skeleton class="h-7 w-12" />
 					</div>
-					<h3 class="mt-4 text-xl font-bold tracking-tight">{market.country}</h3>
-					<p class="mt-1 text-sm text-muted-foreground">{productName(market.productId)}</p>
+					<Skeleton class="mt-4 h-7 w-2/3" />
+					<Skeleton class="mt-2 h-4 w-1/3" />
 					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Compliance')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.complianceComplexity}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Logistics')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.logisticsFeasibility}%</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Margin')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.estimatedMargin}%</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Growth')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.growth}</strong>
-						</div>
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No market insight matched your search.')}</div>
-		{/each}
-	</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredMarkets as market}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/markets/${market.id}`} class="block h-full p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(market.status))}>{market.status}</Badge>
+							<strong class="text-3xl font-bold tracking-tight">{market.marketScore}%</strong>
+						</div>
+						<h3 class="mt-4 text-xl font-bold tracking-tight">{market.country}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{productName(market.productId)}</p>
+						<div class="mt-4 grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Compliance')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.complianceComplexity}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Logistics')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.logisticsFeasibility}%</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Margin')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.estimatedMargin}%</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Growth')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.growth}</strong>
+							</div>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No market insight matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

@@ -8,6 +8,7 @@
 import { listBuyers, createBuyer } from '$lib/api/buyers';
 import { csvExportUrl } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
@@ -88,6 +89,10 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if buyers.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{buyers.error}</p>
+	{/if}
+
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Buyer lead captured.')}</strong>
@@ -117,26 +122,47 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Average fit')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{avgFit}%</strong></CardContent></Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredBuyers as buyer}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/buyers/${buyer.id}`} class="grid h-full gap-3 p-5 no-underline">
+	{#if buyers.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(buyer.status))}>{buyer.status}</Badge>
-						<strong class="text-2xl font-bold tracking-tight">{buyer.fitScore}%</strong>
+						<Skeleton class="h-5 w-16" />
+						<Skeleton class="h-7 w-12" />
 					</div>
-					<h3 class="text-2xl font-bold tracking-tight">{buyer.name}</h3>
-					<p class="text-sm text-muted-foreground">{buyer.segment} · {buyer.country}</p>
-					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pipeline')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(buyer.estimatedAnnualValue)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Payment')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.paymentProfile}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Products')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.interestedProducts.join(', ')}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next step')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.nextStep}</strong></div>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-2 h-4 w-1/2" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-				</a>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No buyer matched your search.')}</div>
-		{/each}
-	</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredBuyers as buyer}
+				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/buyers/${buyer.id}`} class="grid h-full gap-3 p-5 no-underline">
+						<div class="flex items-center justify-between gap-3">
+							<Badge variant={toneVariant(statusTone(buyer.status))}>{buyer.status}</Badge>
+							<strong class="text-2xl font-bold tracking-tight">{buyer.fitScore}%</strong>
+						</div>
+						<h3 class="text-2xl font-bold tracking-tight">{buyer.name}</h3>
+						<p class="text-sm text-muted-foreground">{buyer.segment} · {buyer.country}</p>
+						<div class="grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pipeline')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(buyer.estimatedAnnualValue)}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Payment')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.paymentProfile}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Products')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.interestedProducts.join(', ')}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next step')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.nextStep}</strong></div>
+						</div>
+					</a>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No buyer matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>
