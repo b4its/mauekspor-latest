@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { matchBuyerRequest, getMatchedCatalogs, updateBuyerRequestStatus } from '$lib/api/buyer-requests';
+	import { matchBuyerRequest, getMatchedCatalogs, getMatchedUmkm, updateBuyerRequestStatus } from '$lib/api/buyer-requests';
 	import type { MatchedItem } from '$lib/api/buyer-requests';
 	import { t } from '$lib/i18n.svelte';
 
@@ -44,10 +44,36 @@
 		}
 	}
 
+	// Pilih katalog/UMKM lalu tutup request (alur Buyer -> UMKM terpilih)
+	let selectingId = $state('');
+	async function handleSelect(match: MatchedItem) {
+		if (!match.catalogId) return;
+		error = '';
+		selectingId = String(match.catalogId);
+		try {
+			await updateBuyerRequestStatus(data.request.id, {
+				status: 'Closed',
+				selected_catalog: String(match.catalogId),
+				umkm: String(match.umkm_id ?? '')
+			});
+			data.request.status = 'Closed';
+			data.request.selectedCatalogId = String(match.catalogId);
+		} catch {
+			error = t('Gagal menutup permintaan.');
+		} finally {
+			selectingId = '';
+		}
+	}
+
 	$effect(() => {
-		getMatchedCatalogs(data.request.id)
+		// matched-umkm memperkaya data (contactInfo, catalogTitle) untuk peran Buyer
+		getMatchedUmkm(data.request.id)
 			.then((res) => (matches = res.data))
-			.catch(() => {});
+			.catch(() =>
+				getMatchedCatalogs(data.request.id)
+					.then((res) => (matches = res.data))
+					.catch(() => {})
+			);
 	});
 
 	function scoreTone(score: number) {
@@ -144,6 +170,18 @@
 						{/if}
 						{#if match.umkm_name}
 							<p class="mt-1.5 text-xs text-muted-foreground">{t('UMKM:')} {match.umkm_name}</p>
+						{/if}
+						{#if match.contactInfo && (match.contactInfo.phone || match.contactInfo.email)}
+							<p class="mt-1 text-xs text-muted-foreground">{t('Kontak:')} {match.contactInfo.phone || match.contactInfo.email}</p>
+						{/if}
+						{#if data.request.status !== 'Closed'}
+							<div class="mt-2.5">
+								<Button size="sm" variant="outline" onclick={() => handleSelect(match)} disabled={selectingId !== ''}>
+									{selectingId === String(match.catalogId) ? t('Memilih...') : t('Pilih katalog ini')}
+								</Button>
+							</div>
+						{:else if data.request.selectedCatalogId === String(match.catalogId)}
+							<p class="mt-2 text-xs font-bold text-primary">✓ {t('Katalog terpilih')}</p>
 						{/if}
 					</div>
 				{/each}

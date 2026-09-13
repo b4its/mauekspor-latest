@@ -537,6 +537,9 @@ export type BuyerRequest = {
 	quantity: string;
 	deadline: string;
 	requirements: string[];
+	selectedCatalogId?: string;
+	selectedCatalog?: string;
+	selectedUmkm?: string;
 };
 
 export type Forwarder = {
