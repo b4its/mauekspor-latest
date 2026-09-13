@@ -8,6 +8,7 @@
 	import { listProducts, deleteProduct, batchEnrichProducts } from '$lib/api/products';
 	import { csvExportUrl } from '$lib/api/client';
 	import { statusTone } from '$lib/utils/format';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import type { Product } from '$lib/data/trade';
 
@@ -143,7 +144,39 @@
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredProducts as product}
+		{#if !loaded}
+			{#each [1,2,3,4,5,6] as _}
+				<Card class="p-5">
+					<div class="flex items-center justify-between gap-3">
+						<Skeleton class="h-5 w-20" />
+						<Skeleton class="h-8 w-12" />
+					</div>
+					<Skeleton class="mt-4 h-6 w-40" />
+					<Skeleton class="mt-1 h-4 w-32" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<div class="rounded-lg border bg-muted/40 p-3">
+							<Skeleton class="h-3 w-8" />
+							<Skeleton class="mt-1 h-4 w-16" />
+						</div>
+						<div class="rounded-lg border bg-muted/40 p-3">
+							<Skeleton class="h-3 w-8" />
+							<Skeleton class="mt-1 h-4 w-16" />
+						</div>
+						<div class="rounded-lg border bg-muted/40 p-3">
+							<Skeleton class="h-3 w-12" />
+							<Skeleton class="mt-1 h-4 w-12" />
+						</div>
+						<div class="rounded-lg border bg-muted/40 p-3">
+							<Skeleton class="h-3 w-12" />
+							<Skeleton class="mt-1 h-4 w-16" />
+						</div>
+					</div>
+				</Card>
+			{/each}
+		{:else if filteredProducts.length === 0}
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No product matched your filter.')}</div>
+		{:else}
+			{#each filteredProducts as product}
 			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 				<a href={`/products/${product.id}`} class="block h-full p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
@@ -174,9 +207,8 @@
 					</div>
 				</a>
 			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No product matched your filter.')}</div>
 		{/each}
+		{/if}
 	</div>
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
