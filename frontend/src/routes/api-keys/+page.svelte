@@ -6,6 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { apiKeys as seedApiKeys } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { listApiKeys } from '$lib/api/api-keys';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
@@ -92,6 +93,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if keys.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{keys.error}</p>
+	{/if}
+
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('API key created.')}</strong>
@@ -109,36 +114,61 @@
 		<Input bind:value={query} type="search" placeholder={t('Search key, scope, owner...')} class="w-[min(390px,100%)]" />
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredKeys as key}
-			<Card class="gap-4">
-				<div class="flex items-center justify-between gap-3">
-					<Badge variant={toneVariant(statusTone(revoked ? 'Revoked' : key.status))}>{revoked ? 'Revoked' : key.status}</Badge>
-					<strong class="font-mono text-sm font-bold text-muted-foreground">{key.prefix}...</strong>
-				</div>
-				<CardHeader class="p-0">
-					<CardTitle class="text-xl font-bold tracking-tight">{key.name}</CardTitle>
-					<CardDescription>{key.owner} · {t('Last used')} {revoked ? 'Never' : key.lastUsed}</CardDescription>
-				</CardHeader>
-				<CardContent class="grid gap-3 p-0">
-					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Created')} <strong class="mt-1 block text-sm font-bold text-foreground">{key.createdAt}</strong>
-						</div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Scopes')} <strong class="mt-1 block text-sm font-bold text-foreground">{key.scopes.length}</strong>
-						</div>
+	{#if keys.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
+					<div class="flex items-center justify-between gap-3">
+						<Skeleton class="h-5 w-20" />
+						<Skeleton class="h-5 w-24 font-mono" />
 					</div>
-					<div class="flex flex-wrap gap-2">
-						{#each key.scopes as scope}
-							<span class="rounded-full border bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{scope}</span>
-						{/each}
+					<Skeleton class="mt-4 h-6 w-3/4" />
+					<Skeleton class="mt-2 h-4 w-1/2" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
 					</div>
-				</CardContent>
-				<Button variant="outline" onclick={() => handleRevoke(key.id)} disabled={revokingId === key.id}>{revokingId === key.id ? t('Revoking...') : t('Revoke')}</Button>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No API key matched your search.')}</div>
-		{/each}
-	</div>
+					<div class="mt-3 flex flex-wrap gap-2">
+						<Skeleton class="h-5 w-16 rounded-full" />
+						<Skeleton class="h-5 w-20 rounded-full" />
+						<Skeleton class="h-5 w-14 rounded-full" />
+					</div>
+					<Skeleton class="mt-4 h-9 w-full rounded-lg" />
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredKeys as key}
+				<Card class="gap-4">
+					<div class="flex items-center justify-between gap-3">
+						<Badge variant={toneVariant(statusTone(revoked ? 'Revoked' : key.status))}>{revoked ? 'Revoked' : key.status}</Badge>
+						<strong class="font-mono text-sm font-bold text-muted-foreground">{key.prefix}...</strong>
+					</div>
+					<CardHeader class="p-0">
+						<CardTitle class="text-xl font-bold tracking-tight">{key.name}</CardTitle>
+						<CardDescription>{key.owner} · {t('Last used')} {revoked ? 'Never' : key.lastUsed}</CardDescription>
+					</CardHeader>
+					<CardContent class="grid gap-3 p-0">
+						<div class="grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Created')} <strong class="mt-1 block text-sm font-bold text-foreground">{key.createdAt}</strong>
+							</div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+								{t('Scopes')} <strong class="mt-1 block text-sm font-bold text-foreground">{key.scopes.length}</strong>
+							</div>
+						</div>
+						<div class="flex flex-wrap gap-2">
+							{#each key.scopes as scope}
+								<span class="rounded-full border bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{scope}</span>
+							{/each}
+						</div>
+					</CardContent>
+					<Button variant="outline" onclick={() => handleRevoke(key.id)} disabled={revokingId === key.id}>{revokingId === key.id ? t('Revoking...') : t('Revoke')}</Button>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No API key matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

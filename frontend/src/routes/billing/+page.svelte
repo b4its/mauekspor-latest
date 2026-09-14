@@ -6,6 +6,7 @@
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { billingRecords as seedBillingRecords } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { changePlan, downloadInvoice, getBilling } from '$lib/api/billing';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
@@ -80,6 +81,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if billings.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{billings.error}</p>
+	{/if}
+
 	{#if changed}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Plan change simulated.')}</strong>
@@ -116,17 +121,28 @@
 		</Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each billing.usage as item}
-			<Card class="gap-4">
-				<CardHeader class="flex-row items-center justify-between gap-3 space-y-0 p-0">
-					<CardTitle class="text-base font-bold">{item.label}</CardTitle>
-					<span class="text-sm text-muted-foreground">{item.used} / {item.limit}</span>
-				</CardHeader>
-				<CardContent class="p-0">
-					<Progress value={Math.round((item.used / item.limit) * 100)} />
-				</CardContent>
-			</Card>
-		{/each}
-	</div>
+	{#if billings.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
+					<Skeleton class="h-4 w-24" />
+					<Skeleton class="mt-2 h-7 w-1/2" />
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each billing.usage as item}
+				<Card class="gap-4">
+					<CardHeader class="flex-row items-center justify-between gap-3 space-y-0 p-0">
+						<CardTitle class="text-base font-bold">{item.label}</CardTitle>
+						<span class="text-sm text-muted-foreground">{item.used} / {item.limit}</span>
+					</CardHeader>
+					<CardContent class="p-0">
+						<Progress value={Math.round((item.used / item.limit) * 100)} />
+					</CardContent>
+				</Card>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

@@ -8,6 +8,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { listAuditEvents, exportAuditTrail } from '$lib/api/audit';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Info', 'Warning', 'Critical'];
@@ -75,6 +76,10 @@
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
+	{#if events.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{events.error}</p>
+	{/if}
+
 	{#if exported}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Audit export prepared.')}</strong>
@@ -91,24 +96,45 @@
 		<Input bind:value={query} type="search" placeholder={t('Search actor, module, entity...')} class="w-[min(390px,100%)]" />
 	</div>
 
-	<div class="grid gap-4">
-		{#each filteredEvents as event}
-			<Card>
-				<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
-					<div class="grid gap-1">
-						<Badge variant={toneVariant(statusTone(event.severity))} class="w-fit">{event.severity}</Badge>
-						<strong class="mt-2 text-lg font-bold tracking-tight">{event.action}</strong>
-						<p class="text-sm text-muted-foreground">{event.detail}</p>
-					</div>
-					<aside class="grid justify-items-end gap-1 whitespace-nowrap">
-						<span class="text-xs text-muted-foreground">{event.time}</span>
-						<strong class="text-sm font-bold">{event.actor}</strong>
-						<small class="text-xs text-muted-foreground">{event.module} · {event.entity}</small>
-					</aside>
-				</CardContent>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No audit event matched your search.')}</div>
-		{/each}
-	</div>
+	{#if events.loading}
+		<div class="grid gap-4">
+			{#each Array(5) as _}
+				<Card>
+					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
+						<div class="grid gap-1">
+							<Skeleton class="h-5 w-16" />
+							<Skeleton class="mt-2 h-6 w-48" />
+							<Skeleton class="mt-1 h-4 w-full" />
+						</div>
+						<aside class="grid justify-items-end gap-1">
+							<Skeleton class="h-4 w-24" />
+							<Skeleton class="h-4 w-20" />
+							<Skeleton class="h-3 w-32" />
+						</aside>
+					</CardContent>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4">
+			{#each filteredEvents as event}
+				<Card>
+					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
+						<div class="grid gap-1">
+							<Badge variant={toneVariant(statusTone(event.severity))} class="w-fit">{event.severity}</Badge>
+							<strong class="mt-2 text-lg font-bold tracking-tight">{event.action}</strong>
+							<p class="text-sm text-muted-foreground">{event.detail}</p>
+						</div>
+						<aside class="grid justify-items-end gap-1 whitespace-nowrap">
+							<span class="text-xs text-muted-foreground">{event.time}</span>
+							<strong class="text-sm font-bold">{event.actor}</strong>
+							<small class="text-xs text-muted-foreground">{event.module} · {event.entity}</small>
+						</aside>
+					</CardContent>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No audit event matched your search.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>

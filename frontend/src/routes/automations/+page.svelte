@@ -8,6 +8,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { listAutomations, runAutomation, activateAutomation } from '$lib/api/automations';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Compliance', 'Documents', 'Payments', 'Shipments', 'Reports'];
@@ -105,6 +106,10 @@
 		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
+	{#if rules.error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{rules.error}</p>
+	{/if}
+
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">
 			{#each filters as filter}
@@ -120,34 +125,61 @@
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Total run')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{totalRuns}</strong></CardContent></Card>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredRules as rule}
-			<Card class="grid gap-4">
-				<div class="flex items-center justify-between gap-3">
-					<Badge variant={toneVariant(statusTone(justActivated === rule.id ? 'Active' : rule.status))}>{justActivated === rule.id ? 'Active' : rule.status}</Badge>
-					<strong class="text-sm font-bold text-muted-foreground">{rule.module}</strong>
-				</div>
-				<h3 class="text-2xl font-bold tracking-tight">{rule.name}</h3>
-				<p class="text-sm leading-relaxed text-muted-foreground">{rule.description}</p>
-				<div class="grid grid-cols-2 gap-2">
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Ketika')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.trigger}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lalu')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.action}</strong></div>
-				</div>
-				<div class="grid grid-cols-2 gap-2">
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Runs')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.runs}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Run terakhir')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.lastRun}</strong></div>
-				</div>
-				<div class="grid grid-cols-2 gap-2">
-					<Button variant="outline" disabled={busyId === rule.id} onclick={() => handleRun(rule.id)}>
-						{busyId === rule.id ? '...' : 'Run'}
-					</Button>
-					<Button variant={rule.status === 'Active' || justActivated === rule.id ? 'secondary' : 'outline'} disabled={busyId === rule.id} onclick={() => handleActivate(rule.id)}>
-						{rule.status === 'Active' || justActivated === rule.id ? 'Active' : 'Activate'}
-					</Button>
-				</div>
-			</Card>
-		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada aturan yang cocok dengan pencarian.')}</div>
-		{/each}
-	</div>
+	{#if rules.loading}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each Array(6) as _}
+				<Card class="p-5">
+					<div class="flex items-center justify-between gap-3">
+						<Skeleton class="h-5 w-20" />
+						<Skeleton class="h-5 w-16" />
+					</div>
+					<Skeleton class="mt-4 h-7 w-3/4" />
+					<Skeleton class="mt-2 h-4 w-full" />
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+					</div>
+					<div class="mt-2 grid grid-cols-2 gap-2">
+						<Skeleton class="h-14 w-full rounded-lg" />
+						<Skeleton class="h-14 w-full rounded-lg" />
+					</div>
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<Skeleton class="h-9 w-full rounded-lg" />
+						<Skeleton class="h-9 w-full rounded-lg" />
+					</div>
+				</Card>
+			{/each}
+		</div>
+	{:else}
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{#each filteredRules as rule}
+				<Card class="grid gap-4">
+					<div class="flex items-center justify-between gap-3">
+						<Badge variant={toneVariant(statusTone(justActivated === rule.id ? 'Active' : rule.status))}>{justActivated === rule.id ? 'Active' : rule.status}</Badge>
+						<strong class="text-sm font-bold text-muted-foreground">{rule.module}</strong>
+					</div>
+					<h3 class="text-2xl font-bold tracking-tight">{rule.name}</h3>
+					<p class="text-sm leading-relaxed text-muted-foreground">{rule.description}</p>
+					<div class="grid grid-cols-2 gap-2">
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Ketika')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.trigger}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lalu')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.action}</strong></div>
+					</div>
+					<div class="grid grid-cols-2 gap-2">
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Runs')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.runs}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Run terakhir')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.lastRun}</strong></div>
+					</div>
+					<div class="grid grid-cols-2 gap-2">
+						<Button variant="outline" disabled={busyId === rule.id} onclick={() => handleRun(rule.id)}>
+							{busyId === rule.id ? '...' : 'Run'}
+						</Button>
+						<Button variant={rule.status === 'Active' || justActivated === rule.id ? 'secondary' : 'outline'} disabled={busyId === rule.id} onclick={() => handleActivate(rule.id)}>
+							{rule.status === 'Active' || justActivated === rule.id ? 'Active' : 'Activate'}
+						</Button>
+					</div>
+				</Card>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada aturan yang cocok dengan pencarian.')}</div>
+			{/each}
+		</div>
+	{/if}
 </AppShell>
