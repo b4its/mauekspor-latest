@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
-	import { pipeline } from '$lib/data/trade';
+	import { pipeline as seedPipeline } from '$lib/data/trade';
 	import { listComplianceRequirements } from '$lib/api/compliance';
 	import { listTradeDocuments } from '$lib/api/documents';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -30,6 +30,20 @@
 		docs.items
 			.filter((doc) => doc.projectId === data.project.id)
 			.map((doc) => ({ name: doc.type, score: doc.validationScore, status: doc.status }))
+	);
+
+	let pipeline = $derived(
+		seedPipeline.map((item) => {
+			if (item.label === 'Compliance' && complianceTasks.length > 0) {
+				const verified = complianceTasks.filter((task) => task.status === 'Verified').length;
+				return { ...item, value: Math.round((verified / complianceTasks.length) * 100) };
+			}
+			if (item.label === 'Documents' && documents.length > 0) {
+				const approved = documents.filter((doc) => doc.status === 'Approved').length;
+				return { ...item, value: Math.round((approved / documents.length) * 100) };
+			}
+			return item;
+		})
 	);
 
 	function trTab(x: string) {
