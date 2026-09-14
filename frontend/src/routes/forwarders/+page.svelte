@@ -9,6 +9,8 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
+	import { getForwarderRecommendations } from '$lib/api/forwarders';
+	import type { Forwarder } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
 
 	const modeFilters = ['All', 'Ocean', 'Air', 'Multimodal'];
@@ -31,6 +33,38 @@
 		})
 	);
 
+	// Forwarder Recommendations
+	let recDest = $state('JP');
+	let recs = $state<Forwarder[]>([]);
+	let recsLoading = $state(false);
+	let recsError = $state('');
+	const DEST_OPTIONS = [
+		{ code: 'JP', name: 'Jepang' },
+		{ code: 'US', name: 'Amerika Serikat' },
+		{ code: 'DE', name: 'Jerman' },
+		{ code: 'SG', name: 'Singapura' },
+		{ code: 'AU', name: 'Australia' },
+		{ code: 'CN', name: 'Tiongkok' },
+		{ code: 'KR', name: 'Korea Selatan' },
+		{ code: 'GB', name: 'Inggris' },
+		{ code: 'AE', name: 'UEA' },
+		{ code: 'MY', name: 'Malaysia' },
+	];
+
+	async function loadRecommendations() {
+		recsLoading = true;
+		recsError = '';
+		recs = [];
+		try {
+			const res = await getForwarderRecommendations(recDest);
+			recs = res.data;
+		} catch {
+			recsError = t('Gagal memuat rekomendasi forwarder.');
+		} finally {
+			recsLoading = false;
+		}
+	}
+
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
 		if (tone === 'red') return 'destructive';
@@ -50,6 +84,49 @@
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Verified freight partners for your export lanes.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Compare on-time rates, quote speed, and covered lanes, then request a quote for active shipments.')}</CardDescription>
 		</CardHeader>
+	</Card>
+
+	<!-- Forwarder Recommendations -->
+	<Card class="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-indigo-500/10">
+		<CardContent class="flex flex-wrap items-end justify-between gap-4 p-4">
+			<div class="flex flex-wrap items-end gap-3">
+				<div class="grid gap-1.5">
+					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Rekomendasi Forwarder')}</span>
+					<select class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={recDest}>
+						{#each DEST_OPTIONS as opt}
+							<option value={opt.code}>{opt.name} ({opt.code})</option>
+						{/each}
+					</select>
+				</div>
+				<Button onclick={loadRecommendations} disabled={recsLoading}>
+					{recsLoading ? t('Memuat...') : t('Dapatkan Rekomendasi')}
+				</Button>
+			</div>
+			{#if recs.length > 0}
+				<span class="text-xs font-bold text-muted-foreground">{t('Top')} {recs.length} {t('forwarder ke')} {DEST_OPTIONS.find((o) => o.code === recDest)?.name}</span>
+			{/if}
+		</CardContent>
+		{#if recsError}
+			<CardContent class="pt-0"><p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{recsError}</p></CardContent>
+		{/if}
+		{#if recs.length > 0}
+			<CardContent class="grid gap-2.5 pt-0 md:grid-cols-2">
+				{#each recs as rec}
+					<a href={`/forwarders/${rec.id}`} class="flex items-center justify-between gap-3 rounded-lg border bg-background/60 p-3 no-underline transition-colors hover:border-ring/40">
+						<div>
+							<strong class="text-sm">{rec.name}</strong>
+							<p class="text-xs text-muted-foreground">
+								⭐ {rec.averageRating?.toFixed(1) ?? '—'} · {rec.totalReviews ?? 0} {t('review')}
+								{#if rec.lanes?.length}
+									· {rec.lanes.slice(0, 2).join(', ')}
+								{/if}
+							</p>
+						</div>
+						<Button size="sm" variant="outline">{t('Lihat')}</Button>
+					</a>
+				{/each}
+			</CardContent>
+		{/if}
 	</Card>
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
