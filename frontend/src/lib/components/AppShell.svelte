@@ -8,7 +8,7 @@
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { activities, apiKeys, automationRules, billingRecords, businessProfiles, buyerRequests, buyers, calendarEvents, chatConversations, educationalModules, exportAnalyses, fileAssets, forwarders, integrations, knowledgeArticles, messageThreads, navItems, products, projects, suppliers, supportTickets, teamMembers, templates, tradeReports, userAccounts, workTasks } from '$lib/data/trade';
+	import { activities, navItems } from '$lib/data/trade';
 
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import ActivityIcon from '@lucide/svelte/icons/activity';
@@ -46,30 +46,22 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 	let commands = $derived([
 		...navItems.map((item) => ({ label: item.label, href: item.href, group: 'Navigation' })),
-		...projects.map((project) => ({ label: project.name, href: `/trade-projects/${project.id}`, group: 'Trade Project' })),
-		...products.map((product) => ({ label: product.name, href: `/products/${product.id}`, group: 'Product' })),
-		...buyers.map((buyer) => ({ label: buyer.name, href: `/buyers/${buyer.id}`, group: 'Buyer' })),
-		...suppliers.map((supplier) => ({ label: supplier.name, href: `/suppliers/${supplier.id}`, group: 'Supplier' })),
-		...workTasks.map((task) => ({ label: task.title, href: `/tasks/${task.id}`, group: 'Task' })),
-		...tradeReports.map((report) => ({ label: report.title, href: `/reports/${report.id}`, group: 'Report' })),
-		...integrations.map((integration) => ({ label: integration.name, href: '/integrations', group: 'Integration' })),
-		...templates.map((template) => ({ label: template.title, href: '/templates', group: 'Template' })),
-		...automationRules.map((rule) => ({ label: rule.name, href: '/automations', group: 'Automation' })),
-		...knowledgeArticles.map((article) => ({ label: article.title, href: '/knowledge', group: 'Knowledge' })),
-		...calendarEvents.map((event) => ({ label: event.title, href: '/calendar', group: 'Calendar' })),
-		...fileAssets.map((file) => ({ label: file.name, href: '/files', group: 'File' })),
-		...messageThreads.map((thread) => ({ label: thread.subject, href: '/messages', group: 'Message' })),
-		...billingRecords.map((record) => ({ label: `${record.plan} plan`, href: '/billing', group: 'Billing' })),
-		...supportTickets.map((ticket) => ({ label: ticket.subject, href: '/support', group: 'Support' })),
-		...apiKeys.map((key) => ({ label: key.name, href: '/api-keys', group: 'API Key' })),
-		...businessProfiles.map((profile) => ({ label: profile.companyName, href: '/business-profile', group: 'Business Profile' })),
-		...userAccounts.map((user) => ({ label: user.fullName, href: `/users/${user.id}`, group: 'User' })),
-		...buyerRequests.map((request) => ({ label: request.subject, href: `/buyer-requests/${request.id}`, group: 'Buyer Request' })),
-		...forwarders.map((forwarder) => ({ label: forwarder.name, href: `/forwarders/${forwarder.id}`, group: 'Forwarder' })),
-		...educationalModules.map((module) => ({ label: module.title, href: '/educational', group: 'Educational' })),
-		...chatConversations.map((chat) => ({ label: chat.title, href: '/chat', group: 'Chat' })),
-		...exportAnalyses.map((analysis) => ({ label: `${analysis.productName} - ${analysis.destination}`, href: `/export-analysis/${analysis.id}`, group: 'Export Analysis' }))
+		{ label: 'Dashboard', href: '/dashboard', group: 'Navigation' },
+		{ label: 'Products', href: '/products', group: 'Navigation' },
+		{ label: 'Export Analysis', href: '/export-analysis', group: 'Navigation' },
+		{ label: 'Catalogs', href: '/catalogs', group: 'Navigation' },
+		{ label: 'Costing', href: '/costing', group: 'Navigation' },
+		{ label: 'Buyer Requests', href: '/buyer-requests', group: 'Navigation' },
+		{ label: 'Forwarders', href: '/forwarders', group: 'Navigation' },
+		{ label: 'Buyers', href: '/buyers', group: 'Navigation' },
+		{ label: 'Educational', href: '/educational', group: 'Navigation' },
+		{ label: 'Chat', href: '/chat', group: 'Navigation' },
+		{ label: 'Marketing', href: '/marketing', group: 'Navigation' },
+		{ label: 'Settings', href: '/settings', group: 'Navigation' },
+		{ label: 'Register Admin', href: '/register-admin', group: 'Navigation' },
 	]);
+	// Catatan: pencarian data live menggunakan API /search/?q= langsung (liveResults),
+	// sehingga data dari seed tidak perlu diimpor ke AppShell lagi.
 	let activityCount = $derived(activities.length);
 	let unreadCount = $state(0);
 	let liveResults = $state<{ label: string; href: string; group: string; sub?: string }[]>([]);
