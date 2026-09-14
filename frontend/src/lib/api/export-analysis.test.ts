@@ -15,7 +15,8 @@ import {
 import { listBuyerRequests, getBuyerRequest, matchBuyerRequest, updateBuyerRequestStatus } from './buyer-requests';
 import { listTradeProjects, getTradeProject, createTradeProject } from './trade-projects';
 import { listBusinessProfiles, getBusinessProfile, updateCertifications, getDashboardSummary } from './business-profile';
-import { listEducationalModules, getEducationalModule, publishEducationalModule, listEducationalArticles } from './educational';
+import { listEducationalModules, getEducationalModule, publishEducationalModule } from './educational';
+import { listEducationalArticles } from './educational-articles';
 import { listKnowledgeArticles, publishKnowledgeArticle } from './knowledge';
 import { listCalendarEvents, markCalendarEventDone } from './calendar';
 
