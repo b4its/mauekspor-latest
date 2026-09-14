@@ -25,7 +25,7 @@
 		products.load();
 		listCountries()
 			.then((res) => (countries = res.data))
-			.catch(() => {});
+			.catch(() => { error = t('Gagal memuat daftar negara.'); });
 	});
 
 	function toggleCountry(code: string) {

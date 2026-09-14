@@ -29,7 +29,7 @@
 				nib = res.data.nib ?? '';
 				taxId = res.data.taxId ?? '';
 			})
-			.catch(() => {});
+			.catch(() => { error = t('Gagal memuat pengaturan.'); });
 	});
 
 	async function save() {
