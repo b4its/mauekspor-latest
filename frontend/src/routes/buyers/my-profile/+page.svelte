@@ -3,13 +3,11 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { buyers } from '$lib/data/trade';
 	import { getMyBuyerProfile } from '$lib/api/buyers';
 	import type { BuyerProfile } from '$lib/api/buyers';
 	import { t } from '$lib/i18n.svelte';
 
 	let profile = $state<BuyerProfile | null>(null);
-	let fallback = $derived(buyers[0]);
 
 	$effect(() => {
 		getMyBuyerProfile()
@@ -35,10 +33,10 @@
 			<div class="min-w-0">
 				<Badge variant="secondary">{t('Profil pembeli')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-					{profile?.companyName ?? fallback.name}
+					{profile?.companyName ?? t('Profil Pembeli')}
 				</CardTitle>
 				<CardDescription class="mt-2">
-					{profile?.companyDescription ?? `${fallback.segment} - ${fallback.country}`}
+					{profile?.companyDescription ?? t('Identitas importer Anda akan tampil di sini.')}
 				</CardDescription>
 			</div>
 			<div class="grid gap-2">
