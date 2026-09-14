@@ -78,6 +78,22 @@ def test_register_admin_code_salah_403():
         assert "admin" in res.json()["message"].lower()
 
 
+def test_register_admin_fail_closed_tanpa_env(monkeypatch):
+    """Tanpa MAUEKSPOR_ADMIN_CODE, tidak ada kode yang valid (fail-closed)."""
+    monkeypatch.delenv("MAUEKSPOR_ADMIN_CODE", raising=False)
+    with TestClient(app) as c:
+        res = c.post(
+            "/api/v1/auth/register-admin/",
+            json={
+                "email": "admin-x@mauekspor.example",
+                "password": "password123",
+                "full_name": "Admin X",
+                "admin_code": "admin-bootstrap-2026",
+            },
+        )
+        assert res.status_code == 403
+
+
 def test_refresh_token_tidak_valid_401():
     with TestClient(app) as c:
         res = c.post(

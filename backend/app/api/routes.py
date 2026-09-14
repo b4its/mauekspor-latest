@@ -151,13 +151,15 @@ def register(payload: sc.RegisterPayload, response: Response):
 
 @router.post("/auth/register-admin/")
 def register_admin(payload: sc.RegisterAdminPayload, response: Response):
-    """Buat user Admin — via kode bootstrap `MAUEKSPOR_ADMIN_CODE` atau admin yang sudah login."""
-    code = os.environ.get("MAUEKSPOR_ADMIN_CODE", "admin-bootstrap-2026")
-    if payload.admin_code and payload.admin_code != code:
+    """Buat user Admin — hanya via kode bootstrap `MAUEKSPOR_ADMIN_CODE`.
+
+    Fail-closed: bila env var tidak diset, tidak ada kode yang valid.
+    """
+    code = os.environ.get("MAUEKSPOR_ADMIN_CODE", "")
+    if not code:
+        raise HTTPException(403, "Admin code not configured")
+    if not payload.admin_code or payload.admin_code != code:
         raise HTTPException(403, "Invalid admin code")
-    if not payload.admin_code and not os.environ.get("MAUEKSPOR_ADMIN_CODE"):
-        # Jika tanpa kode, hanya admin yang bisa (dicek middleware untuk module auth? tidak)
-        raise HTTPException(403, "Admin code required")
     if db.get_by("users", email=str(payload.email)):
         raise HTTPException(409, "Email already registered")
     user = db.insert("users", {
