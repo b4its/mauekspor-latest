@@ -4,13 +4,33 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
-	import { complianceTasks, documents, pipeline } from '$lib/data/trade';
+	import { pipeline } from '$lib/data/trade';
+	import { listComplianceRequirements } from '$lib/api/compliance';
+	import { listTradeDocuments } from '$lib/api/documents';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import type { ComplianceRequirement, TradeDocument } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
 
 	let { data } = $props();
 	let selectedTab = $state('Compliance');
 	const tabs = ['Compliance', 'Quotation', 'Documents', 'Shipment'];
+
+	let compliance = createRemoteList<ComplianceRequirement>(listComplianceRequirements, []);
+	let docs = createRemoteList<TradeDocument>(listTradeDocuments, []);
+	compliance.load();
+	docs.load();
+
+	let complianceTasks = $derived(
+		compliance.items
+			.filter((task) => task.projectId === data.project.id)
+			.map((task) => ({ name: task.title, owner: task.owner, status: task.status, due: task.due }))
+	);
+	let documents = $derived(
+		docs.items
+			.filter((doc) => doc.projectId === data.project.id)
+			.map((doc) => ({ name: doc.type, score: doc.validationScore, status: doc.status }))
+	);
 
 	function trTab(x: string) {
 		return t(x === 'Compliance' ? 'Kepatuhan' : x === 'Quotation' ? 'Kutipan' : x === 'Documents' ? 'Dokumen' : 'Pengiriman');
@@ -114,6 +134,9 @@
 
 			{#if selectedTab === 'Compliance'}
 				<div class="grid gap-2.5">
+					{#if complianceTasks.length === 0}
+						<p class="rounded-lg border bg-muted/30 p-3.5 text-sm text-muted-foreground">{t('Belum ada persyaratan kepatuhan untuk proyek ini.')}</p>
+					{/if}
 					{#each complianceTasks as task}
 						<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5">
 							<div>
@@ -126,6 +149,9 @@
 				</div>
 			{:else if selectedTab === 'Documents'}
 				<div class="grid gap-2.5">
+					{#if documents.length === 0}
+						<p class="rounded-lg border bg-muted/30 p-3.5 text-sm text-muted-foreground">{t('Belum ada dokumen untuk proyek ini.')}</p>
+					{/if}
 					{#each documents as doc}
 						<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5">
 							<div class="w-full max-w-sm">
