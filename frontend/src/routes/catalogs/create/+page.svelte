@@ -12,12 +12,15 @@
 	import { products as seedProducts, projects as seedProjects } from '$lib/data/trade';
 	import { createCatalog, addCatalogImage } from '$lib/api/catalogs';
 	import { listProducts, generateCatalogDescription } from '$lib/api/products';
+	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { uploadFileBinary, fileDownloadUrl } from '$lib/api/files';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import type { Product } from '$lib/data/trade';
 
 	let products = createRemoteList<Product>(listProducts, seedProducts);
+	let projects = createRemoteList(listTradeProjects, seedProjects);
 	products.load();
+	projects.load();
 	let productId = $state('');
 	let projectId = $state('');
 	let title = $state('');
@@ -150,7 +153,7 @@
 					<Label for="cat-project">{t('Proyek')}</Label>
 					<NativeSelect id="cat-project" bind:value={projectId}>
 						<option value="">{t('Opsional...')}</option>
-						{#each seedProjects as project}
+						{#each projects.items as project}
 							<option value={project.id}>{project.name}</option>
 						{/each}
 					</NativeSelect>
