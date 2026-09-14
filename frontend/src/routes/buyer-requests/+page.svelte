@@ -4,8 +4,10 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { buyerRequests as seedRequests, buyers, products } from '$lib/data/trade';
+	import { buyerRequests as seedRequests, buyers as seedBuyers, products as seedProducts } from '$lib/data/trade';
 	import { listBuyerRequests, deleteBuyerRequest } from '$lib/api/buyer-requests';
+	import { listBuyers } from '$lib/api/buyers';
+	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
@@ -16,8 +18,12 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	let query = $state('');
 
 	let requests = createRemoteList(listBuyerRequests, seedRequests);
+	let buyers = createRemoteList(listBuyers, seedBuyers);
+	let products = createRemoteList(listProducts, seedProducts);
 	$effect(() => {
 		requests.load();
+		buyers.load();
+		products.load();
 	});
 
 	let deletingId = $state('');
@@ -49,11 +55,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	let newCount = $derived(requests.items.filter((request) => request.status === 'New').length);
 
 	function resolveBuyer(id: string) {
-		return buyers.find((buyer) => buyer.id === id)?.name ?? id;
+		return buyers.items.find((buyer) => buyer.id === id)?.name ?? id;
 	}
 
 	function resolveProduct(id: string) {
-		return products.find((product) => product.id === id)?.name ?? id;
+		return products.items.find((product) => product.id === id)?.name ?? id;
 	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {

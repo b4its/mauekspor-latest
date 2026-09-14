@@ -4,9 +4,10 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { fileAssets, projects } from '$lib/data/trade';
+	import { fileAssets, projects as seedProjects } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
 	import { uploadFileAsset, uploadFileBinary, verifyFileAsset, listFiles, fileDownloadUrl } from '$lib/api/files';
+	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
@@ -29,8 +30,10 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	let verifiedId = $state('');
 
 	let files = createRemoteList(listFiles, fileAssets);
+	let projects = createRemoteList(listTradeProjects, seedProjects);
 	$effect(() => {
 		files.load();
+		projects.load();
 	});
 
 	let filteredFiles = $derived(
@@ -42,7 +45,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	);
 	let needsReview = $derived(files.items.filter((file) => file.status !== 'Verified' && file.status !== 'Archived').length);
 	function projectName(id: string) {
-		return projects.find((project) => project.id === id)?.name ?? id;
+		return projects.items.find((project) => project.id === id)?.name ?? id;
 	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -59,7 +62,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		error = '';
 		uploading = true;
 		try {
-			await uploadFileBinary(file, 'Evidence', projects[0]?.id ?? '', ['evidence']);
+			await uploadFileBinary(file, 'Evidence', projects.items[0]?.id ?? '', ['evidence']);
 			uploaded = file.name;
 			await files.load();
 		} catch {
