@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
-	import { recalculateCostingScenario, costingPdfUrl, getExchangeRate } from '$lib/api/costing';
+	import { recalculateCostingScenario, costingPdfUrl, getExchangeRate, updateExchangeRate, refreshExchangeRate } from '$lib/api/costing';
 	import type { ExchangeRate } from '$lib/api/costing';
 	import { t } from '$lib/i18n.svelte';
 
@@ -13,6 +13,9 @@
 	let fxShock = $state(false);
 	let error = $state('');
 	let fx = $state<ExchangeRate | null>(null);
+	let fxEdit = $state('');
+	let fxError = $state('');
+	let fxSaving = $state(false);
 
 	type Line = { category: string; label: string; amount: number };
 	type Container = { capacity_20ft?: number; capacity_40ft?: number; utilization_note?: string; tips?: string[]; ai_tips?: string };
@@ -57,6 +60,36 @@
 			fx = null;
 		}
 	}
+
+	async function handleFxRefresh() {
+		fxError = '';
+		fxSaving = true;
+		try {
+			fx = (await refreshExchangeRate()).data;
+		} catch {
+			fxError = t('Gagal memperbarui kurs dari sumber.');
+		} finally {
+			fxSaving = false;
+		}
+	}
+
+	async function handleFxSave() {
+		fxError = '';
+		const rate = Number(fxEdit);
+		if (!Number.isFinite(rate) || rate <= 0) {
+			fxError = t('Masukkan kurs yang valid (angka > 0).');
+			return;
+		}
+		fxSaving = true;
+		try {
+			fx = (await updateExchangeRate(rate)).data;
+			fxEdit = '';
+		} catch {
+			fxError = t('Gagal menyimpan kurs.');
+		} finally {
+			fxSaving = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -90,10 +123,29 @@
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/costing/${data.scenario.id}/edit`}>{t('Edit skenario')}</Button>
 					<Button variant="outline" onclick={handleFx}>{fx ? `FX ${fx.rate} (${fx.source})` : t('Tampilkan kurs FX')}</Button>
+					{#if fx}
+						<Button variant="outline" size="sm" disabled={fxSaving} onclick={handleFxRefresh}>{fxSaving ? t('Memperbarui...') : t('Perbarui dari sumber')}</Button>
+					{/if}
 					<Button variant="outline" onclick={() => (fxShock = !fxShock)}>{fxShock ? t('Hapus shock FX') : t('Terapkan shock FX +3.5%')}</Button>
 					<Button onclick={handleRecalculate}>{recalculated ? t('Dihitung ulang') : t('Hitung ulang')}</Button>
 					<Button variant="outline" href={costingPdfUrl(data.scenario.id)}>{t('Unduh PDF')}</Button>
 				</div>
+				{#if fx}
+					<div class="mt-2 flex flex-wrap items-center gap-2">
+						<input
+							type="number"
+							placeholder={String(fx.rate)}
+							class="h-9 w-32 rounded-md border bg-background px-3 text-sm"
+							value={fxEdit}
+							oninput={(e) => (fxEdit = (e.currentTarget as HTMLInputElement).value)}
+						/>
+						<Button size="sm" variant="outline" disabled={fxSaving} onclick={handleFxSave}>{fxSaving ? t('Menyimpan...') : t('Set kurs manual')}</Button>
+						<span class="text-xs text-muted-foreground">{fx.source} · {t('diperbarui')} {fx.updatedAt}</span>
+						{#if fxError}
+							<span class="rounded-lg bg-destructive/10 px-2 py-1 text-xs font-bold text-destructive">{fxError}</span>
+						{/if}
+					</div>
+				{/if}
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 				{/if}
