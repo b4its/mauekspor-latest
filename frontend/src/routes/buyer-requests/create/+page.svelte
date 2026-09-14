@@ -8,8 +8,16 @@
 	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { buyers, products } from '$lib/data/trade';
+	import { buyers as seedBuyers, products as seedProducts } from '$lib/data/trade';
+	import { listBuyers } from '$lib/api/buyers';
+	import { listProducts } from '$lib/api/products';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { createBuyerRequest } from '$lib/api/buyer-requests';
+
+	let buyers = createRemoteList(listBuyers, seedBuyers);
+	let products = createRemoteList(listProducts, seedProducts);
+	buyers.load();
+	products.load();
 
 	let subject = $state('');
 	let buyerId = $state('');
@@ -98,7 +106,7 @@
 						<Label for="br-buyer">{t('Pembeli')}</Label>
 						<NativeSelect id="br-buyer" bind:value={buyerId}>
 							<option value="">{t('Pilih buyer...')}</option>
-							{#each buyers as buyer}
+							{#each buyers.items as buyer}
 								<option value={buyer.id}>{buyer.name}</option>
 							{/each}
 						</NativeSelect>
@@ -107,7 +115,7 @@
 						<Label for="br-product">{t('Produk')}</Label>
 						<NativeSelect id="br-product" bind:value={productId}>
 							<option value="">{t('Pilih produk...')}</option>
-							{#each products as product}
+							{#each products.items as product}
 								<option value={product.id}>{product.name}</option>
 							{/each}
 						</NativeSelect>

@@ -6,9 +6,17 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { products, projects } from '$lib/data/trade';
+	import { products as seedProducts, projects as seedProjects } from '$lib/data/trade';
+	import { listProducts } from '$lib/api/products';
+	import { listTradeProjects } from '$lib/api/trade-projects';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { createCostingScenario } from '$lib/api/costing';
 	import { t } from '$lib/i18n.svelte';
+
+	let projects = createRemoteList(listTradeProjects, seedProjects);
+	let products = createRemoteList(listProducts, seedProducts);
+	projects.load();
+	products.load();
 
 	let projectId = $state('');
 	let productId = $state('');
@@ -85,14 +93,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 						<Label>{t('Proyek')}</Label>
 						<NativeSelect bind:value={projectId}>
 							<option value="">{t('Opsional...')}</option>
-							{#each projects as project}<option value={project.id}>{project.name}</option>{/each}
+							{#each projects.items as project}<option value={project.id}>{project.name}</option>{/each}
 						</NativeSelect>
 					</div>
 					<div class="grid gap-2">
 						<Label>{t('Produk')}</Label>
 						<NativeSelect bind:value={productId}>
 							<option value="">{t('Opsional...')}</option>
-							{#each products as product}<option value={product.id}>{product.name}</option>{/each}
+							{#each products.items as product}<option value={product.id}>{product.name}</option>{/each}
 						</NativeSelect>
 					</div>
 				</div>
