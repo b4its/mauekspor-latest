@@ -15,6 +15,8 @@
 		deleteCatalogImage,
 		addVariantType,
 		addVariantOption,
+		updateVariantType,
+		updateVariantOption,
 		deleteVariantType,
 		deleteVariantOption,
 		createCatalogPricing,
@@ -51,6 +53,8 @@
 	let uploading = $state(false);
 	let newVariantType = $state('');
 	let newVariantOption = $state<Record<string, string>>({});
+	let renameType = $state('');
+	let renameOption = $state<Record<string, string>>({});
 	let variantError = $state('');
 	let pricing = $state<CatalogPricing | null>(null);
 	let marketIntel = $state<CatalogMI | null>(null);
@@ -133,6 +137,35 @@
 			await reloadVariants();
 		} catch {
 			variantError = t('Gagal menghapus opsi varian.');
+		}
+	}
+
+	async function handleRenameVariantType(typeId: string) {
+		variantError = '';
+		const name = renameType.trim();
+		if (name.length < 2) {
+			variantError = t('Nama tipe varian minimal 2 karakter.');
+			return;
+		}
+		try {
+			await updateVariantType(data.catalog.id, typeId, { type_name: name });
+			renameType = '';
+			await reloadVariants();
+		} catch {
+			variantError = t('Gagal mengganti nama tipe varian.');
+		}
+	}
+
+	async function handleRenameVariantOption(typeId: string, optionId: string) {
+		variantError = '';
+		const name = (renameOption[optionId] ?? '').trim();
+		if (!name) return;
+		try {
+			await updateVariantOption(data.catalog.id, typeId, optionId, { option_name: name });
+			renameOption[optionId] = '';
+			await reloadVariants();
+		} catch {
+			variantError = t('Gagal mengganti nama opsi varian.');
 		}
 	}
 
@@ -378,14 +411,44 @@
 						<div class="rounded-lg border bg-muted/30 p-3.5">
 							<div class="flex items-center justify-between gap-2">
 								<strong class="text-sm">{vt.typeName}</strong>
-								<button class="text-xs font-bold text-destructive hover:underline" onclick={() => handleRemoveVariantType(vt.id)}>{t('Hapus tipe')}</button>
+								<div class="flex items-center gap-2">
+									<button class="text-xs font-bold text-muted-foreground hover:text-foreground" onclick={() => (renameType = vt.typeName)}>{t('Ganti nama')}</button>
+									<button class="text-xs font-bold text-destructive hover:underline" onclick={() => handleRemoveVariantType(vt.id)}>{t('Hapus tipe')}</button>
+								</div>
 							</div>
+							{#if renameType.length > 0 && variantTypes.some((x) => x.id === vt.id && x.typeName === renameType)}
+								<div class="mt-2 flex gap-2">
+									<input
+										type="text"
+										placeholder={t('Nama baru...')}
+										class="h-9 flex-1 rounded-md border bg-background px-3 text-sm"
+										value={renameType}
+										oninput={(e) => (renameType = (e.currentTarget as HTMLInputElement).value)}
+									/>
+									<Button size="sm" variant="outline" onclick={() => handleRenameVariantType(vt.id)}>{t('Simpan')}</Button>
+									<Button size="sm" variant="ghost" onclick={() => (renameType = '')}>{t('Batal')}</Button>
+								</div>
+							{/if}
 							<div class="mt-1.5 flex flex-wrap gap-1.5">
 								{#each vt.options ?? [] as option}
-									<span class="inline-flex items-center gap-1 rounded-full border bg-background/60 px-2.5 py-1 text-xs font-bold">
-										{option.optionName}
-										<button class="text-muted-foreground hover:text-destructive" onclick={() => handleRemoveVariantOption(vt.id, option.id)}>✕</button>
-									</span>
+									{#if renameOption[option.id]}
+										<span class="inline-flex items-center gap-1 rounded-full border bg-background/60 px-2.5 py-1 text-xs font-bold">
+											<input
+												type="text"
+												value={renameOption[option.id]}
+												oninput={(e) => (renameOption = { ...renameOption, [option.id]: (e.currentTarget as HTMLInputElement).value })}
+												class="w-24 rounded border bg-background px-1.5 py-0.5 text-xs"
+											/>
+											<button class="text-primary hover:underline" onclick={() => handleRenameVariantOption(vt.id, option.id)}>✓</button>
+											<button class="text-muted-foreground hover:text-foreground" onclick={() => (renameOption[option.id] = '')}>✕</button>
+										</span>
+									{:else}
+										<span class="inline-flex items-center gap-1 rounded-full border bg-background/60 px-2.5 py-1 text-xs font-bold">
+											{option.optionName}
+											<button class="text-muted-foreground hover:text-foreground" onclick={() => (renameOption = { ...renameOption, [option.id]: option.optionName })}>✎</button>
+											<button class="text-muted-foreground hover:text-destructive" onclick={() => handleRemoveVariantOption(vt.id, option.id)}>✕</button>
+										</span>
+									{/if}
 								{/each}
 							</div>
 							<div class="mt-2 flex gap-2">
