@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { buyerRequests as seedRequests, buyers, products } from '$lib/data/trade';
-	import { listBuyerRequests } from '$lib/api/buyer-requests';
+	import { listBuyerRequests, deleteBuyerRequest } from '$lib/api/buyer-requests';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
@@ -19,6 +19,21 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	$effect(() => {
 		requests.load();
 	});
+
+	let deletingId = $state('');
+
+	async function handleDelete(id: string) {
+		if (!confirm(t('Hapus permintaan buyer ini?'))) return;
+		deletingId = id;
+		try {
+			await deleteBuyerRequest(id);
+			await requests.load();
+		} catch {
+			alert(t('Gagal menghapus permintaan buyer.'));
+		} finally {
+			deletingId = '';
+		}
+	}
 
 	let filteredRequests = $derived(
 		requests.items.filter((request) => {
@@ -112,8 +127,17 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each filteredRequests as request}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/buyer-requests/${request.id}`} class="block h-full p-5 no-underline">
+			<Card class="relative transition-all hover:border-ring/40 hover:shadow-md">
+				<Button
+					variant="outline"
+					size="sm"
+					class="absolute top-3 right-3 z-10 text-destructive hover:bg-destructive/10"
+					disabled={deletingId === request.id}
+					onclick={() => handleDelete(request.id)}
+				>
+					{deletingId === request.id ? t('Menghapus...') : t('Hapus')}
+				</Button>
+				<a href={`/buyer-requests/${request.id}`} class="block p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(request.status))}>{request.status}</Badge>
 						<small class="text-xs font-semibold text-muted-foreground">{request.deadline}</small>
