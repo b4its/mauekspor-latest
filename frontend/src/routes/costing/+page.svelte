@@ -6,7 +6,7 @@ import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { costingScenarios as seedScenarios, projects as seedProjects } from '$lib/data/trade';
-	import { listCostingScenarios, compareCostingScenarios, type CostingCompare } from '$lib/api/costing';
+	import { listCostingScenarios, deleteCostingScenario, compareCostingScenarios, type CostingCompare } from '$lib/api/costing';
 import { listTradeProjects } from '$lib/api/trade-projects';
 import { csvExportUrl } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -24,6 +24,21 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		costingScenarios.load();
 		projects.load();
 	});
+
+	let deletingId = $state('');
+
+	async function handleDelete(id: string) {
+		if (!confirm(t('Hapus skenario costing ini?'))) return;
+		deletingId = id;
+		try {
+			await deleteCostingScenario(id);
+			await costingScenarios.load();
+		} catch {
+			alert(t('Gagal menghapus skenario costing.'));
+		} finally {
+			deletingId = '';
+		}
+	}
 
 	let filteredScenarios = $derived(
 		costingScenarios.items.filter((scenario) => {
@@ -203,7 +218,16 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 			{/each}
 		{:else}
 			{#each filteredScenarios as scenario}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class="relative transition-all hover:border-ring/40 hover:shadow-md">
+					<Button
+						variant="outline"
+						size="sm"
+						class="absolute top-3 right-3 z-10 text-destructive hover:bg-destructive/10"
+						disabled={deletingId === scenario.id}
+						onclick={() => handleDelete(scenario.id)}
+					>
+						{deletingId === scenario.id ? t('Menghapus...') : t('Hapus')}
+					</Button>
 					<label class="block h-full p-5">
 						<div class="flex items-center justify-between gap-3">
 							<div class="flex items-center gap-2">
