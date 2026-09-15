@@ -15,8 +15,9 @@
 		deleteCatalogImage,
 		addVariantType,
 		addVariantOption,
-		updateVariantType,
-		updateVariantOption,
+	updateVariantType,
+	updateVariantOption,
+	updateCatalogImage,
 		deleteVariantType,
 		deleteVariantOption,
 		createCatalogPricing,
@@ -50,6 +51,9 @@
 	let aiDesc = $state<CatalogAIDescription | null>(null);
 	let loadingAi = $state(false);
 	let newImageUrl = $state('');
+	let editingAltId = $state('');
+	let editingAltText = $state('');
+	let savingAlt = $state(false);
 	let uploading = $state(false);
 	let newVariantType = $state('');
 	let newVariantOption = $state<Record<string, string>>({});
@@ -224,6 +228,20 @@
 		}
 	}
 
+	async function handleSaveAlt(image: CatalogImage) {
+		error = '';
+		savingAlt = true;
+		try {
+			await updateCatalogImage(data.catalog.id, image.id, { alt_text: editingAltText.trim() });
+			images = images.map((img) => (img.id === image.id ? { ...img, altText: editingAltText.trim() } : img));
+			editingAltId = '';
+		} catch {
+			error = t('Gagal memperbarui teks alternatif.');
+		} finally {
+			savingAlt = false;
+		}
+	}
+
 	async function handleGenerate() {
 		error = '';
 		loadingAi = true;
@@ -357,14 +375,31 @@
 								{:else}
 									<div class="flex h-24 items-center justify-center text-xs font-bold text-muted-foreground">{t('Tidak ada gambar')}</div>
 								{/if}
-								<div class="flex items-center justify-between px-2 py-1">
+								<div class="flex items-center justify-between gap-1 px-2 py-1">
+								{#if editingAltId === image.id}
+									<div class="flex min-w-0 flex-1 gap-1">
+										<input
+											type="text"
+											value={editingAltText}
+											placeholder={t('Teks alternatif...')}
+											class="h-6 min-w-0 flex-1 rounded border bg-background px-1.5 text-[10px]"
+											oninput={(e) => (editingAltText = (e.currentTarget as HTMLInputElement).value)}
+											onkeydown={(e) => { if (e.key === 'Enter') handleSaveAlt(image); }}
+										/>
+										<button class="text-[10px] font-bold text-primary hover:underline" disabled={savingAlt} onclick={() => handleSaveAlt(image)}>{t('Simpan')}</button>
+										<button class="text-[10px] font-bold text-muted-foreground hover:underline" onclick={() => (editingAltId = '')}>{t('Batal')}</button>
+									</div>
+								{:else}
 									{#if image.isPrimary}
 										<span class="text-[10px] font-bold text-primary">{t('Utama')}</span>
 									{:else}
-										<span class="text-[10px] text-muted-foreground">{image.altText || '—'}</span>
+										<button class="min-w-0 flex-1 truncate text-left text-[10px] text-muted-foreground hover:text-foreground" title={t('Ubah teks alternatif')} onclick={() => { editingAltId = image.id; editingAltText = image.altText || ''; }}>
+											{image.altText || t('Tambah teks')}
+										</button>
 									{/if}
 									<button class="text-[10px] font-bold text-destructive hover:underline" onclick={() => handleRemoveImage(image.id)}>{t('Hapus')}</button>
-								</div>
+								{/if}
+							</div>
 							</div>
 						{/each}
 					</div>
