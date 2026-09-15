@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts } from '$lib/data/trade';
-	import { listProducts, deleteProduct, batchEnrichProducts } from '$lib/api/products';
+	import { listProducts, deleteProduct, batchEnrichProducts, batchDeleteProducts } from '$lib/api/products';
 	import { csvExportUrl } from '$lib/api/client';
 	import { statusTone } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -21,6 +21,8 @@
 	let error = $state('');
 	let batching = $state('');
 	let batchMessage = $state('');
+	let selected = $state<Set<string>>(new Set());
+	let batchDeleting = $state(false);
 
 	let pendingCount = $derived(products.filter((p) => p.status !== 'Enriched').length);
 
@@ -63,6 +65,43 @@
 			error = 'Gagal menghapus produk.';
 		} finally {
 			deleting = '';
+		}
+	}
+
+	function toggleSelected(id: string) {
+		const next = new Set(selected);
+		if (next.has(id)) next.delete(id);
+		else next.add(id);
+		selected = next;
+	}
+
+	function toggleAll() {
+		const visible = filteredProducts.map((p) => p.id);
+		const allSelected = visible.every((id) => selected.has(id));
+		const next = new Set(selected);
+		for (const id of visible) {
+			if (allSelected) next.delete(id);
+			else next.add(id);
+		}
+		selected = next;
+	}
+
+	async function removeSelected() {
+		if (selected.size === 0) return;
+		if (!confirm(`Hapus ${selected.size} produk terpilih?`)) return;
+		error = '';
+		batchMessage = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteProducts([...selected]);
+			batchMessage = `Hapus selesai: ${res.data.deletedCount} produk dihapus.`;
+			selected = new Set();
+			const reload = await listProducts();
+			products = reload.data;
+		} catch {
+			error = 'Gagal menghapus produk terpilih.';
+		} finally {
+			batchDeleting = false;
 		}
 	}
 
@@ -135,12 +174,23 @@
 				</Button>
 			{/each}
 		</div>
-		<Input
-			bind:value={query}
-			type="search"
-			placeholder="Search product, origin, HS..."
-			class="max-w-xs"
-		/>
+		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={filteredProducts.length > 0 && filteredProducts.every((p) => selected.has(p.id))} onchange={toggleAll} />
+				{t('Pilih semua')}
+			</label>
+			{#if selected.size > 0}
+				<Button size="sm" variant="destructive" disabled={batchDeleting} onclick={removeSelected}>
+					{batchDeleting ? t('Menghapus...') : `${t('Hapus terpilih')} (${selected.size})`}
+				</Button>
+			{/if}
+			<Input
+				bind:value={query}
+				type="search"
+				placeholder="Search product, origin, HS..."
+				class="max-w-xs"
+			/>
+		</div>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -177,7 +227,16 @@
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No product matched your filter.')}</div>
 		{:else}
 			{#each filteredProducts as product}
-			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+			<Card class={`relative transition-all hover:border-ring/40 hover:shadow-md ${selected.has(product.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+				<div class="absolute top-3 right-3 z-10">
+					<input
+						type="checkbox"
+						class="size-4"
+						checked={selected.has(product.id)}
+						onchange={() => toggleSelected(product.id)}
+						onclick={(e) => e.stopPropagation()}
+					/>
+				</div>
 				<a href={`/products/${product.id}`} class="block h-full p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(product.status))}>{product.status}</Badge>
