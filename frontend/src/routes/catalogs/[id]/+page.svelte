@@ -13,6 +13,8 @@
 		generateCatalogAiDescription,
 		addCatalogImage,
 		deleteCatalogImage,
+		getCatalogMarketIntelligence,
+		getCatalogPricing,
 		addVariantType,
 		addVariantOption,
 	updateVariantType,
@@ -64,6 +66,15 @@
 	let marketIntel = $state<CatalogMI | null>(null);
 	let aiLoading = $state(false);
 	let aiError = $state('');
+
+	$effect(() => {
+		getCatalogPricing(data.catalog.id)
+			.then((res) => (pricing = res.data as CatalogPricing))
+			.catch(() => {});
+		getCatalogMarketIntelligence(data.catalog.id)
+			.then((res) => (marketIntel = res.data as CatalogMI))
+			.catch(() => {});
+	});
 
 	async function handlePricing() {
 		aiError = '';
