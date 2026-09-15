@@ -58,6 +58,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button href="/export-analysis/create">{t('Analisis baru')}</Button>
 			<Button href="/export-analysis/compare" variant="outline">{t('Bandingkan pasar')}</Button>
+			<Button href="/hs-codes" variant="outline">{t('Browsing HS code')}</Button>
 			<Button href={csvExportUrl('/export-analysis/export.csv')} variant="outline">{t('Ekspor CSV')}</Button>
 		</CardContent>
 	</Card>
