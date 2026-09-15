@@ -6,7 +6,7 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { educationalArticles as seedArticles, educationalModules as seedModules } from '$lib/data/trade';
-	import { listEducationalArticles, publishEducationalArticle, createEducationalArticle, deleteEducationalArticle } from '$lib/api/educational-articles';
+	import { listEducationalArticles, publishEducationalArticle, createEducationalArticle, deleteEducationalArticle, updateEducationalArticle, uploadEducationalFile } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
@@ -18,6 +18,12 @@
 	let newTitle = $state('');
 	let newContent = $state('');
 	let creating = $state(false);
+	let editingId = $state('');
+	let editTitle = $state('');
+	let editContent = $state('');
+	let savingEdit = $state(false);
+	let uploadingId = $state('');
+	let editError = $state('');
 
 	$effect(() => {
 		articles.load();
@@ -71,6 +77,43 @@
 		}
 	}
 
+	async function saveArticle(id: string) {
+		editError = '';
+		if (editTitle.trim().length < 3) {
+			editError = t('Judul artikel minimal 3 karakter.');
+			return;
+		}
+		savingEdit = true;
+		try {
+			const updated = (await updateEducationalArticle(id, { title: editTitle.trim(), content: editContent })).data;
+			const idx = articles.items.findIndex((a) => a.id === id);
+			if (idx >= 0) articles.items[idx] = updated;
+			editingId = '';
+		} catch {
+			editError = t('Gagal menyimpan artikel.');
+		} finally {
+			savingEdit = false;
+		}
+	}
+
+	async function handleUploadFile(id: string, event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+		error = '';
+		uploadingId = id;
+		try {
+			const updated = (await uploadEducationalFile(id, file)).data;
+			const idx = articles.items.findIndex((a) => a.id === id);
+			if (idx >= 0) articles.items[idx] = updated;
+		} catch {
+			error = t('Gagal mengunggah file artikel.');
+		} finally {
+			uploadingId = '';
+			input.value = '';
+		}
+	}
+
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
 		if (tone === 'red') return 'destructive';
@@ -111,19 +154,44 @@
 				<Button type="submit" disabled={creating} class="w-fit">{creating ? t('Membuat...') : t('Buat artikel')}</Button>
 			</form>
 			{#each articles.items as article}
-				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-					<div>
-						<strong class="block text-sm font-bold">{article.title}</strong>
-						<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} min read - {article.level} - {article.tags.join(' · ')}</span>
-					</div>
-					<div class="grid justify-items-end gap-2">
-						<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>
-						<div class="flex items-center gap-2">
-							<Button variant="link" size="sm" href={`/educational/articles/${article.id}`}>{t('Lihat')}</Button>
-							<Button size="sm" variant={article.status === 'Published' ? 'outline' : 'default'} disabled={article.status === 'Published' || publishing === article.id} onclick={() => publishArticle(article.id)}>{publishing === article.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
-							<Button size="sm" variant="destructive" disabled={deleting === article.id} onclick={() => removeArticle(article.id)}>{deleting === article.id ? '...' : t('Hapus')}</Button>
+				<div class="rounded-lg border bg-muted/30 p-3.5">
+					{#if editingId === article.id}
+						<div class="grid gap-2">
+							<Input placeholder={t('Judul artikel...')} bind:value={editTitle} />
+							<Textarea placeholder={t('Konten (Markdown)...')} bind:value={editContent} rows={3} />
+							{#if editError}
+								<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{editError}</p>
+							{/if}
+							<div class="flex gap-2">
+								<Button size="sm" disabled={savingEdit} onclick={() => saveArticle(article.id)}>{savingEdit ? t('Menyimpan...') : t('Simpan')}</Button>
+								<Button size="sm" variant="ghost" onclick={() => (editingId = '')}>{t('Batal')}</Button>
+							</div>
 						</div>
-					</div>
+					{:else}
+						<div class="flex items-center justify-between gap-3">
+							<div>
+								<strong class="block text-sm font-bold">{article.title}</strong>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} min read - {article.level} - {article.tags.join(' · ')}</span>
+							</div>
+							<div class="grid justify-items-end gap-2">
+								<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>
+								<div class="flex items-center gap-2">
+									<Button variant="link" size="sm" href={`/educational/articles/${article.id}`}>{t('Lihat')}</Button>
+									<Button size="sm" variant="outline" onclick={() => {
+										editingId = article.id;
+										editTitle = article.title;
+										editContent = article.content ?? '';
+									}}>{t('Ubah')}</Button>
+									<label class="cursor-pointer text-xs font-bold text-muted-foreground hover:underline" title={t('Unggah file')}>
+										{uploadingId === article.id ? t('Mengunggah...') : t('Unggah file')}
+										<input type="file" class="hidden" disabled={uploadingId !== ''} onchange={(e) => handleUploadFile(article.id, e)} />
+									</label>
+									<Button size="sm" variant={article.status === 'Published' ? 'outline' : 'default'} disabled={article.status === 'Published' || publishing === article.id} onclick={() => publishArticle(article.id)}>{publishing === article.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
+									<Button size="sm" variant="destructive" disabled={deleting === article.id} onclick={() => removeArticle(article.id)}>{deleting === article.id ? '...' : t('Hapus')}</Button>
+								</div>
+							</div>
+						</div>
+					{/if}
 				</div>
 			{/each}
 		</CardContent>
