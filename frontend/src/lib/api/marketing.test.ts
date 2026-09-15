@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getOrCreateMarketIntelligence, hasMarketIntelligence, getOrCreateProductPricing, hasProductPricing } from './marketing';
+import { getOrCreateMarketIntelligence, getOrCreateProductPricing } from './marketing';
 
 function jsonResponse(status: number, data: unknown) {
 	return {
@@ -63,15 +63,5 @@ describe('marketing getOrCreate fallback', () => {
 		const result = await getOrCreateProductPricing('P-1', { cogs_per_unit_idr: 5000, target_margin_percent: 20, target_country_code: 'JP' });
 		expect(result.exwPriceUsd).toBe(200);
 		expect(fetchMock).toHaveBeenCalledTimes(1);
-	});
-
-	it('hasMarketIntelligence & hasProductPricing meneruskan ke getter', async () => {
-		const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { data: {} }));
-		vi.stubGlobal('fetch', fetchMock);
-		await hasMarketIntelligence('P-1');
-		await hasProductPricing('P-1');
-		expect(fetchMock).toHaveBeenCalledTimes(2);
-		expect(String(fetchMock.mock.calls[0][0])).toMatch(/market-intelligence/);
-		expect(String(fetchMock.mock.calls[1][0])).toMatch(/pricing/);
 	});
 });

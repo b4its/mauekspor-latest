@@ -26,10 +26,6 @@ export async function getOrCreateMarketIntelligence(productId: string): Promise<
 	}
 }
 
-export function hasMarketIntelligence(productId: string) {
-	return getMarketIntelligence(productId);
-}
-
 // ---------- Pricing ----------
 export async function getOrCreateProductPricing(
 	productId: string,
@@ -40,8 +36,4 @@ export async function getOrCreateProductPricing(
 	} catch {
 		return (await createProductPricing(productId, payload)).data;
 	}
-}
-
-export function hasProductPricing(productId: string) {
-	return getProductPricing(productId);
 }
