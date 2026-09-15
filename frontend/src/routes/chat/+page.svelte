@@ -9,7 +9,8 @@
 		createChatSession,
 		deleteChatSession,
 		sendSessionMessage,
-		getChatSuggestions
+		getChatSuggestions,
+		getChatSession
 	} from '$lib/api/chat';
 	import type { ChatSession } from '$lib/api/chat';
 	import { t } from '$lib/i18n.svelte';
@@ -47,6 +48,19 @@
 	});
 
 	let active = $derived(sessions.find((s) => s.id === activeId) ?? null);
+
+	async function switchSession(id: string) {
+		if (id === activeId) return;
+		activeId = id;
+		error = '';
+		try {
+			const fresh = (await getChatSession(id)).data;
+			const idx = sessions.findIndex((s) => s.id === id);
+			if (idx >= 0) sessions[idx] = fresh;
+		} catch {
+			error = t('Tidak dapat memuat sesi.');
+		}
+	}
 
 	function roleLabel(role: string) {
 		const r = role.toLowerCase();
@@ -114,7 +128,7 @@
 			{/if}
 			{#each sessions as session}
 				<div class={`grid gap-1 rounded-lg border p-3 transition-colors ${session.id === activeId ? 'border-ring bg-primary/10' : ''}`}>
-					<button class="text-left" onclick={() => (activeId = session.id)}>
+					<button class="text-left" onclick={() => switchSession(session.id)}>
 						<strong class="block text-sm font-bold">{session.title}</strong>
 						<small class="text-xs text-muted-foreground">{session.messageCount ?? session.messages.length} {t('pesan')}</small>
 					</button>
