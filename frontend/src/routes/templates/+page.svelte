@@ -7,7 +7,7 @@
 	import { templates as seedTemplates } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { listTemplates, useTemplate } from '$lib/api/templates';
+	import { listTemplates, createTemplate, useTemplate } from '$lib/api/templates';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	
@@ -19,6 +19,12 @@
 	let templates = createRemoteList(listTemplates, seedTemplates);
 	let error = $state('');
 	let usedId = $state('');
+	let showCreate = $state(false);
+	let createSaving = $state(false);
+	let createError = $state('');
+	let newTitle = $state('');
+	let newCategory = $state<'Document' | 'Email' | 'Workflow' | 'Catalog'>('Document');
+	let newDescription = $state('');
 	let filteredTemplates = $derived(
 		templates.items.filter(
 			(item) =>
@@ -49,6 +55,26 @@
 			error = t('Gagal menerapkan template.');
 		}
 	}
+
+	async function handleCreate() {
+		createError = '';
+		if (!newTitle.trim()) {
+			createError = t('Judul template wajib diisi.');
+			return;
+		}
+		createSaving = true;
+		try {
+			await createTemplate({ title: newTitle.trim(), category: newCategory, description: newDescription.trim() });
+			templates.load();
+			showCreate = false;
+			newTitle = '';
+			newDescription = '';
+		} catch {
+			createError = t('Gagal membuat template.');
+		} finally {
+			createSaving = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -68,8 +94,35 @@
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={() => handleUse(templates.items[0]?.id ?? 't-001')}>{used ? t('Template used') : t('Use template')}</Button>
+			<Button variant="outline" onclick={() => (showCreate = !showCreate)}>{showCreate ? t('Batal') : t('Buat template')}</Button>
 			<Badge>{t('Ready')} {readyCount}</Badge>
 		</CardContent>
+		{#if showCreate}
+			<CardContent class="mt-4 grid gap-3 p-0 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Judul')}
+						<Input bind:value={newTitle} placeholder={t('Contoh: Sales Contract V2')} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kategori')}
+						<select bind:value={newCategory} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each filters.filter((f) => f !== 'All') as category}
+								<option value={category}>{category}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Deskripsi')}
+					<Input bind:value={newDescription} placeholder={t('Deskripsi singkat template...')} />
+				</label>
+				{#if createError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{createError}</p>
+				{/if}
+				<Button class="w-fit" disabled={createSaving} onclick={handleCreate}>{createSaving ? t('Menyimpan...') : t('Simpan template')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
