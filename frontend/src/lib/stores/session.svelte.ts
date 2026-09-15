@@ -1,4 +1,5 @@
 import { apiFetch } from '$lib/api/client';
+import { getSession, logout as logoutApi } from '$lib/api/auth';
 import type { SessionUser, LoginPayload, RegisterPayload, UserRole } from '$lib/api/auth';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -38,7 +39,7 @@ function hydrateSession(u: {
 
 export async function fetchSession(): Promise<boolean> {
 	try {
-		const res = await apiFetch<SessionUser>('/auth/me/');
+		const res = await getSession();
 		user = hydrateSession(res.data);
 		status = user ? 'authenticated' : 'unauthenticated';
 		return !!user;
@@ -67,7 +68,7 @@ export async function register(payload: RegisterPayload): Promise<void> {
 
 export async function logout(): Promise<void> {
 	try {
-		await apiFetch('/auth/logout/', { method: 'POST' });
+		await logoutApi();
 	} finally {
 		user = null;
 		status = 'unauthenticated';
