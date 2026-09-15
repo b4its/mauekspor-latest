@@ -7,7 +7,7 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { reanalyzeExportAnalysis, deleteExportAnalysis, getRegulationRecommendations, analysisPdfUrl } from '$lib/api/export-analysis';
+	import { reanalyzeExportAnalysis, deleteExportAnalysis, getRegulationRecommendations, runRegulationCheck, analysisPdfUrl } from '$lib/api/export-analysis';
 	import { updateProduct, getProduct } from '$lib/api/products';
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
 
@@ -32,6 +32,7 @@
 	let error = $state('');
 	let regs = $state<RegulationRecommendations | null>(null);
 	let showRegs = $state(false);
+	let regRunning = $state(false);
 
 	// ---------- Inline Compliance Editor ----------
 	let editMode = $state(false);
@@ -141,6 +142,20 @@
 			regs = null;
 		}
 	}
+
+	async function handleRunRegCheck() {
+		error = '';
+		regRunning = true;
+		try {
+			data.analysis = (await runRegulationCheck(data.analysis.id)).data;
+			showRegs = true;
+			regs = (await getRegulationRecommendations(data.analysis.id, 'id')).data;
+		} catch {
+			error = t('Gagal menjalankan pemeriksaan regulasi.');
+		} finally {
+			regRunning = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -185,6 +200,9 @@
 					<Button variant="outline" href={analysisPdfUrl(data.analysis.id)}>{t('Unduh PDF')}</Button>
 					<Button variant="outline" href={`/export-analysis/${data.analysis.id}/regulation-recommendations`}>{t('Lihat rekomendasi')}</Button>
 					<Button variant="outline" onclick={handleRegs}>{t('Panduan 10 bagian')}</Button>
+					<Button variant="outline" disabled={regRunning} onclick={handleRunRegCheck}>
+						{regRunning ? t('Memeriksa regulasi...') : t('Periksa regulasi')}
+					</Button>
 					<Button variant="outline" disabled={rerunning} onclick={handleRerun}>
 						{rerunning ? t('Menganalisis ulang...') : t('Analisis ulang')}
 					</Button>
