@@ -3590,56 +3590,6 @@ def create_hs_code(payload: sc.CreateHSCodePayload):
     return _one(record)
 
 
-@router.put("/hs-codes/{hs_code}/update/")
-def update_hs_code(hs_code: str, payload: dict):
-    record = db.get_by("hs_codes", hs_code=hs_code.replace(".", ""))
-    if not record:
-        raise HTTPException(404, "HS code not found")
-    for key in ("description", "description_id", "section", "keywords"):
-        if payload.get(key) is not None:
-            record[key] = payload[key]
-    record["updatedAt"] = "now"
-    return _one(record)
-
-
-@router.delete("/hs-codes/{hs_code}/delete/")
-def delete_hs_code(hs_code: str):
-    record = db.get_by("hs_codes", hs_code=hs_code.replace(".", ""))
-    if not record:
-        raise HTTPException(404, "HS code not found")
-    children = [c for c in db.all("hs_codes") if c.get("parent") == record["hs_code"]]
-    if children:
-        raise HTTPException(409, "HS code has children")
-    db.delete("hs_codes", record.get("id"))
-    return {"data": {"status": "deleted"}, "meta": {}}
-
-
-@router.post("/hs-codes/import/")
-def import_hs_codes_csv(file: UploadFile = File(...)):
-    import csv as _csv
-    content = file.file.read().decode("utf-8", errors="replace")
-    reader = _csv.DictReader(content.splitlines())
-    count = 0
-    for row in reader:
-        code = (row.get("hscode") or row.get("hs_code") or "").strip()
-        if not code:
-            continue
-        if db.get_by("hs_codes", hs_code=code):
-            continue
-        db.insert("hs_codes", {
-            "id": db.gen_id("hs_codes", "HS"),
-            "hs_code": code,
-            "description": row.get("description", ""),
-            "section": row.get("section", ""),
-            "parent": row.get("parent", ""),
-            "level": int(row["level"]) if str(row.get("level", "")).isdigit() else 0,
-            "keywords": [],
-            "createdAt": "now",
-        })
-        count += 1
-    return {"data": {"imported": count}, "meta": {}}
-
-
 # ----------------------------------------------------------------------------
 # ADMIN COUNTRIES & REGULATIONS
 # ----------------------------------------------------------------------------
