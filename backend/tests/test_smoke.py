@@ -18,7 +18,7 @@ def test_all_collections_listable():
             "/audit/", "/team/", "/templates/", "/automations/", "/integrations/",
             "/knowledge/", "/educational/", "/educational/articles/", "/calendar/",
             "/files/", "/messages/", "/reports/", "/billing/", "/support/",
-            "/api-keys/", "/chat/", "/export-analysis/",
+            "/api-keys/", "/export-analysis/",
         ]:
             res = c.get(f"/api/v1{path}")
             assert res.status_code == 200, f"{path} -> {res.status_code} {res.text[:120]}"

@@ -940,11 +940,6 @@ def get_my_buyer_profile():
     return _one(record)
 
 
-@router.get("/buyers/my-profile/")
-def get_my_buyer_profile_alias():
-    return get_my_buyer_profile()
-
-
 @router.put("/buyers/profile/{profile_id}/")
 def update_buyer_profile(profile_id: str, payload: sc.UpdateBuyerProfilePayload):
     record = db.get("buyer_profiles", profile_id)
@@ -1150,15 +1145,10 @@ def create_forwarder_profile(payload: sc.CreateForwarderProfilePayload):
 def get_my_forwarder_profile():
     record = db.get_by("forwarder_profiles", userId="current")
     if not record:
-        record = db.get_by("forwarder_profiles", userId="U-001")
+        record = db.get_by("forwarder_profiles", userId="FWD-003")
     if not record:
         raise HTTPException(404, "Forwarder profile not found")
     return _one(record)
-
-
-@router.get("/forwarders/my-profile/")
-def get_my_forwarder_profile_alias():
-    return get_my_forwarder_profile()
 
 
 @router.put("/forwarders/profile/{profile_id}/")
@@ -3124,29 +3114,6 @@ def revoke_api_key(key_id: str):
     if not record:
         raise HTTPException(404, "API key not found")
     record["status"] = "Revoked"
-    return _one(record)
-
-
-@router.get("/chat/")
-def list_chat():
-    return _list_query("chat_conversations")
-
-
-@router.post("/chat/{chat_id}/messages/")
-def send_chat_message(chat_id: str, payload: dict):
-    record = db.get("chat_conversations", chat_id)
-    if not record:
-        raise HTTPException(404, "Chat not found")
-    record.setdefault("messages", []).append({"role": "User", "text": payload.get("text", "")})
-    history = "\n".join(f"{m.get('role', '')}: {m.get('text', '')}" for m in record["messages"][-8:])
-    reply = ai.complete(
-        "You are MauEkspor Copilot, a trade assistant for Indonesian exporters. Answer concisely in Indonesian, grounded in the workspace context given.",
-        f"Conversation so far:\n{history}",
-        kind="chat_reply",
-    )
-    if reply:
-        record["messages"].append({"role": "AI", "text": reply})
-    record["updatedAt"] = "now"
     return _one(record)
 
 

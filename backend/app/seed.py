@@ -312,13 +312,6 @@ def seed_if_empty():
         "id": "AUD-1001", "time": "2026-08-06 10:42", "actor": "AI Copilot", "action": "Generated market insight",
         "module": "Markets", "entity": "MKT-SG-SNK", "severity": "Info", "detail": "Singapore route scored 91.",
     })
-    db.insert("chat_conversations", {
-        "id": "CHAT-001", "title": "Japan coffee compliance guidance", "status": "Active", "updatedAt": "2026-08-06 11:20",
-        "messages": [
-            {"role": "User", "text": "What is blocking the Japan coffee shipment?"},
-            {"role": "AI", "text": "Japanese label proof blocks quote approval."},
-        ],
-    })
 
     # ---------- Suppliers ----------
     db.insert("suppliers", {

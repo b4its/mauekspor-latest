@@ -276,7 +276,7 @@ def test_buyer_profile_crud():
             "company_name": "Test Importer", "preferred_product_categories": ["Coffee"],
         })
         assert r.status_code == 200, r.text
-        r = c.get("/api/v1/buyers/my-profile/")
+        r = c.get("/api/v1/buyers/profile/me/")
         assert r.status_code == 200, r.text
 
 
