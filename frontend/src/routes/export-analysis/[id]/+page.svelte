@@ -173,7 +173,7 @@
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 					{data.analysis.productName} to {data.analysis.destination}
 				</CardTitle>
-				<CardDescription class="mt-2">HS {data.analysis.hsCode} - {t('keyakinan klasifikasi')} {data.analysis.confidence}%.</CardDescription>
+				<CardDescription class="mt-2">HS <a class="font-bold text-primary hover:underline" href={`/hs-codes/${data.analysis.hsCode}`}>{data.analysis.hsCode}</a> - {t('keyakinan klasifikasi')} {data.analysis.confidence}%.</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Readiness score')}</span>
