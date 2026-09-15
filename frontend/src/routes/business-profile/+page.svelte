@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { businessProfiles as seedProfiles } from '$lib/data/trade';
-	import { listBusinessProfiles, updateCertifications } from '$lib/api/business-profile';
+	import { listBusinessProfiles, getBusinessProfile, updateCertifications } from '$lib/api/business-profile';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
@@ -14,7 +14,11 @@
 	$effect(() => {
 		profiles.load();
 	});
-	let profile = $derived(profiles.items[0] ?? seedProfiles[0]);
+	let selectedId = $state('');
+	let profile = $derived(profiles.items.find((p) => p.id === selectedId) ?? profiles.items[0] ?? seedProfiles[0]);
+	$effect(() => {
+		if (!selectedId && (profiles.items[0]?.id ?? '')) selectedId = profiles.items[0].id;
+	});
 	const certOptions = ['Halal', 'ISO 22000', 'HACCP', 'SVLK', 'Organic', 'Origin declaration', 'Nutrition facts'];
 	let saving = $state(false);
 	let certSaved = $state(false);
@@ -54,6 +58,25 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+
+	let detailLoading = $state(false);
+	let detailError = $state('');
+
+	async function selectProfile(id: string) {
+		selectedId = id;
+		detailError = '';
+		detailLoading = true;
+		try {
+			const res = await getBusinessProfile(id);
+			const fresh = res.data as (typeof seedProfiles)[number] & { certifications?: string[] };
+			const idx = profiles.items.findIndex((p) => p.id === id);
+			if (idx >= 0) profiles.items[idx] = fresh;
+		} catch {
+			detailError = t('Gagal memuat detail profil.');
+		} finally {
+			detailLoading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -61,6 +84,22 @@
 </svelte:head>
 
 <AppShell title="Business Profile" eyebrow={t('Identitas UMKM dan sertifikasi')}>
+	{#if profiles.items.length > 1}
+		<div class="flex flex-wrap gap-2">
+			{#each profiles.items as p}
+				<Button variant={p.id === profile.id ? 'default' : 'outline'} size="sm" onclick={() => selectProfile(p.id)}>
+					{p.companyName}
+					{#if detailLoading && p.id === selectedId}
+						<span class="ml-1.5 text-xs opacity-70">{t('Memuat...')}</span>
+					{/if}
+				</Button>
+			{/each}
+		</div>
+		{#if detailError}
+			<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{detailError}</p>
+		{/if}
+	{/if}
+
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
