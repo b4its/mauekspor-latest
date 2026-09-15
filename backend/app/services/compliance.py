@@ -353,10 +353,3 @@ def snapshot_product(product: dict) -> dict[str, Any]:
 def snapshot_regulations(country_code: str) -> list[dict]:
     """Snapshot regulasi negara pada saat analisis."""
     return country_data.get_regulations(country_code)
-
-
-def product_changed(product: dict, snapshot: dict) -> bool:
-    """True bila produk berubah sejak snapshot diambil."""
-    if not snapshot:
-        return False
-    return str(product.get("updatedAt", "")) != str(snapshot.get("updatedAt", ""))

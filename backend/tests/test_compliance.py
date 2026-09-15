@@ -130,18 +130,6 @@ def test_check_ingredient_empty_keywords_dilewati(monkeypatch):
     assert len(issues) == 0
 
 
-def test_product_changed_true_false():
-    product = {"id": "P-1", "name": "Kopi", "updatedAt": "2026-01-01"}
-    snapshot = {"id": "P-1", "name": "Kopi", "updatedAt": "2026-01-01"}
-    assert not compliance.product_changed(product, snapshot)
-    product["updatedAt"] = "2026-01-02"
-    assert compliance.product_changed(product, snapshot)
-
-
-def test_product_changed_snapshot_none():
-    assert compliance.product_changed({"id": "P-1"}, None) is False
-
-
 def test_ai_judge_returns_parsed(monkeypatch):
     monkeypatch.setattr(compliance.ai, "configured", lambda: True)
     monkeypatch.setattr(compliance.ai, "complete", lambda *a, **k: '[{"type": "Label", "severity": "major"}]')

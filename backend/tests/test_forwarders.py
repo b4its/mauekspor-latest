@@ -70,13 +70,6 @@ def test_get_recommendations_tanpa_match():
     assert recs == []
 
 
-def test_specialization_of_all():
-    _seed_forwarders()
-    specs = forwarders.specialization_of_all()
-    assert "ID-JP" in specs
-    assert "ID-DE" in specs
-
-
 def test_get_statistics():
     fwd = db.insert("forwarders", {"id": "FWD-1", "name": "NGL", "averageRating": 4.0})
     db.insert("forwarder_reviews", {"id": "RV-1", "forwarderId": "FWD-1", "rating": 5, "umkmId": "U-1"})

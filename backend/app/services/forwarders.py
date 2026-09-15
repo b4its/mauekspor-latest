@@ -40,13 +40,6 @@ def get_recommendations(destination_country: str, limit: int = 5) -> list[dict]:
     return candidates[:limit]
 
 
-def specialization_of_all() -> list[str]:
-    out = []
-    for fwd in db.all("forwarders"):
-        out.extend(str(x) for x in (fwd.get("specializationRoutes") or fwd.get("routes") or []))
-    return out
-
-
 def get_statistics(forwarder_id: str) -> dict[str, Any]:
     """Statistik rating: distribusi, kemitraan unik, tren 30 hari."""
     forwarder = db.get("forwarders", forwarder_id)

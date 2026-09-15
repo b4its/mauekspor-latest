@@ -241,40 +241,6 @@ def ai_container_optimization(
 
 
 # ---------------------------------------------------------------------------
-# Rekomendasi AI pricing
-# ---------------------------------------------------------------------------
-def ai_pricing_recommendation(product_name: str, exw: float, fob: float, cif: float, margin: float) -> dict[str, Any]:
-    text = ai.complete(
-        "You are an export pricing analyst. Return JSON with keys: recommendation (string), risk_level (Low/Medium/High), "
-        "market_position (string), price_adjustment_suggestion (string), competitive_insights (string).",
-        f"Product: {product_name}; EXW ${exw}, FOB ${fob}, CIF ${cif}, target margin {margin}%.",
-        kind="pricing",
-    )
-    parsed = ai.ask_json(
-        "You are an export pricing analyst. Return JSON with keys recommendation, risk_level, market_position, price_adjustment_suggestion, competitive_insights.",
-        f"Product: {product_name}; EXW ${exw}, FOB ${fob}, CIF ${cif}, target margin {margin}%.",
-        kind="pricing",
-    )
-    if parsed and isinstance(parsed, dict):
-        return {
-            "recommendation": str(parsed.get("recommendation", "Gunakan EXW/FOB/CIF yang dihitung.")),
-            "risk_level": str(parsed.get("risk_level", "Medium")),
-            "market_position": str(parsed.get("market_position", "Competitive")),
-            "price_adjustment_suggestion": str(parsed.get("price_adjustment_suggestion", "Pertahankan margin target.")),
-            "competitive_insights": str(parsed.get("competitive_insights", "Pantau kurs dan tarif freight.")),
-            "_raw": text or "",
-        }
-    return {
-        "recommendation": "Gunakan EXW/FOB/CIF yang dihitung sebagai patokan penawaran.",
-        "risk_level": "Medium",
-        "market_position": "Competitive",
-        "price_adjustment_suggestion": "Pertahankan margin target dan pantau kurs.",
-        "competitive_insights": "Compare against actual freight rates before locking the quote.",
-        "_raw": text or "",
-    }
-
-
-# ---------------------------------------------------------------------------
 # Full costing
 # ---------------------------------------------------------------------------
 def calculate_full_costing(
