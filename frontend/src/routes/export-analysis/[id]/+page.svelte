@@ -197,6 +197,7 @@
 					<CardDescription class="mt-1.5 max-w-2xl leading-relaxed">{data.analysis.summary}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
+					<Button variant="outline" href={`/countries/${data.analysis.destination}`}>{t('Regulasi negara')}</Button>
 					<Button variant="outline" href={analysisPdfUrl(data.analysis.id)}>{t('Unduh PDF')}</Button>
 					<Button variant="outline" href={`/export-analysis/${data.analysis.id}/regulation-recommendations`}>{t('Lihat rekomendasi')}</Button>
 					<Button variant="outline" onclick={handleRegs}>{t('Panduan 10 bagian')}</Button>
