@@ -94,10 +94,6 @@ export function generateCatalogDescription(id: string) {
 }
 
 // ---------- Public / forwarder catalog ----------
-export function listPublicCatalogs() {
-	return apiFetch<Catalog[]>('/catalogs/public/');
-}
-
 export function listForwarderCatalogs() {
 	return apiFetch<Catalog[]>('/catalogs/forwarder/');
 }
@@ -172,10 +168,6 @@ export function updateVariantType(catalogId: string, typeId: string, payload: Re
 
 export function deleteVariantType(catalogId: string, typeId: string) {
 	return apiFetch<{ status: string }>(`/catalogs/${catalogId}/variant-types/${typeId}/`, { method: 'DELETE' });
-}
-
-export function listVariantOptions(catalogId: string, typeId: string) {
-	return apiFetch<VariantOption[]>(`/catalogs/${catalogId}/variant-types/${typeId}/options/`);
 }
 
 export function addVariantOption(catalogId: string, typeId: string, optionName: string) {

@@ -8,7 +8,6 @@ import {
 	publishCatalog,
 	unpublishCatalog,
 	generateCatalogDescription,
-	listPublicCatalogs,
 	listForwarderCatalogs,
 	createCatalogPricing,
 	createCatalogMarketIntelligence,
@@ -97,12 +96,6 @@ describe('catalogs API contract', () => {
 		const fetchMock = mockApi();
 		await generateCatalogDescription('CAT-1');
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/catalogs\/CAT-1\/generate-description\/$/);
-	});
-
-	it('listPublicCatalogs -> GET /catalogs/public/', async () => {
-		const fetchMock = mockApi();
-		await listPublicCatalogs();
-		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/catalogs\/public\/$/);
 	});
 
 	it('listForwarderCatalogs -> GET /catalogs/forwarder/', async () => {
