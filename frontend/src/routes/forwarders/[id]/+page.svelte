@@ -6,8 +6,8 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
-import { requestForwarderQuote, getForwarderStatistics, createForwarderReview } from '$lib/api/forwarders';
-import type { ForwarderStatistics } from '$lib/api/forwarders';
+import { requestForwarderQuote, getForwarderStatistics, createForwarderReview, updateForwarderReview, deleteForwarderReview } from '$lib/api/forwarders';
+import type { ForwarderStatistics, ForwarderReview } from '$lib/api/forwarders';
 import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 
 	let { data } = $props();
@@ -19,6 +19,12 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 	let reviewText = $state('');
 	let submitting = $state(false);
 	let submitted = $state(false);
+	let editingId = $state('');
+	let editingRating = $state(5);
+	let editingText = $state('');
+	let savingEdit = $state(false);
+	let editError = $state('');
+	let deletingId = $state('');
 
 	$effect(() => {
 		getForwarderStatistics(data.forwarder.id)
@@ -52,11 +58,44 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 		try {
 			await createForwarderReview(data.forwarder.id, { rating, review_text: reviewText });
 			submitted = true;
+			reviewText = '';
 			stats = (await getForwarderStatistics(data.forwarder.id)).data;
 		} catch {
 			error = t('Gagal mengirim review.');
 		} finally {
 			submitting = false;
+		}
+	}
+
+	async function handleEditReview(review: ForwarderReview) {
+		editError = '';
+		if (!Number.isFinite(editingRating) || editingRating < 1 || editingRating > 5) {
+			editError = t('Rating harus antara 1 dan 5.');
+			return;
+		}
+		savingEdit = true;
+		try {
+			await updateForwarderReview(data.forwarder.id, review.id!, { rating: editingRating, review_text: editingText });
+			editingId = '';
+			submitted = true;
+			stats = (await getForwarderStatistics(data.forwarder.id)).data;
+		} catch {
+			editError = t('Gagal memperbarui review.');
+		} finally {
+			savingEdit = false;
+		}
+	}
+
+	async function handleDeleteReview(review: ForwarderReview) {
+		editError = '';
+		deletingId = review.id ?? '';
+		try {
+			await deleteForwarderReview(data.forwarder.id, review.id!);
+			stats = (await getForwarderStatistics(data.forwarder.id)).data;
+		} catch {
+			editError = t('Gagal menghapus review.');
+		} finally {
+			deletingId = '';
 		}
 	}
 </script>
@@ -150,6 +189,51 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 					</p>
 				</CardContent>
 			</Card>
+
+			{#if (stats.recentReviews ?? []).length > 0}
+				<Card>
+					<CardHeader><CardTitle>{t('Ulasan terbaru')}</CardTitle></CardHeader>
+					<CardContent class="grid gap-2.5">
+						{#each stats.recentReviews ?? [] as review}
+							<div class="rounded-lg border bg-muted/30 p-3.5">
+								<div class="flex items-center justify-between gap-2">
+									<strong class="text-sm font-bold">
+										{review.rating} ★
+										<span class="ml-1 font-normal text-muted-foreground">{review.reviewerName ?? t('Anonim')} · {review.createdAt ?? '—'}</span>
+									</strong>
+									<div class="flex gap-2">
+										<Button size="sm" variant="outline" onclick={() => {
+											editingId = review.id ?? '';
+											editingRating = review.rating;
+											editingText = review.reviewText ?? '';
+										}}>{t('Ubah')}</Button>
+										<Button size="sm" variant="outline" class="text-destructive hover:text-destructive" disabled={deletingId !== ''} onclick={() => handleDeleteReview(review)}>
+											{deletingId === review.id ? t('Menghapus...') : t('Hapus')}
+										</Button>
+									</div>
+								</div>
+								{#if editingId === review.id}
+									<div class="mt-3 grid gap-2">
+										<select class="h-9 rounded-md border bg-background px-2 text-sm" bind:value={editingRating}>
+											{#each [5, 4, 3, 2, 1] as r}<option value={r}>{r} ★</option>{/each}
+										</select>
+										<Input placeholder={t('Tulis ulasan...')} bind:value={editingText} />
+										{#if editError}
+											<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{editError}</p>
+										{/if}
+										<div class="flex gap-2">
+											<Button size="sm" disabled={savingEdit} onclick={() => handleEditReview(review)}>{savingEdit ? t('Menyimpan...') : t('Simpan')}</Button>
+											<Button size="sm" variant="ghost" onclick={() => (editingId = '')}>{t('Batal')}</Button>
+										</div>
+									</div>
+								{:else if review.reviewText}
+									<p class="mt-1.5 text-sm text-muted-foreground">{review.reviewText}</p>
+								{/if}
+							</div>
+						{/each}
+					</CardContent>
+				</Card>
+			{/if}
 		{/if}
 
 		<Card>
