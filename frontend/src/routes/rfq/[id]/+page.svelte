@@ -6,9 +6,11 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { createQuotation } from '$lib/api/quotations';
+	import { shortlistRFQMatch } from '$lib/api/rfq';
 
 	let { data } = $props();
 	let shortlisted = $state('');
+	let shortlisting = $state('');
 	let quoteCreated = $state(false);
 	let creatingQuote = $state(false);
 	let error = $state('');
@@ -18,6 +20,20 @@
 		if (tone === 'red') return 'destructive';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
+	}
+
+	async function handleShortlist(supplier: string) {
+		error = '';
+		shortlisting = supplier;
+		try {
+			const res = await shortlistRFQMatch(data.rfq.id, supplier);
+			data.rfq = res.data;
+			shortlisted = supplier;
+		} catch {
+			error = t('Gagal menambahkan supplier ke shortlist.');
+		} finally {
+			shortlisting = '';
+		}
 	}
 
 	async function handleCreateQuote() {
@@ -99,7 +115,7 @@
 						</div>
 						<div class="grid justify-items-end gap-2">
 							<b class="text-2xl font-bold tracking-tight">{match.score}%</b>
-							<Button variant="outline" size="sm" onclick={() => (shortlisted = match.supplier)}>{t('Shortlist')}</Button>
+							<Button variant="outline" size="sm" disabled={shortlisting !== ''} onclick={() => handleShortlist(match.supplier)}>{shortlisting === match.supplier ? t('Shortlisting...') : t('Shortlist')}</Button>
 						</div>
 					</div>
 				{/each}
