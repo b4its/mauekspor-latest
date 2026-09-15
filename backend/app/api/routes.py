@@ -2551,13 +2551,6 @@ def export_audit_csv():
     )
 
 
-@router.post("/audit/export/")
-def export_audit():
-    # Sinkron dengan endpoint CSV nyata; tetap pertahankan kontrak lama
-    events = db.all("audit_events")
-    return {"data": {"status": "queued", "count": len(events), "url": "/api/v1/audit/export.csv"}, "meta": {}}
-
-
 @router.get("/team/")
 def list_team():
     return _list_query("team_members")

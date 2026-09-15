@@ -6,7 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { auditEvents } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
-	import { listAuditEvents, exportAuditTrail } from '$lib/api/audit';
+	import { listAuditEvents } from '$lib/api/audit';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
@@ -14,9 +14,6 @@
 	const filters = ['All', 'Info', 'Warning', 'Critical'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let exported = $state(false);
-	let exporting = $state(false);
-	let error = $state('');
 
 	let events = createRemoteList(listAuditEvents, auditEvents);
 	$effect(() => {
@@ -38,19 +35,6 @@
 		return 'secondary';
 	}
 
-	async function handleExport() {
-		error = '';
-		exporting = true;
-		try {
-			await exportAuditTrail();
-			exported = true;
-		} catch {
-			error = t('Gagal mengekspor audit trail.');
-		} finally {
-			exporting = false;
-		}
-	}
-
 	const csvUrl = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'}/audit/export.csv`;
 </script>
 
@@ -66,25 +50,13 @@
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Keep a searchable event trail for compliance, document approvals, supplier risk, payment reminders, and AI-generated insights.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleExport} disabled={exporting}>{exported ? t('Audit exported') : exporting ? t('Exporting...') : t('Export audit trail')}</Button>
 			<Button variant="outline" href={csvUrl}>{t('Download CSV')}</Button>
 			<Badge variant="outline">{t('Events')} {events.items.length}</Badge>
 		</CardContent>
 	</Card>
 
-	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
-	{/if}
-
 	{#if events.error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{events.error}</p>
-	{/if}
-
-	{#if exported}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Audit export prepared.')}</strong>
-			<span class="block text-sm text-muted-foreground">{t('Export dijalankan di backend.')}</span>
-		</div>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">

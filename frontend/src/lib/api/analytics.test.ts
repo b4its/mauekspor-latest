@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getAnalyticsOverview, getAnalyticsLanes, refreshAnalytics } from './analytics';
-import { listAuditEvents, exportAuditTrail } from './audit';
+import { listAuditEvents } from './audit';
 import { listMessages, sendMessage, resolveMessageThread } from './messages';
 import { listMarketInsights, getMarketInsight, createMarketInsight, refreshMarketInsight } from './markets';
 import { listRFQs, getRFQ, createRFQ, shortlistRFQMatch } from './rfq';
@@ -50,13 +50,6 @@ describe('analytics & audit API contract', () => {
 		const fetchMock = mockApi();
 		await listAuditEvents();
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/audit\/$/);
-	});
-
-	it('exportAuditTrail -> POST /audit/export/', async () => {
-		const fetchMock = mockApi();
-		await exportAuditTrail();
-		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/audit\/export\/$/);
-		expect((fetchMock.mock.calls[0][1] as RequestInit).method).toBe('POST');
 	});
 });
 
