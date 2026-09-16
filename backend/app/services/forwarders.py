@@ -35,6 +35,8 @@ def get_recommendations(destination_country: str, limit: int = 5) -> list[dict]:
         coverage = str(fwd.get("coverage", "")).lower()
         lanes = " ".join(str(x).lower() for x in (fwd.get("lanes") or []))
         if route in specialization or code in coverage.upper() or (country_name and country_name in coverage) or (country_name and country_name in lanes):
+            # Pastikan rating & jumlah review selalu tersedia (hitung dari review).
+            recalculate_rating(fwd)
             candidates.append(fwd)
     candidates.sort(key=lambda f: (float(f.get("averageRating", 0) or 0), f.get("totalReviews", 0) or 0), reverse=True)
     return candidates[:limit]

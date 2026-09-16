@@ -79,6 +79,47 @@ def _one(record) -> dict:
     return {"data": _serialize(record), "meta": {}}
 
 
+# Map field snake_case (kanonik) -> camelCase (dibaca frontend).
+_PROFILE_CAMEL = {
+    "company_name": "companyName",
+    "company_description": "companyDescription",
+    "contact_info": "contactInfo",
+    "preferred_product_categories": "preferredProductCategories",
+    "preferred_product_categories_description": "preferredProductCategoriesDescription",
+    "source_countries": "sourceCountries",
+    "source_countries_description": "sourceCountriesDescription",
+    "business_type": "businessType",
+    "business_type_description": "businessTypeDescription",
+    "annual_import_volume": "annualImportVolume",
+    "annual_import_volume_description": "annualImportVolumeDescription",
+    "specialization_routes": "specializationRoutes",
+    "service_types": "serviceTypes",
+}
+
+
+def _profile_payload(data: dict) -> dict:
+    """Normalisasi payload profil: pilih nilai snake_case, jatuh ke camelCase bila kosong."""
+    merged = {}
+    for snake, camel in _PROFILE_CAMEL.items():
+        if data.get(snake) not in (None, "", [], {}):
+            merged[snake] = data[snake]
+        elif data.get(camel) not in (None, "", [], {}):
+            merged[snake] = data[camel]
+    for k, v in data.items():
+        if k not in _PROFILE_CAMEL.values() and k not in _PROFILE_CAMEL and k not in merged:
+            merged[k] = v
+    return merged
+
+
+def _profile_one(record) -> dict:
+    db.save(record)
+    out = _serialize(record)
+    for k, alias in _PROFILE_CAMEL.items():
+        if k in record and alias not in out:
+            out[alias] = record[k]
+    return {"data": out, "meta": {}}
+
+
 def _notify(title: str, description: str, module: str, severity: str = "Info", href: str = "") -> None:
     """Buat notifikasi internal (dipanggil pada aksi penting)."""
     db.insert("notifications", {
@@ -928,19 +969,19 @@ def dashboard_summary():
 # ----------------------------------------------------------------------------
 @router.post("/buyers/profile/")
 def create_buyer_profile(payload: sc.CreateBuyerProfilePayload):
-    data = payload.model_dump()
+    data = _profile_payload(payload.model_dump())
     existing = db.get_by("buyer_profiles", userId="current")
     if existing:
         existing.update(data)
         existing["updatedAt"] = "now"
-        return _one(existing)
+        return _profile_one(existing)
     record = db.insert("buyer_profiles", {
         "id": db.gen_id("buyer_profiles", "BYP"),
         "userId": "current",
         **data,
         "createdAt": "now",
     })
-    return _one(record)
+    return _profile_one(record)
 
 
 @router.get("/buyers/profile/me/")
@@ -950,7 +991,7 @@ def get_my_buyer_profile():
         record = db.get_by("buyer_profiles", userId="U-003")
     if not record:
         raise HTTPException(404, "Buyer profile not found")
-    return _one(record)
+    return _profile_one(record)
 
 
 @router.put("/buyers/profile/{profile_id}/")
@@ -958,10 +999,10 @@ def update_buyer_profile(profile_id: str, payload: sc.UpdateBuyerProfilePayload)
     record = db.get("buyer_profiles", profile_id)
     if not record:
         raise HTTPException(404, "Buyer profile not found")
-    data = payload.model_dump()
+    data = _profile_payload(payload.model_dump())
     record.update(data)
     record["updatedAt"] = "now"
-    return _one(record)
+    return _profile_one(record)
 
 
 @router.get("/buyers/")
@@ -1137,12 +1178,12 @@ def get_matched_umkm(request_id: str):
 # (rute statis profile/rekomendasi didefinisikan sebelum route parameterized)
 @router.post("/forwarders/profile/")
 def create_forwarder_profile(payload: sc.CreateForwarderProfilePayload):
-    data = payload.model_dump()
+    data = _profile_payload(payload.model_dump())
     existing = db.get_by("forwarder_profiles", userId="current")
     if existing:
         existing.update(data)
         existing["updatedAt"] = "now"
-        return _one(existing)
+        return _profile_one(existing)
     record = db.insert("forwarder_profiles", {
         "id": db.gen_id("forwarder_profiles", "FWP"),
         "userId": "current",
@@ -1151,7 +1192,7 @@ def create_forwarder_profile(payload: sc.CreateForwarderProfilePayload):
         "totalReviews": 0,
         "createdAt": "now",
     })
-    return _one(record)
+    return _profile_one(record)
 
 
 @router.get("/forwarders/profile/me/")
@@ -1161,7 +1202,7 @@ def get_my_forwarder_profile():
         record = db.get_by("forwarder_profiles", userId="FWD-003")
     if not record:
         raise HTTPException(404, "Forwarder profile not found")
-    return _one(record)
+    return _profile_one(record)
 
 
 @router.put("/forwarders/profile/{profile_id}/")
@@ -1169,12 +1210,10 @@ def update_forwarder_profile(profile_id: str, payload: sc.UpdateForwarderProfile
     record = db.get("forwarder_profiles", profile_id)
     if not record:
         raise HTTPException(404, "Forwarder profile not found")
-    data = payload.model_dump()
-    for key in ("companyName", "contactInfo", "specializationRoutes", "serviceTypes"):
-        if data.get(key) is not None:
-            record[key] = data[key]
+    data = _profile_payload(payload.model_dump())
+    record.update(data)
     record["updatedAt"] = "now"
-    return _one(record)
+    return _profile_one(record)
 
 
 @router.get("/forwarders/recommendations/")
@@ -1185,12 +1224,16 @@ def forwarder_recommendations(destination_country: str):
 
 @router.get("/forwarders/")
 def list_forwarders(search: str = "", status: str = "", min_rating: float = 0, limit: int = 0, offset: int = 0):
+    from app.services.forwarders import recalculate_rating
     items = db.all("forwarders")
     if search:
         q = search.lower()
         items = [r for r in items if q in str(r.get("name", "")).lower() or q in str(r.get("coverage", "")).lower()]
     if status:
         items = [r for r in items if str(r.get("status", "")).lower() == status.lower()]
+    # Pastikan rating & jumlah review selalu tersedia untuk UI.
+    for r in items:
+        recalculate_rating(r)
     if min_rating:
         items = [r for r in items if float(r.get("averageRating", 0) or 0) >= min_rating]
     total = len(items)
@@ -1204,6 +1247,8 @@ def get_forwarder(forwarder_id: str):
     record = db.get("forwarders", forwarder_id)
     if not record:
         raise HTTPException(404, "Forwarder not found")
+    from app.services.forwarders import recalculate_rating
+    recalculate_rating(record)
     return _one(record)
 
 
@@ -2113,7 +2158,12 @@ def get_quotation(quotation_id: str):
 @router.post("/quotations/")
 def create_quotation(payload: sc.CreateQuotationPayload):
     data = payload.model_dump()
-    data.update({"id": db.gen_id("quotations", "Q"), "status": "Draft", "currency": "USD", "value": 0, "costLines": [], "updatedAt": "now"})
+    data["id"] = db.gen_id("quotations", "Q")
+    data.setdefault("status", "Draft")
+    data.setdefault("currency", "USD")
+    data.setdefault("value", 0)
+    data.setdefault("costLines", [])
+    data["updatedAt"] = "now"
     return _one(db.insert("quotations", data))
 
 

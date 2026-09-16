@@ -128,8 +128,18 @@ class CreateQuotationPayload(BaseModel):
     projectId: str = ""
     productId: str = ""
     buyerName: str = ""
+    # Field tambahan yang dikirim frontend & seed data
+    rfqId: str = ""
+    buyer: str = ""
+    supplier: str = ""
+    value: float = 0
+    currency: str = "USD"
     incoterm: str = "FOB"
     validUntil: str = ""
+    margin: float = 0
+    notes: str = ""
+    costLines: list = Field(default_factory=list)
+    status: str = "Draft"
 
 
 # ---------- Orders ----------
@@ -139,6 +149,16 @@ class CreateOrderPayload(BaseModel):
     buyerName: str = ""
     value: float = 0
     incoterm: str = "FOB"
+    # Field tambahan yang dikirim frontend & seed data
+    buyer: str = ""
+    supplier: str = ""
+    currency: str = "USD"
+    paymentTerms: str = ""
+    deliveryWindow: str = ""
+    readiness: int = 0
+    status: str = "Draft"
+    lines: list = Field(default_factory=list)
+    checklist: list = Field(default_factory=list)
 
 
 # ---------- Compliance ----------
@@ -317,17 +337,25 @@ class CreateHSCodePayload(BaseModel):
 
 # ---------- Buyer profiles ----------
 class CreateBuyerProfilePayload(BaseModel):
-    company_name: str
-    company_description: str = ""
-    contact_info: dict = Field(default_factory=dict)
-    preferred_product_categories: list[str] = Field(default_factory=list)
-    preferred_product_categories_description: str = ""
-    source_countries: list[str] = Field(default_factory=list)
-    source_countries_description: str = ""
-    business_type: str = ""
-    business_type_description: str = ""
-    annual_import_volume: str = ""
-    annual_import_volume_description: str = ""
+    # Terima BOTH snake_case (referensi lama/tests) dan camelCase (frontend).
+    company_name: Optional[str] = None
+    companyName: Optional[str] = None
+    company_description: Optional[str] = None
+    companyDescription: Optional[str] = None
+    contact_info: Optional[dict] = None
+    contactInfo: Optional[dict] = None
+    preferred_product_categories: Optional[list] = None
+    preferredProductCategories: Optional[list] = None
+    preferred_product_categories_description: Optional[str] = None
+    source_countries: Optional[list] = None
+    sourceCountries: Optional[list] = None
+    source_countries_description: Optional[str] = None
+    business_type: Optional[str] = None
+    businessType: Optional[str] = None
+    business_type_description: Optional[str] = None
+    annual_import_volume: Optional[str] = None
+    annualImportVolume: Optional[str] = None
+    annual_import_volume_description: Optional[str] = None
 
 
 class UpdateBuyerProfilePayload(CreateBuyerProfilePayload):
@@ -345,10 +373,15 @@ class UpdateBuyerRequestStatusPayload(BaseModel):
 
 # ---------- Forwarder profiles & reviews ----------
 class CreateForwarderProfilePayload(BaseModel):
-    company_name: str
-    contact_info: dict = Field(default_factory=dict)
-    specialization_routes: list[str] = Field(default_factory=list)
-    service_types: list[str] = Field(default_factory=list)
+    # Terima BOTH snake_case (referensi lama/tests) dan camelCase (frontend).
+    company_name: Optional[str] = None
+    companyName: Optional[str] = None
+    contact_info: Optional[dict] = None
+    contactInfo: Optional[dict] = None
+    specialization_routes: Optional[list] = None
+    specializationRoutes: Optional[list] = None
+    service_types: Optional[list] = None
+    serviceTypes: Optional[list] = None
 
 
 class UpdateForwarderProfilePayload(CreateForwarderProfilePayload):
