@@ -1300,6 +1300,7 @@ const dictionary: Record<string, Entry> = {
 	Products: { id: 'Produk', en: 'Products' },
 	'Export Analysis': { id: 'Analisis Ekspor', en: 'Export Analysis' },
 	Markets: { id: 'Pasar', en: 'Markets' },
+	Countries: { id: 'Negara', en: 'Countries' },
 	Catalogs: { id: 'Katalog', en: 'Catalogs' },
 	Commercial: { id: 'Komersial', en: 'Commercial' },
 	Buyers: { id: 'Pembeli', en: 'Buyers' },

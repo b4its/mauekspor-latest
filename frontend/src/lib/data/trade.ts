@@ -718,6 +718,7 @@ export const navGroups: NavGroup[] = [
 			{ label: 'Products', href: '/products' },
 			{ label: 'Export Analysis', href: '/export-analysis' },
 			{ label: 'Markets', href: '/markets' },
+			{ label: 'Countries', href: '/countries' },
 			{ label: 'Catalogs', href: '/catalogs' }
 		]
 	},
@@ -2102,4 +2103,29 @@ export const activities: ActivityItem[] = [
 		time: '3 hours ago',
 		tone: 'blue'
 	}
+];
+
+// ---------- Seed direktori negara (fallback saat server offline) ----------
+export type CountrySeed = {
+	country_code: string;
+	country_name: string;
+	region: string;
+	subregion?: string;
+	customs_system?: string;
+	has_details?: boolean;
+	risk_level?: string;
+	regulationsCount?: number;
+};
+
+export const seedCountries: CountrySeed[] = [
+	{ country_code: 'ID', country_name: 'Indonesia', region: 'Asia', subregion: 'South-Eastern Asia', customs_system: 'ASEAN', has_details: true, risk_level: 'Moderate', regulationsCount: 9 },
+	{ country_code: 'JP', country_name: 'Japan', region: 'Asia', subregion: 'Eastern Asia', customs_system: 'PRODCOM', has_details: true, risk_level: 'Moderate', regulationsCount: 8 },
+	{ country_code: 'US', country_name: 'United States', region: 'Americas', subregion: 'Northern America', customs_system: 'PRODCOM', has_details: true, risk_level: 'Elevated', regulationsCount: 8 },
+	{ country_code: 'CN', country_name: 'China', region: 'Asia', subregion: 'Eastern Asia', customs_system: 'PRODCOM', has_details: true, risk_level: 'Elevated', regulationsCount: 7 },
+	{ country_code: 'KR', country_name: 'South Korea', region: 'Asia', subregion: 'Eastern Asia', customs_system: 'PRODCOM', has_details: true, risk_level: 'Moderate', regulationsCount: 8 },
+	{ country_code: 'DE', country_name: 'Germany', region: 'Europe', subregion: 'Western Europe', customs_system: 'EU', has_details: true, risk_level: 'Moderate', regulationsCount: 7 },
+	{ country_code: 'GB', country_name: 'United Kingdom', region: 'Europe', subregion: 'Northern Europe', customs_system: 'PRODCOM', has_details: true, risk_level: 'Moderate', regulationsCount: 7 },
+	{ country_code: 'CA', country_name: 'Canada', region: 'Americas', subregion: 'Northern America', customs_system: 'PRODCOM', has_details: true, risk_level: 'Moderate', regulationsCount: 6 },
+	{ country_code: 'AU', country_name: 'Australia', region: 'Oceania', subregion: 'Australia and New Zealand', customs_system: 'PRODCOM', has_details: true, risk_level: 'Moderate', regulationsCount: 7 },
+	{ country_code: 'SG', country_name: 'Singapore', region: 'Asia', subregion: 'South-Eastern Asia', customs_system: 'ASEAN', has_details: true, risk_level: 'Low', regulationsCount: 6 },
 ];

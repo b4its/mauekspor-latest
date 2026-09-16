@@ -80,6 +80,7 @@
 		'Export Analysis': ChartLineIcon,
 		Compliance: ShieldCheckIcon,
 		Markets: GlobeIcon,
+		Countries: GlobeIcon,
 		Catalogs: FolderOpenIcon,
 		Buyers: ContactIcon,
 		'Buyer Requests': ClipboardListIcon,
