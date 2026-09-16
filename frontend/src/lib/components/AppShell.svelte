@@ -160,7 +160,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 						</Breadcrumb.Item>
 						<Breadcrumb.Separator class="hidden sm:block" />
 						<Breadcrumb.Item>
-							<Breadcrumb.Page class="truncate text-base font-semibold tracking-tight sm:text-lg">{title}</Breadcrumb.Page>
+							<Breadcrumb.Page class="truncate font-display text-base font-black tracking-tight text-[#0b1d3a] sm:text-lg dark:text-white">{title}</Breadcrumb.Page>
 						</Breadcrumb.Item>
 					</Breadcrumb.List>
 				</Breadcrumb.Root>
