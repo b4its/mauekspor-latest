@@ -1,8 +1,16 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Path absolut ke .env di dalam direktori backend, agar konfigurasi terbaca
+# walau proses di-start dari direktori kerja mana pun (mis. via systemd/dokker).
+_ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="MAUEKSPOR_", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=str(_ENV_FILE), env_prefix="MAUEKSPOR_", extra="ignore"
+    )
 
     app_name: str = "MauEkspor API"
     api_version: str = "0.2.0"

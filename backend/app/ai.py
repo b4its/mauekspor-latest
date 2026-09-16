@@ -13,16 +13,22 @@ mampu jatuh-kembali ke behaviour statis lama.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
+from pathlib import Path
 from typing import Any
 
 import httpx
 from dotenv import load_dotenv
 
-# Muat .env ke environment sebelum membaca konfigurasi AI.
+logger = logging.getLogger("mauekspor.ai")
+
+# Muat .env secara eksplisit dari direktori backend (bukan dari CWD), sehingga
+# mode remote selalu terpakai walau server di-start dari direktori lain.
 # Contekan: nilai di env OS tidak akan ditimpa (override tetap env OS menang).
-load_dotenv()
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(_BACKEND_DIR / ".env")
 
 MOCK = "mock"
 REMOTE = "remote"
@@ -84,12 +90,34 @@ def _mock(kind: str) -> str | None:
     return json.dumps(output, ensure_ascii=False)
 
 
+# Pola konten balasan yang sebenarnya error dari provider (HTTP 200 tapi
+# berisi pesan kegagalan, mis. "[qoder error 403: {...}]").
+_ERROR_CONTENT_PATTERNS: tuple[str, ...] = (
+    "[qoder error",
+    "[error",
+    "error 401",
+    "error 402",
+    "error 403",
+    "error 429",
+    "insufficient_quota",
+    "invalid api key",
+    "rate limit",
+    "timed out",
+)
+
+
+def _looks_like_error(content: str) -> bool:
+    lowered = content.lower()
+    return any(pattern in lowered for pattern in _ERROR_CONTENT_PATTERNS)
+
+
 # ---------------------------------------------------------------------------
 # Remote provider (OpenAI-compatible)
 # ---------------------------------------------------------------------------
 def _remote(system: str, user: str) -> str | None:
     api_key = os.environ.get("MAUEKSPOR_AI_API_KEY", "").strip()
     if not api_key:
+        logger.warning("AI remote mode dipilih tapi MAUEKSPOR_AI_API_KEY kosong")
         return None
     base_url = os.environ.get("MAUEKSPOR_AI_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
     model = os.environ.get("MAUEKSPOR_AI_MODEL", DEFAULT_MODEL)
@@ -111,9 +139,23 @@ def _remote(system: str, user: str) -> str | None:
         )
         response.raise_for_status()
         body = response.json()
-        return body["choices"][0]["message"]["content"]
-    except Exception:
+        content = body["choices"][0]["message"]["content"]
+    except Exception as exc:
+        logger.warning("AI remote request gagal (%s) untuk %s", type(exc).__name__, base_url)
         return None
+
+    if not content or not str(content).strip():
+        logger.warning("AI remote mengembalikan konten kosong (%s)", base_url)
+        return None
+    if _looks_like_error(str(content)):
+        logger.warning("AI remote mengembalikan konten error: %.120s", str(content))
+        return None
+    return str(content)
+
+
+def fallback(kind: str) -> str | None:
+    """Balasan statis (mock) — dipakai pemanggil saat mode remote gagal."""
+    return _mock(kind)
 
 
 # ---------------------------------------------------------------------------

@@ -2,8 +2,11 @@ services:
   backend:
     build: ./backend
     container_name: mauekspor-backend
-    ports:
-      - "8000:8000"
+    profiles: ["full"]
+    # Host network: backend memakai network stack host sehingga bisa menjangkau
+    # AI server lokal (localhost:20128) dan menghindari firewall Docker bridge
+    # yang memblokir container->host. Backend langsung bind 0.0.0.0:8000 di host.
+    network_mode: host
     environment:
       MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
       MAUEKSPOR_DATABASE_URL: sqlite:///./data/mauekspor.db
@@ -11,7 +14,7 @@ services:
       MAUEKSPOR_CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
       MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-mock}
       MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-}
-      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-https://api.openai.com/v1}
+      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://localhost:20128/v1}
       MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-gpt-4o-mini}
     volumes:
       - backend-data:/app/data
@@ -24,6 +27,7 @@ services:
       args:
         VITE_API_BASE_URL: http://localhost:8000/api/v1
     container_name: mauekspor-frontend
+    profiles: ["full"]
     depends_on:
       - backend
     ports:

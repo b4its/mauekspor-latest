@@ -3127,6 +3127,7 @@ def create_chat_session(payload: sc.CreateChatSessionPayload):
         "id": db.gen_id("chat_sessions", "CHS"),
         "title": payload.title or "Percakapan baru",
         "messages": [],
+        "messageCount": 0,
         "createdAt": "now",
         "updatedAt": "now",
     })
@@ -3138,6 +3139,7 @@ def get_chat_session(session_id: str):
     record = db.get("chat_sessions", session_id)
     if not record:
         raise HTTPException(404, "Chat session not found")
+    record["messageCount"] = len(record.get("messages", []) or [])
     return _one(record)
 
 
@@ -3162,11 +3164,15 @@ def send_session_message(session_id: str, payload: sc.SendChatPayload):
         f"Conversation so far:\n{history}",
         kind="chat_reply",
     )
+    if not reply:
+        # Remote mode gagal/tak terjangkau → jatuh ke jawaban statis agar chat tetap berfungsi.
+        reply = ai.fallback("chat_reply")
     if reply:
         record["messages"].append({"role": "ai", "text": reply})
     if record.get("title") in ("", "Percakapan baru") and payload.text:
         record["title"] = payload.text[:40]
     record["updatedAt"] = "now"
+    record["messageCount"] = len(record["messages"])
     return _one(record)
 
 
