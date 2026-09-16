@@ -61,7 +61,7 @@
 					<Badge variant="secondary">{data.module.level}</Badge>
 					<Badge variant="outline">{data.module.status}</Badge>
 				</div>
-				<CardTitle class="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{data.module.title}</CardTitle>
+				<CardTitle class="mt-3 font-display text-3xl font-black tracking-tight text-[#0b1d3a] sm:text-4xl dark:text-white">{data.module.title}</CardTitle>
 				<p class="mt-2 max-w-2xl text-sm text-muted-foreground">{data.module.summary}</p>
 			</div>
 			<div class="w-full max-w-xs shrink-0 sm:w-56">

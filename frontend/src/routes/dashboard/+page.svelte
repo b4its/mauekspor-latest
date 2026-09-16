@@ -161,7 +161,7 @@
 		<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start">
 			<div>
 				<Badge variant="secondary">{t('Selamat datang kembali')}</Badge>
-				<CardTitle class="mt-3 text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+				<CardTitle class="mt-3 font-display text-3xl font-black tracking-tight text-[#0b1d3a] sm:text-4xl md:text-5xl dark:text-white">
 					{t('Export readiness at a glance.')}
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl leading-relaxed">
