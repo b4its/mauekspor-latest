@@ -140,7 +140,7 @@
 					{#snippet child({ props }: { props: Record<string, unknown> })}
 						<a {...props} href="/dashboard">
 							<div
-								class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary font-black tracking-tight text-sidebar-primary-foreground"
+								class="flex aspect-square size-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b3d91] to-[#1e63d6] font-black tracking-tighter text-white"
 							>
 								ME
 							</div>
@@ -230,9 +230,9 @@
 
 	<Sidebar.Footer>
 		<div
-			class="rounded-lg border border-sidebar-border bg-sidebar-accent/60 p-3 shadow-xs group-data-[collapsible=icon]:hidden"
+			class="rounded-xl border border-sidebar-border bg-gradient-to-br from-[#0b3d91]/10 to-[#1e63d6]/5 p-3 shadow-xs group-data-[collapsible=icon]:hidden dark:from-white/10 dark:to-white/5"
 		>
-			<Badge variant="outline" class="gap-1 border-primary/30 bg-primary/10 text-primary">
+			<Badge variant="outline" class="gap-1 border-[#0b3d91]/30 bg-[#0b3d91]/10 text-[#0b3d91] dark:border-white/30 dark:bg-white/10 dark:text-white">
 				<SparklesIcon class="size-3" />
 				<span>{t('AI copilot active')}</span>
 			</Badge>
