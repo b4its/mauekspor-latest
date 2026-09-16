@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { t, i18n, toggleLocale, nextLocale, type Locale } from './i18n.svelte';
+import { hasKey } from './i18n.svelte';
+
+const uiFiles = import.meta.glob('../routes/**/*.svelte', { query: '?raw', import: 'default' }) as unknown as Record<string, () => Promise<string>>;
+const componentFiles = import.meta.glob('./components/**/*.svelte', { query: '?raw', import: 'default' }) as unknown as Record<string, () => Promise<string>>;
 
 beforeEach(() => {
 	// Reset ke locale default ID agar test deterministik
@@ -86,5 +90,19 @@ describe('i18n kamus integritas (sampel lintas fitur)', () => {
 			i18n.locale = 'en';
 			expect(t(key), `en locale untuk ${key}`).toBe(en);
 		}
+	});
+});
+
+describe('i18n kamus kelengkapan (semua kunci t() di file UI)', () => {
+	it('setiap kunci t() di routes/ dan lib/components/ ada di kamus', async () => {
+		const modules = await Promise.all(Object.values(uiFiles).map((m) => m));
+		const components = await Promise.all(Object.values(componentFiles).map((m) => m));
+		const contents = [...modules, ...components];
+		const keys = new Set<string>();
+		for (const content of contents) {
+			for (const match of String(content).matchAll(/\bt\('([^']+)'/g)) keys.add(match[1]);
+		}
+		const missing = [...keys].filter((k) => !hasKey(k)).sort();
+		expect(missing, `kunci tanpa entri kamus (${contents.length} file dipindai): ${missing.join(', ')}`).toEqual([]);
 	});
 });
