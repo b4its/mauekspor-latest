@@ -18,6 +18,11 @@ import re
 from typing import Any
 
 import httpx
+from dotenv import load_dotenv
+
+# Muat .env ke environment sebelum membaca konfigurasi AI.
+# Contekan: nilai di env OS tidak akan ditimpa (override tetap env OS menang).
+load_dotenv()
 
 MOCK = "mock"
 REMOTE = "remote"
@@ -97,6 +102,7 @@ def _remote(system: str, user: str) -> str | None:
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
                 ],
+                "stream": False,
                 "temperature": 0.3,
                 "max_tokens": 1000,
             },
