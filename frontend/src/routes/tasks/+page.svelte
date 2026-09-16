@@ -142,7 +142,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 						<div class="mt-4 grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.owner}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.due}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Checklist')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.checklist.filter((item) => item.done).length}/{task.checklist.length}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Checklist')} <strong class="mt-1 block text-sm font-bold text-foreground">{(task.checklist ?? []).filter((item) => item.done).length}/{task.checklist?.length ?? 0}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Priority')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.priority}</strong></div>
 						</div>
 					</a>

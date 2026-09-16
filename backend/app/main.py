@@ -29,14 +29,6 @@ app = FastAPI(
     default_response_class=JSONResponse,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -83,6 +75,8 @@ async def require_auth_for_mutations(request, call_next):
     if not (request.url.path.startswith("/api/v1/") and module):
         return await call_next(request)
     if module in {"auth"}:
+        return await call_next(request)
+    if request.method == "OPTIONS":
         return await call_next(request)
 
     token = _request_token(request)
@@ -137,6 +131,15 @@ async def audit_mutations(request, call_next):
 
 def _error_body(status_code: int, message: str, errors=None) -> dict:
     return {"message": message, "errors": errors}
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(StarletteHTTPException)
