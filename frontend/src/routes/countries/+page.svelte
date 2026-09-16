@@ -6,6 +6,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { listCountries, type Country } from '$lib/api/export-analysis';
 	import { seedCountries } from '$lib/data/trade';
+	import { filterCountries, computeCountryStats } from '$lib/data/countries';
 	import { t } from '$lib/i18n.svelte';
 
 	import GlobeIcon from '@lucide/svelte/icons/globe';
@@ -30,20 +31,9 @@
 		countries.load();
 	});
 
-	let filtered = $derived(
-		countries.items.filter((c) => {
-			if (search && !(c.country_name + ' ' + c.country_code).toLowerCase().includes(search.toLowerCase())) return false;
-			if (region && c.region !== region) return false;
-			if (onlyDetailed && !c.has_details) return false;
-			return true;
-		})
-	);
+	let filtered = $derived(filterCountries(countries.items, { search, region, onlyDetailed }));
 
-	let stats = $derived({
-		total: countries.items.length,
-		detailed: countries.items.filter((c) => c.has_details).length,
-		highRisk: countries.items.filter((c) => c.risk_level === 'High' || c.risk_level === 'Elevated').length,
-	});
+	let stats = $derived(computeCountryStats(countries.items));
 
 	const riskTone: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
 		Low: 'secondary',
