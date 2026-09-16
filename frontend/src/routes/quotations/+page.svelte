@@ -68,10 +68,10 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 </svelte:head>
 
 <AppShell title="Quotations" eyebrow={t('Commercial offer management')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Incoterm clarity')}</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Create traceable export quotations with cost and validity control.')}</CardTitle>
+			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Create traceable export quotations with cost and validity control.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Separate EXW, FOB, CIF, landed-cost assumptions, freight validity, currency, named place, margin, and revision history.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">

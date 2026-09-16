@@ -61,10 +61,10 @@
 </svelte:head>
 
 <AppShell title={data.product.id} eyebrow={t('Edit product')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Product master data')}</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Update {data.product.name}.</CardTitle>
+			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">Update {data.product.name}.</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 				{t('Setiap kolom di sini memberi masukan ke klasifikasi HS, kepatuhan, katalog, dan kutipan.')}
 			</CardDescription>

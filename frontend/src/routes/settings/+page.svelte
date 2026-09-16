@@ -52,10 +52,10 @@
 
 <AppShell title="Settings" eyebrow={t('Organisasi dan kontrol akses')}>
 	<div class="grid gap-4 lg:grid-cols-[1.2fr_minmax(360px,0.8fr)]">
-		<Card class="bg-gradient-to-br from-background to-secondary/30">
+		<Card class="panel-hero">
 			<CardHeader><Badge>{t('Profil eksportir terverifikasi')}</Badge></CardHeader>
 			<CardContent class="grid gap-4">
-				<CardTitle class="text-3xl font-bold tracking-tight md:text-4xl">{companyName || t('Perusahaan Anda')}</CardTitle>
+				<CardTitle class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{companyName || t('Perusahaan Anda')}</CardTitle>
 				<CardDescription class="leading-relaxed">
 					{t('Pengaturan organisasi akan memuat identitas legal, data pajak, NIB, lokasi produksi, dokumen verifikasi, izin tim, dan kebijakan keamanan.')}
 				</CardDescription>

@@ -55,18 +55,18 @@
 </svelte:head>
 
 <AppShell title={data.market.country} eyebrow={t('Market insight detail')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<Badge variant={toneVariant(statusTone(data.market.status))}>{data.market.status}</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.product?.name ?? data.market.productId}
 				</CardTitle>
 				<CardDescription class="mt-2">{data.project?.name ?? data.market.projectId}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Market score')}</span>
-				<strong class="mt-1 block text-4xl font-bold tracking-tight">{displayScore}%</strong>
+				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{displayScore}%</strong>
 			</div>
 		</div>
 	</Card>

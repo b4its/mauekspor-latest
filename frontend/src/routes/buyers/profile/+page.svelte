@@ -75,10 +75,10 @@
 </svelte:head>
 
 <AppShell title="Buyer Profile" eyebrow={t('Edit importer identity')}>
-	<Card class="grid gap-6 border bg-gradient-to-br from-background to-secondary/30 p-6 md:p-8">
+	<Card class="grid gap-6 border panel-hero p-6 md:p-8">
 		<div>
 			<Badge variant="secondary">{t('Profil')}</Badge>
-			<h2 class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Perbarui cara eksportir melihat perusahaan Anda.')}</h2>
+			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Perbarui cara eksportir melihat perusahaan Anda.')}</h2>
 			<p class="mt-2 max-w-2xl leading-relaxed text-muted-foreground">
 				{t('Kategori produk yang diminati, negara sumber, dan volume impor tahunan.')}
 			</p>

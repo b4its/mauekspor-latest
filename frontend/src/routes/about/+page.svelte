@@ -16,10 +16,10 @@
 </svelte:head>
 
 <AppShell title="About" eyebrow={t('Sistem operasi dagang')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Indonesia ke pasar global')}</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Satu workspace dari kesiapan produk hingga pengiriman.')}</CardTitle>
+			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Satu workspace dari kesiapan produk hingga pengiriman.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 				{t('MauEkspor menyatukan data produk, klasifikasi HS, bukti kepatuhan, RFQ, kutipan harga, validasi dokumen, tarif forwarder, dan tonggak pengiriman untuk eksportir Indonesia.')}
 			</CardDescription>

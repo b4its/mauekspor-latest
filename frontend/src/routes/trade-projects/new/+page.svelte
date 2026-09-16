@@ -81,7 +81,7 @@
 	<div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]">
 		<div class="space-y-6">
 			<Badge>{t('Panduan penyiapan')}</Badge>
-			<h2 class="text-3xl font-bold tracking-tight md:text-4xl">{t('Mulai dengan tujuan komersial, lalu lampirkan data produk dan kepatuhan.')}</h2>
+			<h2 class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Mulai dengan tujuan komersial, lalu lampirkan data produk dan kepatuhan.')}</h2>
 			<p class="leading-relaxed text-muted-foreground">
 				{t('Wizard ini membuat kontrak frontend untuk alur kerja backend di masa depan: simpan proyek, buat tugas awal, dan picu pekerjaan HS/kepatuhan secara asinkron.')}
 			</p>

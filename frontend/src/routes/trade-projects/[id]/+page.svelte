@@ -67,11 +67,11 @@
 </svelte:head>
 
 <AppShell title={data.project.id} eyebrow={data.project.name}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<Badge variant={toneVariant(statusTone(data.project.risk))}>{data.project.risk} {t('risiko')}</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.project.name}
 				</CardTitle>
 				<CardDescription class="mt-2">{data.project.product} for {data.project.buyer} in {data.project.country}</CardDescription>
@@ -129,7 +129,7 @@
 			<CardContent>
 				<div class="rounded-xl border bg-primary/10 p-4">
 					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('HS yang Direkomendasikan')}</span>
-					<strong class="mt-2 block text-4xl font-bold tracking-tight">{data.project.hsCode}</strong>
+					<strong class="mt-2 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{data.project.hsCode}</strong>
 					<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
 						{t('Keyakinan AI 84%. Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.')}
 					</p>

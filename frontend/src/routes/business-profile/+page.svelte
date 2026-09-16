@@ -100,18 +100,18 @@
 		{/if}
 	{/if}
 
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<Badge variant={toneVariant(statusTone(profile.status))}>{trStatus(profile.status)}</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{profile.companyName}
 				</CardTitle>
 				<CardDescription class="mt-2">{profile.address}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Kesiapan ekspor')}</span>
-				<strong class="mt-1 block text-4xl font-bold tracking-tight">{profile.readiness}%</strong>
+				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{profile.readiness}%</strong>
 			</div>
 		</div>
 	</Card>

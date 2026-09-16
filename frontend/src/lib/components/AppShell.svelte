@@ -146,7 +146,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 <Sidebar.Provider>
 	<AppSidebar />
 
-	<Sidebar.Inset class="min-h-svh">
+	<Sidebar.Inset class="landing-font min-h-svh">
 		<header
 			class="sticky top-3 z-30 mx-3 mt-3 flex h-14 shrink-0 flex-wrap items-center justify-between gap-3 rounded-full border border-[#0b3d91]/10 bg-white/80 px-3 shadow-sm backdrop-blur-xl transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:mx-4 sm:mt-4 sm:px-4 dark:border-white/10 dark:bg-[#0a1730]/80"
 		>

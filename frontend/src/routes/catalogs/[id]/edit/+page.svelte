@@ -55,10 +55,10 @@
 </svelte:head>
 
 <AppShell title={data.catalog.id} eyebrow={t('Edit catalog')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Data master katalog')}</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Perbarui')} {data.catalog.title}.</CardTitle>
+			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Perbarui')} {data.catalog.title}.</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 				{t('Perubahan copy, harga, dan pasar target memperbarui katalog yang menghadap pembeli.')}
 			</CardDescription>

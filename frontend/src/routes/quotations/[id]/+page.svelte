@@ -37,11 +37,11 @@
 </svelte:head>
 
 <AppShell title={data.quotation.id} eyebrow={t('Quotation detail')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="flex-row flex-wrap items-end justify-between gap-3 p-0">
 			<div>
 				<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{data.quotation.incoterm}</CardTitle>
+				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{data.quotation.incoterm}</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl leading-relaxed">{data.quotation.supplier} to {data.quotation.buyer}</CardDescription>
 			</div>
 			<div class="text-right">

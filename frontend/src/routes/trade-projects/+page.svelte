@@ -41,11 +41,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 </svelte:head>
 
 <AppShell title="Trade Projects" eyebrow="Project-based trade operations">
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="flex-row flex-wrap items-start justify-between gap-3 p-0">
 			<div>
 				<Badge variant="outline">{t('Workspace proyek')}</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Kelola eksekusi ekspor-impor dalam satu tempat.')}</CardTitle>
+				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Kelola eksekusi ekspor-impor dalam satu tempat.')}</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 					Each project connects product, HS classification, compliance evidence, quotation,
 					documents, and shipment milestones.

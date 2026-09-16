@@ -78,10 +78,10 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 </svelte:head>
 
 <AppShell title="Messages" eyebrow={t('Komunikasi buyer, supplier, dan internal')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge>{t('Pusat komunikasi')}</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 				{t('Jaga percakapan dagang tetap terhubung dengan catatan ekspor.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">

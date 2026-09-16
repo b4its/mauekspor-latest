@@ -48,18 +48,18 @@
 </svelte:head>
 
 <AppShell title={data.product.id} eyebrow={data.product.name}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<Badge variant={toneVariant(statusTone(data.product.status))}>{data.product.status}</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.product.name}
 				</CardTitle>
 				<CardDescription class="mt-2">{data.product.category} from {data.product.origin}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Product readiness')}</span>
-				<strong class="mt-1 block text-4xl font-bold tracking-tight">{data.product.readiness}%</strong>
+				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{data.product.readiness}%</strong>
 			</div>
 		</div>
 	</Card>

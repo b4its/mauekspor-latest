@@ -54,7 +54,7 @@
 </svelte:head>
 
 <AppShell title={data.module.title} eyebrow={t('Learning module')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 p-5 shadow-sm sm:p-6">
+	<Card class="panel-hero p-5 shadow-sm sm:p-6">
 		<div class="flex flex-wrap items-end justify-between gap-4">
 			<div class="min-w-0">
 				<div class="flex flex-wrap items-center gap-2">

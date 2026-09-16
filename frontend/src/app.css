@@ -250,10 +250,21 @@ progress::-webkit-progress-value {
 	font-family: var(--font-mono-landing);
 }
 
-.landing-font .font-display {
+.landing-font .font-display,
+.landing-font [data-slot='card-title'],
+.landing-font :is(h1, h2, h3, h4) {
 	font-family: var(--font-display);
 }
 
 .landing-font .font-script {
 	font-family: var(--font-script);
+}
+
+/* ---------- Panel hero: gaya landing (gradient biru, rounded-3xl) ---------- */
+@utility panel-hero {
+	@apply !rounded-3xl !border !border-[#0b3d91]/10 !ring-0 bg-gradient-to-br from-white via-[#eaf2ff] to-[#dbe9ff] dark:border-white/10 dark:from-[#0a1730] dark:via-[#0b1f42] dark:to-[#0c2450];
+}
+
+.panel-hero [data-slot='badge'] {
+	@apply border-[#0b3d91]/20 bg-[#0b3d91]/10 text-[#0b3d91] dark:border-white/20 dark:bg-white/10 dark:text-white;
 }

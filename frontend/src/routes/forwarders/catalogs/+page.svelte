@@ -38,10 +38,10 @@
 </svelte:head>
 
 <AppShell title="Forwarder Catalogs" eyebrow={t('Inventaris kuotasi freight')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(forwarder.status))}>{forwarder.name}</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Katalog ekspor aktif yang tersedia untuk kuotasi.')}</CardTitle>
+			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Katalog ekspor aktif yang tersedia untuk kuotasi.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 				{t('Katalog yang diterbitkan mewakili inventaris siap-kuotasi yang dapat dilayani forwarder ini di seluruh jalur yang dicakup.')}
 			</CardDescription>

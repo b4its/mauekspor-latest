@@ -163,21 +163,21 @@
 </svelte:head>
 
 <AppShell title={data.analysis.id} eyebrow={t('Market & compliance analysis detail')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<div class="flex flex-wrap gap-2">
 					<Badge variant={toneVariant(statusTone(data.analysis.status))}>{data.analysis.status}</Badge>
 					<Badge variant={gradeTone(grade)}>{grade}</Badge>
 				</div>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.analysis.productName} to {data.analysis.destination}
 				</CardTitle>
 				<CardDescription class="mt-2">HS <a class="font-bold text-primary hover:underline" href={`/hs-codes/${data.analysis.hsCode}`}>{data.analysis.hsCode}</a> - {t('keyakinan klasifikasi')} {data.analysis.confidence}%.</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Readiness score')}</span>
-				<strong class="mt-1 block text-4xl font-bold tracking-tight">{data.analysis.score}</strong>
+				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{data.analysis.score}</strong>
 				<small class="text-xs font-bold text-muted-foreground">/ 100</small>
 			</div>
 		</div>

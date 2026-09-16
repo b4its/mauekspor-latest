@@ -74,11 +74,11 @@
 </svelte:head>
 
 <AppShell title="Users" eyebrow={t('Account management')}>
-	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
+	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<Badge variant="secondary">{t('Admin only')}</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{t('Manage the accounts in your export workspace.')}
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-xl leading-relaxed">
