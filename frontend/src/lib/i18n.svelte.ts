@@ -1381,6 +1381,10 @@ const dictionary: Record<string, Entry> = {
 	// --- Trade projects ---
 	'Search buyer, product, country...': { id: 'Cari pembeli, produk, negara...', en: 'Search buyer, product, country...' },
 	'risk': { id: 'risiko', en: 'risk' },
+	'Low': { id: 'Rendah', en: 'Low' },
+	'Moderate': { id: 'Sedang', en: 'Moderate' },
+	'Elevated': { id: 'Tinggi', en: 'Elevated' },
+	'High': { id: 'Kritis', en: 'High' },
 	'Stage': { id: 'Tahap', en: 'Stage' },
 
 	// --- Umum (filter & tombol lintas halaman) ---
