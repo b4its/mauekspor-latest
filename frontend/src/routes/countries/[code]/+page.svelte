@@ -5,6 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { getCountry, type Country } from '$lib/api/export-analysis';
+	import { seedCountries } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
 
 	import GlobeIcon from '@lucide/svelte/icons/globe';
@@ -32,7 +33,11 @@
 		activeTab = 'impor';
 		getCountry(code)
 			.then((res) => (country = res.data))
-			.catch((e) => (error = e instanceof Error ? e.message : t('Gagal memuat data negara.')))
+			.catch(() => {
+				const seed = seedCountries.find((c) => c.country_code === code);
+				if (seed) country = seed;
+				else error = t('Gagal memuat data negara.');
+			})
 			.finally(() => (loading = false));
 	});
 

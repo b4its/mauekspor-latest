@@ -13,7 +13,7 @@
 	import MapIcon from '@lucide/svelte/icons/map';
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 
-	const allRegions = ['Asia', 'Africa', 'Europe', 'Oceania', 'Americas', 'Middle East'] as const;
+	const allRegions = ['Asia', 'Africa', 'Europe', 'Oceania', 'Americas'] as const;
 
 	let countries = createRemoteList(
 		async () => {
