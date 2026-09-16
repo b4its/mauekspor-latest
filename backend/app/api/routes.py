@@ -22,6 +22,17 @@ from app.schemas import models as sc
 router = APIRouter(prefix="/api/v1")
 
 
+def _request_token(request) -> str | None:
+    """Ekstrak token dari Authorization header (Bearer) atau cookie access_token."""
+    headers = getattr(request, "headers", None)
+    if headers is not None:
+        auth = headers.get("authorization", "")
+        if auth.lower().startswith("bearer "):
+            return auth.split(" ", 1)[1]
+    cookies = getattr(request, "cookies", {}) or {}
+    return cookies.get("access_token")
+
+
 def _serialize(record):
     out = {k: v for k, v in dict(record).items() if not k.startswith("__")}
     out.pop("password", None)
@@ -185,9 +196,11 @@ def me(current_user: dict = Depends(get_current_user)):
 
 @router.post("/auth/logout/")
 def logout(request: Request, response: Response):
-    token = request.cookies.get("refresh_token") or request.headers.get("X-Refresh-Token")
-    if token:
-        for rec in db.find("refresh_tokens", token=token):
+    token = _request_token(request)
+    # Refresh token bisa dari header X-Refresh-Token atau cookie
+    refresh = request.headers.get("X-Refresh-Token") or request.cookies.get("refresh_token")
+    if refresh:
+        for rec in db.find("refresh_tokens", token=refresh):
             rec["revoked"] = True
             db.save(rec)
     response.delete_cookie("access_token")
@@ -2475,7 +2488,7 @@ def stream_notifications(request: Request):
     from fastapi.responses import StreamingResponse
 
     user = None
-    token = request.cookies.get("access_token")
+    token = _request_token(request)
     if token:
         try:
             payload = decode_token(token)

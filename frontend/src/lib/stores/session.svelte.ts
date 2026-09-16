@@ -1,4 +1,4 @@
-import { apiFetch } from '$lib/api/client';
+import { apiFetch, setAccessToken, setRefreshToken, clearTokens } from '$lib/api/client';
 import { getSession, logout as logoutApi } from '$lib/api/auth';
 import type { SessionUser, LoginPayload, RegisterPayload, UserRole } from '$lib/api/auth';
 
@@ -51,18 +51,30 @@ export async function fetchSession(): Promise<boolean> {
 }
 
 export async function login(payload: LoginPayload): Promise<void> {
-	await apiFetch<SessionUser>('/auth/login/', {
+	const res = await apiFetch<SessionUser>('/auth/login/', {
 		method: 'POST',
 		body: JSON.stringify(payload)
 	});
+	if (res.meta?.access_token) {
+		setAccessToken(res.meta.access_token as string);
+	}
+	if (res.meta?.refresh_token) {
+		setRefreshToken(res.meta.refresh_token as string);
+	}
 	await fetchSession();
 }
 
 export async function register(payload: RegisterPayload): Promise<void> {
-	await apiFetch<SessionUser>('/auth/register/', {
+	const res = await apiFetch<SessionUser>('/auth/register/', {
 		method: 'POST',
 		body: JSON.stringify(payload)
 	});
+	if (res.meta?.access_token) {
+		setAccessToken(res.meta.access_token as string);
+	}
+	if (res.meta?.refresh_token) {
+		setRefreshToken(res.meta.refresh_token as string);
+	}
 	await fetchSession();
 }
 
@@ -70,6 +82,7 @@ export async function logout(): Promise<void> {
 	try {
 		await logoutApi();
 	} finally {
+		clearTokens();
 		user = null;
 		status = 'unauthenticated';
 	}

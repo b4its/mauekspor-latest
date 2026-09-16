@@ -5,6 +5,8 @@
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Field, FieldGroup, FieldLabel } from '$lib/components/ui/field/index.js';
 	import { registerAdmin } from '$lib/api/auth';
+	import { setAccessToken, setRefreshToken } from '$lib/api/client';
+	import { fetchSession } from '$lib/stores/session.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { t } from '$lib/i18n.svelte';
 	import ShipIcon from '@lucide/svelte/icons/ship';
@@ -24,7 +26,7 @@
 		}
 		loading = true;
 		try {
-			await registerAdmin({
+			const res = await registerAdmin({
 				name: 'Admin',
 				email,
 				password,
@@ -32,6 +34,13 @@
 				organization: '',
 				admin_code: adminCode,
 			});
+			if (res.meta?.access_token) {
+				setAccessToken(res.meta.access_token as string);
+			}
+			if (res.meta?.refresh_token) {
+				setRefreshToken(res.meta.refresh_token as string);
+			}
+			await fetchSession();
 			success = true;
 		} catch (err) {
 			error = err instanceof Error ? err.message : t('Gagal mendaftarkan admin. Periksa kode admin.');
