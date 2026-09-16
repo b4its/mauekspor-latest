@@ -132,21 +132,21 @@
 	}
 </script>
 
-<Sidebar.Root collapsible="icon">
+<Sidebar.Root collapsible="icon" class="landing-font">
 	<Sidebar.Header>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton size="lg" tooltipContent={t('MauEkspor Dashboard')}>
 					{#snippet child({ props }: { props: Record<string, unknown> })}
-						<a {...props} href="/dashboard">
-							<div
-								class="flex aspect-square size-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b3d91] to-[#1e63d6] font-black tracking-tighter text-white"
+						<a {...props} href="/dashboard" class="flex items-center gap-2.5">
+							<span
+								class="grid aspect-square size-8 place-items-center rounded-xl bg-gradient-to-br from-[#0b3d91] to-[#1e63d6] font-black tracking-tighter text-white"
 							>
-								ME
-							</div>
-							<div class="grid flex-1 text-left text-sm leading-tight">
-								<span class="truncate font-semibold text-sidebar-foreground">MauEkspor</span>
-								<span class="truncate text-xs text-sidebar-foreground/60">{t('Trade OS')}</span>
+								<ShipIcon class="size-4" />
+							</span>
+							<div class="grid flex-1 text-left leading-tight">
+								<strong class="font-script text-xl leading-none text-[#0b3d91] dark:text-[#5ea1ff]">MauEkspor</strong>
+								<span class="mt-1 truncate text-[11px] font-bold text-sidebar-foreground/60">{t('Workspace Ekspor-Impor')}</span>
 							</div>
 						</a>
 					{/snippet}
