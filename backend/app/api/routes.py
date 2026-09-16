@@ -3435,17 +3435,22 @@ def run_regulation_check(analysis_id: str, payload: dict | None = None):
 # ----------------------------------------------------------------------------
 @router.get("/countries/")
 def list_countries(region: str = "", search: str = ""):
-    from app.data.countries import get_countries, get_regulations
-    items = get_countries()
+    from app.data.world_countries import WORLD_COUNTRIES
+    from app.data.regulatory_intel import COUNTRY_CUSTOMS, profile_for, risk_level_for, has_profile
+    known = {c["country_code"] for c in WORLD_COUNTRIES}
+    items = [dict(c) for c in WORLD_COUNTRIES]
     # Gabungkan negara buatan admin (tersimpan di db) agar ikut tampil
-    known = {c["country_code"] for c in items}
     for dbc in db.all("countries"):
         code = str(dbc.get("country_code", ""))
         if code and code not in known:
             items.append({
                 "country_code": code,
                 "country_name": dbc.get("country_name", code),
-                "region": dbc.get("region", ""),
+                "region": dbc.get("region", "Asia"),
+                "subregion": dbc.get("subregion", ""),
+                "capital": dbc.get("capital", ""),
+                "currency": dbc.get("currency", ""),
+                "languages": dbc.get("languages", []),
             })
             known.add(code)
     if region:
@@ -3454,28 +3459,42 @@ def list_countries(region: str = "", search: str = ""):
         items = [c for c in items if search.lower() in (c["country_name"] + c["country_code"]).lower()]
     for item in items:
         code = item["country_code"]
-        static_regs = get_regulations(code)
-        db_regs = [r for r in db.all("regulations") if str(r.get("countryCode", "")) == code]
-        item["regulationsCount"] = len(static_regs) + len(db_regs)
-    return {"data": items, "meta": {}}
+        profile = profile_for(code, item.get("region", ""))
+        item["customs_system"] = COUNTRY_CUSTOMS.get(code, "")
+        item["has_details"] = has_profile(code)
+        item["risk_level"] = risk_level_for(code)
+        item["regulationsCount"] = len(profile.get("import_rules", [])) + len(profile.get("export_rules", []))
+    return {"data": items, "meta": {"regions": sorted({c["region"] for c in items})}}
 
 
 @router.get("/countries/{country_code}/")
 def get_country_detail(country_code: str):
-    from app.data.countries import get_country, get_regulations
+    from app.data.world_countries import WORLD_COUNTRIES
+    from app.data.regulatory_intel import (
+        COUNTRY_CUSTOMS, customs_system_of, profile_for, risk_level_for, has_profile,
+    )
+    from app.data.countries import get_regulations
     code = country_code.upper()
-    country = get_country(code)
+    country = None
+    for c in WORLD_COUNTRIES:
+        if c["country_code"] == code:
+            country = dict(c)
+            break
     if not country:
         dbc = db.get_by("countries", country_code=code)
         if dbc:
             country = {
                 "country_code": dbc["country_code"],
                 "country_name": dbc.get("country_name", code),
-                "region": dbc.get("region", ""),
+                "region": dbc.get("region", "Asia"),
+                "subregion": dbc.get("subregion", ""),
+                "capital": dbc.get("capital", ""),
+                "currency": dbc.get("currency", ""),
+                "languages": dbc.get("languages", []),
             }
     if not country:
         raise HTTPException(404, "Country not found")
-    # Regulasi statis + regulasi buatan admin (db)
+    # Regulasi statis (kategori komoditas) + regulasi buatan admin (db)
     regs = list(get_regulations(code))
     for r in db.all("regulations"):
         if str(r.get("countryCode", "")) == code:
@@ -3492,6 +3511,27 @@ def get_country_detail(country_code: str):
         by_category.setdefault(r["rule_category"], []).append(r)
     country["regulations"] = regs
     country["regulations_by_category"] = by_category
+    # Profil regulasi ekspor-impor (baru)
+    profile = profile_for(code, country.get("region", ""))
+    system = customs_system_of(code)
+    country["customs_system"] = COUNTRY_CUSTOMS.get(code, "")
+    country["customs_system_info"] = system
+    country["has_details"] = has_profile(code)
+    country["risk_level"] = risk_level_for(code)
+    country["import_rules"] = profile.get("import_rules", [])
+    country["export_rules"] = profile.get("export_rules", [])
+    country["tariff"] = profile.get("tariff", "")
+    country["customs"] = profile.get("customs", "")
+    country["fta"] = profile.get("fta", "")
+    country["checks"] = profile.get("checks", "")
+    country["documents"] = profile.get("documents", [])
+    country["taxes"] = profile.get("taxes", [])
+    country["authorities"] = profile.get("authorities", [])
+    country["sources"] = profile.get("sources", [])
+    country["verified"] = profile.get("verified", "")
+    country["data_note"] = profile.get("note", "")
+    country["sanctions_warning"] = profile.get("sanctions_warning", "")
+    country["_is_template"] = profile.get("_is_template", False)
     return {"data": country, "meta": {}}
 
 
