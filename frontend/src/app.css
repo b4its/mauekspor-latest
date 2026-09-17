@@ -268,3 +268,25 @@ progress::-webkit-progress-value {
 .panel-hero [data-slot='badge'] {
 	@apply border-[#0b3d91]/20 bg-[#0b3d91]/10 text-[#0b3d91] dark:border-white/20 dark:bg-white/10 dark:text-white;
 }
+/* ---------- Sidebar collapsed: sembunyikan teks agar tidak nabrak ---------- */
+[data-slot="sidebar"][data-collapsible="icon"] [data-sidebar="menu-button"] span:not([data-slot="sidebar-menu-button"] *) {
+	opacity: 0 !important;
+	width: 0 !important;
+	overflow: hidden !important;
+	white-space: nowrap !important;
+}
+
+[data-slot="sidebar"][data-collapsible="icon"] [data-sidebar="menu-button"] svg {
+	margin: 0 auto;
+}
+
+[data-slot="sidebar"][data-collapsible="icon"] .group\/collapsible [data-sidebar="menu-button"] span {
+	display: none;
+}
+
+[data-slot="sidebar"][data-collapsible="icon"] [data-slot="sidebar-group-label"] {
+	opacity: 0;
+	margin: 0;
+	padding: 0;
+	height: 0;
+}

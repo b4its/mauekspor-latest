@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
@@ -14,6 +15,7 @@
 	import ActivityIcon from '@lucide/svelte/icons/activity';
 	import BellIcon from '@lucide/svelte/icons/bell';
 	import ArrowRightLeftIcon from '@lucide/svelte/icons/arrow-right-left';
+	import MenuIcon from '@lucide/svelte/icons/menu';
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
 	import { listNotifications } from '$lib/api/notifications';
 import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
@@ -148,7 +150,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 	<Sidebar.Inset class="landing-font min-h-svh">
 <header
-			class="sticky top-3 z-30 mx-3 mt-3 flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-2 rounded-full border border-[#0b3d91]/10 bg-white/80 px-3 py-2 shadow-sm backdrop-blur-xl transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:mx-4 sm:mt-4 sm:px-4 sm:gap-3 dark:border-white/10 dark:bg-[#0a1730]/80"
+			class="sticky top-3 z-30 mx-3 mt-3 flex h-14 shrink-0 items-center justify-between gap-2 rounded-full border border-[#0b3d91]/10 bg-white/80 px-3 shadow-sm backdrop-blur-xl transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:mx-4 sm:mt-4 sm:px-4 dark:border-white/10 dark:bg-[#0a1730]/80"
 		>
 			<div class="flex min-w-0 items-center gap-2">
 				<Sidebar.Trigger class="-ms-1" />
@@ -166,43 +168,97 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				</Breadcrumb.Root>
 			</div>
 
-			<div class="flex flex-wrap items-center justify-end gap-1 sm:gap-2">
+			<div class="flex shrink-0 items-center gap-1 sm:gap-1.5">
 				<ThemeToggle />
-				<Button variant="outline" size="sm" title={i18n.locale === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'} onclick={toggleLocale} class="px-1.5 sm:px-2">
-					<span class="text-xs font-bold uppercase tracking-wide">{i18n.locale === 'id' ? 'EN' : 'ID'}</span>
-				</Button>
-				<Button variant="outline" size="sm" onclick={() => (commandOpen = true)} class="px-1.5 sm:px-2">
-					<SearchIcon class="size-3.5" />
-					<span class="hidden sm:inline ms-1">{t('Search')}</span>
-					<kbd class="ml-1 hidden rounded border border-border bg-secondary px-1 py-0.5 font-mono text-[10px] text-muted-foreground md:inline-block">⌘K</kbd>
-				</Button>
-				<Button href="/notifications" variant="outline" size="sm" class="relative px-1.5 sm:px-2">
-					<BellIcon class="size-3.5" />
-					<span class="hidden lg:inline ms-1">{t('Notifications')}</span>
-					{#if unreadCount > 0}
-						<span class="absolute -right-0.5 -top-0.5 rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">{unreadCount}</span>
-					{/if}
-				</Button>
-				<Button variant="outline" size="sm" onclick={() => (activityOpen = !activityOpen)} class="relative px-1.5 sm:px-2">
-					<ActivityIcon class="size-3.5" />
-					<span class="hidden lg:inline ms-1">{t('Activity')}</span>
-					{#if activityCount}
-						<span class="absolute -right-0.5 -top-0.5 rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">{activityCount}</span>
-					{/if}
-				</Button>
-				<Button href="/trade-projects" variant="outline" size="sm" class="hidden lg:inline-flex">{t('View projects')}</Button>
-				<Button href="/trade-projects/new" size="sm" class="px-2 sm:px-3">
-					<span class="hidden sm:inline">{t('New trade project')}</span>
-					<span class="sm:hidden">{t('New')}</span>
-				</Button>
-				{#if user}
-					<Button variant="ghost" size="sm" disabled={loggingOut} title={user.role} onclick={handleLogout} class="text-muted-foreground px-1.5 sm:px-2">
-						<span class="hidden lg:inline truncate max-w-[120px]">{user.name}</span>
-						<span class="text-[11px] font-semibold uppercase tracking-wide">{loggingOut ? '...' : t('Logout')}</span>
+				<!-- Desktop (>lg): semua aksi inline -->
+				<div class="hidden items-center gap-1.5 lg:flex">
+					<Button variant="outline" size="sm" title={i18n.locale === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'} onclick={toggleLocale}>
+						<span class="text-xs font-bold uppercase tracking-wide">{i18n.locale === 'id' ? 'EN' : 'ID'}</span>
 					</Button>
-				{:else if userStatus === 'unauthenticated'}
-					<Button href="/login" variant="outline" size="sm">{t('Login')}</Button>
-				{/if}
+					<Button variant="outline" size="sm" onclick={() => (commandOpen = true)}>
+						<SearchIcon class="size-3.5" />
+						<span class="ms-1">{t('Search')}</span>
+						<kbd class="ml-1 rounded border border-border bg-secondary px-1 py-0.5 font-mono text-[10px] text-muted-foreground">⌘K</kbd>
+					</Button>
+					<Button href="/notifications" variant="outline" size="sm" class="relative">
+						<BellIcon class="size-3.5" />
+						<span class="ms-1">{t('Notifications')}</span>
+						{#if unreadCount > 0}
+							<span class="absolute -right-0.5 -top-0.5 rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">{unreadCount}</span>
+						{/if}
+					</Button>
+					<Button variant="outline" size="sm" onclick={() => (activityOpen = !activityOpen)} class="relative">
+						<ActivityIcon class="size-3.5" />
+						<span class="ms-1">{t('Activity')}</span>
+						{#if activityCount}
+							<span class="absolute -right-0.5 -top-0.5 rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">{activityCount}</span>
+						{/if}
+					</Button>
+					<Button href="/trade-projects" variant="outline" size="sm">{t('View projects')}</Button>
+					<Button href="/trade-projects/new" size="sm">
+						<span>{t('New trade project')}</span>
+					</Button>
+					{#if user}
+						<Button variant="ghost" size="sm" disabled={loggingOut} title={user.role} onclick={handleLogout} class="text-muted-foreground">
+							<span class="truncate max-w-[120px]">{user.name}</span>
+							<span class="ms-1 text-[11px] font-semibold uppercase tracking-wide">{loggingOut ? '...' : t('Logout')}</span>
+						</Button>
+					{:else if userStatus === 'unauthenticated'}
+						<Button href="/login" variant="outline" size="sm">{t('Login')}</Button>
+					{/if}
+				</div>
+
+				<!-- Mobile/Tablet (<lg): hamburger menu -->
+				<div class="flex items-center lg:hidden">
+					<Button variant="ghost" size="sm" onclick={() => (commandOpen = true)} class="h-8 w-8 p-0" title={t('Search')}>
+						<SearchIcon class="size-4" />
+					</Button>
+					<Button href="/notifications" variant="ghost" size="sm" class="relative h-8 w-8 p-0" title={t('Notifications')}>
+						<BellIcon class="size-4" />
+						{#if unreadCount > 0}
+							<span class="absolute -right-0.5 -top-0.5 rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">{unreadCount}</span>
+						{/if}
+					</Button>
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger class="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" title={t('Menu')}>
+							<MenuIcon class="size-4" />
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content align="end" class="w-56">
+							<DropdownMenu.Group>
+								<DropdownMenu.Label>{t('Aksi Cepat')}</DropdownMenu.Label>
+								<DropdownMenu.Item onclick={() => { commandOpen = true; }}>
+									<SearchIcon class="size-4" />
+									<span>{t('Search')}</span>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item onclick={() => (activityOpen = true)}>
+									<ActivityIcon class="size-4" />
+									<span>{t('Activity')}</span>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item onclick={toggleLocale}>
+									<ArrowRightLeftIcon class="size-4" />
+									<span>{i18n.locale === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
+								</DropdownMenu.Item>
+								<DropdownMenu.Separator />
+								<DropdownMenu.Item onclick={() => (window.location.href = '/trade-projects')}>
+									<span>{t('View projects')}</span>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item onclick={() => (window.location.href = '/trade-projects/new')}>
+									<span>{t('New trade project')}</span>
+								</DropdownMenu.Item>
+								<DropdownMenu.Separator />
+								{#if user}
+									<DropdownMenu.Item onclick={handleLogout} class="text-destructive focus:text-destructive">
+										<span>{t('Logout')} — {user.name}</span>
+									</DropdownMenu.Item>
+								{:else if userStatus === 'unauthenticated'}
+									<DropdownMenu.Item onclick={() => (window.location.href = '/login')}>
+										<span>{t('Login')}</span>
+									</DropdownMenu.Item>
+								{/if}
+							</DropdownMenu.Group>
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				</div>
 			</div>
 		</header>
 
