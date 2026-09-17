@@ -2,7 +2,7 @@
 
 **Workspace ekspor-impor berbasis AI untuk UMKM Indonesia** — satu platform dari kesiapan produk, analisis pasar & kepatuhan, penawaran/costing, katalog digital, hingga dokumen dan pelacakan pengiriman.
 
-> Status saat ini: **berfungsi penuh dengan backend.** Frontend adalah antarmuka kerja lengkap yang terhubung ke backend FastAPI (list, detail, form create, dan action/button di semua modul memakai `src/lib/api/*.ts`; mock di `src/lib/data/trade.ts` hanya fallback saat API tak tersedia). Backend punya auth JWT (refresh rotation) via **Bearer token + sessionStorage** (bukan lagi hanya cookie), RBAC, audit log, dan persistensi SQLite. Fitur inti ExportReadyAI telah diadaptasi lengkap: **enrichment produk (HS code + SKU)**, **Market Intelligence**, **Pricing Calculator (EXW/FOB/CIF)**, **Costing nyata + exchange rate + PDF**, **Export Analysis dengan compliance check, snapshot produk/regulasi, reanalyze, compare, dan rekomendasi regulasi 10 bagian (ID/EN)**, **master data negara + regulasi + HS codes (6.941 kode)**, **katalog dengan gambar + varian + AI description + listing publik**, **buyer request matching**, **forwarder profile + review + rekomendasi + statistik**, **buyer profile**, **educational CRUD + upload file**, dan **chat sessions + suggestions**. Modul AI berjalan dua mode: `mock` (default) dan `remote` (OpenAI-compatible via `MAUEKSPOR_AI_MODE=remote`).
+> Status saat ini: **berfungsi penuh dengan backend.** Frontend adalah antarmuka kerja lengkap yang terhubung ke backend FastAPI (list, detail, form create, dan action/button di semua modul memakai `src/lib/api/*.ts`; mock di `src/lib/data/trade.ts` hanya fallback saat API tak tersedia). Backend punya auth JWT (refresh rotation) via **Bearer token + sessionStorage**, **RBAC per-role**, **audit log**, **login rate limiting**, **password policy**, **security headers**, dan **persistensi PostgreSQL** (production/Docker) / **SQLite** (dev lokal). Fitur inti ExportReadyAI telah diadaptasi lengkap: **enrichment produk (HS code + SKU)**, **Market Intelligence**, **Pricing Calculator (EXW/FOB/CIF)**, **Costing nyata + exchange rate + PDF**, **Export Analysis dengan compliance check, snapshot produk/regulasi, reanalyze, compare, dan rekomendasi regulasi 10 bagian (ID/EN)**, **master data negara (250) + regulasi + HS codes (6.941 kode)**, **katalog dengan gambar + varian + AI description + listing publik**, **buyer request matching**, **forwarder profile + review + rekomendasi + statistik**, **buyer profile**, **educational CRUD + upload file**, dan **chat sessions + suggestions**. **Seeder lengkap 100+ record per tabel** (50+ tabel) mengikuti alur ekspor end-to-end. Modul AI berjalan dua mode: `mock` (default) dan `remote` (OpenAI-compatible via `MAUEKSPOR_AI_MODE=remote`).
 
 ## ✨ Penjelasan untuk Orang Awam (Tanpa Jargon Teknis)
 
@@ -110,7 +110,7 @@ Ditujukan untuk empat peran: **Exporter/UMKM** (pengguna utama), **Buyer**, **Fo
 
 - **Autentikasi:** Login menyimpan `access_token` & `refresh_token` ke **sessionStorage** browser. Setiap request `apiFetch()` menyertakan header `Authorization: Bearer <token>`. Token bertahan saat page reload. Saat 401, sistem otomatis mencoba refresh token via `X-Refresh-Token` header, lalu mendapatkan pasangan token baru. Jika refresh gagal, token dibersihkan (user perlu login ulang).
 - **Frontend** memiliki dua sumber data secara sengaja: `src/lib/data/trade.ts` (mock statis, dipakai sebagai fallback saat API tidak tersedia) dan `src/lib/api/*.ts` (klien HTTP nyata ke backend, `apiFetch` di `src/lib/api/client.ts` menembak `VITE_API_BASE_URL`). Semua halaman workspace — list, detail, form create/edit, dan tombol action — sudah terhubung ke endpoint backend (pola `createRemoteList`/`loadById` dengan fallback ke seed saat API tak tersedia).
-- **Backend** menyediakan **240+ endpoint** yang kontraknya teruji penuh terhadap `src/lib/api/*.ts`, plus auth JWT (refresh rotation), RBAC per-role, audit log, persistensi SQLite, **filtering/pagination** pada list utama, dan **notifikasi otomatis** pada aksi penting. Dokumentasi API otomatis (Swagger): `http://localhost:8000/docs` — lengkap dengan **Authorization Bearer** yang bisa langsung dicoba dari browser.
+- **Backend** menyediakan **240+ endpoint** yang kontraknya teruji penuh terhadap `src/lib/api/*.ts`, plus auth JWT (refresh rotation), **RBAC per-role** (settings khusus Admin), **login rate limiting**, **password policy**, **security headers**, audit log, persistensi **PostgreSQL** (production/Docker) / **SQLite** (dev lokal), **filtering/pagination** pada list utama, dan **notifikasi otomatis** pada aksi penting. Dokumentasi API otomatis (Swagger): `http://localhost:8000/docs` — lengkap dengan **Authorization Bearer** yang bisa langsung dicoba dari browser.
 
 ## Tech Stack
 
@@ -220,15 +220,40 @@ Jalankan test:
 
 `.github/workflows/ci.yml` menjalankan dua job: pytest backend (Python 3.13) serta `pnpm check` + `pnpm build` frontend (Node 20, pnpm 9) — otomatis pada setiap push/PR ke `main`.
 
-### Deployment (Docker) — Full Stack
+### Deployment (Docker) — Full Stack (PostgreSQL)
 
 ```bash
 docker compose --profile full up --build
 ```
+- **PostgreSQL** → `localhost:5432` (user/pass/db: `mauekspor`) — data persisten di volume `db-data`
 - Backend → `http://localhost:8000` (Swagger docs di `/docs`, ReDoc di `/redoc`)
 - Frontend → `http://localhost:3000`
-- Data backend persisten di PostgreSQL (volume `db-data`) atau SQLite (dev lokal, `backend-data`).
+- Backend otomatis konek ke PostgreSQL via `MAUEKSPOR_DATABASE_URL`
 - Atur secret/asal prod lewat `.env` (lihat `backend/.env.production.example`) dan `VITE_API_BASE_URL` saat build frontend (build arg `docker compose`).
+
+### Seeder Data (100+ record per tabel)
+
+Saat database kosong, backend otomatis meng-seed data realistis mengikuti alur ekspor end-to-end:
+
+| Data | Jumlah | Keterangan |
+|------|--------|-----------|
+| Users | 103 | Admin, Exporter, Buyer, Forwarder, CustomsBroker, Finance |
+| Products | 103 | Produk ekspor Indonesia (kopi, rempah, furnitur, batik, dll.) |
+| Projects | 103 | Trade project dari produk → buyer → negara tujuan |
+| Orders → Payments | 101 → 101 | Alur RFQ → Quotation → Order → Payment |
+| Countries | **250** | Master data negara lengkap |
+| HS Codes | **6.989** | Master data kode HS 2022 (dari CSV) |
+| Buyer/Forwarder profiles | 100 / 100 | Terkait user role masing-masing |
+| + 40 tabel lainnya | 100+ | Catalogs, costing, export analysis, dsb. |
+
+Akun seed untuk login:
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Admin** | `admin@mauekspor.example` | `admin123` |
+| **Exporter** | `rizal@kopigayo.example` | `rizal123` |
+| **Buyer** | `aya@hikari.example` | `buyer123` |
+| **Bulk user** | `user006@export.example` (dst.) | `password123` |
 
 ### Akses Swagger / OpenAPI
 

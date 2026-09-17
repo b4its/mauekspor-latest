@@ -10,6 +10,19 @@ SvelteKit 5 (Svelte 5 runes) + Tailwind v4 + shadcn-svelte — antarmuka workspa
 - `src/lib/data/trade.ts` — tipe TypeScript semua entitas + mock data (fallback)
 - `src/lib/components/` — `AppShell`, `AppSidebar`, komponen shadcn-svelte (`ui/*`)
 - `src/lib/stores/session.svelte.ts` — state machine auth: `loading → authenticated | unauthenticated`
+- `src/lib/components/Pagination.svelte` — komponen pagination reusable (page selector, page size, prev/next, total items)
+- `src/lib/utils/pagination.ts` — helper `paginate()` & `calcTotalPages()`
+
+## Responsive & Pagination
+
+Semua halaman workspace **responsif** di semua ukuran layar (mobile/tablet/desktop):
+
+- **Grid responsif:** `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` — menyesuaikan jumlah kolom per breakpoint
+- **Flex-wrap:** header & toolbar memakai `flex-wrap` agar tidak overflow di layar kecil
+- **Mobile sidebar:** chat & halaman dengan sidebar memakai overlay + backdrop + toggle
+- **Search bar:** setiap halaman list punya input pencarian/filter
+- **Pagination:** semua halaman list (30+) memakai `<Pagination>` (20 item/halaman default, bisa ubah 8/12/20/50/100)
+- **No fixed-width:** tidak ada `w-[4000px]` — semua memakai `max-w-*` yang responsif
 
 ## Autentikasi (Auth Flow)
 

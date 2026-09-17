@@ -29,23 +29,35 @@ app = FastAPI(
 
 **Base URL:** `http://localhost:8000/api/v1`
 
-## Autentikasi
+## Database
+
+- **PostgreSQL** (`postgresql://...`) untuk production / Docker
+- **SQLite** (`sqlite:///...`) untuk development lokal
+- Pilih via env `MAUEKSPOR_DATABASE_URL`
+- Semua tabel disimpan di tabel `records` (payload JSONB)
+
+## Autentikasi & Keamanan
 
 - **Login:** `POST /auth/login/` → dapatkan `access_token` & `refresh_token` di response `meta`
 - **Bearer Auth:** Kirim `Authorization: Bearer <access_token>` di header setiap request
 - **Refresh:** `POST /auth/refresh/` dengan header `X-Refresh-Token: <refresh_token>`
 - **Cookie fallback:** Backend juga menerima cookie `access_token` (HttpOnly, SameSite=Lax)
+- **Rate limiting:** Max 5 percobaan login gagal per 60 detik per IP → `429`
+- **Password policy:** Min 8 karakter + wajib huruf & angka
+- **Security headers:** `X-Content-Type-Options`, `X-Frame-Options: DENY`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`, `Cache-Control: no-store`
 
 ## RBAC (Role-Based Access Control)
 
-| Role | Akses |
-|------|-------|
-| Admin | Semua modul (read + write) |
-| Exporter | Modul dagang (produk, analisis, katalog, costing, dll.) |
-| Buyer | Buyer requests, chat, quotations, messages |
-| Forwarder | Shipments, messages, notifications |
-| CustomsBroker | Shipments, compliance, documents, payments, messages |
-| Finance | Payments, billing, orders, quotations, messages |
+| Role | Akses Baca | Akses Tulis (modul) |
+|------|-----------|---------------------|
+| Admin | Semua | Semua (termasuk users, audit, api-keys, settings) |
+| Exporter | Semua (non-admin) | Produk, analisis, katalog, costing, order, shipment, dll. |
+| Buyer | Semua (non-admin) | Buyer requests, quotations, orders, chat, messages |
+| Forwarder | Semua (non-admin) | Shipments, messages, notifications |
+| CustomsBroker | Semua (non-admin) | Shipments, compliance, documents, payments, messages |
+| Finance | Semua (non-admin) | Payments, billing, orders, quotations, messages |
+
+> Modul admin-only (`users`, `audit`, `api-keys`, `settings`) → hanya Admin yang bisa baca & tulis.
 
 ## Format Response
 
@@ -58,6 +70,19 @@ Error:
 ```json
 {"message": "string", "errors": {...}}
 ```
+
+## Endpoint Utama
+
+- **Auth:** login, register, register-admin, refresh, logout, me
+- **Products:** CRUD, enrich (HS+SKU), market intelligence, pricing, catalog description
+- **Export Analysis:** create, compare, reanalyze, regulation recommendations
+- **Catalogs:** CRUD, publish, images, variants, AI description
+- **Costing:** CRUD, exchange rate, PDF, compare
+- **Commercial:** buyers, buyer-requests, forwarders, RFQ, quotations, orders, payments
+- **Fulfillment:** compliance, documents, shipments, tasks
+- **Insights:** analytics, reports, audit
+- **Workspace:** team, messages, chat, files, notifications, educational
+- **Master data:** countries (250), HS codes (6941), regulations
     """,
     version=settings.api_version,
     lifespan=lifespan,

@@ -10,13 +10,17 @@ FastAPI backend untuk workspace export-import MauEkspor. Kontrak endpoint meniru
 | `http://localhost:8000/redoc` | **ReDoc** — dokumentasi alternatif |
 | `http://localhost:8000/openapi.json` | **OpenAPI JSON** — impor ke Postman/Insomnia |
 
-## Autentikasi
+## Autentikasi & Keamanan
 
 - **Login:** `POST /api/v1/auth/login/` → dapatkan `access_token` & `refresh_token` di response `meta`
 - **Kirim token:** Sertakan header `Authorization: Bearer <access_token>` di setiap request
 - **Refresh:** `POST /api/v1/auth/refresh/` dengan header `X-Refresh-Token: <refresh_token>`
 - **Logout:** `POST /api/v1/auth/logout/` — revoke refresh token + hapus cookie
 - **Fallback cookie:** Backend juga menerima cookie `access_token` (HttpOnly, SameSite=Lax) untuk kompatibilitas GET
+- **Login rate limiting:** max 5 percobaan gagal/60 detik per IP → `429`
+- **Password policy:** min 8 karakter + wajib huruf & angka (register)
+- **Security headers:** `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`, `Cache-Control: no-store`
+- **RBAC ketat:** modul `users`, `audit`, `api-keys`, `settings` → hanya Admin (read & write)
 
 > Semua endpoint write (POST/PUT/PATCH/DELETE) memerlukan autentikasi. Endpoint GET publik untuk modul non-admin.
 
@@ -44,8 +48,12 @@ Akun seed:
 - **Persistence** — semua tabel disimpan ke tabel `records` (payload JSONB) di **PostgreSQL** (`postgresql://...`) untuk production/Docker, atau **SQLite** (`sqlite:///...`) untuk dev lokal. Pilih lewat `MAUEKSPOR_DATABASE_URL`. Matikan dengan `MAUEKSPOR_DISABLE_PERSISTENCE=1` (dipakai test).
 - **Auth** — PBKDF2 password hashing, JWT-like access + refresh token. Token dikirim via **`Authorization: Bearer`** header. Juga via cookie HttpOnly (`access_token`, `refresh_token`) untuk fallback.
 - **Refresh token rotation** — setiap refresh mem-revoke token lama dan menerbitkan pasangan baru; token bekas/replay ditolak `401`. Logout me-revoke refresh token.
-- **RBAC** — role `Admin | Exporter | Buyer | Forwarder | CustomsBroker | Finance`. Mutation diblokir `403` bila role tidak berhak atas modul; modul `users`, `audit`, `api-keys`, `settings` read-only untuk Admin.
+- **RBAC** — role `Admin | Exporter | Buyer | Forwarder | CustomsBroker | Finance`. Mutation diblokir `403` bila role tidak berhak atas modul; modul `users`, `audit`, `api-keys`, `settings` khusus Admin (read & write).
+- **Rate limiting** — login dibatasi 5 percobaan gagal/60 detik per IP → `429` (anti brute-force).
+- **Password policy** — register wajib password min 8 karakter + huruf & angka.
+- **Security headers** — middleware menambahkan header keamanan di semua response.
 - **Audit log** — semua mutasi tercatat ke `audit_events` (aktor, aksi, modul, entity, severity).
+- **Seeder 100+ record/tabel** — saat DB kosong, `app/seed_large.py` meng-seed 100+ record per tabel (50+ tabel) mengikuti alur ekspor: users → products → projects → orders → payments, plus **250 negara** & **6.941 HS codes** dari master data.
 - **OpenAPI / Swagger / ReDoc** — dokumentasi API otomatis dengan Bearer auth scheme (tombol "Authorize" di Swagger UI).
 - **Master data HS codes** — `app/data/harmonized-system.csv` (6941 kode HS 2022) + `sections.csv`, dimuat via `app/data/hs_loader.py` (pencarian kata kunci + autocomplete + konteks AI).
 - **Master data negara & regulasi** — `app/data/countries.py`: 250 negara + regulasi (Ingredient/Labeling/Physical) untuk compliance checker.
