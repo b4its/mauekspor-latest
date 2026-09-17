@@ -147,8 +147,8 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	<AppSidebar />
 
 	<Sidebar.Inset class="landing-font min-h-svh">
-		<header
-			class="sticky top-3 z-30 mx-3 mt-3 flex h-14 shrink-0 flex-wrap items-center justify-between gap-3 rounded-full border border-[#0b3d91]/10 bg-white/80 px-3 shadow-sm backdrop-blur-xl transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:mx-4 sm:mt-4 sm:px-4 dark:border-white/10 dark:bg-[#0a1730]/80"
+<header
+			class="sticky top-3 z-30 mx-3 mt-3 flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-2 rounded-full border border-[#0b3d91]/10 bg-white/80 px-3 py-2 shadow-sm backdrop-blur-xl transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:mx-4 sm:mt-4 sm:px-4 sm:gap-3 dark:border-white/10 dark:bg-[#0a1730]/80"
 		>
 			<div class="flex min-w-0 items-center gap-2">
 				<Sidebar.Trigger class="-ms-1" />
@@ -166,55 +166,38 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				</Breadcrumb.Root>
 			</div>
 
-			<div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+			<div class="flex flex-wrap items-center justify-end gap-1 sm:gap-2">
 				<ThemeToggle />
-				<Button variant="outline" size="sm" title={i18n.locale === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'} onclick={toggleLocale}>
+				<Button variant="outline" size="sm" title={i18n.locale === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'} onclick={toggleLocale} class="px-1.5 sm:px-2">
 					<span class="text-xs font-bold uppercase tracking-wide">{i18n.locale === 'id' ? 'EN' : 'ID'}</span>
-					<span class="hidden sm:inline">{i18n.locale === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
 				</Button>
-				<Button variant="outline" size="sm" onclick={() => (commandOpen = true)}>
+				<Button variant="outline" size="sm" onclick={() => (commandOpen = true)} class="px-1.5 sm:px-2">
 					<SearchIcon class="size-3.5" />
-					<span class="hidden sm:inline">{t('Search')}</span>
-					<kbd class="ml-1 hidden rounded border border-border bg-secondary px-1 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-block">⌘K</kbd>
+					<span class="hidden sm:inline ms-1">{t('Search')}</span>
+					<kbd class="ml-1 hidden rounded border border-border bg-secondary px-1 py-0.5 font-mono text-[10px] text-muted-foreground md:inline-block">⌘K</kbd>
 				</Button>
-				<Button href="/notifications" variant="outline" size="sm" class="relative">
+				<Button href="/notifications" variant="outline" size="sm" class="relative px-1.5 sm:px-2">
 					<BellIcon class="size-3.5" />
-					<span class="hidden sm:inline">{t('Notifications')}</span>
+					<span class="hidden lg:inline ms-1">{t('Notifications')}</span>
 					{#if unreadCount > 0}
-						<span class="ml-0.5 rounded-full bg-red-600 px-1.5 text-[10px] font-semibold text-white">
-							{unreadCount}
-						</span>
+						<span class="absolute -right-0.5 -top-0.5 rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">{unreadCount}</span>
 					{/if}
 				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					class="relative"
-					onclick={() => (activityOpen = !activityOpen)}
-				>
+				<Button variant="outline" size="sm" onclick={() => (activityOpen = !activityOpen)} class="relative px-1.5 sm:px-2">
 					<ActivityIcon class="size-3.5" />
-					<span class="hidden sm:inline">{t('Activity')}</span>
+					<span class="hidden lg:inline ms-1">{t('Activity')}</span>
 					{#if activityCount}
-						<span class="ml-0.5 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
-							{activityCount}
-						</span>
+						<span class="absolute -right-0.5 -top-0.5 rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">{activityCount}</span>
 					{/if}
 				</Button>
-				<Button href="/trade-projects" variant="outline" size="sm" class="hidden md:inline-flex">{t('View projects')}</Button>
-				<Button href="/trade-projects/new" size="sm">
+				<Button href="/trade-projects" variant="outline" size="sm" class="hidden lg:inline-flex">{t('View projects')}</Button>
+				<Button href="/trade-projects/new" size="sm" class="px-2 sm:px-3">
 					<span class="hidden sm:inline">{t('New trade project')}</span>
-					<span class="sm:hidden">{t('New project')}</span>
+					<span class="sm:hidden">{t('New')}</span>
 				</Button>
 				{#if user}
-					<Button
-						variant="ghost"
-						size="sm"
-						disabled={loggingOut}
-						title={user.role}
-						onclick={handleLogout}
-						class="text-muted-foreground"
-					>
-						<span class="hidden truncate sm:inline">{user.name}</span>
+					<Button variant="ghost" size="sm" disabled={loggingOut} title={user.role} onclick={handleLogout} class="text-muted-foreground px-1.5 sm:px-2">
+						<span class="hidden lg:inline truncate max-w-[120px]">{user.name}</span>
 						<span class="text-[11px] font-semibold uppercase tracking-wide">{loggingOut ? '...' : t('Logout')}</span>
 					</Button>
 				{:else if userStatus === 'unauthenticated'}
