@@ -80,7 +80,8 @@ def _now() -> str:
 
 
 def _actor_from_cookie(request) -> str:
-    token = request.cookies.get("access_token")
+    """Ekstrak actor name dari request (Authorization header atau cookie)."""
+    token = _request_token(request)
     if not token:
         return "Anonymous"
     try:

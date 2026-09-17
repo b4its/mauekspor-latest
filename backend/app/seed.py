@@ -6,12 +6,13 @@ from app.data import countries as country_data
 
 
 def seed_if_empty():
-    if db.loaded_records("users") or db.loaded_records("products"):
-        return  # sudah ter-seed
+    if db.loaded_records("users") and db.loaded_records("users") > 50:
+        return  # sudah di-seed 100+
 
     # ---------- MASTER DATA: negara & regulasi ----------
-    for c in country_data.get_countries():
-        db.insert("countries", {
+    if not db.loaded_records("countries"):
+        for c in country_data.get_countries():
+            db.insert("countries", {
             "id": db.gen_id("countries", "CTY"),
             "country_code": c["country_code"],
             "country_name": c["country_name"],
@@ -426,3 +427,10 @@ def seed_if_empty():
         "id": "REV-002", "forwarderId": "FWD-NGL", "rating": 4, "reviewText": "Rate kompetitif, update tracking rutin.",
         "umkmId": "U-002", "reviewerName": "Sinta Lestari", "createdAt": "2026-08-04",
     })
+
+    # ---------- LARGE SEED: 100 records per table ----------
+    try:
+        from app.seed_large import seed_100_records
+        seed_100_records()
+    except ImportError:
+        pass  # seed_large.py opsional
