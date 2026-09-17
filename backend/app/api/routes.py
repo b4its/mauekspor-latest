@@ -3243,7 +3243,11 @@ def send_session_message(session_id: str, payload: sc.SendChatPayload):
     record.setdefault("messages", []).append({"role": "user", "text": payload.text})
     history = "\n".join(f"{m.get('role', '')}: {m.get('text', '')}" for m in record["messages"][-8:])
     reply = ai.complete(
-        "You are MauEkspor Copilot, a trade assistant for Indonesian exporters. Answer concisely in Indonesian, grounded in the workspace context given.",
+        "You are MauEkspor Copilot, a trade assistant for Indonesian exporters. "
+        "Answer concisely in Indonesian, grounded in the workspace context given. "
+        "When the user gives a command like 'ringkaskan', 'buatkan', 'analisa', 'cari', 'hitung', 'jelaskan' — "
+        "execute it directly with relevant data. Use markdown formatting for structured responses: "
+        "**bold** for emphasis, `code` for technical terms, - for lists, and headers if needed.",
         f"Conversation so far:\n{history}",
         kind="chat_reply",
     )
