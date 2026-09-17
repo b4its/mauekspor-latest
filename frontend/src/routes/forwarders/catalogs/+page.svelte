@@ -9,6 +9,8 @@
 	import type { Catalog } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const forwarder = seedForwarders[0];
 	let query = $state('');
@@ -31,6 +33,11 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredCatalogs ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredCatalogs?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -53,7 +60,7 @@
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-		{#each filteredCatalogs as catalog}
+		{#each pagedItems as catalog}
 			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 				<a href={`/catalogs/${catalog.id}`} class="grid h-full gap-3 p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
@@ -73,4 +80,6 @@
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada katalog yang diterbitkan cocok.')}</div>
 		{/each}
 	</div>
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredCatalogs?.length ?? 0} />
+
 </AppShell>

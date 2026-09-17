@@ -11,6 +11,8 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Ready', 'In Progress', 'Needs Review'];
 
@@ -42,6 +44,11 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredAnalyses ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredAnalyses?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -95,7 +102,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 				</Card>
 			{/each}
 		{:else}
-			{#each filteredAnalyses as analysis}
+			{#each pagedItems as analysis}
 				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(analysis.status))}>{trStatus(analysis.status)}</Badge>
@@ -119,4 +126,6 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 			{/each}
 		{/if}
 	</div>
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredAnalyses?.length ?? 0} />
+
 </AppShell>

@@ -9,6 +9,8 @@
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let search = $state('');
 	let projects = createRemoteList(listTradeProjects, seedProjects);
@@ -34,6 +36,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filtered ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filtered?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -76,7 +83,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 					</Card>
 				{/each}
 			{:else}
-				{#each filtered as project}
+				{#each pagedItems as project}
 					<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 						<a href={`/trade-projects/${project.id}`} class="grid h-full gap-4 p-5 no-underline">
 							<div class="flex items-center justify-between gap-3">
@@ -97,4 +104,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/if}
 		</CardContent>
 	</Card>
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filtered?.length ?? 0} />
+
 </AppShell>
