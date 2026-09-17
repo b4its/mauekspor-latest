@@ -6,6 +6,8 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { MarkdownRenderer } from '$lib/components/MarkdownRenderer';
+	import ThinkingIndicator from '$lib/components/ThinkingIndicator.svelte';
+	import TypewriterText from '$lib/components/TypewriterText.svelte';
 	import {
 		listChatSessions,
 		createChatSession,
@@ -42,6 +44,8 @@
 	let sidebarOpen = $state(true);
 	let messagesEl = $state<HTMLDivElement | null>(null);
 	let searchQuery = $state('');
+	// Track which AI message is currently animating (the latest one)
+	let typingMessageId = $state<string | null>(null);
 
 	// Rename modal
 	let renameDialogOpen = $state(false);
@@ -165,6 +169,9 @@
 			const idx = sessions.findIndex((s) => s.id === active!.id);
 			if (idx >= 0) sessions[idx] = updated;
 			activeId = updated.id;
+			// Set typing effect untuk pesan AI terbaru
+			const aiMsgCount = updated.messages.filter((m: { role: string }) => m.role === 'ai').length;
+			typingMessageId = `ai-${aiMsgCount - 1}`;
 		} catch {
 			error = t('Gagal mengirim pesan.');
 		} finally { sending = false; }
@@ -306,7 +313,11 @@
 									{#if isUser(message.role)}
 										<p class="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
 									{:else}
-										<MarkdownRenderer text={message.text} />
+										{#if typingMessageId === `ai-${msgIdx}`}
+											<TypewriterText text={message.text} speed={20} />
+										{:else}
+											<MarkdownRenderer text={message.text} />
+										{/if}
 									{/if}
 								</div>
 							</div>
@@ -315,19 +326,7 @@
 				{/if}
 
 				{#if sending}
-					<div class="flex items-start gap-2">
-						<div class="shrink-0 rounded-full border bg-muted p-1.5"><BotIcon class="size-4" /></div>
-						<div class="max-w-[75%] space-y-1">
-							<span class="text-xs font-bold text-muted-foreground">{t('Asisten')}</span>
-							<div class="rounded-xl border bg-muted/50 px-4 py-3">
-								<span class="inline-flex gap-1">
-									<span class="size-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:0ms]"></span>
-									<span class="size-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:150ms]"></span>
-									<span class="size-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:300ms]"></span>
-								</span>
-							</div>
-						</div>
-					</div>
+					<ThinkingIndicator />
 				{/if}
 			</div>
 

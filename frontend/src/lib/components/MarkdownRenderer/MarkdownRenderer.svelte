@@ -14,7 +14,6 @@
 </script>
 
 {#if html}
-	<!-- svelte-ignore a11y_no_sanitize_html -->
 	<div class="md-render text-sm leading-relaxed">
 		{@html html}
 	</div>
