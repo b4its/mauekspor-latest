@@ -11,6 +11,8 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import type { Product } from '$lib/data/trade';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let filter = $state('All');
 	let query = $state('');
@@ -122,6 +124,11 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredProducts ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredProducts?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -226,7 +233,7 @@
 		{:else if filteredProducts.length === 0}
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No product matched your filter.')}</div>
 		{:else}
-			{#each filteredProducts as product}
+			{#each pagedItems as product}
 			<Card class={`relative transition-all hover:border-ring/40 hover:shadow-md ${selected.has(product.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
 				<div class="absolute top-3 right-3 z-10">
 					<input
@@ -272,4 +279,6 @@
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredProducts?.length ?? 0} />
+
 </AppShell>

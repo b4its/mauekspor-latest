@@ -11,6 +11,8 @@
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createSupportTicket, resolveSupportTicket } from '$lib/api/support';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Bug', 'Question', 'Billing', 'Integration', 'Operations'];
 	let activeFilter = $state('All');
@@ -67,6 +69,11 @@
 			error = t('Gagal menyelesaikan tiket.');
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredTickets ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredTickets?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -131,7 +138,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-3">
-			{#each filteredTickets as ticket}
+			{#each pagedItems as ticket}
 				<Card class="flex flex-col items-stretch justify-between gap-4 p-5 md:flex-row md:items-center">
 					<div>
 						<Badge variant={toneVariant(statusTone(resolved || resolvedId === ticket.id ? 'Resolved' : ticket.status))}>{resolved || resolvedId === ticket.id ? 'Resolved' : ticket.status}</Badge>
@@ -149,4 +156,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredTickets?.length ?? 0} />
+
 </AppShell>

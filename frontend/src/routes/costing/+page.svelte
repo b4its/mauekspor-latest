@@ -13,6 +13,8 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Ready', 'Needs Review', 'Draft'];
 	let activeFilter = $state('All');
@@ -103,6 +105,11 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredScenarios ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredScenarios?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -217,7 +224,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 				</Card>
 			{/each}
 		{:else}
-			{#each filteredScenarios as scenario}
+			{#each pagedItems as scenario}
 				<Card class="relative transition-all hover:border-ring/40 hover:shadow-md">
 					<Button
 						variant="outline"
@@ -253,4 +260,6 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 			{/each}
 		{/if}
 	</div>
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredScenarios?.length ?? 0} />
+
 </AppShell>

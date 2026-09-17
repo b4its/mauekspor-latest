@@ -10,6 +10,8 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Logistics', 'Finance', 'Compliance', 'Commerce', 'AI'];
 
@@ -72,6 +74,11 @@
 			error = t('Gagal menghubungkan integrasi.');
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredIntegrations ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredIntegrations?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -147,7 +154,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredIntegrations as item}
+			{#each pagedItems as item}
 				<Card class="gap-4">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone((connected || connectedId === item.id) && item.status === 'Needs Auth' ? 'Connected' : item.status))}>{(connected || connectedId === item.id) && item.status === 'Needs Auth' ? t('Terhubung') : trStatus(item.status)}</Badge>
@@ -179,4 +186,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredIntegrations?.length ?? 0} />
+
 </AppShell>

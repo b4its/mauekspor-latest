@@ -10,6 +10,8 @@
 	import { listTemplates, createTemplate, useTemplate } from '$lib/api/templates';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	
 
 	const filters = ['All', 'Document', 'Email', 'Workflow', 'Catalog'];
@@ -75,6 +77,11 @@
 			createSaving = false;
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredTemplates ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredTemplates?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -175,7 +182,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredTemplates as template}
+			{#each pagedItems as template}
 				<Card class="gap-4">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(template.status))}>{template.status}</Badge>
@@ -207,4 +214,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredTemplates?.length ?? 0} />
+
 </AppShell>

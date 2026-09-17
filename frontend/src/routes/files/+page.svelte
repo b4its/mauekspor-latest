@@ -11,6 +11,8 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Document', 'Certificate', 'Image', 'Evidence', 'Report'];
 
@@ -82,6 +84,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			error = t('Gagal memverifikasi file.');
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredFiles ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredFiles?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -162,7 +169,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredFiles as file}
+			{#each pagedItems as file}
 				<Card class="gap-4">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(verified || verifiedId === file.id ? 'Verified' : file.status))}>{verified || verifiedId === file.id ? t('Terverifikasi') : trStatus(file.status)}</Badge>
@@ -199,4 +206,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredFiles?.length ?? 0} />
+
 </AppShell>

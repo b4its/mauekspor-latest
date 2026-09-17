@@ -12,6 +12,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { assignTask } from '$lib/api/tasks';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Open', 'In Progress', 'Blocked', 'Done'];
 	let activeFilter = $state('All');
@@ -60,6 +62,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			creating = false;
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredTasks ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredTasks?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -133,7 +140,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredTasks as task}
+			{#each pagedItems as task}
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/tasks/${task.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3"><Badge variant={toneVariant(statusTone(task.status))}>{task.status}</Badge><strong class="text-sm font-bold">{task.priority}</strong></div>
@@ -152,4 +159,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredTasks?.length ?? 0} />
+
 </AppShell>

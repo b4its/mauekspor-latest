@@ -10,6 +10,8 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Email', 'WhatsApp', 'Portal', 'Internal'];
 
@@ -71,6 +73,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			error = t('Gagal menyelesaikan thread.');
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredThreads ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredThreads?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -142,7 +149,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		</div>
 	{:else}
 		<div class="grid gap-4">
-			{#each filteredThreads as thread}
+			{#each pagedItems as thread}
 				<Card>
 					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
 						<div class="min-w-0 flex-1">
@@ -165,4 +172,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredThreads?.length ?? 0} />
+
 </AppShell>

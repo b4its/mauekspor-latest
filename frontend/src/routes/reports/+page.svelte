@@ -10,6 +10,8 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Executive', 'Compliance', 'Financial', 'Shipment'];
 
@@ -56,6 +58,11 @@
 			generating = false;
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredReports ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredReports?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -120,7 +127,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredReports as report}
+			{#each pagedItems as report}
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/reports/${report.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
@@ -142,4 +149,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredReports?.length ?? 0} />
+
 </AppShell>

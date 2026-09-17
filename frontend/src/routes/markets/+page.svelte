@@ -11,6 +11,8 @@
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Recommended', 'Watchlist', 'Needs Research'];
 	let activeFilter = $state('All');
@@ -69,6 +71,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			generating = false;
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredMarkets ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredMarkets?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -159,7 +166,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredMarkets as market}
+			{#each pagedItems as market}
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/markets/${market.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
@@ -189,4 +196,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredMarkets?.length ?? 0} />
+
 </AppShell>

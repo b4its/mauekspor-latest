@@ -11,6 +11,8 @@
 	import { statusTone } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Admin', 'Operations', 'Compliance', 'Finance', 'Sales'];
 	let activeFilter = $state('All');
@@ -67,6 +69,11 @@
 			updatingRole = '';
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredMembers ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredMembers?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -163,7 +170,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredMembers as member}
+			{#each pagedItems as member}
 				<Card class="grid gap-4">
 					<CardContent class="grid gap-4 p-5">
 						<div class="flex items-center justify-between gap-3">
@@ -195,4 +202,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredMembers?.length ?? 0} />
+
 </AppShell>

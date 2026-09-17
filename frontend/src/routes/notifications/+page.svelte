@@ -10,6 +10,8 @@
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Unread', 'Read', 'Archived'];
 
@@ -84,6 +86,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			error = t('Gagal mengarsipkan notifikasi.');
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredNotifications ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredNotifications?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -156,7 +163,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		</div>
 	{:else}
 		<div class="grid gap-3">
-			{#each filteredNotifications as item}
+			{#each pagedItems as item}
 				<Card class="flex flex-col items-start justify-between gap-4 p-5 md:flex-row md:items-center">
 					<div class="min-w-0">
 						<Badge variant={toneVariant(statusTone(marked && item.status === 'Unread' ? 'Read' : item.status))}>{marked && item.status === 'Unread' ? t('Dibaca') : trStatus(item.status)}</Badge>
@@ -182,4 +189,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredNotifications?.length ?? 0} />
+
 </AppShell>

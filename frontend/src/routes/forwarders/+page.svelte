@@ -12,6 +12,8 @@
 	import { getForwarderRecommendations } from '$lib/api/forwarders';
 	import type { Forwarder } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const modeFilters = ['All', 'Ocean', 'Air', 'Multimodal'];
 	let activeFilter = $state('All');
@@ -71,6 +73,11 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredForwarders ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredForwarders?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -171,7 +178,7 @@
 				</Card>
 			{/each}
 		{:else}
-			{#each filteredForwarders as forwarder}
+			{#each pagedItems as forwarder}
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/forwarders/${forwarder.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
@@ -195,4 +202,6 @@
 			{/each}
 		{/if}
 	</div>
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredForwarders?.length ?? 0} />
+
 </AppShell>

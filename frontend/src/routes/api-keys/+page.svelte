@@ -11,6 +11,8 @@
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createApiKey, revokeApiKey } from '$lib/api/api-keys';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Active', 'Expiring Soon', 'Revoked'];
 	let activeFilter = $state('All');
@@ -66,6 +68,11 @@
 			revokingId = '';
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredKeys ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredKeys?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -139,7 +146,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredKeys as key}
+			{#each pagedItems as key}
 				<Card class="gap-4">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(revoked ? 'Revoked' : key.status))}>{revoked ? 'Revoked' : key.status}</Badge>
@@ -171,4 +178,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredKeys?.length ?? 0} />
+
 </AppShell>

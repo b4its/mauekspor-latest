@@ -11,6 +11,8 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Lead', 'Qualified', 'Negotiating', 'Active', 'At Risk'];
 	let activeFilter = $state('All');
@@ -64,6 +66,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredBuyers ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredBuyers?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -143,7 +150,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredBuyers as buyer}
+			{#each pagedItems as buyer}
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/buyers/${buyer.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
@@ -165,4 +172,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredBuyers?.length ?? 0} />
+
 </AppShell>

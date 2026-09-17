@@ -11,6 +11,8 @@
 	import { statusTone } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Ready', 'Needs Review', 'Approved', 'Missing'];
 	let activeFilter = $state('All');
@@ -68,6 +70,11 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredDocuments ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredDocuments?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -162,7 +169,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredDocuments as document}
+			{#each pagedItems as document}
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/documents/${document.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
@@ -192,4 +199,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredDocuments?.length ?? 0} />
+
 </AppShell>

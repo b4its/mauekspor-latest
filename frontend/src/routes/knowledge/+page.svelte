@@ -11,6 +11,8 @@
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { publishKnowledgeArticle } from '$lib/api/knowledge';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Export Basics', 'Compliance', 'Logistics', 'Finance', 'Platform'];
 	let activeFilter = $state('All');
@@ -50,6 +52,11 @@
 			error = t('Gagal mempublikasikan artikel.');
 		}
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredArticles ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredArticles?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -117,7 +124,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredArticles as article}
+			{#each pagedItems as article}
 				<Card class="grid gap-4">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(published && article.id === publishedId ? 'Published' : article.status))}>{published && article.id === publishedId ? 'Published' : article.status}</Badge>
@@ -138,4 +145,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredArticles?.length ?? 0} />
+
 </AppShell>

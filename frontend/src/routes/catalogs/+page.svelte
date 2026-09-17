@@ -11,6 +11,8 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Published', 'Draft', 'Needs Review'];
 	let activeFilter = $state('All');
@@ -65,6 +67,11 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredCatalogs ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredCatalogs?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -147,7 +154,7 @@
 				</Card>
 			{/each}
 		{:else}
-			{#each filteredCatalogs as catalog}
+			{#each pagedItems as catalog}
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/catalogs/${catalog.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
@@ -188,4 +195,6 @@
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredCatalogs?.length ?? 0} />
+
 </AppShell>

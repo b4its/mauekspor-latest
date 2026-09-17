@@ -16,6 +16,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import GraduationCapIcon from '@lucide/svelte/icons/graduation-cap';
 	import BookOpenIcon from '@lucide/svelte/icons/book-open';
 	import PlayCircleIcon from '@lucide/svelte/icons/play-circle';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const levelFilters = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
@@ -57,6 +59,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredModules ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredModules?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -122,7 +129,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		</div>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-			{#each filteredModules as module}
+			{#each pagedItems as module}
 				<a href={`/educational/modules/${module.id}`} class="block no-underline">
 					<Card class="grid h-full gap-3 p-5 shadow-sm transition-transform hover:-translate-y-1">
 						<div class="flex items-center justify-between gap-2">
@@ -196,4 +203,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/if}
 		</CardContent>
 	</Card>
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredModules?.length ?? 0} />
+
 </AppShell>

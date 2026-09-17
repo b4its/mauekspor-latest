@@ -10,6 +10,8 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Info', 'Warning', 'Critical'];
 	let activeFilter = $state('All');
@@ -36,6 +38,11 @@
 	}
 
 	const csvUrl = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'}/audit/export.csv`;
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(filteredEvents ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filteredEvents?.length ?? 0, paginationPageSize));
+
 </script>
 
 <svelte:head>
@@ -89,7 +96,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-4">
-			{#each filteredEvents as event}
+			{#each pagedItems as event}
 				<Card>
 					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
 						<div class="grid gap-1">
@@ -109,4 +116,6 @@
 			{/each}
 		</div>
 	{/if}
+	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredEvents?.length ?? 0} />
+
 </AppShell>
