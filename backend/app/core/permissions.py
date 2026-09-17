@@ -42,7 +42,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "support",
         "suppliers",
         "messages",
-        "settings",
+        # "settings" sengaja TIDAK disertakan — settings read/write khusus Admin
     },
     "Forwarder": {
         "shipments",

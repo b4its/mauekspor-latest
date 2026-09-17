@@ -175,10 +175,20 @@ def _issue_tokens(user: dict, response: Response) -> tuple[str, str]:
     return access, refresh
 
 
+def _validate_password_strength(password: str) -> None:
+    """Password policy: min 8 chars, harus mengandung huruf & angka."""
+    if len(password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters")
+    if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+        raise HTTPException(400, "Password must contain letters and numbers")
+
+
 @router.post("/auth/register/")
 def register(payload: sc.RegisterPayload, response: Response):
     if db.get_by("users", email=str(payload.email)):
         raise HTTPException(409, "Email already registered")
+    # Password policy
+    _validate_password_strength(payload.password)
     # Role tidak boleh Admin saat self-register (Admin hanya via /auth/register-admin/).
     # Sama seperti referensi ExportReadyAI yang hanya membolehkan UMKM mendaftar sendiri.
     from app.core.permissions import ROLES

@@ -659,7 +659,71 @@ def seed_100_records():
             "requiredSpecs": _pick_n(["Nutrition facts","Country of origin","Expiry date"], n()%2+1, n()),
             "descriptionRule": f"Regulation for {cc}.", "createdAt": "now", "updatedAt": "now"})
 
+    # -- BUYER PROFILES (100) — 1:1 dengan user role Buyer (U-166..U-180) + ekspansi --
+    buyer_users = [f"U-{100 + i:03d}" for i in range(1, 101) if roles[i-1] == "Buyer"] or [f"U-{100 + i:03d}" for i in range(1, 101)]
+    for i in range(1, 101):
+        owner = buyer_users[(i-1) % len(buyer_users)]
+        db.insert("buyer_profiles", {"id": f"BYP-{i:03d}", "userId": owner,
+            "company_name": _pick(BUYER_COMPANIES, n()),
+            "companyName": _pick(BUYER_COMPANIES, n()+1),
+            "company_description": f"{_pick(BUYER_COMPANIES, n())} is an importer focused on {_pick(CATEGORIES, n()).lower()}.",
+            "companyDescription": f"{_pick(BUYER_COMPANIES, n())} is an importer.",
+            "contact_info": {"email": f"buyer{i:03d}@example.com", "phone": f"+{n()%100+1}-{n()%9000000+1000000}"},
+            "contactInfo": {"email": f"buyer{i:03d}@example.com", "phone": f"+{n()%100+1}-{n()%9000000+1000000}"},
+            "preferred_product_categories": _pick_n(CATEGORIES, n()%3+1, n()),
+            "preferredProductCategories": _pick_n(CATEGORIES, n()%3+1, n()),
+            "source_countries": _pick_n(REGIONS[_pick(ALL_REGIONS, n())], n()%2+1, n()),
+            "sourceCountries": _pick_n(REGIONS[_pick(ALL_REGIONS, n())], n()%2+1, n()),
+            "business_type": _pick(["Importer","Distributor","Wholesaler","Retailer"], n()),
+            "businessType": _pick(["Importer","Distributor","Wholesaler","Retailer"], n()+1),
+            "annual_import_volume": _pick(["US$1-5M","US$5-20M","US$20-100M","US$100M+"], n()),
+            "annualImportVolume": _pick(["US$1-5M","US$5-20M","US$20-100M","US$100M+"], n()+1),
+            "createdAt": "now", "updatedAt": "now"})
+
+    # -- FORWARDER PROFILES (100) — 1:1 dengan user role Forwarder (U-181..U-190) --
+    fwd_users = [f"U-{100 + i:03d}" for i in range(1, 101) if roles[i-1] == "Forwarder"] or [f"U-{100 + i:03d}" for i in range(1, 101)]
+    for i in range(1, 101):
+        owner = fwd_users[(i-1) % len(fwd_users)]
+        db.insert("forwarder_profiles", {"id": f"FWP-{i:03d}", "userId": owner,
+            "company_name": _pick(FORWARDER_COMPANIES, n()),
+            "companyName": _pick(FORWARDER_COMPANIES, n()+1),
+            "contact_info": {"email": f"fwd{i:03d}@example.com", "phone": f"+{n()%100+1}-{n()%9000000+1000000}"},
+            "contactInfo": {"email": f"fwd{i:03d}@example.com", "phone": f"+{n()%100+1}-{n()%9000000+1000000}"},
+            "specialization_routes": _pick_n(["ID-JP","ID-SG","ID-DE","ID-US","ID-KR"], n()%3+1, n()),
+            "specializationRoutes": _pick_n(["ID-JP","ID-SG","ID-DE","ID-US","ID-KR"], n()%3+1, n()),
+            "service_types": _pick_n(["Ocean Freight","Air Freight","Customs Brokerage","Warehousing","Trucking"], n()%3+1, n()),
+            "serviceTypes": _pick_n(["Ocean Freight","Air Freight","Customs Brokerage","Warehousing","Trucking"], n()%3+1, n()),
+            "averageRating": round(n()%50/10, 1), "totalReviews": n()%50,
+            "createdAt": "now", "updatedAt": "now"})
+
     # -- SETTINGS, EXCHANGE RATES --
+
+    # -- FULL MASTER DATA: 250 negara + 6940 HS codes --
+    if db.loaded_records("countries") < 100:
+        from app.data import world_countries
+        for i, c in enumerate(world_countries.WORLD_COUNTRIES, 1):
+            db.insert("countries", {
+                "id": f"CTY-{i:03d}",
+                "country_code": c.get("country_code", ""),
+                "country_name": c.get("country_name", ""),
+                "region": c.get("region", ""),
+                "createdAt": "2026-07-01",
+            })
+
+    # HS codes: jika hanya 100 dari pool (belum dataset penuh), muat 6940 dari CSV
+    if db.loaded_records("hs_codes") < 1000:
+        from app.data import hs_loader
+        _loader = hs_loader.get_hs_loader()
+        for i, code in enumerate(_loader.codes, 1):
+            db.insert("hs_codes", {
+                "id": f"HS-{i:04d}",
+                "hs_code": code.get("hs_code", ""),
+                "description": code.get("description", ""),
+                "section": code.get("section", ""),
+                "level": code.get("level", len(code.get("hs_code", ""))),
+                "parent": code.get("parent", ""),
+                "createdAt": "now",
+            })
     db.insert("settings", {"id":"SET-ORG-001", "companyName":"MauEkspor Demo",
         "country":"Indonesia", "entityType":"PT",
         "nib":"1234567890123", "taxId":"01.234.567.8",

@@ -115,6 +115,59 @@ def _module_of(path: str) -> str:
     return parts[2] if len(parts) > 2 else ""
 
 
+# ── Security headers middleware ────────────────────────────────────
+_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Cache-Control": "no-store",
+}
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    for key, value in _SECURITY_HEADERS.items():
+        response.headers.setdefault(key, value)
+    return response
+
+
+# ── Login rate limiting (anti brute-force) ─────────────────────────
+_login_attempts: dict[str, list[float]] = {}
+
+
+def _rate_limited(ip: str, limit: int = 5, window_seconds: int = 60) -> bool:
+    """Return True if too many login attempts from this IP."""
+    import time as _time
+    now = _time.time()
+    attempts = [t for t in _login_attempts.get(ip, []) if now - t < window_seconds]
+    _login_attempts[ip] = attempts
+    return len(attempts) >= limit
+
+
+def _record_login_attempt(ip: str) -> None:
+    import time as _time
+    _login_attempts.setdefault(ip, []).append(_time.time())
+
+
+@app.middleware("http")
+async def login_rate_limit(request, call_next):
+    if request.url.path == "/api/v1/auth/login/" and request.method == "POST":
+        ip = request.client.host if request.client else "unknown"
+        if _rate_limited(ip):
+            return JSONResponse(
+                status_code=429,
+                content=_error_body(429, "Too many login attempts. Please wait a minute."),
+            )
+        response = await call_next(request)
+        if response.status_code == 401:
+            _record_login_attempt(ip)
+        return response
+    return await call_next(request)
+
+
 @app.middleware("http")
 async def require_auth_for_mutations(request, call_next):
     module = _module_of(request.url.path)
