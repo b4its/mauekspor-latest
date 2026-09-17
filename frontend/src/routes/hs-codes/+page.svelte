@@ -8,6 +8,8 @@
 	import type { HSCode } from '$lib/api/hs-codes';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+	import Pagination from '$lib/components/Pagination.svelte';
+	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let query = $state('');
 	let codes = $state<HSCode[]>([]);
@@ -15,11 +17,16 @@
 	let error = $state('');
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedItems = $derived(paginate(codes ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(codes?.length ?? 0, paginationPageSize));
+
 	async function load(search = '') {
 		error = '';
 		loading = true;
 		try {
-			codes = (await listHsCodes(search, 100)).data;
+			codes = (await listHsCodes(search, 200)).data;
 		} catch {
 			error = t('Gagal memuat daftar HS code.');
 		} finally {
@@ -33,6 +40,7 @@
 
 	function onSearch(value: string) {
 		query = value;
+		paginationPage = 1;
 		clearTimeout(searchTimer);
 		searchTimer = setTimeout(() => load(value.trim()), 300);
 	}
@@ -76,7 +84,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-2.5">
-			{#each codes as code}
+			{#each pagedItems as code}
 				<a href={`/hs-codes/${code.hs_code}`} class="rounded-lg border bg-muted/30 p-3.5 transition-colors hover:border-ring/40 hover:bg-muted/50">
 					<div class="flex flex-wrap items-center justify-between gap-2">
 						<strong class="text-sm font-bold font-mono">{code.hs_code}</strong>
@@ -87,6 +95,9 @@
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada kode HS yang cocok.')}</div>
 			{/each}
+		</div>
+		<div class="mt-4">
+			<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={codes?.length ?? 0} />
 		</div>
 	{/if}
 </AppShell>

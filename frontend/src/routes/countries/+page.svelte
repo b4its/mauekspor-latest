@@ -8,6 +8,8 @@
 	import { seedCountries } from '$lib/data/trade';
 	import { filterCountries, computeCountryStats } from '$lib/data/countries';
 	import { t } from '$lib/i18n.svelte';
+	import Pagination from '$lib/components/Pagination.svelte';
+	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	import GlobeIcon from '@lucide/svelte/icons/globe';
 	import SearchIcon from '@lucide/svelte/icons/search';
@@ -32,6 +34,17 @@
 	});
 
 	let filtered = $derived(filterCountries(countries.items, { search, region, onlyDetailed }));
+
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(24);
+	let pagedItems = $derived(paginate(filtered ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(filtered?.length ?? 0, paginationPageSize));
+
+	// Reset ke halaman 1 saat filter berubah
+	$effect(() => {
+		[search, region, onlyDetailed];
+		paginationPage = 1;
+	});
 
 	let stats = $derived(computeCountryStats(countries.items));
 
@@ -130,7 +143,7 @@
 		<p class="py-12 text-center text-sm text-muted-foreground">{t('Tidak ada negara ditemukan.')}</p>
 	{:else}
 		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-			{#each filtered as c (c.country_code)}
+			{#each pagedItems as c (c.country_code)}
 				<a
 					href={`/countries/${c.country_code}`}
 					class="group flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground transition-all hover:-translate-y-0.5 hover:border-[#0b3d91]/40 hover:shadow-lg"
@@ -164,6 +177,9 @@
 					{/if}
 				</a>
 			{/each}
+		</div>
+		<div class="mt-4">
+			<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filtered?.length ?? 0} />
 		</div>
 	{/if}
 </AppShell>
