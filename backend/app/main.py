@@ -24,9 +24,54 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
+    description="""
+# MauEkspor API — Workspace Ekspor-Impor berbasis AI
+
+**Base URL:** `http://localhost:8000/api/v1`
+
+## Autentikasi
+
+- **Login:** `POST /auth/login/` → dapatkan `access_token` & `refresh_token` di response `meta`
+- **Bearer Auth:** Kirim `Authorization: Bearer <access_token>` di header setiap request
+- **Refresh:** `POST /auth/refresh/` dengan header `X-Refresh-Token: <refresh_token>`
+- **Cookie fallback:** Backend juga menerima cookie `access_token` (HttpOnly, SameSite=Lax)
+
+## RBAC (Role-Based Access Control)
+
+| Role | Akses |
+|------|-------|
+| Admin | Semua modul (read + write) |
+| Exporter | Modul dagang (produk, analisis, katalog, costing, dll.) |
+| Buyer | Buyer requests, chat, quotations, messages |
+| Forwarder | Shipments, messages, notifications |
+| CustomsBroker | Shipments, compliance, documents, payments, messages |
+| Finance | Payments, billing, orders, quotations, messages |
+
+## Format Response
+
+Semua endpoint mengembalikan:
+```json
+{"data": T, "meta": {...}}
+```
+
+Error:
+```json
+{"message": "string", "errors": {...}}
+```
+    """,
     version=settings.api_version,
     lifespan=lifespan,
     default_response_class=JSONResponse,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    contact={
+        "name": "MauEkspor",
+        "url": "http://localhost:3000",
+    },
+    license_info={
+        "name": "MIT",
+    },
 )
 
 
@@ -165,6 +210,49 @@ async def validation_exception_handler(request, exc: RequestValidationError):
 
 
 app.include_router(router)
+
+# ── OpenAPI / Swagger: tambah Bearer auth scheme ───────────────────
+# Hook ke FastAPI's openapi generation (dipanggil lazy saat /openapi.json diakses)
+from fastapi.openapi.utils import get_openapi
+
+_original_openapi = app.openapi
+
+
+def _patched_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = _original_openapi()
+    if "components" not in schema:
+        schema["components"] = {}
+    schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": (
+                "Masukkan access_token dari response login.\n\n"
+                "1. Buka POST /auth/login/ → jalankan → salin `access_token` dari response `meta`\n"
+                "2. Klik tombol 'Authorize' di atas → paste token → klik Authorize\n"
+                "3. Semua request akan otomatis menyertakan header `Authorization: Bearer <token>`"
+            ),
+        }
+    }
+    # Hapus default HTTPBearer scheme jika ada
+    schema["components"]["securitySchemes"].pop("HTTPBearer", None)
+    # Terapkan security ke semua path kecuali auth publik
+    for path, methods in schema.get("paths", {}).items():
+        for method in methods.values():
+            if path.startswith("/api/v1/auth/") and method.get("operationId", "").startswith("login_") or \
+               path.startswith("/api/v1/auth/register") or \
+               path.startswith("/api/v1/auth/refresh"):
+                method.pop("security", None)
+            else:
+                method["security"] = [{"BearerAuth": []}]
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = _patched_openapi
 
 
 @app.get("/")

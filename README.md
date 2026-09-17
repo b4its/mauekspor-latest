@@ -2,7 +2,7 @@
 
 **Workspace ekspor-impor berbasis AI untuk UMKM Indonesia** — satu platform dari kesiapan produk, analisis pasar & kepatuhan, penawaran/costing, katalog digital, hingga dokumen dan pelacakan pengiriman.
 
-> Status saat ini: **berfungsi penuh dengan backend.** Frontend adalah antarmuka kerja lengkap yang terhubung ke backend FastAPI (list, detail, form create, dan action/button di semua modul memakai `src/lib/api/*.ts`; mock di `src/lib/data/trade.ts` hanya fallback saat API tak tersedia). Backend punya auth JWT (refresh rotation), RBAC, audit log, dan persistensi SQLite. Fitur inti ExportReadyAI telah diadaptasi lengkap: **enrichment produk (HS code + SKU)**, **Market Intelligence**, **Pricing Calculator (EXW/FOB/CIF)**, **Costing nyata + exchange rate + PDF**, **Export Analysis dengan compliance check, snapshot produk/regulasi, reanalyze, compare, dan rekomendasi regulasi 10 bagian (ID/EN)**, **master data negara + regulasi + HS codes (6.941 kode)**, **katalog dengan gambar + varian + AI description + listing publik**, **buyer request matching**, **forwarder profile + review + rekomendasi + statistik**, **buyer profile**, **educational CRUD + upload file**, dan **chat sessions + suggestions**. Modul AI berjalan dua mode: `mock` (default) dan `remote` (OpenAI-compatible via `MAUEKSPOR_AI_MODE=remote`).
+> Status saat ini: **berfungsi penuh dengan backend.** Frontend adalah antarmuka kerja lengkap yang terhubung ke backend FastAPI (list, detail, form create, dan action/button di semua modul memakai `src/lib/api/*.ts`; mock di `src/lib/data/trade.ts` hanya fallback saat API tak tersedia). Backend punya auth JWT (refresh rotation) via **Bearer token + sessionStorage** (bukan lagi hanya cookie), RBAC, audit log, dan persistensi SQLite. Fitur inti ExportReadyAI telah diadaptasi lengkap: **enrichment produk (HS code + SKU)**, **Market Intelligence**, **Pricing Calculator (EXW/FOB/CIF)**, **Costing nyata + exchange rate + PDF**, **Export Analysis dengan compliance check, snapshot produk/regulasi, reanalyze, compare, dan rekomendasi regulasi 10 bagian (ID/EN)**, **master data negara + regulasi + HS codes (6.941 kode)**, **katalog dengan gambar + varian + AI description + listing publik**, **buyer request matching**, **forwarder profile + review + rekomendasi + statistik**, **buyer profile**, **educational CRUD + upload file**, dan **chat sessions + suggestions**. Modul AI berjalan dua mode: `mock` (default) dan `remote` (OpenAI-compatible via `MAUEKSPOR_AI_MODE=remote`).
 
 ## ✨ Penjelasan untuk Orang Awam (Tanpa Jargon Teknis)
 
@@ -98,17 +98,18 @@ Ditujukan untuk empat peran: **Exporter/UMKM** (pengguna utama), **Buyer**, **Fo
 
 ```
 ┌──────────────────────────┐        HTTP (JSON, /api/v1/*)        ┌───────────────────────────┐
-│  Frontend (SvelteKit 5)  │ ────────────────────────────────────▶ │  Backend (FastAPI)        │
+│  Frontend (SvelteKit 5)  │ ───── Authorization: Bearer <token> ▶ │  Backend (FastAPI)        │
 │  - Tailwind v4 + shadcn  │ ◀──────────────────────────────────── │  - Pydantic schemas       │
 │  - src/lib/api/*.ts      │        {"data": T, "meta": {...}}     │  - SQLite persistence     │
 │  - src/lib/data/trade.ts │                                       │  - JWT + refresh rotation │
 │    (mock, fallback saat  │                                       │  - RBAC + audit log       │
-│    API tak tersedia)     │                                       └───────────────────────────┘
-└──────────────────────────┘
+│    API tak tersedia)     │                                       │  - OpenAPI /docs (Swagger)│
+└──────────────────────────┘                                       └───────────────────────────┘
 ```
 
-- **Frontend** memiliki dua sumber data secara sengaja: `src/lib/data/trade.ts` (mock statis, dipakai sebagai fallback saat API tidak tersedia) dan `src/lib/api/*.ts` (klien HTTP nyata ke backend, `apiFetch` di `src/lib/api/client.ts` menembak `VITE_API_BASE_URL` dengan `credentials: include` dan retry refresh saat 401). Semua halaman workspace — list, detail, form create/edit, dan tombol action — sudah terhubung ke endpoint backend (pola `createRemoteList`/`loadById` dengan fallback ke seed saat API tak tersedia).
-- **Backend** menyediakan **230+ endpoint** yang kontraknya teruji penuh terhadap `src/lib/api/*.ts` (`tests/test_frontend_contract.py`) dan payload per-request persis seperti yang dikirim frontend (`tests/test_payload_contract.py`), plus auth JWT (refresh rotation), RBAC per-role, audit log, persistensi SQLite, **filtering/pagination** pada list utama, dan **notifikasi otomatis** pada aksi penting. Fitur inti diadaptasi dari repo referensi [ExportReadyAI](https://github.com/ExportReadyAI/ExportReadyAI): enrichment AI, market intelligence, pricing, costing EXW/FOB/CIF + PDF, export analysis + snapshots + compare + inline compliance editor, countries & regulations, HS codes (6941 kode dari CSV), katalog gambar/varian/publik, buyer-request matching, forwarder reviews/rekomendasi, educational CRUD + upload, chat sessions.
+- **Autentikasi:** Login menyimpan `access_token` & `refresh_token` ke **sessionStorage** browser. Setiap request `apiFetch()` menyertakan header `Authorization: Bearer <token>`. Token bertahan saat page reload. Saat 401, sistem otomatis mencoba refresh token via `X-Refresh-Token` header, lalu mendapatkan pasangan token baru. Jika refresh gagal, token dibersihkan (user perlu login ulang).
+- **Frontend** memiliki dua sumber data secara sengaja: `src/lib/data/trade.ts` (mock statis, dipakai sebagai fallback saat API tidak tersedia) dan `src/lib/api/*.ts` (klien HTTP nyata ke backend, `apiFetch` di `src/lib/api/client.ts` menembak `VITE_API_BASE_URL`). Semua halaman workspace — list, detail, form create/edit, dan tombol action — sudah terhubung ke endpoint backend (pola `createRemoteList`/`loadById` dengan fallback ke seed saat API tak tersedia).
+- **Backend** menyediakan **240+ endpoint** yang kontraknya teruji penuh terhadap `src/lib/api/*.ts`, plus auth JWT (refresh rotation), RBAC per-role, audit log, persistensi SQLite, **filtering/pagination** pada list utama, dan **notifikasi otomatis** pada aksi penting. Dokumentasi API otomatis (Swagger): `http://localhost:8000/docs` — lengkap dengan **Authorization Bearer** yang bisa langsung dicoba dari browser.
 
 ## Tech Stack
 
@@ -165,7 +166,8 @@ mauekspor/
 cd frontend
 pnpm install
 cp .env.example .env      # isi VITE_API_BASE_URL (default: http://localhost:8000/api/v1)
-pnpm run dev               # buka http://localhost:5173
+pnpm run dev               # Development → http://localhost:5173
+pnpm run build             # Production build → pnpm run preview (http://localhost:3000)
 ```
 
 Verifikasi sebelum commit:
@@ -183,27 +185,57 @@ python3 -m venv .venv
 .venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
-Dokumentasi API otomatis (Swagger): `http://localhost:8000/docs`
-Health check: `http://localhost:8000/api/v1/health`
+Dokumentasi API otomatis:
+- **Swagger UI:** `http://localhost:8000/docs` — bisa mencoba endpoint langsung, dengan tombol "Authorize" untuk memasukkan Bearer token
+- **ReDoc:** `http://localhost:8000/redoc`
+- **OpenAPI JSON:** `http://localhost:8000/openapi.json`
+- **Health check:** `http://localhost:8000/api/v1/health`
 
 Jalankan test:
 ```bash
-.venv/bin/pytest
+.venv/bin/pytest              # 263+ test backend
 ```
+
+### Akun Seed (Demo)
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Admin** | `admin@mauekspor.example` | `admin123` |
+| **Exporter** | `rizal@kopigayo.example` | `rizal123` |
+| **Buyer** | `aya@hikari.example` | `buyer123` |
+
+### Alur Autentikasi
+
+1. Buka `http://localhost:3000/login` (atau klik "Login" di sidebar)
+2. Masukkan email & password akun seed di atas
+3. Sistem menyimpan `access_token` ke **sessionStorage** browser
+4. Token otomatis dikirim sebagai **`Authorization: Bearer <token>`** di setiap request API
+5. Saat token kedaluwarsa (60 menit), sistem otomatis **refresh** via `refresh_token`
+6. Klik "Logout" untuk membersihkan token
+
+> **Catatan:** Halaman dapat dilihat tanpa login (GET publik). Operasi tulis (buat/edit/hapus) memerlukan login.
 
 ### CI (GitHub Actions)
 
 `.github/workflows/ci.yml` menjalankan dua job: pytest backend (Python 3.13) serta `pnpm check` + `pnpm build` frontend (Node 20, pnpm 9) — otomatis pada setiap push/PR ke `main`.
 
-### Deployment (Docker)
+### Deployment (Docker) — Full Stack
 
 ```bash
-docker compose up --build
+docker compose --profile full up --build
 ```
-- Backend → http://localhost:8000 (docs di `/docs`)
-- Frontend → http://localhost:3000
+- Backend → `http://localhost:8000` (Swagger docs di `/docs`, ReDoc di `/redoc`)
+- Frontend → `http://localhost:3000`
 - Data backend persisten di volume `backend-data` (SQLite).
-- Atur secret/asal prod lewat `.env` (lihat `backend/.env.production.example`) dan `VITE_API_BASE_URL` saat build frontend.
+- Atur secret/asal prod lewat `.env` (lihat `backend/.env.production.example`) dan `VITE_API_BASE_URL` saat build frontend (build arg `docker compose`).
+
+### Akses Swagger / OpenAPI
+
+| URL | Deskripsi |
+|-----|-----------|
+| `http://localhost:8000/docs` | **Swagger UI** — explore & test semua 240+ endpoint langsung dari browser. Klik "Authorize" → paste `access_token` untuk autentikasi. |
+| `http://localhost:8000/redoc` | **ReDoc** — dokumentasi API alternatif yang lebih rapi |
+| `http://localhost:8000/openapi.json` | **OpenAPI JSON** — bisa diimpor ke Postman/Insomnia |
 
 ## Modul & Fitur
 
@@ -224,13 +256,14 @@ Detail per-modul (data model, halaman, endpoint) ada di dokumentasi Obsidian: [`
 | Bagian | Status |
 |---|---|
 | UI seluruh 50+ halaman workspace | ✅ Selesai (shadcn-svelte, dark/light, responsive) |
-| Landing page, Login, Register | ✅ Selesai — login & register kini terhubung ke backend API (session store + redirect) |
+| Landing page, Login, Register | ✅ Selesai — login & register kini terhubung ke backend API (session store + Bearer token + redirect) |
 | Educational sebagai learning platform | ✅ Selesai (course player + lesson tracking + admin CRUD modul/artikel + upload file) |
-| Backend API (FastAPI, 230+ endpoint) | ✅ Selesai — kontrak `src/lib/api/*.ts` teruji 100% via `test_frontend_contract.py` |
-| Autentikasi (JWT + refresh rotation) | ✅ Selesai — PBKDF2, access/refresh token, logout revoke, guard middleware, register-admin |
+| Backend API (FastAPI, 240+ endpoint) | ✅ Selesai — kontrak `src/lib/api/*.ts` teruji 100% via `test_frontend_contract.py` |
+| Autentikasi (JWT + refresh rotation) | ✅ Selesai — PBKDF2, access/refresh token, login/register/logout/refresh, guard middleware, register-admin. Token dikirim via **`Authorization: Bearer`** header (disimpan di sessionStorage). Juga fallback cookie untuk GET. Saat 401 → auto-refresh via `X-Refresh-Token` → token baru. |
 | RBAC per-role | ✅ Selesai — Admin/Exporter/Buyer/Forwarder/CustomsBroker/Finance |
 | Persistensi database | ✅ Selesai — SQLite via `app/db.py`; bisa diganti `MAUEKSPOR_DATABASE_URL` |
 | Audit log | ✅ Selesai — semua mutasi tercatat ke `audit_events` |
+| OpenAPI / Swagger / ReDoc | ✅ Selesai — `http://localhost:8000/docs` dengan Bearer Auth di Swagger UI (tombol "Authorize"); `http://localhost:8000/redoc`; `http://localhost:8000/openapi.json` |
 | Frontend → API (semua halaman) | ✅ Selesai — list, detail, form create/edit, dan action button di seluruh modul memakai backend; fallback ke mock tetap berfungsi |
 | Product enrichment (HS code + SKU) | ✅ Selesai — `POST /products/{id}/enrich/` dengan HS loader (6941 kode) + SKU deterministik + fallback pencarian |
 | Market Intelligence (AI) | ✅ Selesai — `GET/POST /products/{id}/ai/market-intelligence/` + per katalog; termasuk rekomendasi forwarder per negara |

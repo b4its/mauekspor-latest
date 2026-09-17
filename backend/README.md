@@ -2,6 +2,24 @@
 
 FastAPI backend untuk workspace export-import MauEkspor. Kontrak endpoint meniru fungsi di `frontend/src/lib/api/*.ts` (prefix `/api/v1`, respons `{"data": T, "meta": {...}}`).
 
+## Dokumentasi API (Swagger / OpenAPI)
+
+| URL | Deskripsi |
+|-----|-----------|
+| `http://localhost:8000/docs` | **Swagger UI** — explore & test semua 240+ endpoint langsung dari browser. Klik "Authorize" → paste `access_token` |
+| `http://localhost:8000/redoc` | **ReDoc** — dokumentasi alternatif |
+| `http://localhost:8000/openapi.json` | **OpenAPI JSON** — impor ke Postman/Insomnia |
+
+## Autentikasi
+
+- **Login:** `POST /api/v1/auth/login/` → dapatkan `access_token` & `refresh_token` di response `meta`
+- **Kirim token:** Sertakan header `Authorization: Bearer <access_token>` di setiap request
+- **Refresh:** `POST /api/v1/auth/refresh/` dengan header `X-Refresh-Token: <refresh_token>`
+- **Logout:** `POST /api/v1/auth/logout/` — revoke refresh token + hapus cookie
+- **Fallback cookie:** Backend juga menerima cookie `access_token` (HttpOnly, SameSite=Lax) untuk kompatibilitas GET
+
+> Semua endpoint write (POST/PUT/PATCH/DELETE) memerlukan autentikasi. Endpoint GET publik untuk modul non-admin.
+
 ## Menjalankan (dev)
 
 ```bash
@@ -24,15 +42,16 @@ Akun seed:
 ## Fitur
 
 - **Persistence SQLite** — semua tabel disimpan ke `records` (payload JSON) di `mauekspor.db`. Matikan dengan `MAUEKSPOR_DISABLE_PERSISTENCE=1` (dipakai test).
-- **Auth** — PBKDF2 password hashing, JWT-like access + refresh token, cookie HttpOnly (`access_token`, `refresh_token`), juga bisa via header `Authorization: Bearer`.
+- **Auth** — PBKDF2 password hashing, JWT-like access + refresh token. Token dikirim via **`Authorization: Bearer`** header. Juga via cookie HttpOnly (`access_token`, `refresh_token`) untuk fallback.
 - **Refresh token rotation** — setiap refresh mem-revoke token lama dan menerbitkan pasangan baru; token bekas/replay ditolak `401`. Logout me-revoke refresh token.
 - **RBAC** — role `Admin | Exporter | Buyer | Forwarder | CustomsBroker | Finance`. Mutation diblokir `403` bila role tidak berhak atas modul; modul `users`, `audit`, `api-keys`, `settings` read-only untuk Admin.
 - **Audit log** — semua mutasi tercatat ke `audit_events` (aktor, aksi, modul, entity, severity).
+- **OpenAPI / Swagger / ReDoc** — dokumentasi API otomatis dengan Bearer auth scheme (tombol "Authorize" di Swagger UI).
 - **Master data HS codes** — `app/data/harmonized-system.csv` (6941 kode HS 2022) + `sections.csv`, dimuat via `app/data/hs_loader.py` (pencarian kata kunci + autocomplete + konteks AI).
-- **Master data negara & regulasi** — `app/data/countries.py`: 14 negara tujuan + regulasi (Ingredient/Labeling/Physical) untuk compliance checker.
+- **Master data negara & regulasi** — `app/data/countries.py`: 250 negara + regulasi (Ingredient/Labeling/Physical) untuk compliance checker.
 - **Service layer** — `app/services/`: `pricing.py` (EXW/FOB/CIF + exchange rate + kontainer + PDF), `compliance.py` (cek bahan/spesifikasi/kemasan + skor kesiapan + rekomendasi regulasi 10 bagian ID/EN), `matching.py` (skor buyer-request), `forwarders.py` (rating/rekomendasi/statistik), `market_intel.py` (market intelligence + pricing + deskripsi katalog AI).
 - **AI service** — `app/ai.py` dengan dua mode: `mock` (default, deterministik, tanpa API key — dipakai demo & test) dan `remote` (OpenAI-compatible `/chat/completions`, diatur via `MAUEKSPOR_AI_MODE`, `MAUEKSPOR_AI_API_KEY`, `MAUEKSPOR_AI_BASE_URL`, `MAUEKSPOR_AI_MODEL`). Dipakai untuk HS classification, deskripsi katalog, market intelligence, pricing, rekomendasi compliance, dan balasan chat Copilot. Bila remote gagal/tak terkonfigurasi, endpoint jatuh kembali ke nilai statis.
-- **230+ endpoint** — seluruh kontrak `src/lib/api/*.ts` + fitur inti ExportReadyAI: enrichment produk (HS + SKU), market intelligence & pricing per produk, export analysis (compliance + snapshot + reanalyze + compare + regulasi 10 bagian), costing nyata + PDF, katalog (gambar/varian/AI/publik), buyer request matching, forwarder (profil/review/rekomendasi/statistik), buyer profile, educational CRUD + upload, chat sessions + suggestions, countries + HS codes, admin CRUD negara/regulasi/HS + import CSV.
+- **240+ endpoint** — seluruh kontrak `src/lib/api/*.ts` + fitur inti ExportReadyAI: enrichment produk (HS + SKU), market intelligence & pricing per produk, export analysis (compliance + snapshot + reanalyze + compare + regulasi 10 bagian), costing nyata + PDF, katalog (gambar/varian/AI/publik), buyer request matching, forwarder (profil/review/rekomendasi/statistik), buyer profile, educational CRUD + upload, chat sessions + suggestions, countries + HS codes, admin CRUD negara/regulasi/HS + import CSV.
 
 ## Env vars (prefix `MAUEKSPOR_`)
 
