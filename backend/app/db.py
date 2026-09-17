@@ -35,15 +35,44 @@ def _persistence_enabled() -> bool:
     return os.getenv("MAUEKSPOR_DISABLE_PERSISTENCE", "").lower() not in {"1", "true", "yes"}
 
 
-def _db_path() -> Path:
-    url = os.getenv("MAUEKSPOR_DATABASE_URL", settings.database_url)
+# ─────────────────────────────────────────────────────────────────────────────
+# Backend detection & connection
+# ─────────────────────────────────────────────────────────────────────────────
+def _db_url() -> str:
+    return os.getenv("MAUEKSPOR_DATABASE_URL", settings.database_url)
+
+
+def is_postgres() -> bool:
+    return _db_url().startswith(("postgresql://", "postgres://"))
+
+
+def _pg_params() -> dict:
+    """Parse postgresql://user:pass@host:port/dbname into psycopg2 params."""
+    from urllib.parse import unquote, urlparse
+
+    url = _db_url()
+    # Normalize scheme
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    u = urlparse(url)
+    return {
+        "host": u.hostname or "localhost",
+        "port": u.port or 5432,
+        "dbname": u.path.lstrip("/") or "mauekspor",
+        "user": unquote(u.username) if u.username else "mauekspor",
+        "password": unquote(u.password) if u.password else "mauekspor",
+    }
+
+
+def _sqlite_path() -> Path:
+    url = _db_url()
     if url.startswith("sqlite:///"):
         return Path(url.removeprefix("sqlite:///"))
     return Path("mauekspor.db")
 
 
-def _connect() -> sqlite3.Connection:
-    path = _db_path()
+def _connect_sqlite() -> sqlite3.Connection:
+    path = _sqlite_path()
     if path.parent and str(path.parent) not in {"", "."}:
         path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
@@ -60,15 +89,60 @@ def _connect() -> sqlite3.Connection:
     return conn
 
 
+def _connect_pg():
+    """Return a psycopg2 connection for PostgreSQL backend."""
+    import psycopg2
+
+    conn = psycopg2.connect(**_pg_params())
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS records (
+                table_name TEXT NOT NULL,
+                id TEXT NOT NULL,
+                payload JSONB NOT NULL,
+                PRIMARY KEY (table_name, id)
+            )
+            """
+        )
+    conn.commit()
+    return conn
+
+
+def _connect():
+    """Open a connection to the configured backend (SQLite or PostgreSQL)."""
+    if is_postgres():
+        return _connect_pg()
+    return _connect_sqlite()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Persistence operations (unified over SQLite / PostgreSQL)
+# ─────────────────────────────────────────────────────────────────────────────
 def _load_from_disk() -> None:
     global _LOADED
     if _LOADED or not _persistence_enabled():
         _LOADED = True
         return
     with _connect() as conn:
-        rows = conn.execute("SELECT table_name, payload FROM records ORDER BY rowid").fetchall()
-    for table, payload in rows:
-        all(table).append(_attach(table, json.loads(payload)))
+        if is_postgres():
+            import psycopg2.extras
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT table_name, payload FROM records ORDER BY table_name, id")
+                rows = cur.fetchall()
+        else:
+            cur = conn.execute("SELECT table_name, payload FROM records ORDER BY rowid")
+            rows = cur.fetchall()
+    for row in rows:
+        if is_postgres():
+            # RealDictRow: akses via key, payload sudah berupa dict (dari JSONB)
+            table = row["table_name"]
+            payload = row["payload"]
+        else:
+            table, payload = row
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        all(table).append(_attach(table, dict(payload)))
     _LOADED = True
 
 
@@ -76,29 +150,49 @@ def _persist_record(table: str, record: dict[str, Any]) -> None:
     if not _persistence_enabled():
         return
     payload = {k: v for k, v in record.items() if not k.startswith("__")}
+    payload_json = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
     with _connect() as conn:
-        conn.execute(
-            """
-            INSERT INTO records (table_name, id, payload)
-            VALUES (?, ?, ?)
-            ON CONFLICT(table_name, id) DO UPDATE SET payload = excluded.payload
-            """,
-            (table, str(record["id"]), json.dumps(payload, separators=(",", ":"))),
-        )
+        if is_postgres():
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO records (table_name, id, payload)
+                    VALUES (%s, %s, %s::jsonb)
+                    ON CONFLICT (table_name, id) DO UPDATE SET payload = EXCLUDED.payload
+                    """,
+                    (table, str(record["id"]), payload_json),
+                )
+        else:
+            conn.execute(
+                """
+                INSERT INTO records (table_name, id, payload)
+                VALUES (?, ?, ?)
+                ON CONFLICT(table_name, id) DO UPDATE SET payload = excluded.payload
+                """,
+                (table, str(record["id"]), payload_json),
+            )
 
 
 def _delete_record(table: str, record_id: str) -> None:
     if not _persistence_enabled():
         return
     with _connect() as conn:
-        conn.execute("DELETE FROM records WHERE table_name = ? AND id = ?", (table, record_id))
+        if is_postgres():
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM records WHERE table_name = %s AND id = %s", (table, record_id))
+        else:
+            conn.execute("DELETE FROM records WHERE table_name = ? AND id = ?", (table, record_id))
 
 
 def _clear_disk() -> None:
     if not _persistence_enabled():
         return
     with _connect() as conn:
-        conn.execute("DELETE FROM records")
+        if is_postgres():
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM records")
+        else:
+            conn.execute("DELETE FROM records")
 
 
 def _attach(table: str, record: dict[str, Any]) -> dict[str, Any]:
@@ -106,6 +200,9 @@ def _attach(table: str, record: dict[str, Any]) -> dict[str, Any]:
     return record
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Public store API (unchanged)
+# ─────────────────────────────────────────────────────────────────────────────
 def init_store():
     for name in _TABLES:
         _STORE.setdefault(name, [])

@@ -100,11 +100,12 @@ Ditujukan untuk empat peran: **Exporter/UMKM** (pengguna utama), **Buyer**, **Fo
 ┌──────────────────────────┐        HTTP (JSON, /api/v1/*)        ┌───────────────────────────┐
 │  Frontend (SvelteKit 5)  │ ───── Authorization: Bearer <token> ▶ │  Backend (FastAPI)        │
 │  - Tailwind v4 + shadcn  │ ◀──────────────────────────────────── │  - Pydantic schemas       │
-│  - src/lib/api/*.ts      │        {"data": T, "meta": {...}}     │  - SQLite persistence     │
-│  - src/lib/data/trade.ts │                                       │  - JWT + refresh rotation │
-│    (mock, fallback saat  │                                       │  - RBAC + audit log       │
-│    API tak tersedia)     │                                       │  - OpenAPI /docs (Swagger)│
-└──────────────────────────┘                                       └───────────────────────────┘
+│  - src/lib/api/*.ts      │        {"data": T, "meta": {...}}     │  - PostgreSQL (prod/dock) │
+│  - src/lib/data/trade.ts │                                       │  - SQLite (dev lokal)     │
+│    (mock, fallback saat  │                                       │  - JWT + refresh rotation │
+│    API tak tersedia)     │                                       │  - RBAC + audit log       │
+└──────────────────────────┘                                       │  - OpenAPI /docs (Swagger)│
+                                                                   └───────────────────────────┘
 ```
 
 - **Autentikasi:** Login menyimpan `access_token` & `refresh_token` ke **sessionStorage** browser. Setiap request `apiFetch()` menyertakan header `Authorization: Bearer <token>`. Token bertahan saat page reload. Saat 401, sistem otomatis mencoba refresh token via `X-Refresh-Token` header, lalu mendapatkan pasangan token baru. Jika refresh gagal, token dibersihkan (user perlu login ulang).
@@ -139,7 +140,7 @@ mauekspor/
 │   ├── app/core/              # config, security (JWT/PBKDF2), permissions (RBAC)
 │   ├── app/data/              # master data: HS codes (CSV 6941 baris) + countries & regulations
 │   ├── app/services/          # business logic: pricing, compliance, matching, forwarders, market intel
-│   ├── app/db.py              # store + persistensi SQLite
+│   ├── app/db.py              # store + persistensi SQLite / PostgreSQL
 │   ├── app/schemas/           # Pydantic request models
 │   ├── app/seed.py            # seed data demo
 │   └── tests/                 # pytest: auth, RBAC, refresh, smoke, kontrak frontend, fitur inti
@@ -226,7 +227,7 @@ docker compose --profile full up --build
 ```
 - Backend → `http://localhost:8000` (Swagger docs di `/docs`, ReDoc di `/redoc`)
 - Frontend → `http://localhost:3000`
-- Data backend persisten di volume `backend-data` (SQLite).
+- Data backend persisten di PostgreSQL (volume `db-data`) atau SQLite (dev lokal, `backend-data`).
 - Atur secret/asal prod lewat `.env` (lihat `backend/.env.production.example`) dan `VITE_API_BASE_URL` saat build frontend (build arg `docker compose`).
 
 ### Akses Swagger / OpenAPI
@@ -261,7 +262,7 @@ Detail per-modul (data model, halaman, endpoint) ada di dokumentasi Obsidian: [`
 | Backend API (FastAPI, 240+ endpoint) | ✅ Selesai — kontrak `src/lib/api/*.ts` teruji 100% via `test_frontend_contract.py` |
 | Autentikasi (JWT + refresh rotation) | ✅ Selesai — PBKDF2, access/refresh token, login/register/logout/refresh, guard middleware, register-admin. Token dikirim via **`Authorization: Bearer`** header (disimpan di sessionStorage). Juga fallback cookie untuk GET. Saat 401 → auto-refresh via `X-Refresh-Token` → token baru. |
 | RBAC per-role | ✅ Selesai — Admin/Exporter/Buyer/Forwarder/CustomsBroker/Finance |
-| Persistensi database | ✅ Selesai — SQLite via `app/db.py`; bisa diganti `MAUEKSPOR_DATABASE_URL` |
+| Persistensi database | ✅ Selesai — **PostgreSQL** (production/Docker, via `postgresql://`) atau **SQLite** (dev lokal, via `sqlite:///`) via `app/db.py`; pilih lewat `MAUEKSPOR_DATABASE_URL` |
 | Audit log | ✅ Selesai — semua mutasi tercatat ke `audit_events` |
 | OpenAPI / Swagger / ReDoc | ✅ Selesai — `http://localhost:8000/docs` dengan Bearer Auth di Swagger UI (tombol "Authorize"); `http://localhost:8000/redoc`; `http://localhost:8000/openapi.json` |
 | Frontend → API (semua halaman) | ✅ Selesai — list, detail, form create/edit, dan action button di seluruh modul memakai backend; fallback ke mock tetap berfungsi |

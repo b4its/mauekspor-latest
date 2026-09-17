@@ -14,6 +14,8 @@ class Settings(BaseSettings):
 
     app_name: str = "MauEkspor API"
     api_version: str = "0.2.0"
+    # Database: SQLite default untuk dev/test lokal, PostgreSQL untuk production/Docker.
+    # Contoh PostgreSQL: postgresql://mauekspor:mauekspor@db:5432/mauekspor
     database_url: str = "sqlite:///./mauekspor.db"
     secret_key: str = "change-me-in-production"
     access_token_expire_minutes: int = 60

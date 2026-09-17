@@ -186,7 +186,7 @@ def seed_100_records():
         return _counter[0]
     ALL_REGIONS = list(REGIONS.keys())
 
-    # -- USERS (100) --
+    # -- USERS (100) -- Mulai dari U-101 agar tidak menimpa seed dasar (U-001..U-003)
     roles = (["Admin"]*5 + ["Exporter"]*60 + ["Buyer"]*15 + ["Forwarder"]*10 + ["CustomsBroker"]*5 + ["Finance"]*5)
     user_ids = []
     for i in range(1, 101):
@@ -194,12 +194,13 @@ def seed_100_records():
         pool = EXPORT_COMPANIES if role == "Exporter" else BUYER_COMPANIES if role == "Buyer" else FORWARDER_COMPANIES if role == "Forwarder" else EXPORT_COMPANIES
         name = _pick(pool, n())
         dom = "export" if role == "Exporter" else "buyer" if role == "Buyer" else "fwd" if role == "Forwarder" else "admin" if role == "Admin" else "cb" if role == "CustomsBroker" else "fin"
-        u = {"id": f"U-{i:03d}", "email": f"user{i:03d}@{dom}.example", "fullName": f"User {i} - {name[:20]}",
+        uid = f"U-{100 + i:03d}"
+        u = {"id": uid, "email": f"user{i:03d}@{dom}.example", "fullName": f"User {i} - {name[:20]}",
              "name": name, "role": role, "organization": name,
              "password": hash_password("password123" if role != "Admin" else "admin123"),
              "status": "Active", "createdAt": f"2026-{n()%12+1:02d}-{n()%28+1:02d}", "lastLogin": f"2026-08-{n()%20+1:02d}"}
         db.insert("users", u)
-        user_ids.append(u["id"])
+        user_ids.append(uid)
 
     # -- PRODUCTS (100) + enrichments --
     product_ids = []

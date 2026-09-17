@@ -41,7 +41,7 @@ Akun seed:
 
 ## Fitur
 
-- **Persistence SQLite** — semua tabel disimpan ke `records` (payload JSON) di `mauekspor.db`. Matikan dengan `MAUEKSPOR_DISABLE_PERSISTENCE=1` (dipakai test).
+- **Persistence** — semua tabel disimpan ke tabel `records` (payload JSONB) di **PostgreSQL** (`postgresql://...`) untuk production/Docker, atau **SQLite** (`sqlite:///...`) untuk dev lokal. Pilih lewat `MAUEKSPOR_DATABASE_URL`. Matikan dengan `MAUEKSPOR_DISABLE_PERSISTENCE=1` (dipakai test).
 - **Auth** — PBKDF2 password hashing, JWT-like access + refresh token. Token dikirim via **`Authorization: Bearer`** header. Juga via cookie HttpOnly (`access_token`, `refresh_token`) untuk fallback.
 - **Refresh token rotation** — setiap refresh mem-revoke token lama dan menerbitkan pasangan baru; token bekas/replay ditolak `401`. Logout me-revoke refresh token.
 - **RBAC** — role `Admin | Exporter | Buyer | Forwarder | CustomsBroker | Finance`. Mutation diblokir `403` bila role tidak berhak atas modul; modul `users`, `audit`, `api-keys`, `settings` read-only untuk Admin.
@@ -59,7 +59,7 @@ Lihat `app/core/config.py`. Contoh produksi: `.env.production.example`.
 
 | Variabel | Default |
 | --- | --- |
-| `MAUEKSPOR_DATABASE_URL` | `sqlite:///./mauekspor.db` |
+| `MAUEKSPOR_DATABASE_URL` | `sqlite:///./mauekspor.db` (dev) / `postgresql://mauekspor:mauekspor@localhost:5432/mauekspor` (docker) |
 | `MAUEKSPOR_SECRET_KEY` | `change-me-in-production` |
 | `MAUEKSPOR_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` |
 | `MAUEKSPOR_REFRESH_TOKEN_EXPIRE_DAYS` | `7` |
