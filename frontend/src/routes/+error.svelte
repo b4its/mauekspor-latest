@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import Logo from '$lib/components/Logo.svelte';
 	import { t } from '$lib/i18n.svelte';
-	import ShipIcon from '@lucide/svelte/icons/ship';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 
 	const status = $derived(page.status);
@@ -15,12 +15,7 @@
 
 <div class="landing-font flex min-h-svh flex-col items-center justify-center gap-6 bg-[#eaf2ff] p-6 dark:bg-[#040d1f]">
 	<div class="flex w-full max-w-md flex-col items-center gap-6 text-center">
-		<a href="/dashboard" class="flex items-center gap-2 font-medium">
-			<div class="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b3d91] to-[#1e63d6] text-white">
-				<ShipIcon class="size-5" />
-			</div>
-			<span class="font-script text-2xl leading-none text-[#0b3d91] dark:text-[#5ea1ff]">MauEkspor</span>
-		</a>
+		<Logo variant="landscape" href="/dashboard" />
 
 		<div class="space-y-2">
 			<h1 class="text-7xl font-black tracking-tight text-[#0b3d91] dark:text-[#5ea1ff]">{status}</h1>

@@ -6,6 +6,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
+	import Logo from '$lib/components/Logo.svelte';
 	import { navGroups, projects, userAccounts } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
 
@@ -140,14 +141,10 @@
 				<Sidebar.MenuButton size="lg" tooltipContent={t('MauEkspor Dashboard')}>
 					{#snippet child({ props }: { props: Record<string, unknown> })}
 						<a {...props} href="/dashboard" class="flex items-center gap-2.5">
-							<span
-								class="grid aspect-square size-8 place-items-center rounded-xl bg-gradient-to-br from-[#0b3d91] to-[#1e63d6] font-black tracking-tighter text-white"
-							>
-								<ShipIcon class="size-4" />
-							</span>
-							<div class="grid flex-1 text-left leading-tight">
-								<strong class="font-script text-xl leading-none text-[#0b3d91] dark:text-[#5ea1ff]">MauEkspor</strong>
-								<span class="mt-1 truncate text-[11px] font-bold text-sidebar-foreground/60">{t('Workspace Ekspor-Impor')}</span>
+							<Logo variant="logo" class="shrink-0" />
+							<div class="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
+								<Logo variant="landscape" class="!h-6" />
+								<span class="mt-0.5 truncate text-[11px] font-bold text-sidebar-foreground/60">{t('Workspace Ekspor-Impor')}</span>
 							</div>
 						</a>
 					{/snippet}
