@@ -187,16 +187,16 @@
 </svelte:head>
 
 <AppShell title="Chat" eyebrow={t('Asisten dagang AI')}>
-	<div class="relative flex h-[calc(100dvh-9rem)] min-h-[400px] overflow-hidden rounded-xl border bg-card shadow-sm md:h-[calc(100dvh-10rem)]">
-		<!-- Mobile overlay -->
+	<div class="relative flex h-[calc(100dvh-11rem)] min-h-[400px] overflow-hidden rounded-xl border bg-card shadow-sm lg:h-[calc(100dvh-10rem)]">
+		<!-- Overlay untuk mobile & tablet -->
 		{#if sidebarOpen}
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div class="fixed inset-0 z-30 bg-black/30 md:hidden" role="presentation" onclick={() => (sidebarOpen = false)}></div>
+			<div class="fixed inset-0 z-30 bg-black/30 lg:hidden" role="presentation" onclick={() => (sidebarOpen = false)}></div>
 		{/if}
 
 		<!-- Sidebar / Sessions -->
 		<aside
-			class="absolute inset-y-0 left-0 z-40 flex flex-col border-r bg-card transition-all duration-200 md:relative {sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full overflow-hidden md:w-0 md:overflow-hidden'}">
+			class="absolute inset-y-0 left-0 z-40 flex flex-col border-r bg-card transition-all duration-200 lg:relative {sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full overflow-hidden'}">
 			<div class="flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5 min-h-[49px]">
 				<h3 class="truncate text-sm font-bold">{t('Riwayat Sesi')}</h3>
 				<div class="flex items-center gap-0.5 shrink-0">
@@ -250,7 +250,7 @@
 
 		<!-- Collapse toggle (desktop) -->
 		<button
-			class="hidden md:flex absolute left-0 top-1/2 z-20 -translate-y-1/2 items-center justify-center rounded-r-md border border-l-0 bg-card p-1 text-muted-foreground shadow-sm hover:bg-accent hover:text-foreground transition-all {sidebarOpen ? 'md:left-72' : 'md:left-0'}"
+			class="hidden lg:flex absolute left-0 top-1/2 z-20 -translate-y-1/2 items-center justify-center rounded-r-md border border-l-0 bg-card p-1 text-muted-foreground shadow-sm hover:bg-accent hover:text-foreground transition-all {sidebarOpen ? 'lg:left-72' : 'lg:left-0'}"
 			onclick={() => (sidebarOpen = !sidebarOpen)}
 			title={sidebarOpen ? t('Tutup sidebar') : t('Buka sidebar')}
 		>
@@ -262,7 +262,7 @@
 			<!-- Header -->
 			<div class="flex items-center justify-between gap-3 border-b px-3 py-2.5 md:px-4">
 				<div class="flex items-center gap-2 min-w-0">
-					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = !sidebarOpen)} class="-ml-1.5 h-8 w-8 shrink-0 p-0" title={sidebarOpen ? t('Tutup sidebar') : t('Buka sidebar')}>
+					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = !sidebarOpen)} class="-ml-1.5 h-8 w-8 shrink-0 p-0 lg:hidden" title={sidebarOpen ? t('Tutup sidebar') : t('Buka sidebar')}>
 						<PanelRightOpenIcon class="size-4" />
 					</Button>
 					<div class="min-w-0">
