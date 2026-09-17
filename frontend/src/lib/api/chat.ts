@@ -29,6 +29,13 @@ export function deleteChatSession(id: string) {
 	return apiFetch<{ status: string }>(`/chat/sessions/${id}/`, { method: 'DELETE' });
 }
 
+export function renameChatSession(id: string, title: string) {
+	return apiFetch<ChatSession>(`/chat/sessions/${id}/`, {
+		method: 'PUT',
+		body: JSON.stringify({ title })
+	});
+}
+
 export function sendSessionMessage(id: string, text: string) {
 	return apiFetch<ChatSession>(`/chat/sessions/${id}/messages/`, {
 		method: 'POST',

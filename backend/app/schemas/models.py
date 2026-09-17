@@ -426,6 +426,10 @@ class CreateChatSessionPayload(BaseModel):
     title: str = ""
 
 
+class RenameChatSessionPayload(BaseModel):
+    title: str
+
+
 class SendChatPayload(BaseModel):
     text: str
 

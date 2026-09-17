@@ -5,15 +5,18 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card } from '$lib/components/ui/card/index.js';
+import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import { MarkdownRenderer } from '$lib/components/MarkdownRenderer';
 	import {
 		listChatSessions,
 		createChatSession,
 		deleteChatSession,
+		renameChatSession,
 		sendSessionMessage,
 		getChatSuggestions,
-		getChatSession
+		getChatSession,
+		type ChatSession
 	} from '$lib/api/chat';
-	import type { ChatSession } from '$lib/api/chat';
 	import { t } from '$lib/i18n.svelte';
 
 	import PanelRightOpenIcon from '@lucide/svelte/icons/panel-right-open';
@@ -23,6 +26,9 @@
 	import SendHorizonalIcon from '@lucide/svelte/icons/send-horizonal';
 	import BotIcon from '@lucide/svelte/icons/bot';
 	import UserIcon from '@lucide/svelte/icons/user';
+	import SearchIcon from '@lucide/svelte/icons/search';
+	import PencilIcon from '@lucide/svelte/icons/pencil';
+	import XIcon from '@lucide/svelte/icons/x';
 
 	let sessions = $state<ChatSession[]>([]);
 	let activeId = $state('');
@@ -33,6 +39,24 @@
 	let suggestions = $state<{ question: string; context?: string }[]>([]);
 	let sidebarOpen = $state(true);
 	let messagesEl = $state<HTMLDivElement | null>(null);
+
+	// Search sesi
+	let searchQuery = $state('');
+
+	// Rename modal
+	let renameDialogOpen = $state(false);
+	let renameTarget = $state<ChatSession | null>(null);
+	let renameTitle = $state('');
+
+	// Delete modal
+	let deleteDialogOpen = $state(false);
+	let deleteTarget = $state<ChatSession | null>(null);
+
+	let filteredSessions = $derived(
+		searchQuery.trim()
+			? sessions.filter((s) => s.title.toLowerCase().includes(searchQuery.toLowerCase()))
+			: sessions
+	);
 
 	async function loadSessions() {
 		try {
@@ -78,8 +102,7 @@
 			const fresh = (await getChatSession(id)).data;
 			const idx = sessions.findIndex((s) => s.id === id);
 			if (idx >= 0) sessions[idx] = fresh;
-			// Tutup sidebar di mobile setelah pilih sesi
-			sidebarOpen = false;
+			if (window.innerWidth < 768) sidebarOpen = false;
 		} catch {
 			error = t('Tidak dapat memuat sesi.');
 		}
@@ -100,21 +123,54 @@
 			const session = (await createChatSession('')).data;
 			sessions = [session, ...sessions];
 			activeId = session.id;
-			sidebarOpen = false; // buka chat baru di mobile
+			if (window.innerWidth < 768) sidebarOpen = false;
 		} catch {
 			error = t('Gagal membuat sesi baru.');
 		}
 	}
 
 	async function removeSession(id: string) {
-		if (!confirm(t('Hapus sesi ini?'))) return;
 		try {
 			await deleteChatSession(id);
 			sessions = sessions.filter((s) => s.id !== id);
-			if (activeId === id) activeId = sessions[0]?.id ?? '';
+			if (activeId === id) {
+				activeId = sessions[0]?.id ?? '';
+			}
 		} catch {
 			error = t('Gagal menghapus sesi.');
 		}
+	}
+
+	function openRename(session: ChatSession) {
+		renameTarget = session;
+		renameTitle = session.title;
+		renameDialogOpen = true;
+	}
+
+	async function confirmRename() {
+		if (!renameTarget || !renameTitle.trim()) return;
+		const target = renameTarget;
+		try {
+			const updated = (await renameChatSession(target.id, renameTitle.trim())).data;
+			const idx = sessions.findIndex((s) => s.id === target.id);
+			if (idx >= 0) sessions[idx] = updated;
+			renameDialogOpen = false;
+			renameTarget = null;
+		} catch {
+			error = t('Gagal mengganti nama sesi.');
+		}
+	}
+
+	function openDelete(session: ChatSession) {
+		deleteTarget = session;
+		deleteDialogOpen = true;
+	}
+
+	async function confirmDelete() {
+		if (!deleteTarget) return;
+		await removeSession(deleteTarget.id);
+		deleteDialogOpen = false;
+		deleteTarget = null;
 	}
 
 	async function send(textOverride?: string) {
@@ -134,6 +190,13 @@
 			input = '';
 		}
 	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			send();
+		}
+	}
 </script>
 
 <svelte:head>
@@ -142,52 +205,86 @@
 
 <AppShell title="Chat" eyebrow={t('Asisten dagang AI')}>
 	<div class="relative flex h-[calc(100dvh-9rem)] min-h-[400px] overflow-hidden rounded-xl border bg-card shadow-sm md:h-[calc(100dvh-10rem)]">
-		<!-- Sidebar overlay (mobile) -->
+		<!-- Mobile overlay -->
 		{#if sidebarOpen}
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div class="fixed inset-0 z-40 bg-black/30 md:hidden" role="presentation" onclick={() => (sidebarOpen = false)}></div>
+			<div class="fixed inset-0 z-30 bg-black/30 md:hidden" role="presentation" onclick={() => (sidebarOpen = false)}></div>
 		{/if}
 
 		<!-- Sidebar -->
 		<aside
-			class="absolute inset-y-0 left-0 z-50 flex w-72 flex-col border-r bg-muted/30 transition-transform duration-200 md:relative md:w-72 md:translate-x-0 {sidebarOpen ? 'translate-x-0' : '-translate-x-full'}">
-			<div class="flex items-center justify-between gap-2 border-b p-3">
+			class="absolute inset-y-0 left-0 z-40 flex w-72 flex-col border-r bg-card transition-transform duration-200 md:relative md:w-72 md:translate-x-0 {sidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
+		>
+			<!-- Sidebar header -->
+			<div class="flex items-center justify-between gap-2 border-b px-3 py-2.5">
 				<h3 class="text-sm font-bold tracking-tight">{t('Riwayat Sesi')}</h3>
-				<div class="flex items-center gap-1">
-					<Button variant="ghost" size="sm" onclick={newSession} title={t('Sesi baru')}>
+				<div class="flex items-center gap-0.5">
+					<Button variant="ghost" size="sm" onclick={newSession} title={t('Sesi baru')} class="h-8 w-8 p-0">
 						<MessageSquarePlusIcon class="size-4" />
 					</Button>
-					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = false)} class="md:hidden" title={t('Tutup')}>
-						<PanelRightCloseIcon class="size-4" />
+					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = false)} class="h-8 w-8 p-0 md:hidden" title={t('Tutup')}>
+						<XIcon class="size-4" />
 					</Button>
 				</div>
 			</div>
 
+			<!-- Search sessions -->
+			<div class="border-b px-3 py-2">
+				<div class="flex items-center gap-2 rounded-md border bg-muted/30 px-2 py-1.5 text-sm">
+					<SearchIcon class="size-3.5 shrink-0 text-muted-foreground" />
+					<input
+						type="text"
+						placeholder={t('Cari sesi...')}
+						bind:value={searchQuery}
+						class="w-full bg-transparent outline-none placeholder:text-muted-foreground"
+					/>
+					{#if searchQuery}
+						<button onclick={() => (searchQuery = '')} class="shrink-0 text-muted-foreground hover:text-foreground">
+							<XIcon class="size-3" />
+						</button>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Session list -->
 			<div class="flex-1 overflow-y-auto p-2">
 				{#if loading}
-					<p class="p-3 text-xs font-semibold text-muted-foreground">{t('Memuat sesi...')}</p>
-				{/if}
-				{#each sessions as session}
-					<div class="group mb-1 flex items-start gap-1 rounded-lg border p-2.5 text-left text-xs transition-colors hover:border-border hover:bg-accent/50 {session.id === activeId ? 'border-ring bg-accent' : 'border-transparent'}"
-					>
-						<button
-							class="flex-1 text-left"
-							onclick={() => switchSession(session.id)}
-						>
-							<strong class="block truncate text-sm font-bold">{session.title}</strong>
-							<small class="text-muted-foreground">{session.messageCount ?? session.messages.length} {t('pesan')}</small>
-						</button>
-						<button
-							class="shrink-0 rounded p-1 opacity-0 text-muted-foreground/50 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
-							onclick={() => removeSession(session.id)}
-							title={t('Hapus')}
-						>
-							<Trash2Icon class="size-3" />
-						</button>
+					<div class="space-y-2 p-2">
+						{#each [1, 2, 3, 4, 5] as _}
+							<div class="h-16 animate-pulse rounded-lg bg-muted/50"></div>
+						{/each}
 					</div>
-				{/each}
-				{#if !loading && sessions.length === 0}
-					<p class="p-3 text-xs font-semibold text-muted-foreground">{t('Belum ada sesi. Buat sesi baru untuk mulai.')}</p>
+				{:else if filteredSessions.length === 0}
+					<p class="p-4 text-center text-xs text-muted-foreground">
+						{searchQuery ? t('Tidak ada sesi ditemukan.') : t('Belum ada sesi. Buat sesi baru untuk mulai.')}
+					</p>
+				{:else}
+					{#each filteredSessions as session (session.id)}
+						<div
+							class="group mb-1 flex items-start gap-1 rounded-lg border p-2.5 text-left text-xs transition-colors {session.id === activeId ? 'border-ring bg-accent' : 'border-transparent hover:border-border hover:bg-accent/40'}"
+						>
+							<button class="min-w-0 flex-1 text-left" onclick={() => switchSession(session.id)}>
+								<strong class="block truncate text-sm font-bold">{session.title || t('Percakapan baru')}</strong>
+								<small class="text-muted-foreground">{session.messageCount ?? session.messages.length} {t('pesan')}</small>
+							</button>
+							<div class="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+								<button
+									class="rounded p-1 text-muted-foreground/50 hover:bg-accent hover:text-foreground"
+									onclick={() => openRename(session)}
+									title={t('Ganti nama')}
+								>
+									<PencilIcon class="size-3" />
+								</button>
+								<button
+									class="rounded p-1 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive"
+									onclick={() => openDelete(session)}
+									title={t('Hapus')}
+								>
+									<Trash2Icon class="size-3" />
+								</button>
+							</div>
+						</div>
+					{/each}
 				{/if}
 			</div>
 		</aside>
@@ -195,9 +292,9 @@
 		<!-- Main chat area -->
 		<div class="flex flex-1 flex-col overflow-hidden">
 			<!-- Header -->
-			<div class="flex items-center justify-between gap-3 border-b px-4 py-3">
+			<div class="flex items-center justify-between gap-3 border-b px-4 py-2.5">
 				<div class="flex items-center gap-2 min-w-0">
-					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = true)} class="-ml-1 shrink-0 md:hidden" title={t('Buka sesi')}>
+					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = true)} class="-ml-1.5 h-8 w-8 shrink-0 p-0 md:hidden" title={t('Buka sesi')}>
 						<PanelRightOpenIcon class="size-4" />
 					</Button>
 					<div class="min-w-0">
@@ -210,17 +307,14 @@
 						<BotIcon class="mr-1 size-3" />
 						{t('AI')}
 					</Badge>
-					<Button variant="ghost" size="sm" onclick={newSession} title={t('Sesi baru')} class="hidden md:inline-flex">
+					<Button variant="ghost" size="sm" onclick={newSession} class="h-8 w-8 p-0" title={t('Sesi baru')}>
 						<MessageSquarePlusIcon class="size-4" />
 					</Button>
 				</div>
 			</div>
 
-			<!-- Messages area -->
-			<div
-				bind:this={messagesEl}
-				class="flex-1 space-y-3 overflow-y-auto px-4 py-4"
-			>
+			<!-- Messages -->
+			<div bind:this={messagesEl} class="flex-1 space-y-4 overflow-y-auto px-4 py-4">
 				{#if !active}
 					<div class="mx-auto mt-12 grid max-w-md gap-3 text-center">
 						<BotIcon class="mx-auto size-12 text-muted-foreground/30" />
@@ -247,13 +341,15 @@
 									<BotIcon class="size-4" />
 								{/if}
 							</div>
-							<div class="max-w-[85%] space-y-1 md:max-w-[70%]">
+							<div class="max-w-[92%] space-y-1 md:max-w-[75%]">
 								<span class="text-xs font-bold text-muted-foreground">{roleLabel(message.role)}</span>
-								<p
-									class="rounded-xl border px-4 py-2.5 text-sm leading-relaxed {isUser(message.role) ? 'bg-primary text-primary-foreground' : 'bg-muted/50'}"
-								>
-									{message.text}
-								</p>
+								<div class="rounded-xl border px-4 py-2.5 {isUser(message.role) ? 'bg-primary text-primary-foreground' : 'bg-muted/40'}">
+									{#if isUser(message.role)}
+										<p class="text-sm leading-relaxed">{message.text}</p>
+									{:else}
+										<MarkdownRenderer text={message.text} />
+									{/if}
+								</div>
 							</div>
 						</div>
 					{/each}
@@ -264,7 +360,7 @@
 						<div class="shrink-0 rounded-full border bg-muted p-1.5">
 							<BotIcon class="size-4" />
 						</div>
-						<div class="max-w-[70%] space-y-1">
+						<div class="max-w-[75%] space-y-1">
 							<span class="text-xs font-bold text-muted-foreground">{t('Asisten')}</span>
 							<div class="rounded-xl border bg-muted/50 px-4 py-3">
 								<span class="inline-flex gap-1">
@@ -278,30 +374,23 @@
 				{/if}
 			</div>
 
-			<!-- Error toast -->
+			<!-- Error -->
 			{#if error}
 				<div class="mx-4 mb-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-bold text-destructive">
 					{error}
 				</div>
 			{/if}
 
-			<!-- Input form (sticky bottom) -->
-			<form
-				class="flex items-end gap-2 border-t bg-card px-4 py-3"
-				onsubmit={(event) => { event.preventDefault(); send(); }}
-			>
+			<!-- Input -->
+			<form class="flex items-end gap-2 border-t bg-card px-4 py-3" onsubmit={(event) => { event.preventDefault(); send(); }}>
 				<Input
 					bind:value={input}
 					placeholder={t('Tanya tentang kepatuhan, freight, pricing...')}
 					class="min-h-[44px] flex-1 resize-none"
 					disabled={!active}
+					onkeydown={handleKeydown}
 				/>
-				<Button
-					type="submit"
-					disabled={sending || !active || !input.trim()}
-					class="h-[44px] w-[44px] shrink-0 p-0"
-					title={t('Kirim')}
-				>
+				<Button type="submit" disabled={sending || !active || !input.trim()} class="h-[44px] w-[44px] shrink-0 p-0" title={t('Kirim')}>
 					{#if sending}
 						<span class="loading-spinner size-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
 					{:else}
@@ -312,3 +401,44 @@
 		</div>
 	</div>
 </AppShell>
+
+<!-- Rename Dialog -->
+{#if renameDialogOpen}
+	<Dialog.Root bind:open={renameDialogOpen} onOpenChange={(o) => { if (!o) { renameDialogOpen = false; renameTarget = null; } }}>
+		<Dialog.Content class="sm:max-w-md">
+			<Dialog.Header>
+				<Dialog.Title>{t('Ganti nama sesi')}</Dialog.Title>
+				<Dialog.Description>{t('Masukkan nama baru untuk sesi chat ini.')}</Dialog.Description>
+			</Dialog.Header>
+			<div class="grid gap-4 py-4">
+				<Input
+					bind:value={renameTitle}
+					placeholder={t('Nama sesi...')}
+					onkeydown={(e) => { if (e.key === 'Enter') confirmRename(); }}
+				/>
+			</div>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => { renameDialogOpen = false; renameTarget = null; }}>{t('Batal')}</Button>
+				<Button disabled={!renameTitle.trim()} onclick={confirmRename}>{t('Simpan')}</Button>
+			</Dialog.Footer>
+		</Dialog.Content>
+	</Dialog.Root>
+{/if}
+
+<!-- Delete Dialog -->
+{#if deleteDialogOpen}
+	<Dialog.Root bind:open={deleteDialogOpen} onOpenChange={(o) => { if (!o) { deleteDialogOpen = false; deleteTarget = null; } }}>
+		<Dialog.Content class="sm:max-w-md">
+			<Dialog.Header>
+				<Dialog.Title>{t('Hapus sesi')}</Dialog.Title>
+				<Dialog.Description>
+					{t('Apakah Anda yakin ingin menghapus sesi "')}{deleteTarget?.title ?? ''}{t('"? Semua pesan akan hilang.')}
+				</Dialog.Description>
+			</Dialog.Header>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => { deleteDialogOpen = false; deleteTarget = null; }}>{t('Batal')}</Button>
+				<Button variant="destructive" onclick={confirmDelete}>{t('Hapus')}</Button>
+			</Dialog.Footer>
+		</Dialog.Content>
+	</Dialog.Root>
+{/if}

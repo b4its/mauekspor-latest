@@ -3225,6 +3225,16 @@ def delete_chat_session(session_id: str):
     return {"data": {"status": "deleted"}, "meta": {}}
 
 
+@router.put("/chat/sessions/{session_id}/")
+def rename_chat_session(session_id: str, payload: sc.RenameChatSessionPayload):
+    record = db.get("chat_sessions", session_id)
+    if not record:
+        raise HTTPException(404, "Chat session not found")
+    record["title"] = payload.title
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
 @router.post("/chat/sessions/{session_id}/messages/")
 def send_session_message(session_id: str, payload: sc.SendChatPayload):
     record = db.get("chat_sessions", session_id)
