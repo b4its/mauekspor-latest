@@ -231,6 +231,22 @@ docker compose --profile full up --build
 - Backend otomatis konek ke PostgreSQL via `MAUEKSPOR_DATABASE_URL`
 - Atur secret/asal prod lewat `.env` (lihat `backend/.env.production.example`) dan `VITE_API_BASE_URL` saat build frontend (build arg `docker compose`).
 
+### Frontend Dev — Hot Reload di Docker
+
+Untuk pengembangan frontend dengan **hot reload** (Vite HMR — perubahan kode langsung tampil di browser tanpa restart):
+
+```bash
+# Jalankan db + backend + frontend-dev (Vite, hot reload)
+docker compose --profile dev up -d
+```
+
+- **Frontend dev** → `http://localhost:5173` (Vite HMR aktif)
+- Source code di-mount dari `./frontend` ke container (`frontend-node-modules` volume menjaga `node_modules`)
+- Edit file di `frontend/src/...` → browser auto-reload
+- Backend tetap di `http://localhost:8000`
+
+> Catatan: `docker compose --profile full up -d` menjalankan frontend production (port 3000). Gunakan profile `dev` untuk hot reload.
+
 ### Seeder Data (100+ record per tabel)
 
 Saat database kosong, backend otomatis meng-seed data realistis mengikuti alur ekspor end-to-end:

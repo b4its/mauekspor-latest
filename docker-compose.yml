@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: mauekspor-db
-    profiles: ["full"]
+    profiles: ["full", "dev"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-mauekspor}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mauekspor}
@@ -21,7 +21,7 @@ services:
   backend:
     build: ./backend
     container_name: mauekspor-backend
-    profiles: ["full"]
+    profiles: ["full", "dev"]
     # Host network: backend memakai network stack host sehingga bisa menjangkau
     # AI server lokal (localhost:20128) dan menghindari firewall Docker bridge
     # yang memblokir container->host. Backend langsung bind 0.0.0.0:8000 di host.
@@ -58,6 +58,31 @@ services:
       ORIGIN: http://localhost:3000
     restart: unless-stopped
 
+  # ── Frontend DEV (hot reload) ──────────────────────────────────────
+  # Jalankan: docker compose --profile dev up -d db backend frontend-dev
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      args:
+        VITE_API_BASE_URL: http://localhost:8000/api/v1
+    container_name: mauekspor-frontend-dev
+    profiles: ["dev"]
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api/v1
+      HOST: 0.0.0.0
+      PORT: 5173
+    # Mount source untuk hot reload; node_modules tetap dari image (anonymous volume)
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    restart: unless-stopped
+
 volumes:
   db-data:
   backend-uploads:
+  frontend-node-modules:
