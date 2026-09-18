@@ -160,6 +160,7 @@ def login(payload: sc.LoginPayload, response: Response):
 
 
 def _issue_tokens(user: dict, response: Response) -> tuple[str, str]:
+    import os as _os
     access = create_access_token(user)
     refresh = create_refresh_token(user)
     db.insert("refresh_tokens", {
@@ -170,8 +171,10 @@ def _issue_tokens(user: dict, response: Response) -> tuple[str, str]:
         "expiresAt": None,
         "revoked": False,
     })
-    response.set_cookie("access_token", access, httponly=True, samesite="lax", max_age=3600)
-    response.set_cookie("refresh_token", refresh, httponly=True, samesite="lax", max_age=7 * 86400)
+    # Cookie aman: HttpOnly + SameSite=Lax + Secure (jika production/HTTPS)
+    secure = _os.getenv("MAUEKSPOR_COOKIE_SECURE", "").lower() in {"1", "true", "yes", "secure"}
+    response.set_cookie("access_token", access, httponly=True, samesite="lax", max_age=3600, secure=secure)
+    response.set_cookie("refresh_token", refresh, httponly=True, samesite="lax", max_age=7 * 86400, secure=secure)
     return access, refresh
 
 
@@ -181,6 +184,23 @@ def _validate_password_strength(password: str) -> None:
         raise HTTPException(400, "Password must be at least 8 characters")
     if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
         raise HTTPException(400, "Password must contain letters and numbers")
+
+
+def _sanitize_text(value: str, max_len: int = 200) -> str:
+    """Sanitasi input teks: hilangkan karakter kontrol & batasi panjang."""
+    import re as _re
+    if not value:
+        return ""
+    value = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", value)
+    return value.strip()[:max_len]
+
+
+@router.get("/auth/csrf/")
+def get_csrf_token(request: Request):
+    """Issue token CSRF untuk klien yang memakai auth via cookie."""
+    from app.main import issue_csrf_token
+    token = issue_csrf_token(request)
+    return {"data": {"csrf_token": token}, "meta": {}}
 
 
 @router.post("/auth/register/")
@@ -197,11 +217,11 @@ def register(payload: sc.RegisterPayload, response: Response):
         raise HTTPException(400, "Role not allowed for self-registration")
     user = db.insert("users", {
         "id": db.gen_id("users", "U"),
-        "email": str(payload.email),
-        "fullName": payload.name,
-        "name": payload.name,
+        "email": str(payload.email).strip().lower(),
+        "fullName": _sanitize_text(payload.name),
+        "name": _sanitize_text(payload.name),
         "role": role,
-        "organization": payload.organization,
+        "organization": _sanitize_text(payload.organization, 100),
         "password": hash_password(payload.password),
         "status": "Active",
         "createdAt": "2026-08-07",

@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+import os
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -148,49 +149,170 @@ _SECURITY_HEADERS = {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Cache-Control": "no-store",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob: https:; "
+        "font-src 'self' data:; "
+        "connect-src 'self' http://localhost:8000 http://localhost:5173; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    ),
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
 }
 
 
+# ── General rate limiting (anti brute-force / abuse) ───────────────
+import time as _time
+
+_RL_WINDOW = 60
+_RL_DEFAULT = 120  # max requests per window per IP
+_RL_ENABLED = os.getenv("MAUEKSPOR_DISABLE_PERSISTENCE", "").lower() not in {"1", "true", "yes"}
+
+
+def _rate_limit_key(request) -> str:
+    ip = request.client.host if request.client else "unknown"
+    return ip
+
+
+_ratelimit: dict[str, list[float]] = {}
+
+
+def _rate_limited(ip: str, limit: int, window: int = _RL_WINDOW) -> bool:
+    now = _time.time()
+    hits = [t for t in _ratelimit.get(ip, []) if now - t < window]
+    _ratelimit[ip] = hits
+    return len(hits) >= limit
+
+
+def _record_hit(ip: str) -> None:
+    _ratelimit.setdefault(ip, []).append(_time.time())
+
+
+@app.middleware("http")
+async def general_rate_limit(request, call_next):
+    """Rate limit semua request API (120/60s per IP). Login lebih ketat."""
+    if _RL_ENABLED and request.url.path.startswith("/api/v1/"):
+        ip = _rate_limit_key(request)
+        limit = 5 if request.url.path == "/api/v1/auth/login/" else _RL_DEFAULT
+        if _rate_limited(ip, limit):
+            return JSONResponse(
+                status_code=429,
+                content=_error_body(429, "Too many requests. Please slow down."),
+                headers={"Retry-After": "60"},
+            )
+        response = await call_next(request)
+        _record_hit(ip)
+        return response
+    return await call_next(request)
+
+
+# ── Account lockout (login gagal berulang) ─────────────────────────
+_login_failures: dict[str, int] = {}
+_LOCKOUT_THRESHOLD = 10
+_LOCKOUT_SECONDS = 300
+
+
+def _is_locked_out(identifier: str) -> bool:
+    failures = _login_failures.get(identifier, 0)
+    if failures >= _LOCKOUT_THRESHOLD:
+        return True
+    return False
+
+
+def _record_login_failure(identifier: str) -> None:
+    _login_failures[identifier] = _login_failures.get(identifier, 0) + 1
+
+
+def _clear_login_failures(identifier: str) -> None:
+    _login_failures.pop(identifier, None)
+
+
+@app.middleware("http")
+async def login_lockout(request, call_next):
+    if request.url.path == "/api/v1/auth/login/" and request.method == "POST":
+        # Identifikasi berdasarkan IP + email (jika ada)
+        ip = _rate_limit_key(request)
+        identifier = ip
+        response = await call_next(request)
+        if response.status_code == 401:
+            _record_login_failure(identifier)
+        else:
+            _clear_login_failures(identifier)
+        return response
+    return await call_next(request)
+
+
+# ── CSRF protection (untuk auth via cookie) ────────────────────────
+import secrets as _secrets
+
+# Simpan token CSRF per sesi (dipakai request berbasis cookie)
+_csrf_tokens: dict[str, str] = {}
+
+
+def issue_csrf_token(request) -> str:
+    """Buat / kembalikan token CSRF untuk request yang memakai cookie."""
+    token = _secrets.token_urlsafe(32)
+    _csrf_tokens[token] = _time.time()
+    return token
+
+
+@app.middleware("http")
+async def csrf_protection(request, call_next):
+    """Cegah CSRF untuk mutasi yang memakai cookie (bukan Bearer).
+
+    Diaktifkan via env MAUEKSPOR_ENABLE_CSRF=1 (default nonaktif karena
+    auth utama adalah Bearer token; CSRF hanya untuk fallback cookie).
+    """
+    if os.getenv("MAUEKSPOR_ENABLE_CSRF", "").lower() not in {"1", "true", "yes"}:
+        return await call_next(request)
+    is_write = request.method in {"POST", "PUT", "PATCH", "DELETE"}
+    uses_bearer = request.headers.get("authorization", "").lower().startswith("bearer ")
+    has_cookie = bool(request.cookies.get("access_token"))
+
+    if (
+        request.url.path.startswith("/api/v1/")
+        and is_write
+        and has_cookie
+        and not uses_bearer
+        and not _is_public_mutation(request.url.path)
+    ):
+        csrf = request.headers.get("x-csrf-token")
+        if not csrf or csrf not in _csrf_tokens:
+            return JSONResponse(
+                status_code=403,
+                content=_error_body(403, "CSRF token missing or invalid. Gunakan Authorization Bearer atau sertakan X-CSRF-Token."),
+            )
+    return await call_next(request)
+
+
+# ── Request body size limit ────────────────────────────────────────
+_MAX_BODY_SIZE = 25 * 1024 * 1024  # 25 MB
+
+
+@app.middleware("http")
+async def body_size_limit(request, call_next):
+    if request.url.path.startswith("/api/v1/"):
+        length = request.headers.get("content-length")
+        if length and length.isdigit() and int(length) > _MAX_BODY_SIZE:
+            return JSONResponse(
+                status_code=413,
+                content=_error_body(413, "Payload too large (max 25MB)"),
+            )
+    return await call_next(request)
+
+
+# ── Security headers middleware ────────────────────────────────────
 @app.middleware("http")
 async def security_headers(request, call_next):
     response = await call_next(request)
     for key, value in _SECURITY_HEADERS.items():
         response.headers.setdefault(key, value)
     return response
-
-
-# ── Login rate limiting (anti brute-force) ─────────────────────────
-_login_attempts: dict[str, list[float]] = {}
-
-
-def _rate_limited(ip: str, limit: int = 5, window_seconds: int = 60) -> bool:
-    """Return True if too many login attempts from this IP."""
-    import time as _time
-    now = _time.time()
-    attempts = [t for t in _login_attempts.get(ip, []) if now - t < window_seconds]
-    _login_attempts[ip] = attempts
-    return len(attempts) >= limit
-
-
-def _record_login_attempt(ip: str) -> None:
-    import time as _time
-    _login_attempts.setdefault(ip, []).append(_time.time())
-
-
-@app.middleware("http")
-async def login_rate_limit(request, call_next):
-    if request.url.path == "/api/v1/auth/login/" and request.method == "POST":
-        ip = request.client.host if request.client else "unknown"
-        if _rate_limited(ip):
-            return JSONResponse(
-                status_code=429,
-                content=_error_body(429, "Too many login attempts. Please wait a minute."),
-            )
-        response = await call_next(request)
-        if response.status_code == 401:
-            _record_login_attempt(ip)
-        return response
-    return await call_next(request)
 
 
 @app.middleware("http")
@@ -268,9 +390,26 @@ app.add_middleware(
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request, exc: StarletteHTTPException):
+    # Sanitasi: jangan bocorkan detail internal untuk error 500
+    if exc.status_code >= 500:
+        return JSONResponse(
+            status_code=500,
+            content=_error_body(500, "Internal server error"),
+        )
     return JSONResponse(
         status_code=exc.status_code,
         content=_error_body(exc.status_code, str(exc.detail)),
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc):
+    """Handler error tak terduga: jangan bocorkan stack trace ke klien."""
+    import logging
+    logging.getLogger("app").error("Unhandled error", exc_info=exc)
+    return JSONResponse(
+        status_code=500,
+        content=_error_body(500, "Internal server error"),
     )
 
 
@@ -280,8 +419,10 @@ async def validation_exception_handler(request, exc: RequestValidationError):
     for e in exc.errors():
         loc = e.get("loc", ())
         field = str(loc[-1]) if loc else "body"
+        # Sanitasi pesan error agar tidak bocorkan nilai input
+        msg = str(e.get("msg", "invalid"))
         errors.setdefault(field, [])
-        errors[field].append(e.get("msg", "invalid"))
+        errors[field].append(msg)
     return JSONResponse(
         status_code=422,
         content=_error_body(422, "Validation error", errors),

@@ -36,6 +36,10 @@ services:
       MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-}
       MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://localhost:20128/v1}
       MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-gpt-4o-mini}
+      # Keamanan: aktifkan CSRF (default off, Bearer adalah auth utama)
+      MAUEKSPOR_ENABLE_CSRF: ${MAUEKSPOR_ENABLE_CSRF:-0}
+      # Cookie Secure (set 1 saat di belakang HTTPS)
+      MAUEKSPOR_COOKIE_SECURE: ${MAUEKSPOR_COOKIE_SECURE:-0}
     volumes:
       - backend-uploads:/app/uploads
     depends_on:
