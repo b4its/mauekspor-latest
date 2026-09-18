@@ -288,7 +288,7 @@
 				<Button href="/trade-projects" variant="outline">{t('Lihat semua')}</Button>
 			</CardHeader>
 			<CardContent class="grid gap-2">
-				{#each projects.items as project}
+				{#each projects.items.slice(0, 5) as project}
 					<a href={`/trade-projects/${project.id}`} class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3 no-underline transition-colors hover:border-ring/40">
 						<div>
 							<strong class="block">{project.name}</strong>
@@ -312,7 +312,7 @@
 				<Button href="/export-analysis" variant="outline">{t('Jalankan analisis')}</Button>
 			</CardHeader>
 			<CardContent class="grid gap-2">
-				{#each exportAnalyses.items as analysis}
+				{#each exportAnalyses.items.slice(0, 5) as analysis}
 					<a href={`/export-analysis/${analysis.id}`} class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3 no-underline transition-colors hover:border-ring/40">
 						<div>
 							<strong class="block">{analysis.productName}</strong>
