@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "aos": "^2.3.4",
-    "marked": "^18.0.9"
+    "marked": "^18.0.9",
+    "leaflet": "^1.9.4"
   }
 }
