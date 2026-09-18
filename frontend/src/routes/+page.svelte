@@ -84,7 +84,10 @@
 		<header
 			class="sticky top-3.5 z-30 flex flex-wrap items-center justify-between gap-4 rounded-full border border-[#0b3d91]/10 bg-white/80 p-3 pl-5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#0a1730]/80"
 		>
-			<Logo variant="landscape" href="/" class="justify-center" />
+			<a href="/" class="inline-flex items-center gap-1.5">
+				<Logo variant="logo" class="!h-9" />
+				<span class="font-display text-2xl font-black tracking-tight text-[#0b1d3a] dark:text-white">auEkspor</span>
+			</a>
 
 			<nav class="hidden gap-6 text-sm font-bold text-[#0b1d3a]/70 md:flex dark:text-white/70" aria-label={t('Navigasi laman')}>
 				{#each navLinks as link}
@@ -110,7 +113,7 @@
 					</Sheet.Trigger>
 					<Sheet.Content side="right" class="landing-font w-72 border-[#0b3d91]/10 bg-white dark:border-white/10 dark:bg-[#0a1730]">
 						<Sheet.Header>
-							<Sheet.Title class="flex items-center gap-2"><Logo variant="landscape" class="!h-7" /></Sheet.Title>
+							<Sheet.Title class="flex items-center gap-1.5"><Logo variant="logo" class="!h-7" /><span class="font-display text-xl font-black text-[#0b1d3a] dark:text-white">auEkspor</span></Sheet.Title>
 						</Sheet.Header>
 						<nav class="flex flex-col gap-1 px-4" aria-label={t('Navigasi seluler')}>
 							{#each navLinks as link, index}
@@ -457,7 +460,10 @@
 		</section>
 
 		<footer class="flex flex-wrap items-center justify-between gap-4 px-2 py-6 text-sm text-[#0b1d3a]/60 dark:text-white/60">
-			<Logo variant="landscape" class="justify-center" />
+			<a href="/" class="inline-flex items-center gap-1.5">
+				<Logo variant="logo" class="!h-8" />
+				<span class="font-display text-xl font-black tracking-tight text-[#0b1d3a] dark:text-white">auEkspor</span>
+			</a>
 			<p class="max-w-xl">{t('Satu workspace dari kesiapan produk hingga pengiriman kargo — dibangun untuk eksportir Indonesia.')}</p>
 			<nav class="flex gap-4 text-sm font-bold text-[#0b1d3a]/60 dark:text-white/60" aria-label="Footer">
 				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/about">{t('Tentang')}</a>
