@@ -142,10 +142,6 @@
 					{#snippet child({ props }: { props: Record<string, unknown> })}
 						<a {...props} href="/dashboard" class="flex items-center gap-2.5">
 							<Logo variant="logo" class="hidden shrink-0 group-data-[collapsible=icon]:block" />
-							<div class="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-								<Logo variant="landscape" class="!h-6" />
-								<span class="mt-0.5 truncate text-[11px] font-bold text-sidebar-foreground/60">{t('Workspace Ekspor-Impor')}</span>
-							</div>
 						</a>
 					{/snippet}
 				</Sidebar.MenuButton>

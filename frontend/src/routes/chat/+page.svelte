@@ -62,6 +62,22 @@
 			: sessions
 	);
 
+	// ── Pagination & grouping sesi ──
+	let sessionPage = $state(1);
+	const SESSION_PAGE_SIZE = 30;
+	let sessionTotalPages = $derived(Math.max(1, Math.ceil(filteredSessions.length / SESSION_PAGE_SIZE)));
+	let pagedSessions = $derived(
+		filteredSessions.slice((sessionPage - 1) * SESSION_PAGE_SIZE, sessionPage * SESSION_PAGE_SIZE)
+	);
+	// Kelompokkan sesi yang punya pesan vs kosong
+	let groupedSessions = $derived({
+		active: pagedSessions.filter((s) => (s.messageCount ?? s.messages.length) > 0),
+		empty: pagedSessions.filter((s) => (s.messageCount ?? s.messages.length) === 0)
+	});
+	$effect(() => {
+		if (sessionPage > sessionTotalPages) sessionPage = sessionTotalPages;
+	});
+
 	async function loadSessions() {
 		try {
 			sessions = (await listChatSessions()).data;
@@ -228,20 +244,59 @@
 					{:else if filteredSessions.length === 0}
 						<p class="p-4 text-center text-xs text-muted-foreground">{searchQuery ? t('Tidak ada sesi ditemukan.') : t('Belum ada sesi. Buat sesi baru untuk mulai.')}</p>
 					{:else}
-						{#each filteredSessions as session (session.id)}
-							<div
-								class="group mb-1 flex items-start gap-1 rounded-lg border p-2.5 text-left text-xs transition-colors {session.id === activeId ? 'border-ring bg-accent' : 'border-transparent hover:border-border hover:bg-accent/40'}"
-							>
-								<button class="min-w-0 flex-1 text-left" onclick={() => switchSession(session.id)}>
-									<strong class="block truncate text-sm font-bold">{session.title || t('Percakapan baru')}</strong>
-									<small class="text-muted-foreground">{session.messageCount ?? session.messages.length} {t('pesan')}</small>
-								</button>
-								<div class="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-									<button class="rounded p-1 text-muted-foreground/50 hover:bg-accent hover:text-foreground" onclick={() => openRename(session)} title={t('Ganti nama')}><PencilIcon class="size-3" /></button>
-									<button class="rounded p-1 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive" onclick={() => openDelete(session)} title={t('Hapus')}><Trash2Icon class="size-3" /></button>
+						{#if groupedSessions.active.length > 0}
+							<div class="px-2 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">{t('Percakapan')}</div>
+							{#each groupedSessions.active as session (session.id)}
+								<div
+									class="group mb-1 flex items-start gap-1 rounded-lg border p-2.5 text-left text-xs transition-colors {session.id === activeId ? 'border-ring bg-accent' : 'border-transparent hover:border-border hover:bg-accent/40'}"
+								>
+									<button class="min-w-0 flex-1 text-left" onclick={() => switchSession(session.id)}>
+										<strong class="block truncate text-sm font-bold">{session.title || t('Percakapan baru')}</strong>
+										<small class="text-muted-foreground">{session.messageCount ?? session.messages.length} {t('pesan')}</small>
+									</button>
+									<div class="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+										<button class="rounded p-1 text-muted-foreground/50 hover:bg-accent hover:text-foreground" onclick={() => openRename(session)} title={t('Ganti nama')}><PencilIcon class="size-3" /></button>
+										<button class="rounded p-1 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive" onclick={() => openDelete(session)} title={t('Hapus')}><Trash2Icon class="size-3" /></button>
+									</div>
 								</div>
+							{/each}
+						{/if}
+						{#if groupedSessions.empty.length > 0}
+							<div class="px-2 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">{t('Baru / Kosong')}</div>
+							{#each groupedSessions.empty as session (session.id)}
+								<div
+									class="group mb-1 flex items-start gap-1 rounded-lg border p-2.5 text-left text-xs transition-colors {session.id === activeId ? 'border-ring bg-accent' : 'border-transparent hover:border-border hover:bg-accent/40'}"
+								>
+									<button class="min-w-0 flex-1 text-left" onclick={() => switchSession(session.id)}>
+										<strong class="block truncate text-sm font-bold">{session.title || t('Percakapan baru')}</strong>
+										<small class="text-muted-foreground">{session.messageCount ?? session.messages.length} {t('pesan')}</small>
+									</button>
+									<div class="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+										<button class="rounded p-1 text-muted-foreground/50 hover:bg-accent hover:text-foreground" onclick={() => openRename(session)} title={t('Ganti nama')}><PencilIcon class="size-3" /></button>
+										<button class="rounded p-1 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive" onclick={() => openDelete(session)} title={t('Hapus')}><Trash2Icon class="size-3" /></button>
+									</div>
+								</div>
+							{/each}
+						{/if}
+						{#if sessionTotalPages > 1}
+							<div class="flex items-center justify-between gap-2 border-t px-1 pt-2">
+								<button
+									class="rounded-md px-2 py-1 text-xs font-bold text-muted-foreground hover:bg-accent disabled:opacity-40"
+									disabled={sessionPage <= 1}
+									onclick={() => (sessionPage--)}
+								>
+									{t('Sebelumnya')}
+								</button>
+								<span class="text-[11px] text-muted-foreground">{sessionPage} / {sessionTotalPages}</span>
+								<button
+									class="rounded-md px-2 py-1 text-xs font-bold text-muted-foreground hover:bg-accent disabled:opacity-40"
+									disabled={sessionPage >= sessionTotalPages}
+									onclick={() => (sessionPage++)}
+								>
+									{t('Selanjutnya')}
+								</button>
 							</div>
-						{/each}
+						{/if}
 					{/if}
 				</div>
 			</div>
