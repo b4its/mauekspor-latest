@@ -196,7 +196,7 @@
 		{:else}
 		<a href="/products" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
-				<CardContent class="p-5">
+				<CardContent class="p-6">
 					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Komoditas Unggulan Desa')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{products.items.length}</strong>
 					<small class="text-sm text-muted-foreground">{products.items.filter((p) => p.status === 'Enriched').length} {t('ter-enrich')}</small>
@@ -205,7 +205,7 @@
 		</a>
 		<a href="/export-analysis" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
-				<CardContent class="p-5">
+				<CardContent class="p-6">
 					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Analisis pasar')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{exportAnalyses.items.length}</strong>
 					<small class="text-sm text-muted-foreground">{t('rata-rata')} {avgConfidence}% {t('keyakinan')}</small>
@@ -214,7 +214,7 @@
 		</a>
 		<a href="/costing" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
-				<CardContent class="p-5">
+				<CardContent class="p-6">
 					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Nilai pipeline')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(pipelineValue)}</strong>
 					<small class="text-sm text-muted-foreground">{projects.items.length} {t('proyek aktif')}</small>
@@ -223,7 +223,7 @@
 		</a>
 		<a href="/buyer-requests" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
-				<CardContent class="p-5">
+				<CardContent class="p-6">
 					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Permintaan pembeli')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{buyerRequests.items.length}</strong>
 					<small class="text-sm text-muted-foreground">{buyerRequests.items.filter((r) => r.status === 'New').length} {t('baru')}</small>
@@ -232,7 +232,7 @@
 		</a>
 		<a href="/forwarders" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
-				<CardContent class="p-5">
+				<CardContent class="p-6">
 					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Forwarder')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{forwarders.items.length}</strong>
 					<small class="text-sm text-muted-foreground">{forwarders.items.filter((f) => f.status === 'Verified').length} {t('terverifikasi')}</small>
@@ -241,7 +241,7 @@
 		</a>
 		<a href="/compliance" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
-				<CardContent class="p-5">
+				<CardContent class="p-6">
 					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Tinjauan risiko')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{openRisks}</strong>
 					<small class="text-sm text-muted-foreground">{t('perlu tinjauan manusia')}</small>
@@ -263,19 +263,19 @@
 			</div>
 		</CardHeader>
 		<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-			<Button href="/products/new" class="h-auto flex-col gap-2 py-5 text-left">
+			<Button href="/products/new" class="h-auto flex-col gap-3 py-5 text-left">
 				<span class="text-lg font-bold">{t('+ Produk Baru')}</span>
 				<small class="font-normal text-muted-foreground">{t('Tambah produk untuk analisis')}</small>
 			</Button>
-			<Button href="/catalogs/create" variant="secondary" class="h-auto flex-col gap-2 py-5 text-left">
+			<Button href="/catalogs/create" variant="secondary" class="h-auto flex-col gap-3 py-5 text-left">
 				<span class="text-lg font-bold">{t('Buat Katalog')}</span>
 				<small class="font-normal text-muted-foreground">{t('Publikasikan produk Anda')}</small>
 			</Button>
-			<Button href="/marketing" variant="secondary" class="h-auto flex-col gap-2 py-5 text-left">
+			<Button href="/marketing" variant="secondary" class="h-auto flex-col gap-3 py-5 text-left">
 				<span class="text-lg font-bold">{t('Analisis Pasar')}</span>
 				<small class="font-normal text-muted-foreground">{t('Market intelligence + pricing')}</small>
 			</Button>
-			<Button href="/buyer-requests" variant="secondary" class="h-auto flex-col gap-2 py-5 text-left">
+			<Button href="/buyer-requests" variant="secondary" class="h-auto flex-col gap-3 py-5 text-left">
 				<span class="text-lg font-bold">{t('Permintaan Buyer')}</span>
 				<small class="font-normal text-muted-foreground">{t('Cocokkan dengan katalog Anda')}</small>
 			</Button>
@@ -291,14 +291,14 @@
 				</div>
 				<Button href="/trade-projects" variant="outline">{t('Lihat semua')}</Button>
 			</CardHeader>
-			<CardContent class="grid gap-2">
+			<CardContent class="grid gap-3">
 				{#each projects.items.slice(0, 5) as project}
 					<a href={`/trade-projects/${project.id}`} class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3 no-underline transition-colors hover:border-ring/40">
 						<div>
 							<strong class="block">{project.name}</strong>
 							<span class="block text-sm text-muted-foreground">{project.product} - {project.buyer}</span>
 						</div>
-						<div class="grid justify-items-end gap-2 whitespace-nowrap">
+						<div class="grid justify-items-end gap-3 whitespace-nowrap">
 							<Badge variant={badgeVariant(project.risk)}>{project.risk}</Badge>
 							<b class="text-xl font-bold tracking-tight">{project.readiness}%</b>
 						</div>
@@ -315,14 +315,14 @@
 				</div>
 				<Button href="/export-analysis" variant="outline">{t('Jalankan analisis')}</Button>
 			</CardHeader>
-			<CardContent class="grid gap-2">
+			<CardContent class="grid gap-3">
 				{#each exportAnalyses.items.slice(0, 5) as analysis}
 					<a href={`/export-analysis/${analysis.id}`} class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3 no-underline transition-colors hover:border-ring/40">
 						<div>
 							<strong class="block">{analysis.productName}</strong>
 							<span class="block text-sm text-muted-foreground">{analysis.destination} - HS {analysis.hsCode}</span>
 						</div>
-						<div class="grid justify-items-end gap-2 whitespace-nowrap">
+						<div class="grid justify-items-end gap-3 whitespace-nowrap">
 							<Badge variant={badgeVariant(analysis.status)}>{analysis.status}</Badge>
 							<b class="text-xl font-bold tracking-tight">{analysis.score}</b>
 						</div>
@@ -339,17 +339,17 @@
 					<CardTitle>{t('Checklist kesiapan ekspor')}</CardTitle>
 					<CardDescription>{checklistDone} dari {checklist.length} {t('langkah selesai')} — {checklistPercent}%</CardDescription>
 				</div>
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-3">
 					<div class="h-2 w-40 overflow-hidden rounded-full bg-muted">
 						<div class="h-full rounded-full bg-emerald-500" style={`width:${checklistPercent}%`}></div>
 					</div>
 					<Badge variant={checklistPercent === 100 ? 'default' : 'outline'}>{checklistPercent}%</Badge>
 				</div>
 			</CardHeader>
-			<CardContent class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
 				{#each checklist as step}
 					<a href={step.href} class="rounded-xl border bg-muted/30 p-3.5 no-underline transition-colors hover:border-ring/40">
-						<div class="flex items-center justify-between gap-2">
+						<div class="flex items-center justify-between gap-3">
 							<span class={`size-5 rounded-full grid place-items-center text-xs font-bold ${step.done ? 'bg-emerald-500 text-white' : 'border bg-background text-muted-foreground'}`}>
 								{step.done ? '✓' : ''}
 							</span>
@@ -441,10 +441,10 @@
 			</div>
 			<Button variant="outline" size="sm" href="/educational">{t('Semua modul')}</Button>
 		</CardHeader>
-		<CardContent class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+		<CardContent class="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
 			{#each eduModules.items.slice(0, 3) as module (module.id)}
 				<a href={`/educational/modules/${module.id}`} class="rounded-xl border bg-muted/30 p-4 no-underline transition-colors hover:border-ring/40">
-					<div class="flex items-center justify-between gap-2">
+					<div class="flex items-center justify-between gap-3">
 						<Badge variant="secondary">{module.level}</Badge>
 						<span class="text-xs font-bold text-muted-foreground">{module.completion}% {t('selesai')}</span>
 					</div>

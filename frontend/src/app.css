@@ -290,3 +290,23 @@ progress::-webkit-progress-value {
 	padding: 0;
 	height: 0;
 }
+
+/* Micro-interactions for modern UX */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+}
+button:hover {
+    transform: translateY(-1px);
+}
+button:active {
+    transform: translateY(0);
+}
+a:hover {
+    opacity: 0.9;
+    transform: scale(1.01);
+}
+.card-hover {
+    @apply hover:shadow-lg hover:border-ring/40 transition-all duration-200;
+}

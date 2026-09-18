@@ -338,3 +338,113 @@ Buka folder `guideline/obsidian/` sebagai vault di [Obsidian](https://obsidian.m
 Model peran, daftar modul, dan pola fitur AI pada proyek ini merujuk pada platform sejenis:
 - Frontend referensi: [ExportReadyAI/ExportReadyAI-fe](https://github.com/ExportReadyAI/ExportReadyAI-fe) (Next.js + Django REST)
 - Komponen UI: [shadcn-svelte](https://www.shadcn-svelte.com/)
+
+---
+
+## 🚀 Deployment & Production Guide
+
+### Environment Setup
+
+#### 1. Create Production Environment Variables
+```bash
+# Copy template to production config
+cp backend/.env.production.example backend/.env.production
+
+# Edit with secure values
+nano backend/.env.production
+```
+
+**Critical Settings for Production:**
+- `MAUEKSPOR_SECRET_KEY` - Generate random key: `openssl rand -hex 32`
+- `MAUEKSPOR_ACCESS_TOKEN_EXPIRE_MINUTES` - Set shorter (e.g., 60)
+- `MAUEKSPOR_REFRESH_TOKEN_EXPIRE_DAYS` - Set appropriately (e.g., 7)
+- `MAUEKSPOR_DATABASE_URL` - Use PostgreSQL in production
+- `MAUEKSPOR_CORS_ORIGINS` - Restrict to your domain only
+
+#### 2. Database Backup Strategy
+```bash
+# Daily automated backup script (add to crontab)
+# Back up SQLite file or dump PostgreSQL
+0 2 * * * pg_dump mauekspor > /backups/mauekspor_$(date +\%Y\%m\%d).sql
+```
+
+### Docker Deployment
+
+```bash
+# Build and run production containers
+docker-compose up -d --build
+
+# Monitor logs
+docker-compose logs -f app frontend
+```
+
+### Nginx Reverse Proxy Configuration
+
+```nginx
+server {
+    listen 80;
+    server_name mauekspor.id;
+    
+    # HSTS Header
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    
+    # Security Headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    location / {
+        proxy_pass http://frontend:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    
+    location /api/v1 {
+        proxy_pass http://backend:8000;
+        proxy_set_header Host $host;
+        proxy_read_timeout 120s;
+    }
+}
+```
+
+### Monitoring & Health Checks
+
+- **Health endpoint**: `GET /api/v1/health/`
+- **Log monitoring**: Use `docker-compose logs -f` or ELK stack
+- **Error tracking**: Integrate Sentry.io for error monitoring
+
+### Performance Optimization Checklist
+
+✅ Images compressed via WebP format  
+✅ CSS/JS minified in production build  
+✅ Static assets served via CDN (recommended)  
+✅ Database query optimization for high-traffic periods  
+
+---
+
+## 🧪 Testing Commands
+
+```bash
+# Backend unit tests
+cd backend && python -m pytest tests/ -v
+
+# Frontend unit tests  
+cd frontend && npm test
+
+# Run full test suite
+./scripts/run_all_tests.sh
+```
+
+## 🔐 Security Best Practices
+
+- Rotate API keys monthly
+- Enable rate limiting on login endpoints
+- Regular dependency vulnerability scans: `pip audit` (backend), `npm audit` (frontend)
+- HTTPS enforced at all layers
+- Input validation on all user inputs (already implemented)
+
+---
+
+*Platform ini dikurasi khusus untuk ekosistem desa Indonesia - dari petani hingga pasar global.*
