@@ -1,6 +1,6 @@
 # MauEkspor
 
-**Workspace ekspor-impor berbasis AI untuk UMKM Indonesia** — satu platform dari kesiapan produk, analisis pasar & kepatuhan, penawaran/costing, katalog digital, hingga dokumen dan pelacakan pengiriman.
+**Platform Ekspor Khusus Komoditas Desa Indonesia** — workspace berbasis AI yang dikurasi untuk Kelompok Tani, BUMDes, dan Unit Pengolahan Hasil Desa. Platform ini menyatukan komoditas unggulan desa (kopi, kakao, rempah, kerajinan rotan, vanili, manggis, madu hutan) dengan dukungan regulasi spesifik desa: **PP No. 28 Tahun 2024 (Karantina Pertanian)**, **Permendag No. 16 Tahun 2025 (izin ekspor desa)**, serta aturan Bea Cukai tentang pembebasan khusus komoditas. Dari kesiapan produk (HS code, packing list), analisis pasar & kepatuhan, costing (EXW/FOB/CIF), katalog digital, hingga dokumen dan pelacakan pengiriman—semua dirancang untuk ekosistem desa.
 
 > Status saat ini: **berfungsi penuh dengan backend.** Frontend adalah antarmuka kerja lengkap yang terhubung ke backend FastAPI (list, detail, form create, dan action/button di semua modul memakai `src/lib/api/*.ts`; mock di `src/lib/data/trade.ts` hanya fallback saat API tak tersedia). Backend punya auth JWT (refresh rotation) via **Bearer token + sessionStorage**, **RBAC per-role**, **audit log**, **login rate limiting**, **password policy**, **security headers**, dan **persistensi PostgreSQL** (production/Docker) / **SQLite** (dev lokal). Fitur inti ExportReadyAI telah diadaptasi lengkap: **enrichment produk (HS code + SKU)**, **Market Intelligence**, **Pricing Calculator (EXW/FOB/CIF)**, **Costing nyata + exchange rate + PDF**, **Export Analysis dengan compliance check, snapshot produk/regulasi, reanalyze, compare, dan rekomendasi regulasi 10 bagian (ID/EN)**, **master data negara (250) + regulasi + HS codes (6.941 kode)**, **katalog dengan gambar + varian + AI description + listing publik**, **buyer request matching**, **forwarder profile + review + rekomendasi + statistik**, **buyer profile**, **educational CRUD + upload file**, dan **chat sessions + suggestions**. **Seeder lengkap 100+ record per tabel** (50+ tabel) mengikuti alur ekspor end-to-end. Modul AI berjalan dua mode: `mock` (default) dan `remote` (OpenAI-compatible via `MAUEKSPOR_AI_MODE=remote`).
 
@@ -41,10 +41,12 @@ MauEkspor menyatukan semuanya ke **satu "meja kerja" digital**. Semua data — p
 
 ### Peran pengguna
 
-- **Eksportir / UMKM** — pemakai utama: mengelola produk, analisis, penawaran, pengiriman.
-- **Buyer** — pembeli yang mengirim kebutuhan dan melihat katalog.
-- **Forwarder** — jasa pengiriman/logistik yang muncul di rekomendasi rute.
-- **Admin** — mengatur akun, paket, dan dukungan.
+- **KepalaDesa / Kepala BUMDes** — peran desa dengan menu sederhana: daftar komoditas, cek kepatuhan, cetak dokumen. Dibuat khusus untuk perangkat desa yang butuh akses cepat tanpa kompleksitas teknis.
+- **Komoditas Unggulan Desa** (sebelumnya "Eksportir/UMKM") — petani, nelayan, pengrajin, pelaku BUMDes/Kelompok Tani. Semua data dikurasi hanya komoditas desa: kopi, kakao, rempah, kerajinan, hasil hutan non-kayu.
+- **Buyer** — pembeli global (Jepang, EU, Singapura) yang mencari produk desa Indonesia.
+- **Forwarder** — jasa logistik maritim & udara yang mendukung pengiriman hasil bumi.
+- **Admin** — manajemen sistem dan dukungan teknis.
+
 
 ### Istilah teknis yang sering muncul (versi sederhana)
 

@@ -1,6 +1,9 @@
 """Role-based access control: role -> modules allowed to mutate."""
 
-ROLES = {"Admin", "Exporter", "Buyer", "Forwarder", "CustomsBroker", "Finance"}
+ROLES = {
+    "Admin", "Exporter", "Buyer", "Forwarder", "CustomsBroker", "Finance",
+    "KepalaDesa",  # role desa untuk menu sederhana (produk, kepatuhan, dokumen)
+}
 
 # Modules only an Admin may even read.
 ADMIN_ONLY_MODULES = {"users", "audit", "api-keys", "settings", "admin"}

@@ -267,11 +267,13 @@ class AuditExportPayload(BaseModel):
 class CreateExportAnalysisPayload(BaseModel):
     productId: str
     destination: str
+    jenis_komoditas: str | None = None  # pertanian/perikanan/kerajinan; auto-infer if missing
 
 
 class CompareExportAnalysisPayload(BaseModel):
     product_id: str
     country_codes: list[str]
+    jenis_komoditas: str | None = None
 
 
 class ReanalyzePayload(BaseModel):

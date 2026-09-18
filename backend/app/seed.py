@@ -434,3 +434,10 @@ def seed_if_empty():
         seed_100_records()
     except ImportError:
         pass  # seed_large.py opsional
+
+    # ---------- KOMODITAS DESA: kurasi kopi, kakao, rempah, rotan, HHNK ----------
+    try:
+        from app.seed_village_commodities import seed_village_commodities
+        seed_village_commodities()
+    except ImportError:
+        pass  # seed_village_commodities.py opsional

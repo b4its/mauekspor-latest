@@ -272,6 +272,159 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
 
 
 # ---------------------------------------------------------------------------
+# Regulasi prioritas desa — khusus untuk komoditas pertanian/perikanan/kerajinan
+# ---------------------------------------------------------------------------
+from app.seed_village_commodities import commodity_group_for_chapter, chapter_of
+
+
+VILLAGE_REGULATORY_PRIORITIES = {
+    "pertanian": [
+        {"title": "Karantina Pertanian — PP No. 28 Tahun 2024",
+         "detail": "Semua hasil kebun/tanaman (biji-bijian, buah segar, rempah) wajib mendapat pemeriksaan karantina dan dokumen Phytosanitary Certificate (SKT). Periksa di https://www.barantan.pertanian.go.id/",
+         "evidence_fields": ["phytosanitary", "karantina"], "priority": "critical"},
+        {"title": "Sertifikat Kesehatan Tumbuhan (Phytosanitary Certificate / SKT)",
+         "detail": "Dokumen wajib dari karantina pertanian yang menyatakan komoditas bebas hama & penyakit sesuai negara tujuan.",
+         "evidence_fields": ["certificate", "phytosanitary", "hama bebas"], "priority": "critical"},
+        {"title": "Pengemasan Standar ISPM-15 (jika menggunakan kemasan kayu)",
+         "detail": "Pallet/kayu pembungkus wajib disemprot/fumigasi & diberi stempel IPPC ISPM-15.",
+         "evidence_fields": ["ISPM-15", "fumigasi", "pallet kayu"], "priority": "major"},
+    ],
+    "perikanan": [
+        {"title": "Karantina Ikan (KKP) — PP 28/2024",
+         "detail": "Ikan hidup/dingin/diawetkan serta turunan produk ikan memerlukan sertifikat kesehatan dari Karantina Ikan (BKIPM Provinsi).",
+         "evidence_fields": ["BKIPM", "karantina_ikan", "health_certificate"], "priority": "critical"},
+        {"title": "Health Certificate & Traceability",
+         "detail": "Surat keterangan kesehatan + traceability (asalnya mana, penangkapan/pelihara).",
+         "evidence_fields": ["traceability", "origin", "health_certificate"], "priority": "major"},
+        {"title": "HACCP / BPOM untuk produk olahan",
+         "detail": "Produksi ikan olahan (fillet, kerupuk, abon) perlu HACCP atau izin BPOM untuk ekspor.",
+         "evidence_fields": ["HACCP", "BPOM", "GMP"], "priority": "major"},
+    ],
+    "kerajinan": [
+        {"title": "CITES — bahan dari spesies dilindungi?",
+         "detail": "Kriya berbahan kayu/kulit/suku tertentu harus dicek apakah termasuk CITES Appendix. Jika ya, diperlukan CITES permit atau ganti material alternatif.",
+         "evidence_fields": ["CITES", "bahan alam", "legalitas kayu", "SVLK"], "priority": "critical"},
+        {"title": "Dokumen Asal Bahan Baku (Legalitas Timber/SVLK)",
+         "detail": "Bukti legalitas kayu/rattan (SVLK SLE, FLETA, surat asal-usul dari penyuluh kehutanan).",
+         "evidence_fields": ["SVLK", "legalitas", "FLETA", "surat asal"], "priority": "major"},
+        {"title": "Fumigasi/HT & ISPM-15 untuk kemasan kayu",
+         "detail": "Jika ada komponen kayu dalam kemasan kargo, perlu perlakuan HT & stempel IPPC.",
+         "evidence_fields": ["ISPM-15", "fumigasi", "kemasan kayu"], "priority": "minor"},
+    ],
+}
+
+
+def _evidence_in_record(record: str | None, fields: list[str]) -> bool:
+    text = (record or "").lower()
+    return any(f in text for f in fields)
+
+
+def _material_matches_cites_keyword(material: str | None) -> bool:
+    keywords = ["mahogany", "ebony", "rosewood", "ivory", "coral", "turtle shell", "rattan limited", "cites"]
+    text = (material or "").lower()
+    return any(kw in text for kw in keywords)
+
+
+def infer_commodity_group(product: dict) -> str:
+    """Infer commodity group dari `commodity_group` / `commodityGroup` atau HS chapter."""
+    group = product.get("commodityGroup") or product.get("commodity_group", "")
+    if group:
+        return group.lower().strip()
+    hs = product.get("hs", "")
+    ch = chapter_of(hs)
+    if ch is not None:
+        return commodity_group_for_chapter(ch)
+    cat = product.get("category", "").lower()
+    if "kriya" in cat or "rotan" in cat or "anyaman" in cat:
+        return "kerajinan"
+    return "pertanian"
+
+
+def normalize_jenis_komoditas(jenis: str | None) -> str | None:
+    if not jenis:
+        return None
+    j = jenis.lower().strip()
+    if j in ("pertanian", "peternakan", "kebun", "hasil_bumi"):
+        return "pertanian"
+    if j in ("perikanan", "laut", "ikan"):
+        return "perikanan"
+    if j in ("kerajinan", "kriya", "rotan", "anyaman"):
+        return "kerajinan"
+    return None
+
+
+def village_regulatory_issues(product: dict, country_code: str, group: str) -> list[dict]:
+    """Prioritas isu kepatuhan spesifik desa."""
+    issues = []
+    priorities = VILLAGE_REGULATORY_PRIORITIES.get(group, [])
+    packaging = product.get("packaging", "") or ""
+    material = product.get("material_composition", "") or ""
+    certs = ", ".join(product.get("certificates", []) or [])
+
+    for item in priorities:
+        has_evidence = False
+        evidence_fields = item.get("evidence_fields", [])
+        if evidence_fields:
+            has_evidence = (
+                _evidence_in_record(packaging, evidence_fields) or
+                _evidence_in_record(certs, evidence_fields) or
+                _evidence_in_record(material, evidence_fields)
+            )
+        else:
+            has_evidence = True
+
+        title = item.get("title", "")
+        detail = item.get("detail", "")
+        severity = "critical" if item.get("priority") == "critical" else ("major" if item.get("priority") == "major" else "minor")
+        needs_evidence = item.get("priority") != "minor"
+
+        if not has_evidence or (needs_evidence and not _evidence_in_record(certs, ["halal","certificate"])):
+            issues.append({
+                "type": "Regulation",
+                "rule_key": f"village_priority_{item.get('title','').replace(' ','')}",
+                "your_value": f"Produk dari kelompok {group}",
+                "required_value": f"{title}",
+                "description": detail,
+                "severity": severity,
+            })
+
+    if group == "kerajinan" and _material_matches_cites_keyword(material):
+        issues.append({
+            "type": "CITES",
+            "rule_key": "cites_check_required",
+            "your_value": material,
+            "required_value": "Periksa appendix CITES; siapkan dokumen CITES permit jika applicable",
+            "description": "Bahan baku dikategorikan berpotensi masuk CITES. Pastikan legalitas bahan terdokumentasi.",
+            "severity": "critical",
+        })
+
+    return issues
+
+
+def analyze_product_compliance(product: dict, country_code: str, jenis_komoditas: str | None = None) -> dict[str, Any]:
+    """Jalankan semua checker pada data produk dengan prioritas desa.
+
+    pertanian → PP 28/2024+Phyto, kerajinan → CITES+SVLK.
+    Return menyimpan `commodityGroup`.
+    """
+    group = normalize_jenis_komoditas(jenis_komoditas) or infer_commodity_group(product)
+    issues = []
+    issues += village_regulatory_issues(product, country_code, group)
+    issues += check_ingredient_compliance(product, country_code)
+    issues += check_specification_compliance(product, country_code)
+    issues += check_packaging_compliance(product, country_code)
+    score, grade = calculate_readiness_score(issues)
+    recommendations = generate_recommendations(issues)
+    return {
+        "issues": issues,
+        "score": score,
+        "grade": grade,
+        "recommendations": recommendations,
+        "commodityGroup": group,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Analisis penuh dari produk (untuk create / reanalyze)
 # ---------------------------------------------------------------------------
 def analyze_product_compliance(product: dict, country_code: str) -> dict[str, Any]:

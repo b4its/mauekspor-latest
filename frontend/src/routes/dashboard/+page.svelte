@@ -15,6 +15,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
+	import VillagePotentialMap from '$lib/components/VillagePotentialMap.svelte';
 	import { t } from '$lib/i18n.svelte';
 
 	let profiles = createRemoteList(listBusinessProfiles, seedProfiles);
@@ -196,7 +197,7 @@
 		<a href="/products" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
 				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Produk')}</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Komoditas Unggulan Desa')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{products.items.length}</strong>
 					<small class="text-sm text-muted-foreground">{products.items.filter((p) => p.status === 'Enriched').length} {t('ter-enrich')}</small>
 				</CardContent>
@@ -249,6 +250,9 @@
 		</a>
 	{/if}
 	</div>
+
+	<!-- Peta Potensi Desa -->
+	<VillagePotentialMap />
 
 	<!-- Quick Actions -->
 	<Card class="bg-gradient-to-br from-primary/5 to-secondary/20 shadow-sm">

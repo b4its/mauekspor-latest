@@ -17,7 +17,7 @@
 	import WarehouseIcon from '@lucide/svelte/icons/warehouse';
 	import GlobeIcon from '@lucide/svelte/icons/globe';
 	import AnchorIcon from '@lucide/svelte/icons/anchor';
-	import FactoryIcon from '@lucide/svelte/icons/factory';
+	import SproutIcon from '@lucide/svelte/icons/sprout';
 	import TruckIcon from '@lucide/svelte/icons/truck';
 	import BoxesIcon from '@lucide/svelte/icons/boxes';
 	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
@@ -70,7 +70,7 @@
 	];
 
 	const roles = [
-		{ icon: FactoryIcon, title: 'Exporter / UMKM', text: 'Siapkan produk, analisis pasar & kepatuhan, bangun katalog, dan kelola pipeline penawaran hingga pengiriman.' },
+		{ icon: SproutIcon, title: 'Exporter / UMKM', text: 'Siapkan komoditas, analisis pasar & kepatuhan, bangun katalog, dan kelola pipeline penawaran hingga pengiriman.' },
 		{ icon: PackageSearchIcon, title: 'Buyer', text: 'Kirim kebutuhan (RFQ), lihat katalog UMKM yang cocok, dan hubungi langsung via WhatsApp.' },
 		{ icon: ShipIcon, title: 'Forwarder', text: 'Jaga profil, dapatkan review, dan muncul di rekomendasi rute untuk mendapatkan kuotasi baru.' },
 		{ icon: ShieldCheckIcon, title: 'Customs Broker', text: 'Pantau kepatuhan, bukti dokumen, dan status kepabeanan dalam satu workspace.' },
@@ -260,7 +260,7 @@
 
 		<section class="grid grid-cols-2 gap-3 sm:grid-cols-4" data-aos="fade-up">
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<FactoryIcon class="size-6 text-[#1e63d6]" />
+				<SproutIcon class="size-6 text-[#1e63d6]" />
 				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Produsen UMKM')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">

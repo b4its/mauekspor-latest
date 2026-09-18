@@ -9,19 +9,19 @@ EXPORT_COMPANIES = [
     "Yogyakarta Batik Lestari", "Lombok Pearls Industry", "Pontianak Rubber Indah",
     "Palembang Kriya Ukir", "Manado Cengkih Sejahtera", "Padang Kopi Kapal",
     "Aceh Organic Farm", "Riau Fiber Optima", "Jambi Kayu Manis",
-    "Bengkulu Lada Hitam", "Lampung Kopi Robusta", "Bangka Timah Indah",
-    "Batam Electronics Manufacturing", "Tangerang Sport Shoes Indo",
-    "Bogor Agro Lestari", "Malang Apple Fresh", "Probolinggo Udang Ocean",
+    "Bengkulu Lada Hitam", "Lampung Kopi Robusta",
+    "BUMDes Kerajinan Batam Sejahtera", "Koperasi Tani Tangerang Makmur",
+    "BUMDes Agro Bogor Lestari", "Malang Apple Fresh", "Probolinggo Udang Ocean",
     "Cianjur Beras Sehat", "Subang Nanas Manis", "Garut Domba Export",
     "Tasikmalaya Bordir Kreatif", "Kudus Kretek Rempah", "Jepara Ukir Furniture",
     "Solo Batik Pusaka", "Pekalongan Laut Batik", "Tegal Ikan Laut Asin",
     "Cilacap Kayu Jati", "Purwokerto Agro Nusantara", "Magelang Kopi Arabika",
     "Salatiga Snack Sehat", "Ambon Cengkih Bestari", "Ternate Pala Rempah",
     "Biak Coral Marine", "Jayawijaya Kopi Papua", "Merauke Sagu Abadi",
-    "Timika Mineral Sejahtera", "Sorong Ikan Tuna", "Madiun Kripik Tempe",
+    "Timika Tani Sejahtera", "Sorong Ikan Tuna", "Madiun Kripik Tempe",
     "Kediri Tebu Gula", "Blitar Susu Murni", "Pasuruan Ikan Bandeng",
-    "Gresik Chemical Industry", "Sidoarjo Kerupuk Udang", "Mojokerto Genteng Press",
-    "Ngawi Kayu Jati", "Bojonegoro Minyak Bumi", "Tuban Batu Kapur",
+    "BUMDes Agro Gresik Makmur", "Sidoarjo Kerupuk Udang", "Mojokerto Kerajinan Bambu",
+    "Ngawi Kayu Jati", "BUMDes Tani Bojonegoro", "Tuban Kerajinan Batu",
     "Lamongan Ikan Lele", "Jombang Cor Logam", "Nganjuk Jahe Merah",
     "Ponorogo Alat Musik Kayu",
 ]
@@ -87,32 +87,28 @@ CERTIFICATES = ["HACCP", "ISO 9001:2015", "ISO 22000", "Halal MUI", "Organic USD
     "FSSC 22000", "Rainforest Alliance", "Fair Trade", "RSPO", "FSC",
     "OEKO-TEX", "GOTS", "SMETA", "GLOBALGAP", "ASC", "MSC"]
 
+# Pool HS khusus komoditas desa: Chapter 01-24 (pertanian-peternakan-perikanan-
+# perkebunan), 46 (kerajinan anyaman rotan), dan 68-70 (kriya batu/keramik/kaca).
 HS_POOL = [
+    ("010632", "Live parrots"), ("020230", "Frozen bovine meat"),
+    ("030389", "Frozen fish"), ("030432", "Frozen tilapia fillets"),
+    ("040900", "Natural honey"), ("060311", "Fresh orchid cut flowers"),
+    ("071333", "Shelled kidney beans"), ("080310", "Bananas, fresh"),
+    ("081060", "Mangosteens, fresh"), ("081330", "Dried mango slices"),
     ("090111", "Coffee, not roasted"), ("090121", "Coffee, roasted"),
-    ("160413", "Shrimps prepared"), ("160414", "Tuna prepared"),
+    ("090230", "Black tea"), ("090411", "Pepper of genus Piper"),
+    ("090611", "Vanilla, neither crushed nor ground"), ("090831", "Nutmeg"),
+    ("090961", "Cinnamon tree bark"), ("100630", "Semi-milled rice"),
+    ("120100", "Soybeans"), ("120740", "Sesame seeds"),
+    ("151190", "Palm oil"), ("160413", "Shrimps prepared"),
+    ("160414", "Tuna prepared"), ("170114", "Raw cane sugar"),
     ("180100", "Cocoa beans"), ("190531", "Sweet biscuits"),
-    ("210111", "Coffee extracts"), ("330499", "Beauty preparations"),
-    ("392690", "Articles of plastics"), ("420222", "Handbags"),
-    ("440349", "Tropical wood"), ("442090", "Wood marquetry"),
-    ("470321", "Chemical pulp"), ("480255", "Paper"),
-    ("520942", "Denim fabrics"), ("540710", "Woven nylon"),
-    ("570110", "Wool carpets"), ("610910", "Cotton T-shirts"),
-    ("611020", "Cotton pullovers"), ("620342", "Cotton trousers"),
-    ("640219", "Sports footwear"), ("691110", "Porcelain tableware"),
-    ("691390", "Ceramic statuettes"), ("711311", "Silver jewelry"),
-    ("732393", "Stainless tableware"), ("761410", "Aluminum cables"),
-    ("841810", "Fridge-freezers"), ("844332", "Printers"),
-    ("847130", "Portable computers"), ("847141", "Data processing machines"),
-    ("851712", "Smartphones"), ("851830", "Headphones"),
-    ("852352", "Smart cards"), ("870323", "Cars 1500-3000cc"),
-    ("900311", "Spectacle frames"), ("901890", "Medical instruments"),
-    ("940169", "Wooden seats"), ("940360", "Wooden furniture"),
-    ("940421", "Latex mattresses"), ("950300", "Toys"),
-    ("970110", "Paintings"), ("691200", "Ceramic tableware"),
-    ("821110", "Knives"), ("852580", "Cameras"),
-    ("847160", "Computer peripherals"), ("903289", "Regulating instruments"),
-    ("940540", "Electric lamps"), ("950691", "Fitness equipment"),
-    ("970200", "Original prints"),
+    ("200811", "Cashew nuts prepared"), ("210111", "Coffee extracts"),
+    ("240120", "Tobacco, partly stemmed"),
+    ("460212", "Basketwork of vegetable materials, rattan"),
+    ("680291", "Monumental/building articles of stone"),
+    ("691110", "Porcelain tableware"), ("691390", "Ceramic statuettes"),
+    ("701399", "Glass tableware"),
 ]
 
 PRODUCTS = [
@@ -643,11 +639,13 @@ def seed_100_records():
             "cifPriceUsd": round(cogs/exr*(1+mv/100)*1.12, 2),
             "generatedAt": "now"})
 
-    # -- HS CODES (100) --
+    # -- HS CODES (pool komoditas desa) --
+    from app.seed_village_commodities import village_flags
     for i, (code, desc) in enumerate(HS_POOL[:100], 1):
         db.insert("hs_codes", {"id": f"HS-{i:03d}", "hs_code": code,
             "description": desc, "section": _pick(["I","II","III","IV","V","VI","VII","VIII","IX","X"], n()),
-            "level": len(code), "parent": code[:-2] if len(code)>2 else "TOTAL", "createdAt": "now"})
+            "level": len(code), "parent": code[:-2] if len(code)>2 else "TOTAL",
+            **village_flags(code), "createdAt": "now"})
 
     # -- REGULATIONS (100) --
     demo_cc = ["JP","SG","DE","US","KR","NL","AU","GB","MY","TH"]
@@ -710,20 +708,12 @@ def seed_100_records():
                 "createdAt": "2026-07-01",
             })
 
-    # HS codes: jika hanya 100 dari pool (belum dataset penuh), muat 6940 dari CSV
+    # HS codes: jika hanya 100 dari pool (belum dataset penuh), muat dari CSV
+    # HANYA chapter komoditas desa (01-24 pertanian/perikanan/perkebunan,
+    # 46 kerajinan anyaman rotan, 68-70 kriya) — bukan seluruh 6.941 kode.
     if db.loaded_records("hs_codes") < 1000:
-        from app.data import hs_loader
-        _loader = hs_loader.get_hs_loader()
-        for i, code in enumerate(_loader.codes, 1):
-            db.insert("hs_codes", {
-                "id": f"HS-{i:04d}",
-                "hs_code": code.get("hs_code", ""),
-                "description": code.get("description", ""),
-                "section": code.get("section", ""),
-                "level": code.get("level", len(code.get("hs_code", ""))),
-                "parent": code.get("parent", ""),
-                "createdAt": "now",
-            })
+        from app.seed_village_commodities import seed_village_hs_codes
+        seed_village_hs_codes()
     db.insert("settings", {"id":"SET-ORG-001", "companyName":"MauEkspor Demo",
         "country":"Indonesia", "entityType":"PT",
         "nib":"1234567890123", "taxId":"01.234.567.8",

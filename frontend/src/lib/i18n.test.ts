@@ -34,7 +34,7 @@ describe('i18n t()', () => {
 		expect(t('Dashboard')).toBe('Dasbor');
 		i18n.locale = 'en';
 		expect(t('Dashboard')).toBe('Dashboard');
-		expect(t('Products')).toBe('Products');
+		expect(t('Products')).toBe('Village Flagship Commodities');
 		expect(t('Analytics')).toBe('Analytics');
 	});
 

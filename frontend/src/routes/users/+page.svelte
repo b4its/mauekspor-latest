@@ -107,7 +107,7 @@
 						page = 1;
 					}}
 				>
-					{filter}
+					{t(filter === 'UMKM' ? 'Kelompok Tani/BUMDes' : filter)}
 				</Button>
 			{/each}
 		</div>

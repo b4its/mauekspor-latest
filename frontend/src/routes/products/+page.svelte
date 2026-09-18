@@ -135,7 +135,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<title>{t('Produk')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Products" eyebrow="Export product master data">
+<AppShell title="Komoditas Unggulan Desa" eyebrow="Master data komoditas unggulan desa">
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

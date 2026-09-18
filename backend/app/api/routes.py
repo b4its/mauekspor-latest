@@ -3326,7 +3326,7 @@ def create_analysis(payload: sc.CreateExportAnalysisPayload):
     if existing:
         raise HTTPException(409, "Analysis for this product & country already exists")
 
-    result = compliance_svc.analyze_product_compliance(product, country_code)
+    result = compliance_svc.analyze_product_compliance(product, country_code, payload.jenis_komoditas or None)
     snapshot = compliance_svc.snapshot_product(product)
     reg_snapshot = compliance_svc.snapshot_regulations(country_code)
     record = db.insert("export_analyses", {
@@ -3349,6 +3349,7 @@ def create_analysis(payload: sc.CreateExportAnalysisPayload):
         "marketDemand": "Medium",
         "duties": "Pending",
         "restrictions": [],
+        "commodityGroup": result.get("commodityGroup", "pertanian"),  # dari inferensi desa
         "summary": result["recommendations"][:300] if result["recommendations"] else "Analysis complete.",
         "updatedAt": "now",
     })
@@ -3438,7 +3439,7 @@ def reanalyze_analysis(analysis_id: str):
         raise HTTPException(404, "Product not found")
     from app.data.countries import resolve_country
     cc = resolve_country(str(record.get("countryCode") or record.get("destination", "")))
-    result = compliance_svc.analyze_product_compliance(product, cc)
+    result = compliance_svc.analyze_product_compliance(product, cc, None)
     record["score"] = result["score"]
     record["statusGrade"] = result["grade"]
     record["complianceIssues"] = result["issues"]

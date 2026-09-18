@@ -25,6 +25,8 @@ _TABLES = [
     "chat_sessions", "regulation_recommendations", "buyer_profiles",
     "forwarder_profiles", "educational_lessons", "regulations",
     "settings",
+    # --- Modul desa (komoditas unggulan & peta potensi desa) ---
+    "villages",
 ]
 
 _STORE: dict[str, list[dict[str, Any]]] = {}
