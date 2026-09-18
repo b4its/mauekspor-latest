@@ -3,7 +3,7 @@
 MauEkspor Ngrok Tunnel Runner
 Quick start script for deploying MauEkspor via ngrok
 
-Port mapping: old + 15 + 1 = new port
+Port mapping: old + 16
 - Backend: 8016 (8000 + 16)
 - Frontend Dev: 5189 (5173 + 16)
 - Frontend Prod: 3016 (3000 + 16)
@@ -24,30 +24,40 @@ SERVICES = {
     "Frontend Production": 3016,
 }
 
-def start_ngrok_tunnel(service_name, port):
-    """Start an ngrok tunnel in background"""
-    
-    # Check if pyngrok is installed
+def check_ngrok_installed():
+    """Check if pyngrok is installed"""
     try:
         import ngrok
+        return True
     except ImportError:
-        print(f"\n❌ Installing pyngrok...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "pyngrok"])
-        import ngrok
+        return False
+
+def check_ngrok_binary():
+    """Check if ngrok binary exists"""
+    result = subprocess.run(
+        ['which', 'ngrok'],
+        capture_output=True,
+        text=True
+    )
+    return result.returncode == 0
+
+def install_pyngrok():
+    """Install pyngrok package"""
+    print(f"\n📦 Installing pyngrok...")
     
-    # Setup ngrok
-    ngrok.set_auth_token(NGROK_TOKEN)
+    # Try with --break-system-packages flag
+    cmd = [sys.executable, '-m', 'pip', 'install', '--quiet', 
+           '--break-system-packages', 'pyngrok']
     
-    print(f"\n🚀 Starting tunnel for {service_name} on port {port}...")
+    result = subprocess.run(cmd, capture_output=True, text=True)
     
-    # Create tunnel
-    public_url = ngrok.connect(port)
+    if result.returncode != 0:
+        print(f"⚠️  Warning: pip installation failed")
+        print(f"   Error: {result.stderr}")
+        return False
     
-    print(f"✅ Tunnel active!")
-    print(f"   Public URL: {public_url}")
-    print(f"   Local URL:  http://localhost:{port}")
-    
-    return public_url, port
+    print("✅ pyngrok installed successfully")
+    return True
 
 def main():
     print("=" * 70)
@@ -63,13 +73,41 @@ def main():
     print("Starting all tunnels...")
     print("=" * 70 + "\n")
     
+    # Check if pyngrok is already installed
+    if not check_ngrok_installed():
+        print("⚠️  pyngrok not found, installing...")
+        if not install_pyngrok():
+            print("\n❌ Failed to install pyngrok!")
+            print("   Please run: pip3 install --break-system-packages pyngrok")
+            print("   Or use: make ngrok-install-manual")
+            sys.exit(1)
+    
+    # Import after installation
+    try:
+        from pyngrok import ngrok
+    except ImportError as e:
+        print(f"\n❌ Cannot import ngrok module: {e}")
+        print("   Make sure pyngrok is properly installed")
+        sys.exit(1)
+    
+    # Setup ngrok
+    ngrok.set_auth_token(NGROK_TOKEN)
+    
     tunnels = {}
     
     # Start each tunnel
     for service, port in SERVICES.items():
         try:
-            url, local_port = start_ngrok_tunnel(service, port)
-            tunnels[service] = {"url": url, "port": local_port}
+            print(f"\n🚀 Starting tunnel for {service} on port {port}...")
+            
+            # Create tunnel
+            public_url = ngrok.connect(port)
+            
+            tunnels[service] = {"url": public_url, "port": port}
+            print(f"✅ Tunnel active!")
+            print(f"   Public URL: {public_url}")
+            print(f"   Local URL:  http://localhost:{port}")
+            
         except Exception as e:
             print(f"\n❌ Error starting {service}: {e}")
             continue
@@ -94,11 +132,6 @@ def main():
     print("\n1. Start your application backend/frontend")
     print("2. Update frontend config to use ngrok URLs")
     print("3. Test your deployment")
-    
-    print("\nExample frontend configuration (.env):")
-    if "Backend API" in tunnels and "Frontend Development" in tunnels:
-        bg_url = tunnels["Backend API"]["url"].replace("http://", "https://")
-        print(f"   VITE_API_BASE_URL={bg_url}/api/v1")
     
     print("\n" + "=" * 70)
     print("👉 Press Ctrl+C to stop all tunnels")

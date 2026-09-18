@@ -155,41 +155,85 @@ docker-build:
 
 ngrok-install:
 	@echo ""
-	@echo "Installing pyngrok..."
-	@pip install --upgrade pyngrok 2>/dev/null || pip3 install --upgrade pyngrok 2>/dev/null
-	@echo "✅ pyngrok installed"
+	@echo "Checking ngrok installation..."
+	@if command -v ngrok &> /dev/null; then \
+		echo "✅ ngrok binary found"; \
+	elif python3 -c "import ngrok" 2>/dev/null; then \
+		echo "✅ pyngrok module found"; \
+	else \
+		echo "⚠️  Neither ngrok binary nor pyngrok found"; \
+		echo ""; \
+		echo "Install one of these:"; \
+		echo "  A) Download ngrok binary: https://ngrok.com/download"; \
+		echo "     - wget https://bin.equinox.io/c/bNyj1mQVAI4d/ngrok-stable-linux-amd64.tgz"; \
+		echo "     - tar xzf ngrok-stable-linux-amd64.tgz"; \
+		echo "     - sudo mv ngrok /usr/local/bin/"; \
+		echo ""; \
+		echo "  B) Use pip package:"; \
+		echo "     pip3 install --break-system-packages pyngrok"; \
+		echo ""; \
+		echo "For now, will use simple script (start-ngrok-simple.sh)"; \
+	fi
 
 ngrok-tunnel-local:
-	@python3 start-ngrok-tunnels.py
+	@if python3 -c "import ngrok" 2>/dev/null; then \
+		echo "Using pyngrok Python module..."; \
+		python3 start-ngrok-tunnels.py; \
+	elif command -v ngrok &> /dev/null; then \
+		echo "Using ngrok binary..."; \
+		NGROK_TOKEN="3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf" && \
+		for port in 8016 5189 3016; do \
+			ngrok http $$port --log stdout --authtoken $$NGROK_TOKEN & \
+			sleep 0.5; \
+		done; \
+	else \
+		echo "Falling back to simple script..."; \
+		bash start-ngrok-simple.sh; \
+	fi
 
 ngrok-tunnel-prod:
-	@python3 start-ngrok-tunnels.py
+	@if python3 -c "import ngrok" 2>/dev/null; then \
+		echo "Using pyngrok Python module..."; \
+		python3 start-ngrok-tunnels.py; \
+	elif command -v ngrok &> /dev/null; then \
+		echo "Using ngrok binary..."; \
+		NGROK_TOKEN="3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf" && \
+		for port in 8016 5189 $(PROD_FRONTEND_PORT); do \
+			ngrok http $$port --log stdout --authtoken $$NGROK_TOKEN & \
+			sleep 0.5; \
+		done; \
+	else \
+		echo "Falling back to simple script..."; \
+		bash start-ngrok-simple.sh; \
+	fi
 
 ngrok-local: ngrok-install
 	@echo ""
 	@echo "Starting ngrok tunnels for LOCAL/DEV mode..."
 	@echo "Tunneling ports: $(BACKEND_PORT), 5189, 3016"
 	@echo ""
-	@python3 start-ngrok-tunnels.py
+	@$(MAKE) --no-print-directory ngrok-tunnel-local
 
 ngrok-prod: ngrok-install
 	@echo ""
 	@echo "Starting ngrok tunnels for PRODUCTION mode..."
 	@echo "Tunneling ports: $(BACKEND_PORT), 5189, $(PROD_FRONTEND_PORT)"
 	@echo ""
-	@python3 start-ngrok-tunnels.py
+	@$(MAKE) --no-print-directory ngrok-tunnel-prod
 
 ngrok-all: ngrok-install
 	@echo ""
 	@echo "Starting ALL ngrok tunnels (development + production)..."
 	@echo "Tunneling ports: $(BACKEND_PORT), 5189, 3016"
 	@echo ""
-	@python3 start-ngrok-tunnels.py
+	@$(MAKE) --no-print-directory ngrok-tunnel-local
 
 ngrok-stop:
 	@echo ""
 	@echo "Stopping all ngrok tunnels..."
 	@pkill -f ngrok 2>/dev/null || true
+	@pkill -f start-ngrok-tunnels.py 2>/dev/null || true
+	@pkill -f "ngrok http" 2>/dev/null || true
 	@echo "✅ All ngrok tunnels stopped"
 
 seed:
