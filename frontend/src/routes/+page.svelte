@@ -7,6 +7,7 @@
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import { products, projects, buyers, exportAnalyses } from '$lib/data/trade';
+	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
 	import { t } from '$lib/i18n.svelte';
 
 	import ShipIcon from '@lucide/svelte/icons/ship';
@@ -24,8 +25,22 @@
 	import ReceiptTextIcon from '@lucide/svelte/icons/receipt-text';
 	import FileTextIcon from '@lucide/svelte/icons/file-text';
 	import MenuIcon from '@lucide/svelte/icons/menu';
+	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
+	import LogOutIcon from '@lucide/svelte/icons/log-out';
 
 	let mobileNavOpen = $state(false);
+	let loggingOut = $state(false);
+
+	$effect(() => { fetchSession(); });
+	let user = $derived(getUser());
+	let userStatus = $derived(getStatus());
+	let isLoggedIn = $derived(userStatus === 'authenticated' && !!user);
+
+	async function handleLogout() {
+		loggingOut = true;
+		await logout();
+		window.location.href = '/';
+	}
 
 	let pipelineValue = $derived(projects.reduce((sum, p) => sum + p.value, 0));
 	let exportCount = $derived(products.length);
@@ -97,8 +112,22 @@
 
 			<div class="hidden items-center gap-2 md:flex">
 				<ThemeToggle />
-				<Button variant="outline" href="/login" class="border-[#0b3d91]/20">{t('Masuk')}</Button>
-				<Button href="/register" class="bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85">{t('Mulai Ekspor')}</Button>
+				{#if isLoggedIn}
+					<Badge variant="outline" class="hidden max-w-[160px] border-[#0b3d91]/20 px-3 py-1.5 lg:inline-flex">
+						<span class="truncate text-xs font-bold">{user?.name}</span>
+					</Badge>
+					<Button href="/dashboard" class="bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85">
+						<LayoutDashboardIcon class="size-4" />
+						<span class="ms-1">{t('Dashboard')}</span>
+					</Button>
+					<Button variant="outline" onclick={handleLogout} disabled={loggingOut} class="border-[#0b3d91]/20">
+						<LogOutIcon class="size-4" />
+						<span class="ms-1">{loggingOut ? '...' : t('Logout')}</span>
+					</Button>
+				{:else}
+					<Button variant="outline" href="/login" class="border-[#0b3d91]/20">{t('Masuk')}</Button>
+					<Button href="/register" class="bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85">{t('Mulai Ekspor')}</Button>
+				{/if}
 			</div>
 
 			<div class="flex items-center gap-2 md:hidden">
@@ -129,9 +158,29 @@
 							{/each}
 						</nav>
 						<Sheet.Footer class="flex-col gap-2">
+						{#if isLoggedIn}
+							<div class="flex items-center gap-2 rounded-lg border border-[#0b3d91]/10 bg-[#0b3d91]/5 px-3 py-2.5 dark:border-white/10 dark:bg-white/5">
+								<div class="grid size-9 shrink-0 place-items-center rounded-full bg-[#0b3d91] font-bold text-white">
+									{(user?.name ?? 'U').charAt(0).toUpperCase()}
+								</div>
+								<div class="min-w-0">
+									<p class="truncate text-sm font-bold">{user?.name}</p>
+									<p class="truncate text-[11px] text-muted-foreground">{user?.email}</p>
+								</div>
+							</div>
+							<Button href="/dashboard" class="w-full bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85" onclick={() => (mobileNavOpen = false)}>
+								<LayoutDashboardIcon class="size-4" />
+								<span class="ms-1">{t('Dashboard')}</span>
+							</Button>
+							<Button variant="outline" class="w-full border-[#0b3d91]/20" onclick={() => { mobileNavOpen = false; handleLogout(); }}>
+								<LogOutIcon class="size-4" />
+								<span class="ms-1">{loggingOut ? '...' : t('Logout')}</span>
+							</Button>
+						{:else}
 							<Button href="/login" variant="outline" class="w-full border-[#0b3d91]/20" onclick={() => (mobileNavOpen = false)}>{t('Masuk')}</Button>
 							<Button href="/register" class="w-full bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85" onclick={() => (mobileNavOpen = false)}>{t('Mulai Ekspor')}</Button>
-						</Sheet.Footer>
+						{/if}
+					</Sheet.Footer>
 					</Sheet.Content>
 				</Sheet.Root>
 			</div>
