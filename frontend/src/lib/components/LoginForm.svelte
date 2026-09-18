@@ -67,17 +67,19 @@
 							<FieldLabel for="password-{id}">{t('Kata sandi')}</FieldLabel>
 							<span class="ms-auto text-sm text-muted-foreground">{t('Lupa password? Hubungi admin')}</span>
 						</div>
-						<div class="relative">
-							<Input 
-								id="password-{id}" 
-								type={showPassword ? 'text' : 'password'} 
-								placeholder={t('Minimum 8 karakter')} 
-								bind:value={password} 
-								required 
-							/>
+						<div class="relative flex items-center">
+							<div class="flex-1">
+								<Input 
+									id="password-{id}" 
+									type={showPassword ? 'text' : 'password'} 
+									placeholder={t('Minimum 8 karakter')} 
+									bind:value={password} 
+									required 
+								/>
+							</div>
 							<button
 								type="button"
-								class="absolute end-3 top-[34px] cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+								class="ml-2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
 								onclick={() => (showPassword = !showPassword)}
 								title={showPassword ? t('Sembunyikan') : t('Tampilkan')}
 								aria-label={showPassword ? t('Sembunyikan password') : t('Tampilkan password')}
