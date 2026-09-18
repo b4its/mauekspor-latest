@@ -178,7 +178,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<div class="flex items-center justify-between gap-3">
 							<div>
 								<strong class="block text-sm font-bold">{article.title}</strong>
-								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} min read - {article.level} - {article.tags.join(' · ')}</span>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} min read - {article.level} - {(article.tags ?? []).join(' · ')}</span>
 							</div>
 							<div class="grid justify-items-end gap-2">
 								<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>

@@ -162,7 +162,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pipeline')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(buyer.estimatedAnnualValue)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Payment')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.paymentProfile}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Products')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.interestedProducts.join(', ')}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Products')}<strong class="mt-1 block text-sm font-bold text-foreground">{(buyer.interestedProducts ?? []).join(', ')}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next step')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.nextStep}</strong></div>
 						</div>
 					</a>

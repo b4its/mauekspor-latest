@@ -42,7 +42,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		files.items.filter(
 			(file) =>
 				(activeFilter === 'All' || file.type === activeFilter) &&
-				[file.name, file.type, file.status, file.owner, ...file.tags].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				[file.name, file.type, file.status, file.owner, ...(file.tags ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
 	let needsReview = $derived(files.items.filter((file) => file.status !== 'Verified' && file.status !== 'Archived').length);

@@ -160,7 +160,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						</div>
 						<aside class="grid justify-items-end gap-2 whitespace-nowrap">
 							<strong class="text-sm font-bold">{thread.linkedTo}</strong>
-							<span class="block text-sm text-muted-foreground">{thread.participants.join(', ')}</span>
+							<span class="block text-sm text-muted-foreground">{(thread.participants ?? []).join(', ')}</span>
 							<Button variant="outline" size="sm" onclick={() => handleResolve(thread.id)}>{resolvedId === thread.id ? t('Selesai') : t('Selesaikan')}</Button>
 						</aside>
 					</CardContent>
