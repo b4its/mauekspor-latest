@@ -4,8 +4,9 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card } from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import SearchableSelect from '$lib/components/SearchableSelect.svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
+	
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { createTradeProject } from '$lib/api/trade-projects';
 	import { t } from '$lib/i18n.svelte';
@@ -135,11 +136,7 @@
 					{#if step === 0}
 						<div class="field grid gap-2">
 							<Label>{t('Tipe proyek')}</Label>
-							<NativeSelect bind:value={projectType}>
-								{#each projectTypes as type}
-									<option>{type}</option>
-								{/each}
-							</NativeSelect>
+							<SearchableSelect bind:value={projectType} options={[{value:'Exporter-led',label:'Exporter-led'},{value:'Buyer-led',label:'Buyer-led'},{value:'Joint',label:'Joint'}]} />
 						</div>
 						<div class="field grid gap-2">
 							<Label>{t('Nama proyek')}</Label>

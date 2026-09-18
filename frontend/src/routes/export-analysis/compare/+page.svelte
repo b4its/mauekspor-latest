@@ -4,6 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table/index.js';
+	import SearchableSelect from '$lib/components/SearchableSelect.svelte';
 	import { products as seedProducts } from '$lib/data/trade';
 	import { listProducts } from '$lib/api/products';
 	import { listCountries, compareExportAnalyses, downloadComparePdf } from '$lib/api/export-analysis';
@@ -82,12 +83,11 @@
 		<CardContent class="grid gap-4 p-6">
 			<div class="grid gap-2">
 				<label class="text-xs font-bold uppercase tracking-wide text-muted-foreground" for="cmp-product">{t('1. Pilih produk')}</label>
-				<select id="cmp-product" class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={selectedProductId}>
-					<option value="">{t('— Pilih produk —')}</option>
-					{#each products.items as product}
-						<option value={product.id}>{product.name} (HS {product.hs})</option>
-					{/each}
-				</select>
+				<SearchableSelect
+					bind:value={selectedProductId}
+					placeholder={t('— Pilih produk —')}
+					options={products.items.map((p) => ({ value: p.id, label: p.name, sub: p.hs ? `HS ${p.hs}` : '' }))}
+				/>
 			</div>
 			<div class="grid gap-2">
 				<label class="text-xs font-bold uppercase tracking-wide text-muted-foreground" for="cmp-countries">

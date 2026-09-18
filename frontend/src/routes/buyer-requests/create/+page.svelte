@@ -4,8 +4,9 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import SearchableSelect from '$lib/components/SearchableSelect.svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
+	
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { buyers as seedBuyers, products as seedProducts } from '$lib/data/trade';
@@ -104,21 +105,11 @@
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
 						<Label for="br-buyer">{t('Pembeli')}</Label>
-						<NativeSelect id="br-buyer" bind:value={buyerId}>
-							<option value="">{t('Pilih buyer...')}</option>
-							{#each buyers.items as buyer}
-								<option value={buyer.id}>{buyer.name}</option>
-							{/each}
-						</NativeSelect>
+						<SearchableSelect bind:value={buyerId} options={buyers.items.map((b) => ({ value: b.id, label: b.name, sub: b.country }))} />
 					</div>
 					<div class="grid gap-2">
 						<Label for="br-product">{t('Produk')}</Label>
-						<NativeSelect id="br-product" bind:value={productId}>
-							<option value="">{t('Pilih produk...')}</option>
-							{#each products.items as product}
-								<option value={product.id}>{product.name}</option>
-							{/each}
-						</NativeSelect>
+						<SearchableSelect bind:value={productId} options={products.items.map((p) => ({ value: p.id, label: p.name, sub: p.hs ? `HS ${p.hs}` : '' }))} />
 					</div>
 				</div>
 				<div class="grid gap-2">

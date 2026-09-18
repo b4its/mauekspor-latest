@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
+	import SearchableSelect from '$lib/components/SearchableSelect.svelte';
 	import { products as seedProducts } from '$lib/data/trade';
 	import { listProducts } from '$lib/api/products';
 	import { createExportAnalysis, listCountries } from '$lib/api/export-analysis';
@@ -87,10 +87,11 @@
 		>
 			<div class="grid gap-2">
 				<Label for="ea-product">{t('Produk')}</Label>
-				<NativeSelect id="ea-product" bind:value={productId} class="w-full">
-					<option value="">{t('Pilih produk...')}</option>
-					{#each products.items as product}<option value={product.id}>{product.name} (HS {product.hs})</option>{/each}
-				</NativeSelect>
+				<SearchableSelect
+					bind:value={productId}
+					placeholder={t('Pilih produk...')}
+					options={products.items.map((p) => ({ value: p.id, label: p.name, sub: p.hs ? `HS ${p.hs}` : '' }))}
+				/>
 				{#if notEnriched}
 					<p class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-700">
 						{t('Produk belum di-enrich (HS code belum pasti). Jalankan AI enrichment di halaman produk agar hasil analisis lebih akurat.')}
@@ -99,10 +100,11 @@
 			</div>
 			<div class="grid gap-2">
 				<Label>{t('Pasar tujuan')}</Label>
-				<NativeSelect bind:value={destination} class="w-full">
-					<option value="">{t('Pilih tujuan...')}</option>
-					{#each countries as country}<option value={country.country_code}>{country.country_name} ({country.country_code}) — {country.region}</option>{/each}
-				</NativeSelect>
+				<SearchableSelect
+					bind:value={destination}
+					placeholder={t('Pilih tujuan...')}
+					options={countries.map((c) => ({ value: c.country_code, label: c.country_name, sub: `${c.country_code} — ${c.region}` }))}
+				/>
 			</div>
 
 			{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive sm:col-span-2">{error}</p>{/if}

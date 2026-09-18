@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
+	import SearchableSelect from '$lib/components/SearchableSelect.svelte';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { products as seedProducts, projects as seedProjects } from '$lib/data/trade';
 	import { listProducts } from '$lib/api/products';
@@ -91,17 +91,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
 						<Label>{t('Proyek')}</Label>
-						<NativeSelect bind:value={projectId}>
-							<option value="">{t('Opsional...')}</option>
-							{#each projects.items as project}<option value={project.id}>{project.name}</option>{/each}
-						</NativeSelect>
+						<SearchableSelect bind:value={projectId} options={projects.items.map((p) => ({ value: p.id, label: p.name }))} />
 					</div>
 					<div class="grid gap-2">
 						<Label>{t('Produk')}</Label>
-						<NativeSelect bind:value={productId}>
-							<option value="">{t('Opsional...')}</option>
-							{#each products.items as product}<option value={product.id}>{product.name}</option>{/each}
-						</NativeSelect>
+						<SearchableSelect bind:value={productId} options={products.items.map((p) => ({ value: p.id, label: p.name, sub: p.hs ? `HS ${p.hs}` : '' }))} />
 					</div>
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
@@ -111,9 +105,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 					</div>
 					<div class="grid gap-2">
 						<Label>{t('Incoterm')}</Label>
-						<NativeSelect bind:value={incoterm}>
-							{#each incoterms as option}<option>{option}</option>{/each}
-						</NativeSelect>
+						<SearchableSelect bind:value={incoterm} options={incoterms.map((i) => ({ value: i, label: i }))} />
 					</div>
 				</div>
 				<div class="grid gap-2">
