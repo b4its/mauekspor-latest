@@ -4,13 +4,17 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
-	import Pagination from '$lib/components/Pagination.svelte';
-	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { businessProfiles as seedProfiles } from '$lib/data/trade';
 	import { listBusinessProfiles, getBusinessProfile, updateCertifications } from '$lib/api/business-profile';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import SearchIcon from '@lucide/svelte/icons/search';
+	import XIcon from '@lucide/svelte/icons/x';
+	import CheckIcon from '@lucide/svelte/icons/check';
 
 	let profiles = createRemoteList(listBusinessProfiles, seedProfiles);
 	$effect(() => {
@@ -22,14 +26,59 @@
 		if (!selectedId && (profiles.items[0]?.id ?? '')) selectedId = profiles.items[0].id;
 	});
 
-	// Pagination untuk daftar profil
-	let paginationPage = $state(1);
-	let paginationPageSize = $state(20);
-	let pagedProfiles = $derived(paginate(profiles.items ?? [], paginationPage, paginationPageSize));
-	let paginationTotalPages = $derived(calcTotalPages(profiles.items?.length ?? 0, paginationPageSize));
-	$effect(() => {
-		if (paginationPage > paginationTotalPages) paginationPage = paginationTotalPages;
+	// ── Searchable profile dropdown ──
+	let searchQuery = $state('');
+	let dropdownOpen = $state(false);
+	let expandedGroup = $state<string | null>(null);
+
+	// Filter berdasarkan pencarian
+	let searchedProfiles = $derived(
+		searchQuery.trim()
+			? profiles.items.filter((p) =>
+					(p.companyName ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+				)
+			: profiles.items
+	);
+
+	// Group berdasarkan nama perusahaan (untuk duplikat)
+	let groupedProfiles = $derived.by(() => {
+		const map = new Map<string, typeof profiles.items>();
+		for (const p of searchedProfiles) {
+			const key = p.companyName ?? 'Tanpa nama';
+			if (!map.has(key)) map.set(key, []);
+			map.get(key)!.push(p);
+		}
+		return [...map.entries()].map(([name, items]) => ({ name, items }));
 	});
+
+	function toggleGroup(name: string) {
+		expandedGroup = expandedGroup === name ? null : name;
+	}
+
+	function selectFromDropdown(id: string) {
+		selectProfile(id);
+		dropdownOpen = false;
+		expandedGroup = null;
+		searchQuery = '';
+	}
+
+	// Tutup dropdown saat klik di luar
+	import { onMount } from 'svelte';
+	let dropdownEl = $state<HTMLDivElement | null>(null);
+	onMount(() => {
+		function handleClick(e: MouseEvent) {
+			if (dropdownEl && !dropdownEl.contains(e.target as Node)) {
+				dropdownOpen = false;
+				expandedGroup = null;
+				searchQuery = '';
+			}
+		}
+		document.addEventListener('click', handleClick);
+		return () => document.removeEventListener('click', handleClick);
+	});
+
+	// Selected label
+	let selectedLabel = $derived(profile?.companyName ?? t('Pilih profil...'));
 
 	const certOptions = ['Halal', 'ISO 22000', 'HACCP', 'SVLK', 'Organic', 'Origin declaration', 'Nutrition facts'];
 	let saving = $state(false);
@@ -97,21 +146,96 @@
 
 <AppShell title="Business Profile" eyebrow={t('Identitas UMKM dan sertifikasi')}>
 	{#if profiles.items.length > 1}
-		<div class="flex flex-wrap gap-2">
-			{#each pagedProfiles as p}
-				<Button variant={p.id === profile.id ? 'default' : 'outline'} size="sm" onclick={() => selectProfile(p.id)}>
-					{p.companyName}
-					{#if detailLoading && p.id === selectedId}
-						<span class="ml-1.5 text-xs opacity-70">{t('Memuat...')}</span>
+		<div bind:this={dropdownEl} class="relative z-20 mb-4 max-w-md">
+			<!-- Trigger / selected -->
+			<button
+				type="button"
+				onclick={() => (dropdownOpen = !dropdownOpen)}
+				class="flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-sm shadow-sm transition-colors hover:bg-accent/50"
+			>
+				<span class="truncate font-semibold">{selectedLabel}</span>
+				<span class="flex items-center gap-2">
+					{#if detailLoading}
+						<span class="text-xs text-muted-foreground">{t('Memuat...')}</span>
 					{/if}
-				</Button>
-			{/each}
+					<ChevronDownIcon class="size-4 shrink-0 text-muted-foreground transition-transform {dropdownOpen ? 'rotate-180' : ''}" />
+				</span>
+			</button>
+
+			<!-- Dropdown -->
+			{#if dropdownOpen}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div class="absolute inset-x-0 top-full z-30 mt-1.5 overflow-hidden rounded-lg border border-border bg-card shadow-xl" role="presentation">
+					<!-- Search -->
+					<div class="flex items-center gap-2 border-b bg-muted/30 px-3 py-2">
+						<SearchIcon class="size-4 shrink-0 text-muted-foreground" />
+						<input
+							type="text"
+							placeholder={t('Cari profil...')}
+							bind:value={searchQuery}
+							class="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+						/>
+						{#if searchQuery}
+							<button onclick={() => (searchQuery = '')} class="text-muted-foreground hover:text-foreground"><XIcon class="size-3.5" /></button>
+						{/if}
+					</div>
+
+					<!-- List (max height + scroll) -->
+					<div class="max-h-64 overflow-y-auto p-1">
+						{#if groupedProfiles.length === 0}
+							<p class="px-3 py-4 text-center text-sm text-muted-foreground">{t('Tidak ada profil ditemukan.')}</p>
+						{:else}
+							{#each groupedProfiles as group}
+								{#if group.items.length === 1}
+									<!-- Tunggal: langsung pilih -->
+									<button
+										type="button"
+										onclick={() => selectFromDropdown(group.items[0].id)}
+										class="flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent {group.items[0].id === selectedId ? 'bg-accent font-semibold' : ''}"
+									>
+										<span class="truncate">{group.name}</span>
+										{#if group.items[0].id === selectedId}
+											<CheckIcon class="size-4 shrink-0 text-primary" />
+										{/if}
+									</button>
+								{:else}
+									<!-- Duplikat: grup yang bisa di-expand -->
+									<div class="rounded-md">
+										<button
+											type="button"
+											onclick={() => toggleGroup(group.name)}
+											class="flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+										>
+											<span class="flex min-w-0 items-center gap-2">
+												<span class="truncate">{group.name}</span>
+												<Badge variant="outline" class="shrink-0">{group.items.length}</Badge>
+											</span>
+											<ChevronRightIcon class="size-4 shrink-0 text-muted-foreground transition-transform {expandedGroup === group.name ? 'rotate-90' : ''}" />
+										</button>
+										{#if expandedGroup === group.name}
+											<div class="ml-3 border-l border-border pl-2">
+												{#each group.items as item}
+													<button
+														type="button"
+														onclick={() => selectFromDropdown(item.id)}
+														class="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors hover:bg-accent {item.id === selectedId ? 'bg-accent font-semibold' : ''}"
+													>
+														<span class="truncate">{item.id}</span>
+														{#if item.id === selectedId}
+															<CheckIcon class="size-4 shrink-0 text-primary" />
+														{/if}
+													</button>
+												{/each}
+											</div>
+										{/if}
+									</div>
+								{/if}
+							{/each}
+						{/if}
+					</div>
+				</div>
+			{/if}
 		</div>
-		{#if profiles.items.length > paginationPageSize}
-			<div class="mt-2">
-				<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={profiles.items?.length ?? 0} />
-			</div>
-		{/if}
 		{#if detailError}
 			<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{detailError}</p>
 		{/if}
