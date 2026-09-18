@@ -42,6 +42,20 @@
 	let error = $state('');
 	let suggestions = $state<{ question: string; context?: string }[]>([]);
 	let sidebarOpen = $state(true);
+
+	// Inisialisasi: tertutup di mobile/tablet (<1024px), terbuka di desktop
+	if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+		sidebarOpen = false;
+	}
+
+	// Saat layar diperbesar ke desktop, buka otomatis
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const mq = window.matchMedia('(min-width: 1024px)');
+		const onChange = () => { if (mq.matches) sidebarOpen = true; };
+		mq.addEventListener('change', onChange);
+		return () => mq.removeEventListener('change', onChange);
+	});
 	let messagesEl = $state<HTMLDivElement | null>(null);
 	let searchQuery = $state('');
 	// Track which AI message is currently animating (the latest one)
