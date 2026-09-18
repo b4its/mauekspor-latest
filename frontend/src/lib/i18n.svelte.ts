@@ -2062,6 +2062,8 @@ const dictionary: Record<string, Entry> = {
 	'Langkah selanjutnya': { id: 'Langkah selanjutnya', en: 'Next steps' },
 	'Lengkapi semua field (email, password min 8 karakter, dan kode admin).': { id: 'Lengkapi semua field (email, password min 8 karakter, dan kode admin).', en: 'Fill in all fields (email, password min 8 characters, and admin code).' },
 	'Lupa password? Hubungi admin': { id: 'Lupa password? Hubungi admin', en: 'Forgot password? Contact admin' },
+	'Tampilkan password': { id: 'Tampilkan password', en: 'Show password' },
+	'Sembunyikan password': { id: 'Sembunyikan password', en: 'Hide password' },
 	'Market Intelligence menganalisis peluang pasar untuk produk Anda — negara yang direkomendasikan, tren, kompetisi, dan forwarder potensial. Pilih produk lalu klik untuk memulai.': { id: 'Market Intelligence menganalisis peluang pasar untuk produk Anda — negara yang direkomendasikan, tren, kompetisi, dan forwarder potensial. Pilih produk lalu klik untuk memulai.', en: 'Market Intelligence analyzes market opportunities for your product — recommended countries, trends, competition, and potential forwarders. Select a product then click to start.' },
 	'Market intelligence + pricing': { id: 'Market intelligence + pricing', en: 'Market intelligence + pricing' },
 	'Market intelligence, compliance check, dan perbandingan negara dalam hitungan detik — bukan minggu.': { id: 'Market intelligence, compliance check, dan perbandingan negara dalam hitungan detik — bukan minggu.', en: 'Market intelligence, compliance checks, and country comparisons in seconds — not weeks.' },

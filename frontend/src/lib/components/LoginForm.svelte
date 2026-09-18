@@ -1,44 +1,47 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button/index.js';
-	import * as Card from '$lib/components/ui/card/index.js';
-	import { FieldGroup, Field, FieldLabel, FieldDescription } from '$lib/components/ui/field/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { login } from '$lib/stores/session.svelte';
-	import { cn } from '$lib/utils.js';
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { t } from '$lib/i18n.svelte';
+ 	import { Button } from '$lib/components/ui/button/index.js';
+ 	import * as Card from '$lib/components/ui/card/index.js';
+ 	import { FieldGroup, Field, FieldLabel, FieldDescription } from '$lib/components/ui/field/index.js';
+ 	import { Input } from '$lib/components/ui/input/index.js';
+ 	import { login } from '$lib/stores/session.svelte';
+ 	import { cn } from '$lib/utils.js';
+ 	import type { HTMLAttributes } from 'svelte/elements';
+ 	import { t } from '$lib/i18n.svelte';
+ 	import EyeIcon from '@lucide/svelte/icons/eye';
+ 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 
-	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
+ 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 
-	const id = $props.id();
+ 	const id = $props.id();
 
-	let email = $state('');
-	let password = $state('');
-	let loading = $state(false);
-	let error = $state('');
-	let message = $state('');
+ 	let email = $state('');
+ 	let password = $state('');
+ 	let showPassword = $state(false);
+ 	let loading = $state(false);
+ 	let error = $state('');
+ 	let message = $state('');
 
-	let canSubmit = $derived(email.includes('@') && password.length >= 8);
+ 	let canSubmit = $derived(email.includes('@') && password.length >= 8);
 
-	async function submit() {
-		error = '';
-		message = '';
+ 	async function submit() {
+ 		error = '';
+ 		message = '';
 
-		if (!canSubmit) {
-			error = t('Lengkapi data dengan email valid dan password minimal 8 karakter.');
-			return;
-		}
+ 		if (!canSubmit) {
+ 			error = t('Lengkapi data dengan email valid dan password minimal 8 karakter.');
+ 			return;
+ 		}
 
-		loading = true;
-		try {
-			await login({ email, password });
-			window.location.href = '/dashboard';
-		} catch (err) {
-			error = err instanceof Error ? err.message : t('Gagal masuk. Silakan coba lagi.');
-		} finally {
-			loading = false;
-		}
-	}
+ 		loading = true;
+ 		try {
+ 			await login({ email, password });
+ 			window.location.href = '/dashboard';
+ 		} catch (err) {
+ 			error = err instanceof Error ? err.message : t('Gagal masuk. Silakan coba lagi.');
+ 		} finally {
+ 			loading = false;
+ 		}
+ 	}
 </script>
 
 <div class={cn('flex flex-col gap-6', className)} {...restProps}>
@@ -64,7 +67,28 @@
 							<FieldLabel for="password-{id}">{t('Kata sandi')}</FieldLabel>
 							<span class="ms-auto text-sm text-muted-foreground">{t('Lupa password? Hubungi admin')}</span>
 						</div>
-						<Input id="password-{id}" type="password" placeholder={t('Minimum 8 karakter')} bind:value={password} required />
+						<div class="relative">
+							<Input 
+								id="password-{id}" 
+								type={showPassword ? 'text' : 'password'} 
+								placeholder={t('Minimum 8 karakter')} 
+								bind:value={password} 
+								required 
+							/>
+							<button
+								type="button"
+								class="absolute end-3 top-[34px] cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+								onclick={() => (showPassword = !showPassword)}
+								title={showPassword ? t('Sembunyikan') : t('Tampilkan')}
+								aria-label={showPassword ? t('Sembunyikan password') : t('Tampilkan password')}
+							>
+								{#if showPassword}
+									<EyeOffIcon class="size-4" />
+								{:else}
+									<EyeIcon class="size-4" />
+								{/if}
+							</button>
+						</div>
 					</Field>
 
 					{#if error}

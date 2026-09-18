@@ -19,7 +19,9 @@
 	let organization = $state('');
 	let email = $state('');
 	let password = $state('');
+	let showPassword = $state(false);
 	let confirmPassword = $state('');
+	let showConfirmPassword = $state(false);
 	let loading = $state(false);
 	let error = $state('');
 	let message = $state('');
