@@ -1,0 +1,68 @@
+# MauEkspor Docker Compose - Production Mode
+# Full containerized environment for production/deployment
+# All services run in Docker containers
+
+services:
+  # ── DATABASE (PostgreSQL) ──────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: mauekspor-db-prod
+    profiles: ["production", "full"]
+    ports:
+      - "5447:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mauekspor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mauekspor}
+      POSTGRES_DB: ${POSTGRES_DB:-mauekspor}
+    volumes:
+      - db-prod-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mauekspor} -d ${POSTGRES_DB:-mauekspor}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── BACKEND API (FastAPI) ───────────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: mauekspor-backend-prod
+    profiles: ["production", "full"]
+    network_mode: host
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
+      MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@localhost:5447/${POSTGRES_DB:-mauekspor}
+      MAUEKSPOR_UPLOAD_DIR: /app/uploads
+      MAUEKSPOR_CORS_ORIGINS: '["http://localhost:5188","http://localhost:3015","http://127.0.0.1:5188"]'
+      MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-mock}
+      MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-}
+      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://localhost:20143/v1}
+      MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-gpt-4o-mini}
+      MAUEKSPOR_ENABLE_CSRF: ${MAUEKSPOR_ENABLE_CSRF:-0}
+      MAUEKSPOR_COOKIE_SECURE: ${MAUEKSPOR_COOKIE_SECURE:-0}
+    volumes:
+      - backend-prod-uploads:/app/uploads
+    restart: unless-stopped
+
+  # ── FRONTEND PRODUCTION BUILD ──────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8015/api/v1
+    container_name: mauekspor-frontend-prod
+    profiles: ["production", "full"]
+    depends_on:
+      - backend
+    ports:
+      - "3015:3000"
+    environment:
+      ORIGIN: http://localhost:3015
+    restart: unless-stopped
+
+volumes:
+  db-prod-data:
+  backend-prod-uploads:

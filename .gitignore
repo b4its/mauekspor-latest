@@ -1,3 +1,6 @@
+media
+media/
+
 # Node
 frontend/node_modules/
 frontend/.svelte-kit/

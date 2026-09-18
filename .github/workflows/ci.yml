@@ -56,18 +56,18 @@ jobs:
 
       - name: Smoke test backend container
         run: |
-          docker run -d --rm --name mauekspor-backend -p 8000:8000 mauekspor-backend
+          docker run -d --rm --name mauekspor-backend -p 8015:8000 mauekspor-backend
           sleep 5
-          curl -fsS -o /dev/null http://localhost:8000/docs
-          curl -fsS -X POST http://localhost:8000/api/v1/auth/login/ \
+          curl -fsS -o /dev/null http://localhost:8015/docs
+          curl -fsS -X POST http://localhost:8015/api/v1/auth/login/ \
             -H "Content-Type: application/json" \
             -d '{"email":"admin@mauekspor.example","password":"admin123"}' -o /dev/null
           docker rm -f mauekspor-backend
 
       - name: Smoke test frontend container
         run: |
-          docker run -d --rm --name mauekspor-frontend -p 3000:3000 mauekspor-frontend
+          docker run -d --rm --name mauekspor-frontend -p 3015:3000 mauekspor-frontend
           sleep 5
-          curl -fsS -o /dev/null http://localhost:3000/
-          curl -fsS -o /dev/null http://localhost:3000/dashboard
+          curl -fsS -o /dev/null http://localhost:3015/
+          curl -fsS -o /dev/null http://localhost:3015/dashboard
           docker rm -f mauekspor-frontend

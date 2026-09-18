@@ -1,0 +1,31 @@
+# MauEkspor Docker Compose - Local Development Mode
+# Uses network_mode: host to access services on host machine directly
+# DO NOT use this for production - it conflicts with host processes!
+
+services:
+  # ── LOCAL BACKEND (runs via uvicorn, not in container) ────────────────
+  # Backend runs directly on localhost:8016 using uvicorn
+  # This is the RECOMMENDED way for development
+  
+  # ── DATABASE (PostgreSQL) ──────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: mauekspor-db-local
+    profiles: ["local"]
+    ports:
+      - "5447:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mauekspor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mauekspor}
+      POSTGRES_DB: ${POSTGRES_DB:-mauekspor}
+    volumes:
+      - db-local-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mauekspor} -d ${POSTGRES_DB:-mauekspor}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db-local-data:

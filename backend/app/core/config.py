@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
     cors_origins: list[str] = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
+        "http://localhost:5188",
+        "http://127.0.0.1:5188",
+        "http://localhost:3015",
     ]
     seed_admin_email: str = "admin@mauekspor.example"
     seed_admin_password: str = "admin123"

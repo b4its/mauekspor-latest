@@ -200,7 +200,6 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 					</Button>
 					{#if user}
 						<Button variant="ghost" size="sm" disabled={loggingOut} title={user.role} onclick={handleLogout} class="text-muted-foreground">
-							<span class="truncate max-w-[120px]">{user.name}</span>
 							<span class="ms-1 text-[11px] font-semibold uppercase tracking-wide">{loggingOut ? '...' : t('Logout')}</span>
 						</Button>
 					{:else if userStatus === 'unauthenticated'}

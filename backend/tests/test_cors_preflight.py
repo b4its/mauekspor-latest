@@ -27,7 +27,7 @@ def _preflight(path: str, request_method: str = "GET"):
             return client.options(
                 path,
                 headers={
-                    "Origin": "http://localhost:3000",
+                    "Origin": "http://localhost:3015",
                     "Access-Control-Request-Method": request_method,
                 },
             )
@@ -37,14 +37,14 @@ def test_preflight_admin_only_modules_allowed():
     for module in ("settings", "users", "audit", "api-keys"):
         r = _preflight(f"/api/v1/{module}/")
         assert r.status_code == 200, f"preflight /{module}/ should pass, got {r.status_code}"
-        assert r.headers.get("access-control-allow-origin") == "http://localhost:3000"
+        assert r.headers.get("access-control-allow-origin") == "http://localhost:3015"
 
 
 def test_preflight_regular_modules_allowed():
     for module in ("chat/sessions", "products", "buyers", "countries"):
         r = _preflight(f"/api/v1/{module}/", request_method="POST")
         assert r.status_code == 200, f"preflight /{module}/ should pass, got {r.status_code}"
-        assert r.headers.get("access-control-allow-origin") == "http://localhost:3000"
+        assert r.headers.get("access-control-allow-origin") == "http://localhost:3015"
 
 
 def test_auth_error_responses_carry_cors_headers():
@@ -61,14 +61,14 @@ def test_auth_error_responses_carry_cors_headers():
             r = client.post(
                 "/api/v1/chat/sessions/",
                 json={},
-                headers={"Origin": "http://localhost:3000"},
+                headers={"Origin": "http://localhost:3015"},
             )
             assert r.status_code == 401
-            assert r.headers.get("access-control-allow-origin") == "http://localhost:3000"
+            assert r.headers.get("access-control-allow-origin") == "http://localhost:3015"
 
             r = client.get(
                 "/api/v1/settings/",
-                headers={"Origin": "http://localhost:3000"},
+                headers={"Origin": "http://localhost:3015"},
             )
             assert r.status_code == 403
-            assert r.headers.get("access-control-allow-origin") == "http://localhost:3000"
+            assert r.headers.get("access-control-allow-origin") == "http://localhost:3015"

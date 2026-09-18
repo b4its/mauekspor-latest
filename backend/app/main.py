@@ -28,7 +28,7 @@ app = FastAPI(
     description="""
 # MauEkspor API — Workspace Ekspor-Impor berbasis AI
 
-**Base URL:** `http://localhost:8000/api/v1`
+**Base URL:** `http://localhost:8015/api/v1`
 
 ## Database
 
@@ -93,7 +93,7 @@ Error:
     openapi_url="/openapi.json",
     contact={
         "name": "MauEkspor",
-        "url": "http://localhost:3000",
+        "url": "http://localhost:3015",
     },
     license_info={
         "name": "MIT",
@@ -155,7 +155,7 @@ _SECURITY_HEADERS = {
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: blob: https:; "
         "font-src 'self' data:; "
-        "connect-src 'self' http://localhost:8000 http://localhost:5173; "
+        "connect-src 'self' http://localhost:8015 http://localhost:5188; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; "
         "form-action 'self'"
