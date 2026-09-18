@@ -10,6 +10,8 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let articles = createRemoteList(listEducationalArticles, seedArticles);
 	let publishing = $state('');
@@ -120,6 +122,11 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage_articles = $state(1);
+	let paginationPageSize_articles = $state(20);
+	let pagedItems_articles = $derived(paginate(articles.items ?? [], paginationPage_articles, paginationPageSize_articles));
+	let paginationTotalPages_articles = $derived(calcTotalPages(articles.items?.length ?? 0, paginationPageSize_articles));
+
 </script>
 
 <svelte:head>
@@ -153,7 +160,7 @@
 				<Textarea placeholder={t('Konten (Markdown)...')} bind:value={newContent} rows={3} />
 				<Button type="submit" disabled={creating} class="w-fit">{creating ? t('Membuat...') : t('Buat artikel')}</Button>
 			</form>
-			{#each articles.items as article}
+			{#each pagedItems_articles as article}
 				<div class="rounded-lg border bg-muted/30 p-3.5">
 					{#if editingId === article.id}
 						<div class="grid gap-2">
@@ -197,4 +204,6 @@
 		</CardContent>
 	</Card>
 {#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
+	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
+
 </AppShell>

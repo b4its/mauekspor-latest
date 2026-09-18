@@ -64,6 +64,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pagedItems = $derived(paginate(filteredModules ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredModules?.length ?? 0, paginationPageSize));
 
+	let paginationPage_articles = $state(1);
+	let paginationPageSize_articles = $state(20);
+	let pagedItems_articles = $derived(paginate(articles.items ?? [], paginationPage_articles, paginationPageSize_articles));
+	let paginationTotalPages_articles = $derived(calcTotalPages(articles.items?.length ?? 0, paginationPageSize_articles));
+
 </script>
 
 <svelte:head>
@@ -188,7 +193,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					</div>
 				{/each}
 			{:else}
-				{#each articles.items as article}
+				{#each pagedItems_articles as article}
 					<a class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5 no-underline transition-colors hover:bg-muted/60" href={`/educational/articles/${article.id}`}>
 						<div>
 							<strong class="block text-sm font-bold">{article.title}</strong>
@@ -204,5 +209,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardContent>
 	</Card>
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredModules?.length ?? 0} />
+
+	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
 
 </AppShell>

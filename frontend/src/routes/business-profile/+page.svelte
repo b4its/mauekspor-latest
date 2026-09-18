@@ -4,6 +4,8 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
+	import Pagination from '$lib/components/Pagination.svelte';
+	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { businessProfiles as seedProfiles } from '$lib/data/trade';
 	import { listBusinessProfiles, getBusinessProfile, updateCertifications } from '$lib/api/business-profile';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -19,6 +21,16 @@
 	$effect(() => {
 		if (!selectedId && (profiles.items[0]?.id ?? '')) selectedId = profiles.items[0].id;
 	});
+
+	// Pagination untuk daftar profil
+	let paginationPage = $state(1);
+	let paginationPageSize = $state(20);
+	let pagedProfiles = $derived(paginate(profiles.items ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(profiles.items?.length ?? 0, paginationPageSize));
+	$effect(() => {
+		if (paginationPage > paginationTotalPages) paginationPage = paginationTotalPages;
+	});
+
 	const certOptions = ['Halal', 'ISO 22000', 'HACCP', 'SVLK', 'Organic', 'Origin declaration', 'Nutrition facts'];
 	let saving = $state(false);
 	let certSaved = $state(false);
@@ -86,7 +98,7 @@
 <AppShell title="Business Profile" eyebrow={t('Identitas UMKM dan sertifikasi')}>
 	{#if profiles.items.length > 1}
 		<div class="flex flex-wrap gap-2">
-			{#each profiles.items as p}
+			{#each pagedProfiles as p}
 				<Button variant={p.id === profile.id ? 'default' : 'outline'} size="sm" onclick={() => selectProfile(p.id)}>
 					{p.companyName}
 					{#if detailLoading && p.id === selectedId}
@@ -95,6 +107,11 @@
 				</Button>
 			{/each}
 		</div>
+		{#if profiles.items.length > paginationPageSize}
+			<div class="mt-2">
+				<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={profiles.items?.length ?? 0} />
+			</div>
+		{/if}
 		{#if detailError}
 			<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{detailError}</p>
 		{/if}

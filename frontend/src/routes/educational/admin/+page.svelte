@@ -9,6 +9,8 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+import Pagination from '$lib/components/Pagination.svelte';
+import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let modules = createRemoteList(listEducationalModules, seedModules);
 	let articles = createRemoteList(listEducationalArticles, seedArticles);
@@ -55,6 +57,16 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+	let paginationPage_modules = $state(1);
+	let paginationPageSize_modules = $state(20);
+	let pagedItems_modules = $derived(paginate(modules.items ?? [], paginationPage_modules, paginationPageSize_modules));
+	let paginationTotalPages_modules = $derived(calcTotalPages(modules.items?.length ?? 0, paginationPageSize_modules));
+
+	let paginationPage_articles = $state(1);
+	let paginationPageSize_articles = $state(20);
+	let pagedItems_articles = $derived(paginate(articles.items ?? [], paginationPage_articles, paginationPageSize_articles));
+	let paginationTotalPages_articles = $derived(calcTotalPages(articles.items?.length ?? 0, paginationPageSize_articles));
+
 </script>
 
 <svelte:head>
@@ -88,7 +100,7 @@
 				<Badge variant="secondary">{modules.items.length} {t('total')}</Badge>
 			</CardHeader>
 			<CardContent class="grid gap-2">
-				{#each modules.items as module}
+				{#each pagedItems_modules as module}
 					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
 						<div>
 							<strong class="block text-sm font-bold">{module.title}</strong>
@@ -109,7 +121,7 @@
 				<Badge variant="secondary">{articles.items.length} {t('total')}</Badge>
 			</CardHeader>
 			<CardContent class="grid gap-2">
-				{#each articles.items as article}
+				{#each pagedItems_articles as article}
 					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
 						<div>
 							<strong class="block text-sm font-bold">{article.title}</strong>
@@ -125,4 +137,8 @@
 		</Card>
 	</div>
 {#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
+	<Pagination bind:page={paginationPage_modules} bind:pageSize={paginationPageSize_modules} totalPages={paginationTotalPages_modules} totalItems={modules.items?.length ?? 0} />
+
+	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
+
 </AppShell>
