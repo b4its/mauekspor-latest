@@ -3704,6 +3704,81 @@ def create_hs_code(payload: sc.CreateHSCodePayload):
 
 
 # ----------------------------------------------------------------------------
+# ADMIN PANEL — Generic CRUD untuk SEMUA tabel
+# ----------------------------------------------------------------------------
+@router.get("/admin/tables/")
+def admin_list_tables():
+    """Daftar semua tabel di database beserta jumlah record."""
+    tables = []
+    for name in db._TABLES:
+        tables.append({"name": name, "count": db.loaded_records(name)})
+    return {"data": tables, "meta": {"total": len(tables)}}
+
+
+def _admin_validate_table(table: str) -> None:
+    if table not in db._TABLES:
+        raise HTTPException(404, f"Table '{table}' not found")
+
+
+@router.get("/admin/data/{table}/")
+def admin_list_records(table: str, search: str = "", limit: int = 50, offset: int = 0):
+    """List record dari tabel tertentu (search + pagination)."""
+    _admin_validate_table(table)
+    items = db.all(table)
+    if search:
+        q = search.lower()
+        items = [r for r in items if q in json.dumps(r, ensure_ascii=False).lower()]
+    total = len(items)
+    paged = items[offset:offset + limit]
+    # Serialize: hapus __table & password
+    out = []
+    for r in paged:
+        rec = _serialize(dict(r))
+        rec.pop("password", None)
+        out.append(rec)
+    return {"data": out, "meta": {"total": total, "limit": limit, "offset": offset, "count": len(out)}}
+
+
+@router.post("/admin/data/{table}/")
+def admin_create_record(table: str, payload: dict):
+    """Buat record baru di tabel (payload = objek JSON)."""
+    _admin_validate_table(table)
+    if "id" not in payload:
+        payload["id"] = db.gen_id(table)
+    record = db.insert(table, dict(payload))
+    return _one(record)
+
+
+@router.get("/admin/data/{table}/{record_id}/")
+def admin_get_record(table: str, record_id: str):
+    _admin_validate_table(table)
+    record = db.get(table, record_id)
+    if not record:
+        raise HTTPException(404, "Record not found")
+    return _one(record)
+
+
+@router.put("/admin/data/{table}/{record_id}/")
+def admin_update_record(table: str, record_id: str, payload: dict):
+    """Update record: merge payload ke record yang ada."""
+    _admin_validate_table(table)
+    record = db.get(table, record_id)
+    if not record:
+        raise HTTPException(404, "Record not found")
+    record.update(payload)
+    db.save(record)
+    return _one(record)
+
+
+@router.delete("/admin/data/{table}/{record_id}/")
+def admin_delete_record(table: str, record_id: str):
+    _admin_validate_table(table)
+    if not db.delete(table, record_id):
+        raise HTTPException(404, "Record not found")
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
 # ADMIN COUNTRIES & REGULATIONS
 # ----------------------------------------------------------------------------
 @router.post("/admin/countries/")

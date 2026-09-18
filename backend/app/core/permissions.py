@@ -3,7 +3,7 @@
 ROLES = {"Admin", "Exporter", "Buyer", "Forwarder", "CustomsBroker", "Finance"}
 
 # Modules only an Admin may even read.
-ADMIN_ONLY_MODULES = {"users", "audit", "api-keys", "settings"}
+ADMIN_ONLY_MODULES = {"users", "audit", "api-keys", "settings", "admin"}
 
 # Modules each role may mutate (writes). Reads stay open unless in ADMIN_ONLY_MODULES.
 MUTATE_MODULES: dict[str, set[str] | str] = {
