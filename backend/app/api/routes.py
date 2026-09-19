@@ -2849,6 +2849,7 @@ def delete_educational_module(module_id: str):
 
 
 @router.post("/educational/{module_id}/publish/")
+@router.post("/educational/modules/{module_id}/publish/")
 def publish_educational_module(module_id: str):
     record = db.get("educational_modules", module_id)
     if not record:
