@@ -33,8 +33,12 @@ const DEFAULT_TEMPLATES: { label: string; text: string }[] = [
 ];
 
 export function openWhatsApp(phone: string, message: string): void {
-	const digits = phone.replace(/[^0-9]/g, '');
+	let digits = phone.replace(/[^0-9]/g, '');
 	if (!digits) return;
+	// Konversi prefix 0 (lokal Indonesia) ke 62 (kode negara)
+	if (digits.startsWith('0')) {
+		digits = '62' + digits.slice(1);
+	}
 	const encoded = encodeURIComponent(message);
 	const url = `https://wa.me/${digits}?text=${encoded}`;
 	window.open(url, '_blank', 'noopener,noreferrer');

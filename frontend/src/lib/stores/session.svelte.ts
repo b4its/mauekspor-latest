@@ -81,6 +81,8 @@ export async function register(payload: RegisterPayload): Promise<void> {
 export async function logout(): Promise<void> {
 	try {
 		await logoutApi();
+	} catch {
+		// Token mungkin sudah expired → backend 401. Abaikan; lokal sudah bersih.
 	} finally {
 		clearTokens();
 		user = null;

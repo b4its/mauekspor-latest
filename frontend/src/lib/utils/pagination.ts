@@ -10,7 +10,9 @@
  *   let totalPages = $derived(calcTotalPages(filtered.length, pageSize));
  */
 export function paginate<T>(items: T[], page: number, pageSize: number): T[] {
-	const start = (page - 1) * pageSize;
+	const totalPages = calcTotalPages(items.length, pageSize);
+	const clampedPage = Math.min(Math.max(1, page), totalPages);
+	const start = (clampedPage - 1) * pageSize;
 	return items.slice(start, start + pageSize);
 }
 

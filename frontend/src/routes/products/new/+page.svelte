@@ -44,7 +44,10 @@
 				netWeight: netWeight.trim() || undefined,
 				grossWeight: grossWeight.trim() || undefined,
 				moq: moq.trim() || undefined,
-				leadTime: leadTime.trim() || undefined
+				leadTime: leadTime.trim() || undefined,
+				certificates: certificates.trim()
+					? certificates.split(',').map((c) => c.trim()).filter(Boolean)
+					: undefined
 			});
 			createdId = res.data.id;
 			created = true;

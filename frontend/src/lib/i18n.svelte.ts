@@ -16,7 +16,7 @@ const dictionary: Record<string, Entry> = {
 	'Maaf, terjadi kesalahan. Silakan coba lagi atau hubungi dukungan.': { id: 'Maaf, terjadi kesalahan. Silakan coba lagi atau hubungi dukungan.', en: 'Sorry, an error occurred. Please try again or contact support.' },
 	'Kembali ke Dashboard': { id: 'Kembali ke Dashboard', en: 'Back to Dashboard' },
 	'Detail kesalahan': { id: 'Detail kesalahan', en: 'Error details' },
-	'Runs': { id: 'Run', en: 'Runs' },
+	'Runs': { id: 'Dijalankan', en: 'Runs' },
 	'terverifikasi': { id: 'terverifikasi', en: 'verified' },
 	'Jepang': { id: 'Jepang', en: 'Japan' },
 	'Amerika Serikat': { id: 'Amerika Serikat', en: 'United States' },

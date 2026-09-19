@@ -13,6 +13,7 @@ export type CreateProductPayload = {
 	description?: string;
 	material_composition?: string;
 	quality_specs?: Record<string, unknown>;
+	certificates?: string[];
 };
 
 export type UpdateProductPayload = Partial<CreateProductPayload> & {

@@ -129,6 +129,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pagedItems = $derived(paginate(filteredProducts ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredProducts?.length ?? 0, paginationPageSize));
 
+	// Reset halaman ke 1 saat filter/query berubah (cegah grid kosong)
+	$effect(() => {
+		filter;
+		query;
+		paginationPage = 1;
+	});
+
 </script>
 
 <svelte:head>

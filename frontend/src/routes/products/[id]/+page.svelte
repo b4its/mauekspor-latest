@@ -10,17 +10,19 @@
 	let { data } = $props();
 	let enriching = $state(false);
 	let enriched = $state(false);
+	let enrichError = $state('');
 	let deleting = $state(false);
 
 	async function runEnrichment() {
 		enriching = true;
+		enrichError = '';
 		try {
 			data.product = (await enrichProduct(data.product.id)).data;
+			enriched = true;
 		} catch {
-			await new Promise((resolve) => setTimeout(resolve, 300));
+			enrichError = 'Gagal menjalankan enrichment.';
 		} finally {
 			enriching = false;
-			enriched = true;
 		}
 	}
 

@@ -103,8 +103,11 @@ async function attemptRefresh(): Promise<boolean> {
 				}
 			} catch { /* ignore */ }
 		} else {
-			// Refresh gagal → bersihkan token
+			// Refresh gagal → bersihkan token dan sinyalkan session expired
 			clearTokens();
+			try {
+				window.dispatchEvent(new CustomEvent('mauekspor-session-expired'));
+			} catch { /* SSR / non-browser */ }
 		}
 		return res.ok;
 	});

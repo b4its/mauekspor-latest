@@ -207,9 +207,9 @@
 					<Button variant="outline" size="lg" href="/dashboard" class="h-11 border-[#0b3d91]/20 px-6 text-base">{t('Pelajari Lebih Lanjut')}</Button>
 				</div>
 				<div class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-bold text-[#0b1d3a]/60 dark:text-white/60">
-					<span>{t('Smart Agriculture')}${t(': AI & IoT')}</span>
-					<span>{t('Digital Market Access')}${t(': Global Supply Chain')}</span>
-					<span>{t('Community Empowerment')}${t(': Economic Growth')}</span>
+					<span>{t('Smart Agriculture')}: {t('AI & IoT')}</span>
+					<span>{t('Digital Market Access')}: {t('Global Supply Chain')}</span>
+					<span>{t('Community Empowerment')}: {t('Economic Growth')}</span>
 				</div>
 			</div>
 
