@@ -196,7 +196,7 @@ describe('educational, knowledge, calendar API contract', () => {
 	it('publishEducationalModule -> POST /educational/modules/{id}/publish/', async () => {
 		const fetchMock = mockApi();
 		await publishEducationalModule('EDU-1');
-		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/educational\/EDU-1\/publish\/$/);
+		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/educational\/modules\/EDU-1\/publish\/$/);
 	});
 
 	it('listEducationalArticles -> GET /educational/articles/', async () => {

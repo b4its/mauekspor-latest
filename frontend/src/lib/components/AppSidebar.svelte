@@ -316,7 +316,7 @@
 							</DropdownMenu.Item>
 						</DropdownMenu.Group>
 						<DropdownMenu.Separator />
-						<DropdownMenu.Item onclick={() => { logout(); window.location.href = '/login'; }}>
+						<DropdownMenu.Item onclick={async () => { await logout(); window.location.href = '/login'; }}>
 							{#snippet child({ props })}
 								<a {...props}>
 									<LogOutIcon class="text-muted-foreground" />

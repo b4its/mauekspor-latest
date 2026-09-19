@@ -1,4 +1,4 @@
-import { apiFetch, ApiError } from '$lib/api/client';
+import { apiFetch, getAccessToken, ApiError } from '$lib/api/client';
 import type { ExportAnalysis } from '$lib/data/trade';
 
 export type CreateExportAnalysisPayload = {
@@ -110,10 +110,13 @@ export function compareExportAnalyses(payload: ComparePayload) {
 
 export async function downloadComparePdf(payload: ComparePayload) {
 	const base = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+	const token = getAccessToken();
+	if (token) headers['Authorization'] = `Bearer ${token}`;
 	const response = await fetch(`${base}/export-analysis/compare/pdf/`, {
 		method: 'POST',
 		credentials: 'include',
-		headers: { 'Content-Type': 'application/json' },
+		headers,
 		body: JSON.stringify(payload)
 	});
 	if (!response.ok) throw new ApiError(response.status, null);

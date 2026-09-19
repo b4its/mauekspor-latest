@@ -38,5 +38,5 @@ export function deleteEducationalModule(id: string) {
 }
 
 export function publishEducationalModule(id: string) {
-	return apiFetch<EducationalModule>(`/educational/${id}/publish/`, { method: 'POST' });
+	return apiFetch<EducationalModule>(`/educational/modules/${id}/publish/`, { method: 'POST' });
 }

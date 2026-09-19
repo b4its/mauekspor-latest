@@ -18,6 +18,7 @@
 	import MenuIcon from '@lucide/svelte/icons/menu';
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
 	import { listNotifications } from '$lib/api/notifications';
+	import { getAccessToken } from '$lib/api/client';
 import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 	let { title = 'Overview', eyebrow = 'Export-import command center', children } = $props();
@@ -48,18 +49,6 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 	let commands = $derived([
 		...navItems.map((item) => ({ label: item.label, href: item.href, group: 'Navigation' })),
-		{ label: 'Dashboard', href: '/dashboard', group: 'Navigation' },
-		{ label: 'Products', href: '/products', group: 'Navigation' },
-		{ label: 'Export Analysis', href: '/export-analysis', group: 'Navigation' },
-		{ label: 'Catalogs', href: '/catalogs', group: 'Navigation' },
-		{ label: 'Costing', href: '/costing', group: 'Navigation' },
-		{ label: 'Buyer Requests', href: '/buyer-requests', group: 'Navigation' },
-		{ label: 'Forwarders', href: '/forwarders', group: 'Navigation' },
-		{ label: 'Buyers', href: '/buyers', group: 'Navigation' },
-		{ label: 'Educational', href: '/educational', group: 'Navigation' },
-		{ label: 'Chat', href: '/chat', group: 'Navigation' },
-		{ label: 'Marketing', href: '/marketing', group: 'Navigation' },
-		{ label: 'Settings', href: '/settings', group: 'Navigation' },
 		{ label: 'Register Admin', href: '/register-admin', group: 'Navigation' },
 	]);
 	// Catatan: pencarian data live menggunakan API /search/?q= langsung (liveResults),
@@ -117,7 +106,10 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 		clearTimeout(searchTimer);
 		searchTimer = setTimeout(async () => {
 			try {
-				const res = await fetch(`${API_BASE}/search/?q=${encodeURIComponent(q)}`, { credentials: 'include' });
+				const headers: Record<string, string> = {};
+				const token = getAccessToken();
+				if (token) headers['Authorization'] = `Bearer ${token}`;
+				const res = await fetch(`${API_BASE}/search/?q=${encodeURIComponent(q)}`, { credentials: 'include', headers });
 				if (res.ok) {
 					const body = await res.json();
 					liveResults = (body.data ?? []) as typeof liveResults;

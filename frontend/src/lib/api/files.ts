@@ -1,4 +1,4 @@
-import { apiFetch, ApiError, type ApiErrorBody } from '$lib/api/client';
+import { apiFetch, getAccessToken, ApiError, type ApiErrorBody } from '$lib/api/client';
 import type { FileAsset } from '$lib/data/trade';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
@@ -21,7 +21,10 @@ export async function uploadFileBinary(file: File, type: string, projectId: stri
 	form.append('type_', type);
 	form.append('project_id', projectId);
 	form.append('tags', tags.join(','));
-	const response = await fetch(`${API_BASE_URL}/files/upload/`, { method: 'POST', body: form, credentials: 'include' });
+	const headers: Record<string, string> = {};
+	const token = getAccessToken();
+	if (token) headers['Authorization'] = `Bearer ${token}`;
+	const response = await fetch(`${API_BASE_URL}/files/upload/`, { method: 'POST', body: form, credentials: 'include', headers });
 	const body = response.headers.get('content-type')?.includes('application/json')
 		? await response.json()
 		: null;

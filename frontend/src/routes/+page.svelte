@@ -88,7 +88,7 @@
 		>
 			<a href="/" class="inline-flex items-center gap-1.5">
 				<Logo variant="logo" class="!h-9" />
-				<span class="font-display text-2xl font-black tracking-tight text-[#0b1d3a] dark:text-white">auEkspor</span>
+				<span class="font-display text-2xl font-black tracking-tight text-[#0b1d3a] dark:text-white">MauEkspor</span>
 			</a>
 
 			<nav class="hidden gap-6 text-sm font-bold text-[#0b1d3a]/70 md:flex dark:text-white/70" aria-label={t('Navigasi laman')}>
@@ -129,7 +129,7 @@
 					</Sheet.Trigger>
 					<Sheet.Content side="right" class="landing-font w-72 border-[#0b3d91]/10 bg-white dark:border-white/10 dark:bg-[#0a1730]">
 						<Sheet.Header>
-							<Sheet.Title class="flex items-center gap-1.5"><Logo variant="logo" class="!h-7" /><span class="font-display text-xl font-black text-[#0b1d3a] dark:text-white">auEkspor</span></Sheet.Title>
+							<Sheet.Title class="flex items-center gap-1.5"><Logo variant="logo" class="!h-7" /><span class="font-display text-xl font-black text-[#0b1d3a] dark:text-white">MauEkspor</span></Sheet.Title>
 						</Sheet.Header>
 						<nav class="flex flex-col gap-1 px-4" aria-label={t('Navigasi seluler')}>
 							{#each navLinks as link, index}
