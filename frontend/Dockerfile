@@ -1,9 +1,20 @@
 FROM node:22-alpine AS build
 WORKDIR /app
+
+# Create .npmrc with correct pnpm settings
+RUN echo "fetch-retries=5" >> .npmrc && \
+    echo "fetchretry-interval=20000" >> .npmrc && \
+    echo "fetch-retry-max-timeout=120000" >> .npmrc
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+ENV PNPM_CONFIGURE_WEBPACK=false
+RUN corepack enable && \
+    export PNPM_HOME=/pnpm && \
+    export PATH=$PNPM_HOME:$PATH && \
+    (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile --config.fetch-retries=5 --config.fetchRetryInterval=20000)
+
 COPY . .
-ARG VITE_API_BASE_URL=http://localhost:8000/api/v1
+ARG VITE_API_BASE_URL=http://localhost:8015/api/v1
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN pnpm build
 

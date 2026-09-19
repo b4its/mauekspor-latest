@@ -1,13 +1,15 @@
-# MauEkspor Docker Compose - Production Mode
-# Full containerized environment for production/deployment
-# All services run in Docker containers
+# MauEkspor Docker Compose - Production Mode with Nginx Reverse Proxy
+# Architecture:
+#   - Frontend at / (root)  
+#   - Backend API at /backend
+#   - Nginx acts as reverse proxy
+#   - Ngrok exposes nginx to public internet
 
 services:
   # ── DATABASE (PostgreSQL) ──────────────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: mauekspor-db-prod
-    profiles: ["production", "full"]
     ports:
       - "5447:5432"
     environment:
@@ -22,39 +24,42 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+    networks:
+      - mauekspor-backend
 
   # ── BACKEND API (FastAPI) ───────────────────────────────────────────
   backend:
     build: ./backend
     container_name: mauekspor-backend-prod
-    profiles: ["production", "full"]
-    network_mode: host
     depends_on:
       db:
         condition: service_healthy
+    ports:
+      - "8015:8000"
     environment:
       MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
-      MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@localhost:5447/${POSTGRES_DB:-mauekspor}
+      MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@db:5432/${POSTGRES_DB:-mauekspor}
       MAUEKSPOR_UPLOAD_DIR: /app/uploads
-      MAUEKSPOR_CORS_ORIGINS: '["http://localhost:5188","http://localhost:3015","http://127.0.0.1:5188"]'
+      MAUEKSPOR_CORS_ORIGINS: '["http://localhost","https://*.ngrok-free.app","https://*.trycloudflare.com"]'
       MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-mock}
       MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-}
-      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://localhost:20143/v1}
+      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://host.docker.internal:20143/v1}
       MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-gpt-4o-mini}
       MAUEKSPOR_ENABLE_CSRF: ${MAUEKSPOR_ENABLE_CSRF:-0}
       MAUEKSPOR_COOKIE_SECURE: ${MAUEKSPOR_COOKIE_SECURE:-0}
     volumes:
       - backend-prod-uploads:/app/uploads
     restart: unless-stopped
+    networks:
+      - mauekspor-backend
 
   # ── FRONTEND PRODUCTION BUILD ──────────────────────────────────────
   frontend-prod:
     build:
       context: ./frontend
       args:
-        VITE_API_BASE_URL: http://localhost:8015/api/v1
+        VITE_API_BASE_URL: http://nginx/backend/api/v1
     container_name: mauekspor-frontend-prod
-    profiles: ["production", "full"]
     depends_on:
       - backend
     ports:
@@ -62,32 +67,28 @@ services:
     environment:
       ORIGIN: http://localhost:3015
     restart: unless-stopped
+    networks:
+      - mauekspor-backend
 
-  # ── FRONTEND DEV SERVER (for development) ───────────────────────────
-  frontend-dev:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-      args:
-        VITE_API_BASE_URL: http://localhost:8015/api/v1
-    container_name: mauekspor-frontend-dev
-    profiles: ["dev", "development"]
+  # ── NGINX REVERSE PROXY ─────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: mauekspor-nginx-prod
     ports:
-      - "5173:5173"
-    environment:
-      VITE_API_BASE_URL: http://localhost:8015/api/v1
-      HOST: 0.0.0.0
-      PORT: 5173
+      - "8080:80"
     volumes:
-      - ./frontend:/app
-      - frontend-node-modules:/app/node_modules
+      - ./nginx.production.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend-prod
     restart: unless-stopped
+    networks:
+      - mauekspor-backend
 
 volumes:
   db-prod-data:
   backend-prod-uploads:
-  frontend-node-modules:
 
 networks:
-  default:
-    external: false
+  mauekspor-backend:
+    driver: bridge

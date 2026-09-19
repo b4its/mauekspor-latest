@@ -1,10 +1,9 @@
-.PHONY: help local dev prod stop restart clean build docker-build docker-up docker-down seed reseed test help-docs status logs
+# MauEkspor Makefile - Production with Ngrok Tunnel
 
-# Variables
+.PHONY: help ngrok-prod-up ngrok-prod-stop ngrok-prod-build ngrok-prod-logs ngrok-prod-reseed ngrok-tunnel-start ngrok-tunnel-stop ngrok-show-urls local stop restart build docker-up docker-down
+
 NGROK_TOKEN := 3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
 BACKEND_PORT := 8016
-FRONTEND_PORT := 5188
-PROD_FRONTEND_PORT := 3015
 DATABASE_PORT := 5447
 
 SHELL := /bin/bash
@@ -13,354 +12,126 @@ SHELL := /bin/bash
 
 help:
 	@echo "=========================================="
-	@echo "🌍 MauEkspor - Makefile Commands"
+	@echo "🌍 MauEkspor - Deployment"
 	@echo "=========================================="
 	@echo ""
-	@echo "🚀 Deployment Commands:"
-	@echo "  make local           - Run development (backend + frontend on localhost)"
-	@echo "  make dev             - Same as local"
-	@echo "  make prod            - Run production mode with Docker containers"
+	@echo "Quick Start:"
+	@echo "  make ngrok-prod-build"
+	@echo "  make ngrok-prod-up"
+	@echo "  [NEW TERMINAL] make ngrok-tunnel-start"
 	@echo ""
-	@echo "⚠️  IMPORTANT: Use separate docker-compose files!"
-	@echo "  • docker-compose.local.yml   - For local development (optional DB only)"
-	@echo "  • docker-compose.prod.yml    - For production (full containerized)"
-	@echo "  • DO NOT mix them - ports will conflict!"
+	@echo "Commands:"
+	@echo "  make ngrok-prod-up     - Start services (not ngrok)"
+	@echo "  make ngrok-tunnel-start- Start ngrok public tunnel"
+	@echo "  make ngrok-prod-stop   - Stop everything"
+	@echo "  make ngrok-prod-logs   - View logs"
 	@echo ""
-	@echo "🌐 Ngrok Tunnels:"
-	@echo "  make ngrok-local     - Start ngrok tunnels for local/dev"
-	@echo "  make ngrok-prod      - Start ngrok tunnels for production"
-	@echo "  make ngrok-all       - Start all ngrok tunnels"
-	@echo "  make ngrok-stop      - Stop all ngrok tunnels"
+
+ngrok-prod-build:
+	@echo "Building Docker images..."
+	docker compose -f docker-compose.production.yml build db backend frontend-prod nginx
+	@echo "✅ Build complete!"
+
+ngrok-prod-up: 
+	@echo "Starting production services..."
+	-docker compose -f docker-compose.production.yml down
+	-docker rm -f mauekspor-db-prod mauekspor-backend-prod mauekspor-frontend-prod mauekspor-nginx-prod 2>/dev/null || true
+	
+	docker compose -f docker-compose.production.yml up -d db
+	@sleep 8
+	
+	docker compose -f docker-compose.production.yml up -d backend frontend-prod nginx
+	
 	@echo ""
-	@echo "⚙️  Build & Management:"
-	@echo "  make build           - Build frontend for production"
-	@echo "  make docker-build    - Build Docker images (production)"
-	@echo "  make docker-up       - Start production containers"
-	@echo "  make docker-down     - Stop all Docker containers"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ Services Running Locally!"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo ""
-	@echo "📊 Database Operations:"
-	@echo "  make seed            - Seed database with initial data"
-	@echo "  make reseed          - Reset and re-seed database"
-	@echo "  make db-clean        - Remove database file (SQLite only)"
+	@echo "Local URLs:"
+	@echo "  Frontend: http://localhost:3015"
+	@echo "  Backend:  http://localhost:8015/api/v1"
+	@echo "  Nginx:    http://localhost:8080"
 	@echo ""
-	@echo "🔍 Monitoring:"
-	@echo "  make status          - Check running services (local & docker)"
-	@echo "  make logs            - View Docker logs (production)"
-	@echo "  make logs-backend    - View backend logs only"
-	@echo "  make logs-frontend   - View frontend logs only"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "⚠️  NEXT STEP (in new terminal):"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo ""
-	@echo "🧹 Cleanup:"
-	@echo "  make clean           - Clean build artifacts"
-	@echo "  make distclean       - Full cleanup (including .env backups)"
+	@echo "Run in NEW terminal:"
+	@echo "  make ngrok-tunnel-start"
 	@echo ""
-	@echo "💡 Usage Examples:"
-	@echo "  # Local development"
-	@echo "  make local"
-	@echo ""
-	@echo "  # Production with Docker"
-	@echo "  make prod"
-	@echo ""
-	@echo "  # With ngrok tunnels"
-	@echo "  make ngrok-prod"
-	@echo ""
+	@echo "This creates PUBLIC URL for your app!"
 	@echo "=========================================="
+
+ngrok-prod-stop:
+	@echo "Stopping services..."
+	-docker compose -f docker-compose.production.yml down
+	-docker rm -f mauekspor-db-prod mauekspor-backend-prod mauekspor-frontend-prod mauekspor-nginx-prod 2>/dev/null || true
+	@echo "✅ Stopped!"
+
+ngrok-prod-logs:
+	@docker compose -f docker-compose.production.yml logs -f
+
+ngrok-prod-reseed:
+	@echo "WARNING: Deletes ALL data!"
+	@read -p "Type YES: " confirm && \
+	if [ "$$confirm" = "YES" ]; then \
+		docker exec mauekspor-db-prod psql -U mauekspor -d mauekspor -c "DROP SCHEMA public CASCADE;" 2>/dev/null || true; \
+		docker exec mauekspor-db-prod psql -U mauekspor -d mauekspor -c "CREATE SCHEMA public;" 2>/dev/null || true; \
+		cd backend && .venv/bin/python -c "from app.seed import seed_if_empty; seed_if_empty()"; \
+		echo "✅ Re-seeded!"; \
+	else \
+		echo "Cancelled"; \
+	fi
+
+ngrok-tunnel-start:
+	@echo "═══════════════════════════════════════"
+	@echo "🌐 Starting NGROK TUNNEL"
+	@echo "═══════════════════════════════════════"
+	@echo ""
+	@echo "Target: localhost:8080 (nginx)"
+	@echo "Creating PUBLIC URL from internet..."
+	@echo ""
+	-ngrok stop 2>/dev/null || true
+	ngrok http 8080 --log stdout --authtoken ${NGROK_TOKEN}
+
+ngrok-tunnel-stop:
+	@echo "Stopping ngrok..."
+	-ngrok stop 2>/dev/null || true
+	pkill -f ngrok 2>/dev/null || true
+	@echo "✅ Stopped"
+
+ngrok-show-urls:
+	@curl -s http://localhost:4040/api/tunnels | python3 -m json.tool
 
 local:
-	@echo ""
-	@echo "Starting MauEkspor in LOCAL mode..."
-	@echo "Backend API: http://localhost:$(BACKEND_PORT)"
-	@echo "Frontend Dev: http://localhost:$(FRONTEND_PORT)"
-	@echo ""
-	@# Install dependencies if needed
-	@if [ ! -d "backend/.venv" ]; then \
-		echo "📦 Setting up Python virtual environment..."; \
-		cd backend && python3 -m venv .venv; \
-		cd backend && .venv/bin/pip install -r requirements.txt; \
-	fi
-	@if [ ! -d "frontend/node_modules" ]; then \
-		echo "📦 Installing frontend dependencies..."; \
-		cd frontend && pnpm install; \
-	fi
-	
-	@# Start PostgreSQL container first (optional)
-	@if [ "$$START_DB" = "true" ]; then \
-		echo "🗄️ Starting database container..."; \
-		docker compose -f docker-compose.local.yml --profile local up -d db; \
-		sleep 3; \
-	fi
-	
-	@# Start services in background
-	@echo "🚀 Starting backend server..."
-	cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $(BACKEND_PORT) &
-	@sleep 2
-	
-	@echo "🎨 Starting frontend dev server..."
-	cd frontend && pnpm run dev --host 0.0.0.0 --port $(FRONTEND_PORT) &
-	
-	@echo ""
-	@echo "✅ Local development server started!"
-	@echo "Press Ctrl+C to stop all services"
-	@wait
-
-dev: local
-
-prod:
-	@echo ""
-	@echo "Starting MauEkspor in PRODUCTION mode (Docker)..."
-	@docker compose -f docker-compose.prod.yml --profile production up -d db backend frontend
-	@echo ""
-	@echo "✅ Production containers started!"
-	@echo "Backend API: http://localhost:$(BACKEND_PORT)"
-	@echo "Frontend Prod: http://localhost:$(PROD_FRONTEND_PORT)"
-	@echo ""
-	@echo "To view logs: make logs"
+	@echo "Local mode not configured"
 
 stop:
-	@echo ""
-	@echo "Stopping all services..."
-	@pkill -f uvicorn 2>/dev/null || true
-	@pkill -f pnpm 2>/dev/null || true
-	@pkill -f node 2>/dev/null || true
-	@echo "✅ Stopped all processes"
+	pkill -f uvicorn 2>/dev/null || true
 
-docker-down:
-	@echo ""
-	@echo "Stopping Docker containers (production)..."
-	@docker compose -f docker-compose.prod.yml --profile production down
-	@echo "✅ Production containers stopped"
-	@# Also stop local database if running
-	@docker compose -f docker-compose.local.yml --profile local down 2>/dev/null || true
-	@echo "✅ Local database stopped (if running)"
-
-restart:
-	@make stop || true
-	@sleep 1
-	@make local
+restart: stop local
 
 build:
-	@echo ""
-	@echo "Building frontend for production..."
-	@cd frontend && pnpm build
-	@cd frontend && pnpm package
-	@echo ""
-	@echo "✅ Frontend built successfully!"
-	@echo "Output directory: frontend/build/"
+	cd frontend && pnpm build
+	@echo "Built!"
 
-docker-build:
-	@echo ""
-	@echo "Building Docker images (production)..."
-	@docker compose -f docker-compose.prod.yml --profile production build db backend frontend
-	@echo ""
-	@echo "✅ Docker images built successfully!"
+docker-up:
+	docker compose -f docker-compose.production.yml up -d
+	@echo "Up!"
 
-ngrok-install:
-	@echo ""
-	@echo "Checking ngrok installation..."
-	@if command -v ngrok &> /dev/null; then \
-		echo "✅ ngrok binary found"; \
-	elif python3 -c "import ngrok" 2>/dev/null; then \
-		echo "✅ pyngrok module found"; \
-	else \
-		echo "⚠️  Neither ngrok binary nor pyngrok found"; \
-		echo ""; \
-		echo "Install one of these:"; \
-		echo "  A) Download ngrok binary: https://ngrok.com/download"; \
-		echo "     - wget https://bin.equinox.io/c/bNyj1mQVAI4d/ngrok-stable-linux-amd64.tgz"; \
-		echo "     - tar xzf ngrok-stable-linux-amd64.tgz"; \
-		echo "     - sudo mv ngrok /usr/local/bin/"; \
-		echo ""; \
-		echo "  B) Use pip package:"; \
-		echo "     pip3 install --break-system-packages pyngrok"; \
-		echo ""; \
-		echo "For now, will use simple script (start-ngrok-simple.sh)"; \
-	fi
+docker-down:
+	docker compose -f docker-compose.production.yml down
+	@echo "Down!"
 
-ngrok-tunnel-local:
-	@if python3 -c "import ngrok" 2>/dev/null; then \
-		echo "Using pyngrok Python module..."; \
-		python3 start-ngrok-tunnels.py; \
-	elif command -v ngrok &> /dev/null; then \
-		echo "Using ngrok binary..."; \
-		NGROK_TOKEN="3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf" && \
-		for port in 8016 5189 3016; do \
-			ngrok http $$port --log stdout --authtoken $$NGROK_TOKEN & \
-			sleep 0.5; \
-		done; \
-	else \
-		echo "Falling back to simple script..."; \
-		bash start-ngrok-simple.sh; \
-	fi
+# Alternative: Use Cloudflare Tunnel instead of Ngrok
+cloudflared-install:
+	@echo "Installing Cloudflared..."
+	cd /tmp && curl -L --output cloudflare.tar.gz https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && \
+	sudo dpkg -i cloudflared-linux-amd64.deb && \
+	rm cloudflared-linux-amd64.deb && \
+	echo "✅ Cloudflared installed!"
 
-ngrok-tunnel-prod:
-	@if python3 -c "import ngrok" 2>/dev/null; then \
-		echo "Using pyngrok Python module..."; \
-		python3 start-ngrok-tunnels.py; \
-	elif command -v ngrok &> /dev/null; then \
-		echo "Using ngrok binary..."; \
-		NGROK_TOKEN="3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf" && \
-		for port in 8016 5189 $(PROD_FRONTEND_PORT); do \
-			ngrok http $$port --log stdout --authtoken $$NGROK_TOKEN & \
-			sleep 0.5; \
-		done; \
-	else \
-		echo "Falling back to simple script..."; \
-		bash start-ngrok-simple.sh; \
-	fi
-
-ngrok-local: ngrok-install
-	@echo ""
-	@echo "Starting ngrok tunnels for LOCAL/DEV mode..."
-	@echo "Tunneling ports: $(BACKEND_PORT), 5189, 3016"
-	@echo ""
-	@$(MAKE) --no-print-directory ngrok-tunnel-local
-
-ngrok-prod: ngrok-install
-	@echo ""
-	@echo "Starting ngrok tunnels for PRODUCTION mode..."
-	@echo "Tunneling ports: $(BACKEND_PORT), 5189, $(PROD_FRONTEND_PORT)"
-	@echo ""
-	@$(MAKE) --no-print-directory ngrok-tunnel-prod
-
-ngrok-all: ngrok-install
-	@echo ""
-	@echo "Starting ALL ngrok tunnels (development + production)..."
-	@echo "Tunneling ports: $(BACKEND_PORT), 5189, 3016"
-	@echo ""
-	@$(MAKE) --no-print-directory ngrok-tunnel-local
-
-ngrok-stop:
-	@echo ""
-	@echo "Stopping all ngrok tunnels..."
-	@pkill -f ngrok 2>/dev/null || true
-	@pkill -f start-ngrok-tunnels.py 2>/dev/null || true
-	@pkill -f "ngrok http" 2>/dev/null || true
-	@echo "✅ All ngrok tunnels stopped"
-
-seed:
-	@echo ""
-	@echo "Seeding database with initial data..."
-	@cd backend && .venv/bin/python -c "from app.seed import seed_if_empty; seed_if_empty()"
-	@echo ""
-	@echo "✅ Database seeded successfully!"
-	@echo "Default users created:"
-	@echo "  Admin: admin@mauekspor.example / admin123"
-	@echo "  Exporter: rizal@kopigayo.example / rizal123"
-	@echo "  Buyer: aya@hikari.example / buyer123"
-
-reseed:
-	@echo ""
-	@echo "⚠️  Warning: This will delete existing data and re-seed!"
-	@read -p "Are you sure? Type 'YES' to continue: " confirm && \
-	if [ "$$confirm" = "YES" ]; then \
-		echo "Deleting existing data..."; \
-		rm -f mauekspor.db backend/mauekspor.db; \
-		echo "Re-seeding database..."; \
-		cd backend && .venv/bin/python -c "from app.seed import seed_if_empty; seed_if_empty()"; \
-		echo "✅ Database re-seeded successfully!"; \
-	else \
-		echo "❌ Operation cancelled"; \
-	fi
-
-db-clean:
-	@echo ""
-	@echo "Removing database file..."
-	@rm -f mauekspor.db backend/mauekspor.db
-	@echo "✅ Database removed (will be recreated on next run)"
-
-test:
-	@echo ""
-	@echo "Running tests..."
-	@cd backend && .venv/bin/pytest -v || echo "Tests completed"
-	@echo ""
-	@echo "✅ Tests executed"
-
-status:
-	@echo ""
-	@echo "=========================================="
-	@echo "📊 Service Status"
-	@echo "=========================================="
-	@echo ""
-	@echo "🔧 Checking processes..."
-	@ps aux | grep -E "(uvicorn|pnpm|node|ngrok)" | grep -v grep || echo "No active services found"
-	@echo ""
-	@echo "🌐 Port availability:"
-	@lsof -i :$(BACKEND_PORT) 2>/dev/null || echo "  Backend ($(BACKEND_PORT)): not listening"
-	@lsof -i :5189 2>/dev/null || echo "  Frontend Dev (5189): not listening"
-	@lsof -i :$(PROD_FRONTEND_PORT) 2>/dev/null || echo "  Frontend Prod ($(PROD_FRONTEND_PORT)): not listening"
-	@echo ""
-	@echo "🐳 Production Docker containers:"
-	@docker compose -f docker-compose.prod.yml --profile production ps 2>/dev/null || echo "No production containers running"
-	@echo ""
-	@echo "🐳 Local Docker containers (if any):"
-	@docker compose -f docker-compose.local.yml --profile local ps 2>/dev/null || echo "No local containers running"
-	@echo ""
-	@echo "=========================================="
-
-logs:
-	@echo ""
-	@echo "Viewing Docker logs (production)..."
-	@docker compose -f docker-compose.prod.yml --profile production logs -f
-
-logs-backend:
-	@echo ""
-	@echo "Viewing backend logs..."
-	@docker compose -f docker-compose.prod.yml --profile production logs -f backend
-
-logs-frontend:
-	@echo ""
-	@echo "Viewing frontend logs..."
-	@docker compose -f docker-compose.prod.yml --profile production logs -f frontend
-
-logs-db:
-	@echo ""
-	@echo "Viewing database logs..."
-	@docker compose -f docker-compose.prod.yml --profile production logs -f db
-
-clean:
-	@echo ""
-	@echo "Cleaning build artifacts..."
-	@rm -rf frontend/build
-	@rm -rf frontend/.svelte-kit/output
-	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
-	@echo "✅ Cleaned build artifacts"
-
-distclean: clean
-	@echo ""
-	@echo "Performing full cleanup..."
-	@rm -rf frontend/node_modules
-	@rm -rf backend/.venv
-	@rm -rf frontend/.pnpm-store
-	@rm -f mauekspor.db backend/mauekspor.db
-	@echo "✅ Full cleanup complete (dependencies and data removed)"
-
-install:
-	@echo ""
-	@echo "Installing all dependencies..."
-	@echo "Setting up backend..."
-	@cd backend && [ ! -d ".venv" ] && python3 -m venv .venv || true
-	@cd backend && .venv/bin/pip install -r requirements.txt
-	@echo "Setting up frontend..."
-	@cd frontend && pnpm install
-	@echo "✅ All dependencies installed!"
-
-setup: install seed
-	@echo ""
-	@echo "=========================================="
-	@echo "🎉 Setup Complete!"
-	@echo "=========================================="
-	@echo ""
-	@echo "You can now run:"
-	@echo "  make local     - Development mode"
-	@echo "  make prod      - Production mode (Docker)"
-	@echo "  make ngrok-local  - With ngrok tunnels (local)"
-	@echo ""
-	@echo "Access URLs:"
-	@echo "  Backend: http://localhost:$(BACKEND_PORT)"
-	@echo "  Frontend: http://localhost:5188"
-	@echo ""
-	@echo "Login credentials:"
-	@echo "  Admin: admin@mauekspor.example / admin123"
-	@echo "  Exporter: rizal@kopigayo.example / rizal123"
-	@echo "  Buyer: aya@hikari.example / buyer123"
-	@echo ""
+cloudflared-tunnel-start:
+	@echo "Starting Cloudflare Tunnel..."
+	@echo "You'll need to configure tunnel first with: sudo cloudflared tunnel create my-tunnel"
+	cloudflared tunnel run my-tunnel

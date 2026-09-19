@@ -1,0 +1,19 @@
+# MauEkspor - Ngrok Production Tunnel
+# This exposes NGINX (port 8080) to the PUBLIC INTERNET via ngrok
+
+services:
+  # ── NGROK TUNNEL CONTAINER ───────────────────────────────────
+  # Exposes nginx reverse proxy (port 8080) to public internet
+  
+  ngrok-prod:
+    image: mauekspor-ngrok-tunnel:latest
+    container_name: mauekspor-ngrok-prod
+    restart: unless-stopped
+    environment:
+      - AUTHToken=3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
+      - PORT=8080
+      - SERVICE_NAME=nginx-prod
+    ports:
+      - "4040:4040"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

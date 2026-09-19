@@ -1,0 +1,71 @@
+# MauEkspor - Ngrok Tunnel via Docker (No local installation needed!)
+# This uses a custom ngrok container built from scratch
+
+version: '3.8'
+
+services:
+  # ── NGROK TUNNEL CONTAINER ───────────────────────────────────
+  # Runs ngrok in a container to expose services publicly
+  # NO ngrok binary needed on host machine!
+  
+  ngrok-backend:
+    image: mauekspor-ngrok-tunnel:latest
+    build:
+      context: ./docker/ngrok
+      dockerfile: Dockerfile.ngrok-tunnel
+    container_name: mauekspor-ngrok-backend
+    profiles: ["ngrok", "tunnel"]
+    restart: unless-stopped
+    environment:
+      - AUTHTOKEN=3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
+      - PORT=8016
+      - SERVICE_NAME=backend
+    networks:
+      - mauekspor-network
+    depends_on:
+      backend:
+        condition: service_started
+
+  ngrok-frontend-dev:
+    image: mauekspor-ngrok-tunnel:latest
+    build:
+      context: ./docker/ngrok
+      dockerfile: Dockerfile.ngrok-tunnel
+    container_name: mauekspor-ngrok-frontend-dev
+    profiles: ["ngrok", "tunnel"]
+    restart: unless-stopped
+    environment:
+      - AUTHTOKEN=3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
+      - PORT=5188
+      - SERVICE_NAME=frontend-dev
+    networks:
+      - mauekspor-network
+    depends_on:
+      frontend-dev:
+        condition: service_started
+
+  ngrok-frontend-prod:
+    image: mauekspor-ngrok-tunnel:latest
+    build:
+      context: ./docker/ngrok
+      dockerfile: Dockerfile.ngrok-tunnel
+    container_name: mauekspor-ngrok-frontend-prod
+    profiles: ["ngrok", "tunnel"]
+    restart: unless-stopped
+    environment:
+      - AUTHTOKEN=3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
+      - PORT=3015
+      - SERVICE_NAME=frontend-prod
+    networks:
+      - mauekspor-network
+    depends_on:
+      frontend-prod:
+        condition: service_started
+
+volumes:
+  # No persistent storage needed
+
+networks:
+  mauekspor-network:
+    driver: bridge
+    name: mauekspor-network

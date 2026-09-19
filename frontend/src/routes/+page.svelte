@@ -55,12 +55,12 @@
 	];
 
 	const features = [
-		{ icon: PackageSearchIcon, title: 'Product readiness', text: 'Structured specs, packaging, certificates, and HS candidates that every export step reuses.' },
-		{ icon: ChartLineIcon, title: 'Market intelligence', text: 'HS classification, duties, restrictions, and regulation recommendations per destination.' },
-		{ icon: ShieldCheckIcon, title: 'Compliance evidence', text: 'Requirement-to-evidence tracking with confidence scores and human review gates.' },
-		{ icon: ReceiptTextIcon, title: 'Commercial execution', text: 'RFQ, quotation, costing, orders, and payments in one consistent pipeline.' },
-		{ icon: TruckIcon, title: 'Logistics visibility', text: 'Forwarder rates, lanes, booking milestones, and shipment exceptions at a glance.' },
-		{ icon: FileTextIcon, title: 'Document control', text: 'Validated commercial invoices, packing lists, and certificates with cross-field checks.' }
+		{ icon: SproutIcon, title: 'Smart Agriculture', text: 'AI-powered tools untuk monitoring kualitas, produktivitas, dan efisiensi produksi komoditas desa.' },
+		{ icon: GlobeIcon, title: 'Global Market Access', text: 'Akses ke pasar global dengan analisis HS, kepatuhan otomatis, dan rekomendasi regulasi per negara tujuan.' },
+		{ icon: ChartLineIcon, title: 'Market Intelligence', text: 'Data-driven insights untuk memahami tren pasar global, harga kompetitif, dan peluang ekspor baru.' },
+		{ icon: ReceiptTextIcon, title: 'Supply Chain Management', text: 'Manajemen rantai pasok terintegrasi dari petani hingga pembeli global dengan tracking real-time.' },
+		{ icon: ShieldCheckIcon, title: 'Compliance & Quality', text: 'Standar ekspor internasional, sertifikasi otomatis, dan dokumentasi lengkap untuk akses pasar tanpa hambatan.' },
+		{ icon: BoxesIcon, title: 'Digital Export Workspace', text: 'Platform semua-in-satu untuk mengelola katalog produk, costing, order, dan pengiriman dalam satu tempat.' }
 	];
 
 	const steps = [
@@ -70,26 +70,26 @@
 	];
 
 	const roles = [
-		{ icon: SproutIcon, title: 'Exporter / UMKM', text: 'Siapkan komoditas, analisis pasar & kepatuhan, bangun katalog, dan kelola pipeline penawaran hingga pengiriman.' },
-		{ icon: PackageSearchIcon, title: 'Buyer', text: 'Kirim kebutuhan (RFQ), lihat katalog UMKM yang cocok, dan hubungi langsung via WhatsApp.' },
-		{ icon: ShipIcon, title: 'Forwarder', text: 'Jaga profil, dapatkan review, dan muncul di rekomendasi rute untuk mendapatkan kuotasi baru.' },
-		{ icon: ShieldCheckIcon, title: 'Customs Broker', text: 'Pantau kepatuhan, bukti dokumen, dan status kepabeanan dalam satu workspace.' },
-		{ icon: ReceiptTextIcon, title: 'Finance', text: 'Lacak pembayaran, milestone deposit, dan tagihan di sepanjang siklus order.' }
+		{ icon: SproutIcon, title: 'Petani & UMKM Desa', text: 'Akses pasar global, standardisasi ekspor, dan peningkatan kualitas produk dengan teknologi digital.' },
+		{ icon: BoxesIcon, title: 'Kooperatif Desa', text: 'Manajemen komoditas terpusat, branding bersama, dan akses ke buyer internasional tanpa perantara.' },
+		{ icon: GlobeIcon, title: 'Dinas Pertanian', text: 'Monitoring produktivitas desa, sertifikasi massal, dan linkage dengan rantai pasok global.' },
+		{ icon: ChartLineIcon, title: 'Investor Agrotech', text: 'Platform scalable untuk investasi di smart agriculture, supply chain tech, dan digital market access.' },
+		{ icon: PackageSearchIcon, title: 'Buyer Global', text: 'Akses langsung ke komoditas berkualitas dari desa Indonesia dengan tracing lengkap dan sustainability tracking.' }
 	];
 
 	const testimonials = [
-		{ quote: 'We went from scattered spreadsheets to a single trade workspace for coffee export to Japan.', name: 'Rizal Fahmi', role: 'PT Kopi Gayo Nusantara' },
-		{ quote: 'Compliance evidence tracking finally makes sense for our EU furniture program.', name: 'Sinta Lestari', role: 'Medan Crispy Foods' },
-		{ quote: 'Forwarder lanes and quote speed comparison saved us days on booking decisions.', name: 'Ayu Pratama', role: 'Operations Lead' }
+		{ quote: 'MauEkspor membantu desa kami mengekspor kopi Gayo langsung ke Jepang dengan standar ekspor yang benar.', name: 'Rizal Fahmi', role: 'Kooperatif Petani Kopi Gayo' },
+		{ quote: 'Dengan smart agriculture tools, produktivitas kerajinan tangan desa meningkat 40% dan kami bisa akses buyer Eropa.', name: 'Sinta Lestari', role: 'Pengrajin Jepara' },
+		{ quote: 'Platform digital ini mengubah cara kerja petani kami - dari isolation pasar lokal ke global supply chain dalam 6 bulan.', name: 'Dr. Bambang Santoso', role: 'Dinas Pertanian Kabupaten' }
 	];
 </script>
 
 <svelte:head>
-	<title>MauEkspor | {t('Workspace Ekspor-Impor')}</title>
-	<meta
-		name="description"
-		content="One workspace from product readiness to shipment delivery. Indonesian exporters plan, analyze, quote, document, and ship with confidence."
-	/>
+	<title>MauEkspor - SMART Village Technology | Meningkatkan Komoditas Desa Ke Rantai Pasok Global</title>
+	<meta name="description" content="Smart Village Technology: Solusi digital untuk meningkatkan pelayanan, ekonomi, pendidikan, pertanian, dan kualitas hidup masyarakat desa. MauEkspor menghubungkan komoditas desa ke rantai pasok global." />
+	<meta name="keywords" content="smart village, technology desa, mauekspor, ekspor komoditas desa, UMKM pedesaan, rantai pasok global, ekonomi desa, pertanian modern" />
+	<meta property="og:title" content="MauEkspor - SMART Village Technology" />
+	<meta property="og:description" content="Solusi digital untuk meningkatkan pelayanan, ekonomi, pendidikan, pertanian, dan kualitas hidup masyarakat desa." />
 </svelte:head>
 
 <AosInit />
@@ -191,26 +191,25 @@
 
 			<div data-aos="fade-right">
 				<Badge variant="secondary" class="bg-[#0b3d91]/10 text-[#0b3d91] dark:bg-white/10 dark:text-white">
-					<AnchorIcon class="size-3.5" />
-					{t('Dibangun untuk eksportir Indonesia')}
+					<SproutIcon class="size-3.5" />
+					{t('SMART Village Technology')}
 				</Badge>
 				<h1 class="mt-4 font-display text-5xl font-black leading-[0.95] tracking-tight text-[#0b1d3a] sm:text-6xl md:text-7xl dark:text-white">
-					{t('Dari kesiapan produk hingga')} <span class="text-[#1e63d6] dark:text-[#5ea1ff]">{t('kapal berlayar')}</span>.
+					<span class="text-[#1e63d6] dark:text-[#5ea1ff]">MauEkspor</span>: {t('Meningkatkan Komoditas Desa Ke Rantai Pasok Global')}
 				</h1>
 				<p class="mt-5 max-w-2xl text-lg leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-					{t('MauEkspor menyatukan data produk, klasifikasi HS, bukti kepatuhan, penawaran, dokumen, dan milestone kargo — agar tim ekspor-impor Anda berlayar dengan percaya diri.')}
-				</p>
+					{t('Solusi digital untuk meningkatkan pelayanan, ekonomi, pendidikan, pertanian, dan kualitas hidup masyarakat desa. MauEkspor menghubungkan UMKM desa dengan pasar global melalui teknologi ekspor-impor yang terintegrasi.')}</p>
 				<div class="mt-7 flex flex-wrap gap-3">
 					<Button size="lg" href="/register" class="h-11 bg-[#0b3d91] px-6 text-base text-white hover:bg-[#0b3d91]/85">
 						<PlaneTakeoffIcon class="size-4" />
-						Mulai Ekspor
+						Gabung Sekarang
 					</Button>
-					<Button variant="outline" size="lg" href="/dashboard" class="h-11 border-[#0b3d91]/20 px-6 text-base">{t('Jelajahi Workspace')}</Button>
+					<Button variant="outline" size="lg" href="/dashboard" class="h-11 border-[#0b3d91]/20 px-6 text-base">{t('Pelajari Lebih Lanjut')}</Button>
 				</div>
 				<div class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-bold text-[#0b1d3a]/60 dark:text-white/60">
-					<span>{t('Autentikasi siap cookie')}</span>
-					<span>{t('Akses berbasis peran')}</span>
-					<span>{t('Tindakan tertelusur audit')}</span>
+					<span>{t('Smart Agriculture')}${t(': AI & IoT')}</span>
+					<span>{t('Digital Market Access')}${t(': Global Supply Chain')}</span>
+					<span>{t('Community Empowerment')}${t(': Economic Growth')}</span>
 				</div>
 			</div>
 
@@ -261,65 +260,59 @@
 		<section class="grid grid-cols-2 gap-3 sm:grid-cols-4" data-aos="fade-up">
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
 				<SproutIcon class="size-6 text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Produsen UMKM')}</span>
+				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Komoditas Desa')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
 				<BoxesIcon class="size-6 text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Barang Ekspor')}</span>
-			</div>
-			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<TruckIcon class="size-6 text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Logistik Darat')}</span>
+				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Smart Agriculture')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
 				<GlobeIcon class="size-6 text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Pasar Global')}</span>
+				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Global Market Access')}</span>
+			</div>
+			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
+				<ChartLineIcon class="size-6 text-[#1e63d6]" />
+				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Economic Growth')}</span>
 			</div>
 </section>
 
 	<!-- Pain Points & Solutions -->
 	<section class="grid gap-6 rounded-3xl border border-[#0b3d91]/10 bg-gradient-to-br from-white to-[#f0f5ff] p-8 dark:border-white/10 dark:from-[#0a1730] dark:to-[#0c1f3d]" data-aos="fade-up">
 		<div class="max-w-2xl">
-			<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Masalah & Solusi')}</Badge>
-			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Ekspor tidak harus serumit itu.')}</h2>
+			<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('SMART Village Technology')}</Badge>
+			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Transformasi Digital untuk Desa Indonesia')}</h2>
 		</div>
 		<div class="grid gap-4 md:grid-cols-2">
 			<div class="rounded-2xl border border-red-200 bg-red-50/60 p-6 dark:border-red-900/30 dark:bg-red-950/20" data-aos="fade-right">
 				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-red-600 dark:text-red-400">
-					<span class="text-2xl">✗</span> {t('Masalah')}
+					<span class="text-2xl">✗</span> {t('Tantangan Desa')}
 				</h3>
 				<ul class="mt-4 grid gap-3">
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
-						{t('Data produk tercecer di spreadsheet, chat, dan email — tidak ada satu sumber kebenaran.')}
-					</li>
+						{t('Akses terbatas ke pasar global dan rantai pasok internasional.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
-						{t('Analisis pasar dan kepatuhan memakan waktu berminggu-minggu karena riset manual per negara.')}
-					</li>
+						{t('Komoditas berkualitas belum memiliki standar ekspor yang jelas.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
-						{t('Penawaran harga tidak konsisten — kalkulasi EXW/FOB/CIF sering salah dan dokumen tidak terintegrasi.')}
-					</li>
+						{t('Minim teknologi digital untuk monitoring kualitas dan efisiensi produksi.')}</li>
 				</ul>
 			</div>
 			<div class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 dark:border-emerald-900/30 dark:bg-emerald-950/20" data-aos="fade-left">
 				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-					<span class="text-2xl">✓</span> {t('Solusi MauEkspor')}
+					<span class="text-2xl">✓</span> {t('Solusi Smart Village')}
 				</h3>
 				<ul class="mt-4 grid gap-3">
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
-						{t('Satu workspace terstruktur: produk, katalog, analisis, dan dokumen dalam satu tempat sinkron.')}
-					</li>
+						{t('Platform digital terintegrasi untuk menghubungkan komoditas desa dengan rantai pasok global.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
-						{t('Analisis kepatuhan AI dengan snapshot produk, perbandingan negara, dan rekomendasi 10-bagian per tujuan.')}
-					</li>
+						{t('Smart agriculture tools dengan AI untuk peningkatan kualitas dan produktivitas.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
-						{t('Costing EXW/FOB/CIF otomatis, PDF siap kirim, dan kalkulasi kapasitas kontainer dari dimensi produk nyata.')}
-					</li>
+						{t('Market intelligence dan compliance check otomatis untuk akses pasar global tanpa hambatan.')}</li>
 				</ul>
 			</div>
 		</div>
@@ -468,27 +461,31 @@
 		<div class="grid gap-6 md:grid-cols-2">
 			<div>
 				<Badge variant="outline" class="border-white/30 text-white">{t('Visi')}</Badge>
-				<h3 class="mt-4 font-display text-3xl font-black tracking-tight md:text-4xl">{t('Menyederhanakan ekspor untuk setiap UMKM Indonesia.')}</h3>
+				<h3 class="mt-4 font-display text-3xl font-black tracking-tight md:text-4xl">{t('SMART Village Technology untuk Kesejahteraan Masyarakat Desa')}</h3>
 				<p class="mt-4 leading-relaxed text-white/75">
-					{t('Kami percaya bahwa potensi ekspor UMKM Indonesia terhambat oleh kompleksitas administrasi, bukan oleh kualitas produk. MauEkspor hadir sebagai sistem operasi dagang yang menyatukan data, analisis, dan eksekusi dalam satu workspace yang terstruktur.')}
-				</p>
+					{t('Kami percaya bahwa potensi desa Indonesia dapat berkembang pesat dengan teknologi digital yang tepat. MauEkspor hadir sebagai jembatan antara komoditas lokal berkualitas dengan rantai pasok global, menciptakan pertumbuhan ekonomi berkelanjutan dan pemberdayaan masyarakat desa.')}</p>
 			</div>
 			<div class="grid content-start gap-4">
-				<Badge variant="outline" class="border-white/30 text-white">{t('Misi')}</Badge>
+				<Badge variant="outline" class="border-white/30 text-white">{t('Misi SMART Village')}</Badge>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<span class="text-2xl">🎯</span>
-					<h4 class="mt-2 text-lg font-bold">{t('Kesiapan Produk')}</h4>
-					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Data produk terstruktur, kode HS otomatis, dan enrichment berbasis AI sebagai fondasi setiap alur ekspor.')}</p>
-				</div>
-				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<span class="text-2xl">🔍</span>
-					<h4 class="mt-2 text-lg font-bold">{t('Analisis Cerdas')}</h4>
-					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Market intelligence, compliance check, dan perbandingan negara dalam hitungan detik — bukan minggu.')}</p>
+					<span class="text-2xl">🌱</span>
+					<h4 class="mt-2 text-lg font-bold">{t('Smart Agriculture')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Implementasi IoT dan AI untuk monitoring kualitas, produktivitas, dan efisiensi produksi komoditas desa.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
 					<span class="text-2xl">🚀</span>
-					<h4 class="mt-2 text-lg font-bold">{t('Eksekusi Terpadu')}</h4>
-					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Dari costing dan katalog digital hingga dokumen dan milestone pengiriman — semua terintegrasi.')}</p>
+					<h4 class="mt-2 text-lg font-bold">{t('Digital Market Access')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Menghubungkan UMKM desa dengan pasar global melalui platform ekspor-impor yang terintegrasi dan mudah digunakan.')}</p>
+				</div>
+				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
+					<span class="text-2xl">💼</span>
+					<h4 class="mt-2 text-lg font-bold">{t('Economic Empowerment')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Pemberdayaan ekonomi masyarakat desa melalui peningkatan nilai jual, akses pasar baru, dan pengurangan ketergantungan pada perantara.')}</p>
+				</div>
+				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
+					<span class="text-2xl">👥</span>
+					<h4 class="mt-2 text-lg font-bold">{t('Community Development')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Peningkatan kualitas hidup masyarakat desa melalui pendidikan digital, transfer teknologi, dan pembangunan ekosistem kolaboratif.')}</p>
 				</div>
 			</div>
 		</div>
@@ -499,11 +496,11 @@
 			data-aos="zoom-in"
 		>
 			<div>
-				<h2 class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{t('Siap ekspor dengan percaya diri?')}</h2>
-				<p class="mt-3 leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">{t('Siapkan workspace Anda dalam beberapa menit dan mulai proyek dagang pertama Anda.')}</p>
+				<h2 class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{t('Siap Transformasi Desa ke Ekonomi Global?')}</h2>
+				<p class="mt-3 leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">{t('Bergabunglah dengan komunitas petani, UMKM, dan stakeholder desa yang telah memanfaatkan teknologi untuk mencapai pasar global.')}</p>
 			</div>
 			<div class="flex flex-wrap gap-3">
-				<Button size="lg" href="/register" class="h-11 bg-[#0b3d91] px-6 text-base text-white hover:bg-[#0b3d91]/85">{t('Buat Workspace Anda')}</Button>
+				<Button size="lg" href="/register" class="h-11 bg-[#0b3d91] px-6 text-base text-white hover:bg-[#0b3d91]/85">{t('Mulai Era Baru Desa')}</Button>
 				<Button variant="outline" size="lg" href="/login" class="h-11 border-[#0b3d91]/20 px-6 text-base">{t('Masuk')}</Button>
 			</div>
 		</section>
@@ -511,9 +508,9 @@
 		<footer class="flex flex-wrap items-center justify-between gap-4 px-2 py-6 text-sm text-[#0b1d3a]/60 dark:text-white/60">
 			<a href="/" class="inline-flex items-center gap-1.5">
 				<Logo variant="logo" class="!h-8" />
-				<span class="font-display text-xl font-black tracking-tight text-[#0b1d3a] dark:text-white">auEkspor</span>
+				<span class="font-display text-xl font-black tracking-tight text-[#0b1d3a] dark:text-white">MauEkspor - SMART Village</span>
 			</a>
-			<p class="max-w-xl">{t('Satu workspace dari kesiapan produk hingga pengiriman kargo — dibangun untuk eksportir Indonesia.')}</p>
+			<p class="max-w-xl">{t('SMART Village Technology: Menghubungkan komoditas desa dengan rantai pasok global untuk kesejahteraan masyarakat Indonesia.')}</p>
 			<nav class="flex gap-4 text-sm font-bold text-[#0b1d3a]/60 dark:text-white/60" aria-label="Footer">
 				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/about">{t('Tentang')}</a>
 				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/login">{t('Masuk')}</a>

@@ -1,0 +1,16 @@
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y curl dumb-init unzip && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -LO https://bin.equinox.io/c/bNyj1mQVAI4d/ngrok-stable-linux-amd64.tgz && \
+    tar xzf ngrok-stable-linux-amd64.tgz && \
+    mv ngrok /usr/local/bin/ && \
+    chmod +x /usr/local/bin/ngrok && \
+    rm ngrok-stable-linux-amd64.tgz
+
+WORKDIR /app
+
+HEALTHCHECK --interval=30s --timeout=10s CMD pgrep ngrok || exit 1
+
+CMD ["dumb-init", "ngrok", "http", "8080", "--log", "stdout", "--authtoken", "3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf"]
