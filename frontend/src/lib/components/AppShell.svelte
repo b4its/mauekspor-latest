@@ -67,7 +67,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	let activityCount = $derived(activities.length);
 	let unreadCount = $state(0);
 	let liveResults = $state<{ label: string; href: string; group: string; sub?: string }[]>([]);
-	const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
+	const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 	$effect(() => {
 		async function refreshNotifications() {

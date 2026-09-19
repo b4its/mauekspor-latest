@@ -109,7 +109,7 @@ export function compareExportAnalyses(payload: ComparePayload) {
 }
 
 export async function downloadComparePdf(payload: ComparePayload) {
-	const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8015/api/v1';
+	const base = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 	const response = await fetch(`${base}/export-analysis/compare/pdf/`, {
 		method: 'POST',
 		credentials: 'include',
@@ -137,7 +137,7 @@ export function getRegulationRecommendations(id: string, language = 'id') {
 }
 
 export function analysisPdfUrl(id: string) {
-	const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8015/api/v1';
+	const base = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 	return `${base}/export-analysis/${id}/pdf/`;
 }
 

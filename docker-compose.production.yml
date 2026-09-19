@@ -58,14 +58,17 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_BASE_URL: http://nginx/backend/api/v1
+        VITE_API_BASE_URL: /api/v1
     container_name: mauekspor-frontend-prod
     depends_on:
       - backend
     ports:
       - "3015:3000"
     environment:
-      ORIGIN: http://localhost:3015
+      # Derive origin dari header proxy (X-Forwarded-*) agar valid juga
+      # saat diakses via ngrok / domain publik
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
     restart: unless-stopped
     networks:
       - mauekspor-backend

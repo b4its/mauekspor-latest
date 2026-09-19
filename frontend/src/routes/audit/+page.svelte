@@ -37,7 +37,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
-	const csvUrl = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'}/audit/export.csv`;
+	const csvUrl = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/audit/export.csv`;
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(20);
 	let pagedItems = $derived(paginate(filteredEvents ?? [], paginationPage, paginationPageSize));

@@ -19,6 +19,14 @@ export default defineConfig({
 		host: '0.0.0.0',
 		port: 5188,
 		strictPort: true,
+		// Proxy API ke backend agar frontend selalu same-origin (/api/v1).
+		// Aman diakses dari device/jaringan lain tanpa hardcode localhost.
+		proxy: {
+			'/api': {
+				target: process.env.BACKEND_ORIGIN ?? 'http://localhost:8015',
+				changeOrigin: true
+			}
+		},
 		// Hot reload: izinkan HMR dari luar container
 		watch: {
 			usePolling: true,

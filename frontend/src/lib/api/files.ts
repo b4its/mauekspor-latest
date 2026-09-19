@@ -1,7 +1,7 @@
 import { apiFetch, ApiError, type ApiErrorBody } from '$lib/api/client';
 import type { FileAsset } from '$lib/data/trade';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8015/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 export function listFiles() {
 	return apiFetch<FileAsset[]>('/files/');
