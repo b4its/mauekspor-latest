@@ -17,7 +17,7 @@ export function listAdminRecords(table: string, params: { search?: string; limit
 	if (params.limit) qs.set('limit', String(params.limit));
 	if (params.offset) qs.set('offset', String(params.offset));
 	const q = qs.toString();
-	return apiFetch<AdminRecord[]>(`/admin/data/${table}/${q ? `?${q}` : ''}`);
+	return apiFetch<AdminRecord[]>(q ? `/admin/data/${table}/?${q}` : `/admin/data/${table}/`);
 }
 
 export function getAdminRecord(table: string, id: string) {

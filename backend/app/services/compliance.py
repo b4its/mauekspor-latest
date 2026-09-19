@@ -424,25 +424,6 @@ def analyze_product_compliance(product: dict, country_code: str, jenis_komoditas
     }
 
 
-# ---------------------------------------------------------------------------
-# Analisis penuh dari produk (untuk create / reanalyze)
-# ---------------------------------------------------------------------------
-def analyze_product_compliance(product: dict, country_code: str) -> dict[str, Any]:
-    """Jalankan semua checker pada data produk (live atau snapshot) dan hitung skor."""
-    issues = []
-    issues += check_ingredient_compliance(product, country_code)
-    issues += check_specification_compliance(product, country_code)
-    issues += check_packaging_compliance(product, country_code)
-    score, grade = calculate_readiness_score(issues)
-    recommendations = generate_recommendations(issues)
-    return {
-        "issues": issues,
-        "score": score,
-        "grade": grade,
-        "recommendations": recommendations,
-    }
-
-
 def analyze_product_from_snapshot(product_snapshot: dict, country_code: str) -> dict[str, Any]:
     """Jalankan compliance check dari data snapshot produk (historis).
 
