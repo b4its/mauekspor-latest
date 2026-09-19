@@ -266,19 +266,19 @@
 
 		<section class="grid grid-cols-2 gap-3 sm:grid-cols-4" data-aos="fade-up">
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<WheatIcon class="size-6 text-[#1e63d6]" />
+				<FaIcon icon="fa-solid fa-wheat-awn" class="text-2xl text-[#1e63d6]" />
 				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Komoditas Desa')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<ShieldCheckIcon class="size-6 text-[#1e63d6]" />
+				<FaIcon icon="fa-solid fa-shield-halved" class="text-2xl text-[#1e63d6]" />
 				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Kepatuhan Ekspor')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<HandshakeIcon class="size-6 text-[#1e63d6]" />
+				<FaIcon icon="fa-solid fa-handshake" class="text-2xl text-[#1e63d6]" />
 				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Koneksi Pembeli Global')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<TruckIcon class="size-6 text-[#1e63d6]" />
+				<FaIcon icon="fa-solid fa-truck" class="text-2xl text-[#1e63d6]" />
 				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Logistik & Pengiriman')}</span>
 			</div>
 </section>
