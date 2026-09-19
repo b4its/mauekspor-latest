@@ -419,7 +419,7 @@ def seed_if_empty():
         "createdAt": "2026-08-03",
     })
     db.insert("forwarder_profiles", {
-        "id": "FWP-001", "userId": "current",
+        "id": "FWP-001", "userId": "U-002",
         "companyName": "Nusantara Global Logistics", "contactInfo": {"email": "ops@ngl.example", "phone": "+62 21 555 0100"},
         "specializationRoutes": ["ID-JP", "ID-SG"], "serviceTypes": ["Ocean Freight", "Customs Brokerage"],
         "averageRating": 4.5, "totalReviews": 2,

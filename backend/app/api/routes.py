@@ -76,7 +76,6 @@ def _filtered_query(
 
 
 def _one(record) -> dict:
-    db.save(record)
     return {"data": _serialize(record), "meta": {}}
 
 
@@ -1257,9 +1256,9 @@ def list_forwarders(search: str = "", status: str = "", min_rating: float = 0, l
         items = [r for r in items if q in str(r.get("name", "")).lower() or q in str(r.get("coverage", "")).lower()]
     if status:
         items = [r for r in items if str(r.get("status", "")).lower() == status.lower()]
-    # Pastikan rating & jumlah review selalu tersedia untuk UI.
+    # Pastikan rating & jumlah review selalu tersedia untuk UI (read-only).
     for r in items:
-        recalculate_rating(r)
+        recalculate_rating(r, persist=False)
     if min_rating:
         items = [r for r in items if float(r.get("averageRating", 0) or 0) >= min_rating]
     total = len(items)
@@ -1274,7 +1273,7 @@ def get_forwarder(forwarder_id: str):
     if not record:
         raise HTTPException(404, "Forwarder not found")
     from app.services.forwarders import recalculate_rating
-    recalculate_rating(record)
+    recalculate_rating(record, persist=False)
     return _one(record)
 
 
@@ -2585,6 +2584,12 @@ def stream_notifications(request: Request):
 
         last_count = None
         while True:
+            # Cek apakah client sudah disconnect (defensif: tidak semua request punya method ini)
+            try:
+                if hasattr(request, 'is_disconnected') and await request.is_disconnected():
+                    break
+            except Exception:
+                pass
             unread = [n for n in db.find("notifications") if n.get("status") == "Unread"]
             count = len(unread)
             if count != last_count:
@@ -2979,6 +2984,7 @@ def upload_file(payload: dict):
 
 UPLOAD_DIR = os.environ.get("MAUEKSPOR_UPLOAD_DIR", os.path.join(os.getcwd(), "uploads"))
 MAX_UPLOAD_MB = 25
+_ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".doc", ".docx", ".xls", ".xlsx", ".csv", ".txt", ".zip", ".rar"}
 
 
 @router.post("/files/upload/")
@@ -2995,6 +3001,9 @@ def upload_file_binary(
     if len(content) > MAX_UPLOAD_MB * 1024 * 1024:
         raise HTTPException(413, "File terlalu besar (maks 25MB)")
     safe_name = os.path.basename(file.filename or "file.bin")
+    ext = os.path.splitext(safe_name)[1].lower()
+    if ext not in _ALLOWED_EXTENSIONS:
+        raise HTTPException(400, f"Tipe file '{ext}' tidak diizinkan. Tipe yang diperbolehkan: {', '.join(sorted(_ALLOWED_EXTENSIONS))}")
     stored_name = f"{int(time.time() * 1000)}-{safe_name}"
     storage_path = os.path.join(UPLOAD_DIR, stored_name)
     with open(storage_path, "wb") as out:

@@ -165,7 +165,7 @@ class UploadComplianceEvidencePayload(BaseModel):
 class GenerateDocumentPayload(BaseModel):
     type: str = "Commercial Invoice"
     projectId: str = ""
-    data: dict = {}
+    data: dict = Field(default_factory=dict)
 
 
 # ---------- Batch actions ----------
