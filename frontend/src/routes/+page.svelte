@@ -27,6 +27,14 @@
 	import MenuIcon from '@lucide/svelte/icons/menu';
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
+	import RocketIcon from '@lucide/svelte/icons/rocket';
+	import BriefcaseIcon from '@lucide/svelte/icons/briefcase';
+	import UsersIcon from '@lucide/svelte/icons/users';
+	import CircleXIcon from '@lucide/svelte/icons/circle-x';
+	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
+	import HandshakeIcon from '@lucide/svelte/icons/handshake';
+	import WheatIcon from '@lucide/svelte/icons/wheat';
+	import AwardIcon from '@lucide/svelte/icons/award';
 
 	let mobileNavOpen = $state(false);
 	let loggingOut = $state(false);
@@ -285,33 +293,33 @@
 		<div class="grid gap-4 md:grid-cols-2">
 			<div class="rounded-2xl border border-red-200 bg-red-50/60 p-6 dark:border-red-900/30 dark:bg-red-950/20" data-aos="fade-right">
 				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-red-600 dark:text-red-400">
-					<span class="text-2xl">✗</span> {t('Tantangan Desa')}
+					<CircleXIcon class="size-6 shrink-0" /> {t('Tantangan Desa')}
 				</h3>
 				<ul class="mt-4 grid gap-3">
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
+						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
 						{t('Akses terbatas ke pasar global dan rantai pasok internasional.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
+						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
 						{t('Komoditas berkualitas belum memiliki standar ekspor yang jelas.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-red-100 text-center text-xs leading-5 text-red-600 dark:bg-red-900/30 dark:text-red-400">✗</span>
+						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
 						{t('Minim teknologi digital untuk monitoring kualitas dan efisiensi produksi.')}</li>
 				</ul>
 			</div>
 			<div class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 dark:border-emerald-900/30 dark:bg-emerald-950/20" data-aos="fade-left">
 				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-					<span class="text-2xl">✓</span> {t('Solusi Smart Village')}
+					<CircleCheckIcon class="size-6 shrink-0" /> {t('Solusi Smart Village')}
 				</h3>
 				<ul class="mt-4 grid gap-3">
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
+						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
 						{t('Platform digital terintegrasi untuk menghubungkan komoditas desa dengan rantai pasok global.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
+						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
 						{t('Smart agriculture tools dengan AI untuk peningkatan kualitas dan produktivitas.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<span class="mt-0.5 size-5 shrink-0 rounded-full bg-emerald-100 text-center text-xs leading-5 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">✓</span>
+						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
 						{t('Market intelligence dan compliance check otomatis untuk akses pasar global tanpa hambatan.')}</li>
 				</ul>
 			</div>
@@ -468,22 +476,22 @@
 			<div class="grid content-start gap-4">
 				<Badge variant="outline" class="border-white/30 text-white">{t('Misi SMART Village')}</Badge>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<span class="text-2xl">🌱</span>
+					<SproutIcon class="size-6 text-emerald-400" />
 					<h4 class="mt-2 text-lg font-bold">{t('Smart Agriculture')}</h4>
 					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Implementasi IoT dan AI untuk monitoring kualitas, produktivitas, dan efisiensi produksi komoditas desa.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<span class="text-2xl">🚀</span>
+					<RocketIcon class="size-6 text-blue-400" />
 					<h4 class="mt-2 text-lg font-bold">{t('Digital Market Access')}</h4>
 					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Menghubungkan UMKM desa dengan pasar global melalui platform ekspor-impor yang terintegrasi dan mudah digunakan.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<span class="text-2xl">💼</span>
+					<BriefcaseIcon class="size-6 text-amber-400" />
 					<h4 class="mt-2 text-lg font-bold">{t('Economic Empowerment')}</h4>
 					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Pemberdayaan ekonomi masyarakat desa melalui peningkatan nilai jual, akses pasar baru, dan pengurangan ketergantungan pada perantara.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<span class="text-2xl">👥</span>
+					<UsersIcon class="size-6 text-purple-400" />
 					<h4 class="mt-2 text-lg font-bold">{t('Community Development')}</h4>
 					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Peningkatan kualitas hidup masyarakat desa melalui pendidikan digital, transfer teknologi, dan pembangunan ekosistem kolaboratif.')}</p>
 				</div>
