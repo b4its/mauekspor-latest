@@ -245,6 +245,7 @@ def register_admin(payload: sc.RegisterAdminPayload, response: Response):
         raise HTTPException(403, "Invalid admin code")
     if db.get_by("users", email=str(payload.email)):
         raise HTTPException(409, "Email already registered")
+    _validate_password_strength(payload.password)
     user = db.insert("users", {
         "id": db.gen_id("users", "U"),
         "email": str(payload.email),
@@ -1017,8 +1018,6 @@ def create_buyer_profile(payload: sc.CreateBuyerProfilePayload, current_user: di
 def get_my_buyer_profile(current_user: dict = Depends(get_current_user)):
     record = db.get_by("buyer_profiles", userId=current_user["id"])
     if not record:
-        record = db.get_by("buyer_profiles", userId="U-003")
-    if not record:
         raise HTTPException(404, "Buyer profile not found")
     return _profile_one(record)
 
@@ -1227,8 +1226,6 @@ def create_forwarder_profile(payload: sc.CreateForwarderProfilePayload, current_
 @router.get("/forwarders/profile/me/")
 def get_my_forwarder_profile(current_user: dict = Depends(get_current_user)):
     record = db.get_by("forwarder_profiles", userId=current_user["id"])
-    if not record:
-        record = db.get_by("forwarder_profiles", userId="FWD-003")
     if not record:
         raise HTTPException(404, "Forwarder profile not found")
     return _profile_one(record)

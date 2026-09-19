@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Path absolut ke .env di dalam direktori backend, agar konfigurasi terbaca
@@ -29,6 +30,17 @@ class Settings(BaseSettings):
     seed_admin_password: str = "admin123"
     seed_exporter_email: str = "rizal@kopigayo.example"
     seed_exporter_password: str = "rizal123"
+
+    @model_validator(mode="after")
+    def _warn_default_secret(self) -> "Settings":
+        """Peringatkan di log bila secret_key masih default (risiko token forgery)."""
+        if self.secret_key == "change-me-in-production":
+            import logging
+            logging.getLogger("mauekspor.config").warning(
+                "MAUEKSPOR_SECRET_KEY masih default! Set variabel lingkungan MAUEKSPOR_SECRET_KEY "
+                "ke nilai acak yang kuat sebelum deploy ke production."
+            )
+        return self
 
 
 settings = Settings()

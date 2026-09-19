@@ -238,6 +238,12 @@ async def login_lockout(request, call_next):
         # Identifikasi berdasarkan IP + email (jika ada)
         ip = _rate_limit_key(request)
         identifier = ip
+        if _is_locked_out(identifier):
+            return JSONResponse(
+                status_code=429,
+                content=_error_body(429, "Too many failed login attempts. Account temporarily locked."),
+                headers={"Retry-After": str(_LOCKOUT_SECONDS)},
+            )
         response = await call_next(request)
         if response.status_code == 401:
             _record_login_failure(identifier)
