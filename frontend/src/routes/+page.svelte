@@ -10,27 +10,9 @@
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
 	import { t } from '$lib/i18n.svelte';
 
-	import ShipIcon from '@lucide/svelte/icons/ship';
-	import PlaneTakeoffIcon from '@lucide/svelte/icons/plane-takeoff';
-	import ContainerIcon from '@lucide/svelte/icons/container';
-	import PackageSearchIcon from '@lucide/svelte/icons/package-search';
-	import WarehouseIcon from '@lucide/svelte/icons/warehouse';
-	import GlobeIcon from '@lucide/svelte/icons/globe';
-	import AnchorIcon from '@lucide/svelte/icons/anchor';
-	import SproutIcon from '@lucide/svelte/icons/sprout';
-	import TruckIcon from '@lucide/svelte/icons/truck';
-	import BoxesIcon from '@lucide/svelte/icons/boxes';
-	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
-	import ChartLineIcon from '@lucide/svelte/icons/chart-line';
-	import ReceiptTextIcon from '@lucide/svelte/icons/receipt-text';
-	import FileTextIcon from '@lucide/svelte/icons/file-text';
 	import MenuIcon from '@lucide/svelte/icons/menu';
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
-	import HandshakeIcon from '@lucide/svelte/icons/handshake';
-	import WheatIcon from '@lucide/svelte/icons/wheat';
-	import AwardIcon from '@lucide/svelte/icons/award';
-	import UsersIcon from '@lucide/svelte/icons/users';
 	import FaIcon from '$lib/components/FaIcon.svelte';
 
 	let mobileNavOpen = $state(false);
@@ -60,26 +42,26 @@
 	];
 
 	const features = [
-		{ icon: SproutIcon, title: 'Kesiapan Produk Ekspor', text: 'Katalog terstruktur, HS code otomatis, dan standar kualitas internasional untuk menjamin komoditas desa siap diterima pasar global.' },
-		{ icon: GlobeIcon, title: 'Analisis Pasar Tujuan', text: 'Rekomendasi negara tujuan berdasarkan data permintaan, tarif bea, dan kecocokan produk desa dengan kebutuhan buyer internasional.' },
-		{ icon: ShieldCheckIcon, title: 'Kepatuhan & Sertifikasi Ekspor', text: 'Cek kepatuhan otomatis: karantina pertanian, ISPM-15, halal, HACCP — semua persyaratan ekspor terverifikasi sebelum pengiriman.' },
-		{ icon: FileTextIcon, title: 'Dokumen Ekspor Lengkap', text: 'Packing list, invoice, bill of lading, certificate of origin, phytosanitary — semua dokumen ekspor tersedia dalam satu workspace.' },
-		{ icon: HandshakeIcon, title: 'Koneksi Pembeli Global', text: 'Matching otomatis antara komoditas desa dengan buyer internasional berdasarkan spesifikasi, volume, dan HS code.' },
-		{ icon: TruckIcon, title: 'Logistik & Pengiriman', text: 'Rekomendasi forwarder, kalkulasi biaya FCL/LCL, dan tracking pengiriman dari gudang desa hingga pelabuhan tujuan.' }
+		{ fa: 'fa-solid fa-seedling', title: 'Kesiapan Produk Ekspor', text: 'Katalog terstruktur, HS code otomatis, dan standar kualitas internasional untuk menjamin komoditas desa siap diterima pasar global.' },
+		{ fa: 'fa-solid fa-globe', title: 'Analisis Pasar Tujuan', text: 'Rekomendasi negara tujuan berdasarkan data permintaan, tarif bea, dan kecocokan produk desa dengan kebutuhan buyer internasional.' },
+		{ fa: 'fa-solid fa-shield-halved', title: 'Kepatuhan & Sertifikasi Ekspor', text: 'Cek kepatuhan otomatis: karantina pertanian, ISPM-15, halal, HACCP — semua persyaratan ekspor terverifikasi sebelum pengiriman.' },
+		{ fa: 'fa-solid fa-file-lines', title: 'Dokumen Ekspor Lengkap', text: 'Packing list, invoice, bill of lading, certificate of origin, phytosanitary — semua dokumen ekspor tersedia dalam satu workspace.' },
+		{ fa: 'fa-solid fa-handshake', title: 'Koneksi Pembeli Global', text: 'Matching otomatis antara komoditas desa dengan buyer internasional berdasarkan spesifikasi, volume, dan HS code.' },
+		{ fa: 'fa-solid fa-truck', title: 'Logistik & Pengiriman', text: 'Rekomendasi forwarder, kalkulasi biaya FCL/LCL, dan tracking pengiriman dari gudang desa hingga pelabuhan tujuan.' }
 	];
 
 	const steps = [
-		{ n: '01', icon: BoxesIcon, title: 'Standardisasi', text: 'Lengkapi profil komoditas: nama, HS code, spesifikasi, sertifikasi, dan kapasitas produksi.' },
-		{ n: '02', icon: ShieldCheckIcon, title: 'Kesiapan Ekspor', text: 'Jalankan cek kepatuhan otomatis: regulasi negara tujuan, persyaratan karantina, dan standar kemasan.' },
-		{ n: '03', icon: HandshakeIcon, title: 'Koneksi & Kirim', text: 'Terima buyer request, buat quotation, siapkan dokumen, dan booking pengiriman dengan forwarder terpercaya.' }
+		{ n: '01', fa: 'fa-solid fa-boxes-stacked', title: 'Standardisasi', text: 'Lengkapi profil komoditas: nama, HS code, spesifikasi, sertifikasi, dan kapasitas produksi.' },
+		{ n: '02', fa: 'fa-solid fa-shield-halved', title: 'Kesiapan Ekspor', text: 'Jalankan cek kepatuhan otomatis: regulasi negara tujuan, persyaratan karantina, dan standar kemasan.' },
+		{ n: '03', fa: 'fa-solid fa-handshake', title: 'Koneksi & Kirim', text: 'Terima buyer request, buat quotation, siapkan dokumen, dan booking pengiriman dengan forwarder terpercaya.' }
 	];
 
 	const roles = [
-		{ icon: WheatIcon, title: 'Petani & Kelompok Tani', text: 'Standarisasi komoditas kebun dan sawah untuk memenuhi standar ekspor internasional dan akses ke pasar premium global.' },
-		{ icon: UsersIcon, title: 'BUMDes & Koperasi', text: 'Kelola komoditas anggota secara terpusat, bangun brand bersama, dan ekspor langsung ke buyer global tanpa perantara.' },
-		{ icon: AwardIcon, title: 'Kepala Desa & Dinas', text: 'Monitor kesiapan ekspor desa, koordinasi sertifikasi massal, dan pantau nilai ekspor komoditas daerah secara real-time.' },
-		{ icon: TruckIcon, title: 'Forwarder & Logistik', text: 'Terima RFQ dari kelompok tani dan BUMDes, berikan penawaran freight kompetitif, dan kelola dokumen ekspor.' },
-		{ icon: PackageSearchIcon, title: 'Buyer Internasional', text: 'Temukan komoditas unggulan desa Indonesia yang telah memenuhi standar ekspor dengan traceability dan sertifikasi lengkap.' }
+		{ fa: 'fa-solid fa-wheat-awn', title: 'Petani & Kelompok Tani', text: 'Standarisasi komoditas kebun dan sawah untuk memenuhi standar ekspor internasional dan akses ke pasar premium global.' },
+		{ fa: 'fa-solid fa-users', title: 'BUMDes & Koperasi', text: 'Kelola komoditas anggota secara terpusat, bangun brand bersama, dan ekspor langsung ke buyer global tanpa perantara.' },
+		{ fa: 'fa-solid fa-award', title: 'Kepala Desa & Dinas', text: 'Monitor kesiapan ekspor desa, koordinasi sertifikasi massal, dan pantau nilai ekspor komoditas daerah secara real-time.' },
+		{ fa: 'fa-solid fa-truck', title: 'Forwarder & Logistik', text: 'Terima RFQ dari kelompok tani dan BUMDes, berikan penawaran freight kompetitif, dan kelola dokumen ekspor.' },
+		{ fa: 'fa-solid fa-magnifying-glass', title: 'Buyer Internasional', text: 'Temukan komoditas unggulan desa Indonesia yang telah memenuhi standar ekspor dengan traceability dan sertifikasi lengkap.' }
 	];
 
 	const testimonials = [
@@ -192,7 +174,7 @@
 		</header>
 
 		<section class="relative grid items-center gap-8 overflow-hidden rounded-3xl border border-[#0b3d91]/10 bg-gradient-to-br from-white via-[#eaf2ff] to-[#dbe9ff] p-6 shadow-sm md:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] md:p-12 dark:border-white/10 dark:from-[#0a1730] dark:via-[#0b1f42] dark:to-[#0c2450]">
-			<GlobeIcon class="pointer-events-none absolute -right-16 -top-16 size-72 text-[#0b3d91]/5 dark:text-white/5" />
+			<FaIcon icon="fa-solid fa-globe" class="pointer-events-none absolute -right-16 -top-16 text-[8rem] text-[#0b3d91]/5 dark:text-white/5" />
 
 			<div data-aos="fade-right">
 				<Badge variant="secondary" class="bg-[#0b3d91]/10 text-[#0b3d91] dark:bg-white/10 dark:text-white">
@@ -206,7 +188,7 @@
 					{t('Platform digital yang memandu petani, pengrajin, dan UMKM desa untuk mempersiapkan komoditas unggulan memasuki rantai pasok ekspor internasional — dari standarisasi komoditas hingga terhubung dengan pembeli global.')}</p>
 				<div class="mt-7 flex flex-wrap gap-3">
 					<Button size="lg" href="/register" class="h-11 bg-[#0b3d91] px-6 text-base text-white hover:bg-[#0b3d91]/85">
-						<PlaneTakeoffIcon class="size-4" />
+						<FaIcon icon="fa-solid fa-plane-departure" class="text-base" />
 						{t('Mulai Persiapan Ekspor')}
 					</Button>
 					<Button variant="outline" size="lg" href="/dashboard" class="h-11 border-[#0b3d91]/20 px-6 text-base">{t('Pelajari Lebih Lanjut')}</Button>
@@ -340,7 +322,7 @@
 					>
 						<CardHeader>
 							<span class="grid size-10 place-items-center rounded-xl bg-[#0b3d91]/10 text-[#0b3d91] dark:bg-white/10 dark:text-[#5ea1ff]">
-								<feature.icon class="size-5" />
+								<FaIcon icon={feature.fa} class="text-xl" />
 							</span>
 							<CardTitle class="text-xl tracking-tight">{t(feature.title)}</CardTitle>
 						</CardHeader>
@@ -368,7 +350,7 @@
 						data-aos-delay={index * 80}
 					>
 						<CardHeader>
-							<role.icon class="size-6 text-[#0b3d91] dark:text-white" />
+							<FaIcon icon={role.fa} class="text-2xl text-[#0b3d91] dark:text-white" />
 							<CardTitle class="mt-3 text-base">{t(role.title)}</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -425,7 +407,7 @@
 						<CardHeader>
 							<div class="flex items-center justify-between">
 								<span class="text-[13px] font-black uppercase tracking-[0.1em] text-white/70">{step.n}</span>
-								<step.icon class="size-6 text-white/80" />
+								<FaIcon icon={step.fa} class="text-2xl text-white/80" />
 							</div>
 							<CardTitle class="text-2xl tracking-tight text-white">{t(step.title)}</CardTitle>
 						</CardHeader>
