@@ -196,7 +196,7 @@
 
 			<div data-aos="fade-right">
 				<Badge variant="secondary" class="bg-[#0b3d91]/10 text-[#0b3d91] dark:bg-white/10 dark:text-white">
-					<SproutIcon class="size-3.5" />
+					<FaIcon icon="fa-solid fa-seedling" class="text-sm" />
 					{t('Platform Ekspor Komoditas Desa')}
 				</Badge>
 				<h1 class="mt-4 font-display text-5xl font-black leading-[0.95] tracking-tight text-[#0b1d3a] sm:text-6xl md:text-7xl dark:text-white">
@@ -242,22 +242,22 @@
 
 				<div class="mt-3 flex items-center justify-around rounded-2xl border border-[#0b3d91]/10 bg-gradient-to-r from-[#0b3d91] to-[#1e63d6] p-4 text-white shadow-lg">
 					<div class="flex flex-col items-center gap-1.5" data-aos="zoom-in" data-aos-delay="200">
-						<ShipIcon class="size-7" />
+						<FaIcon icon="fa-solid fa-ship" class="text-3xl" />
 						<span class="text-[11px] font-bold uppercase tracking-wide opacity-80">{t('Laut')}</span>
 					</div>
 					<div class="h-8 w-px bg-white/20"></div>
 					<div class="flex flex-col items-center gap-1.5" data-aos="zoom-in" data-aos-delay="300">
-						<PlaneTakeoffIcon class="size-7" />
+						<FaIcon icon="fa-solid fa-plane-departure" class="text-3xl" />
 						<span class="text-[11px] font-bold uppercase tracking-wide opacity-80">{t('Udara')}</span>
 					</div>
 					<div class="h-8 w-px bg-white/20"></div>
 					<div class="flex flex-col items-center gap-1.5" data-aos="zoom-in" data-aos-delay="400">
-						<ContainerIcon class="size-7" />
+						<FaIcon icon="fa-solid fa-boxes-stacked" class="text-3xl" />
 						<span class="text-[11px] font-bold uppercase tracking-wide opacity-80">{t('Kontainer')}</span>
 					</div>
 					<div class="h-8 w-px bg-white/20"></div>
 					<div class="flex flex-col items-center gap-1.5" data-aos="zoom-in" data-aos-delay="500">
-						<WarehouseIcon class="size-7" />
+						<FaIcon icon="fa-solid fa-warehouse" class="text-3xl" />
 						<span class="text-[11px] font-bold uppercase tracking-wide opacity-80">{t('Gudang')}</span>
 					</div>
 				</div>
