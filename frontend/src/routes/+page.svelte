@@ -269,20 +269,20 @@
 
 		<section class="grid grid-cols-2 gap-3 sm:grid-cols-4" data-aos="fade-up">
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<SproutIcon class="size-6 text-[#1e63d6]" />
+				<WheatIcon class="size-6 text-[#1e63d6]" />
 				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Komoditas Desa')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<BoxesIcon class="size-6 text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Smart Agriculture')}</span>
+				<ShieldCheckIcon class="size-6 text-[#1e63d6]" />
+				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Kepatuhan Ekspor')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<GlobeIcon class="size-6 text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Global Market Access')}</span>
+				<HandshakeIcon class="size-6 text-[#1e63d6]" />
+				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Koneksi Pembeli Global')}</span>
 			</div>
 			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<ChartLineIcon class="size-6 text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Economic Growth')}</span>
+				<TruckIcon class="size-6 text-[#1e63d6]" />
+				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Logistik & Pengiriman')}</span>
 			</div>
 </section>
 
@@ -330,9 +330,9 @@
 
 	<section id="features" class="grid gap-6 py-8">
 			<div class="max-w-2xl" data-aos="fade-up">
-				<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Kapabilitas')}</Badge>
-				<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Semua yang tim ekspor butuhkan, dalam satu tempat.')}</h2>
-				<p class="mt-3 leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">{t('Enam modul kerja yang berbagi data yang sama dan menggerakkan proyek dari ide hingga kargo terkirim.')}</p>
+				<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Fitur Rantai Pasok Ekspor')}</Badge>
+				<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Semua yang dibutuhkan untuk ekspor komoditas desa, dalam satu tempat.')}</h2>
+				<p class="mt-3 leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">{t('Enam modul terintegrasi yang mengawal kesiapan ekspor komoditas desa — dari standardisasi produk hingga pembayaran diterima.')}</p>
 			</div>
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 				{#each features as feature, index}
@@ -357,10 +357,10 @@
 
 		<section id="roles" class="grid gap-6 py-8">
 			<div class="max-w-2xl" data-aos="fade-up">
-				<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Dibuat untuk')}</Badge>
-				<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Satu workspace untuk semua peran dagang.')}</h2>
+				<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Ekosistem Rantai Pasok')}</Badge>
+				<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Satu platform untuk seluruh ekosistem ekspor desa.')}</h2>
 				<p class="mt-3 leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-					{t('Dari eksportir hingga finance, setiap peran mendapat tampilan yang relevan dengan akses sesuai perannya.')}
+					{t('Dari petani dan kelompok tani hingga forwarder dan buyer global — setiap pemangku kepentingan mendapat peran dan akses yang relevan dalam rantai pasok ekspor.')}
 				</p>
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -385,29 +385,29 @@
 	<!-- Use Cases -->
 	<section class="grid gap-6 rounded-3xl border border-[#0b3d91]/10 bg-white p-8 dark:border-white/10 dark:bg-[#0a1730]" data-aos="fade-up">
 		<div class="max-w-2xl">
-			<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Studi Kasus')}</Badge>
-			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Dari kopi, furnitur, hingga produk olahan.')}</h2>
+			<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Kisah Sukses Ekspor Desa')}</Badge>
+			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Dari kopi Gayo, rempah Maluku, hingga kerajinan Jepara.')}</h2>
 		</div>
 		<div class="grid gap-4 md:grid-cols-3">
 			<Card class="border-[#0b3d91]/10 dark:border-white/10" data-aos="fade-up">
 				<CardContent class="grid gap-3 pt-(--card-spacing)">
-					<Badge class="w-fit bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{t('Pertama Kali')}</Badge>
-					<h4 class="text-lg font-bold">{t('Eksportir Pemula')}</h4>
-					<p class="text-sm leading-relaxed text-muted-foreground">{t('UMKM kopi Gayo pertama kali ekspor ke Jepang. MauEkspor memandu dari HS code, analisis pasar, hingga dokumen pengiriman — semuanya dalam 3 minggu.')}</p>
+					<Badge class="w-fit bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{t('Komoditas Pertanian')}</Badge>
+					<h4 class="text-lg font-bold">{t('Kelompok Tani Kopi Gayo')}</h4>
+					<p class="text-sm leading-relaxed text-muted-foreground">{t('KSU Kopi Gayo Bener Meriah pertama kali ekspor langsung ke Jepang. MauEkspor memandu dari HS code, phytosanitary certificate, analisis pasar, hingga dokumen FOB — semuanya dalam 4 minggu.')}</p>
 				</CardContent>
 			</Card>
 			<Card class="border-[#0b3d91]/10 dark:border-white/10" data-aos="fade-up" data-aos-delay="100">
 				<CardContent class="grid gap-3 pt-(--card-spacing)">
-					<Badge class="w-fit bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">{t('Skala UKM')}</Badge>
-					<h4 class="text-lg font-bold">{t('Produsen Makanan Olahan')}</h4>
-					<p class="text-sm leading-relaxed text-muted-foreground">{t('Produsen keripik singkong menggunakan katalog digital dan buyer-request matching untuk menjangkau buyer di Eropa dan Timur Tengah tanpa perantara.')}</p>
+					<Badge class="w-fit bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">{t('Produk Olahan Desa')}</Badge>
+					<h4 class="text-lg font-bold">{t('BUMDes Produsen Rempah')}</h4>
+					<p class="text-sm leading-relaxed text-muted-foreground">{t('BUMDes pengolah rempah Maluku menggunakan katalog digital, compliance check HACCP, dan buyer-matching untuk menjangkau importir di Eropa tanpa bergantung pada broker.')}</p>
 				</CardContent>
 			</Card>
 			<Card class="border-[#0b3d91]/10 dark:border-white/10" data-aos="fade-up" data-aos-delay="200">
 				<CardContent class="grid gap-3 pt-(--card-spacing)">
-					<Badge class="w-fit bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">{t('Kerajinan & Mebel')}</Badge>
-					<h4 class="text-lg font-bold">{t('Eksportir Furnitur')}</h4>
-					<p class="text-sm leading-relaxed text-muted-foreground">{t('Eksportir mebel Jepara memanfaatkan costing container dan forwarder recommendations untuk memberikan penawaran FOB yang kompetitif ke buyer Australia.')}</p>
+					<Badge class="w-fit bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">{t('Kerajinan & Anyaman')}</Badge>
+					<h4 class="text-lg font-bold">{t('Pengrajin Rotan & Mebel')}</h4>
+					<p class="text-sm leading-relaxed text-muted-foreground">{t('Pengrajin mebel Jepara memanfaatkan cek kepatuhan SVLK/CITES, costing FCL, dan rekomendasi forwarder untuk memenangkan order FOB kompetitif dari buyer Australia dan Eropa.')}</p>
 				</CardContent>
 			</Card>
 		</div>
@@ -415,8 +415,8 @@
 
 	<section id="workflow" class="grid gap-6 rounded-3xl bg-gradient-to-br from-[#0b3d91] to-[#123b7a] p-8 text-white">
 			<div class="max-w-2xl" data-aos="fade-up">
-				<Badge variant="outline" class="border-white/30 text-white">{t('Cara Kerja')}</Badge>
-				<h2 class="mt-3 font-display text-4xl font-black tracking-tight md:text-5xl">{t('Tiga langkah dari ide hingga invoice.')}</h2>
+				<Badge variant="outline" class="border-white/30 text-white">{t('Alur Kesiapan Ekspor')}</Badge>
+				<h2 class="mt-3 font-display text-4xl font-black tracking-tight md:text-5xl">{t('Tiga langkah dari komoditas desa ke pasar global.')}</h2>
 			</div>
 			<div class="grid gap-4 md:grid-cols-3">
 				{#each steps as step, index}
@@ -442,8 +442,8 @@
 
 		<section id="testimonials" class="grid gap-6 py-8">
 			<div class="max-w-2xl" data-aos="fade-up">
-				<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Cerita')}</Badge>
-				<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Tim yang berlayar lebih jauh dengan MauEkspor.')}</h2>
+				<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Cerita Sukses Ekspor')}</Badge>
+				<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Petani dan UMKM desa yang berhasil menembus pasar global.')}</h2>
 			</div>
 			<div class="grid gap-4 md:grid-cols-3">
 				{#each testimonials as item, index}
@@ -471,31 +471,31 @@
 		<div class="grid gap-6 md:grid-cols-2">
 			<div>
 				<Badge variant="outline" class="border-white/30 text-white">{t('Visi')}</Badge>
-				<h3 class="mt-4 font-display text-3xl font-black tracking-tight md:text-4xl">{t('SMART Village Technology untuk Kesejahteraan Masyarakat Desa')}</h3>
+				<h3 class="mt-4 font-display text-3xl font-black tracking-tight md:text-4xl">{t('Menjadi Jembatan Komoditas Desa ke Rantai Pasok Ekspor Global')}</h3>
 				<p class="mt-4 leading-relaxed text-white/75">
-					{t('Kami percaya bahwa potensi desa Indonesia dapat berkembang pesat dengan teknologi digital yang tepat. MauEkspor hadir sebagai jembatan antara komoditas lokal berkualitas dengan rantai pasok global, menciptakan pertumbuhan ekonomi berkelanjutan dan pemberdayaan masyarakat desa.')}</p>
+					{t('Kami percaya bahwa kualitas komoditas Indonesia dari pelosok desa layak bersaing di pasar global. MauEkspor hadir untuk memastikan setiap petani, pengrajin, dan UMKM desa memiliki akses yang setara terhadap rantai pasok ekspor internasional — tanpa ketergantungan pada broker dan perantara.')}</p>
 			</div>
 			<div class="grid content-start gap-4">
-				<Badge variant="outline" class="border-white/30 text-white">{t('Misi SMART Village')}</Badge>
+				<Badge variant="outline" class="border-white/30 text-white">{t('Pilar Rantai Pasok Ekspor')}</Badge>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
 					<SproutIcon class="size-6 text-emerald-400" />
-					<h4 class="mt-2 text-lg font-bold">{t('Smart Agriculture')}</h4>
-					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Implementasi IoT dan AI untuk monitoring kualitas, produktivitas, dan efisiensi produksi komoditas desa.')}</p>
+					<h4 class="mt-2 text-lg font-bold">{t('Kesiapan Produk')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Bantu setiap komoditas desa memenuhi standar mutu internasional — HS code, spesifikasi, kemasan, dan sertifikasi yang diakui buyer global.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
 					<RocketIcon class="size-6 text-blue-400" />
-					<h4 class="mt-2 text-lg font-bold">{t('Digital Market Access')}</h4>
-					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Menghubungkan UMKM desa dengan pasar global melalui platform ekspor-impor yang terintegrasi dan mudah digunakan.')}</p>
+					<h4 class="mt-2 text-lg font-bold">{t('Akses Pasar Global')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Koneksikan UMKM dan kelompok tani desa langsung dengan buyer internasional — tanpa ketergantungan pada perantara, margin lebih besar untuk petani.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
 					<BriefcaseIcon class="size-6 text-amber-400" />
-					<h4 class="mt-2 text-lg font-bold">{t('Economic Empowerment')}</h4>
-					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Pemberdayaan ekonomi masyarakat desa melalui peningkatan nilai jual, akses pasar baru, dan pengurangan ketergantungan pada perantara.')}</p>
+					<h4 class="mt-2 text-lg font-bold">{t('Nilai Tambah Ekonomi')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Tingkatkan nilai jual komoditas desa melalui standarisasi, branding, dan akses ke rantai pasok premium global yang memberikan harga lebih adil.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
 					<UsersIcon class="size-6 text-purple-400" />
-					<h4 class="mt-2 text-lg font-bold">{t('Community Development')}</h4>
-					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Peningkatan kualitas hidup masyarakat desa melalui pendidikan digital, transfer teknologi, dan pembangunan ekosistem kolaboratif.')}</p>
+					<h4 class="mt-2 text-lg font-bold">{t('Ekosistem Berkelanjutan')}</h4>
+					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Bangun ekosistem kolaboratif antara petani, koperasi, forwarder, dan buyer untuk rantai pasok ekspor yang adil dan berkelanjutan.')}</p>
 				</div>
 			</div>
 		</div>
@@ -506,11 +506,11 @@
 			data-aos="zoom-in"
 		>
 			<div>
-				<h2 class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{t('Siap Transformasi Desa ke Ekonomi Global?')}</h2>
-				<p class="mt-3 leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">{t('Bergabunglah dengan komunitas petani, UMKM, dan stakeholder desa yang telah memanfaatkan teknologi untuk mencapai pasar global.')}</p>
+				<h2 class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{t('Siap Ekspor Komoditas Desa ke Pasar Global?')}</h2>
+				<p class="mt-3 leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">{t('Bergabunglah dengan petani, pengrajin, dan BUMDes yang telah menggunakan MauEkspor untuk mempersiapkan komoditas unggulan mereka memasuki rantai pasok ekspor internasional.')}</p>
 			</div>
 			<div class="flex flex-wrap gap-3">
-				<Button size="lg" href="/register" class="h-11 bg-[#0b3d91] px-6 text-base text-white hover:bg-[#0b3d91]/85">{t('Mulai Era Baru Desa')}</Button>
+				<Button size="lg" href="/register" class="h-11 bg-[#0b3d91] px-6 text-base text-white hover:bg-[#0b3d91]/85">{t('Mulai Persiapan Ekspor')}</Button>
 				<Button variant="outline" size="lg" href="/login" class="h-11 border-[#0b3d91]/20 px-6 text-base">{t('Masuk')}</Button>
 			</div>
 		</section>
@@ -518,9 +518,9 @@
 		<footer class="flex flex-wrap items-center justify-between gap-4 px-2 py-6 text-sm text-[#0b1d3a]/60 dark:text-white/60">
 			<a href="/" class="inline-flex items-center gap-1.5">
 				<Logo variant="logo" class="!h-8" />
-				<span class="font-display text-xl font-black tracking-tight text-[#0b1d3a] dark:text-white">MauEkspor - SMART Village</span>
+				<span class="font-display text-xl font-black tracking-tight text-[#0b1d3a] dark:text-white">MauEkspor</span>
 			</a>
-			<p class="max-w-xl">{t('SMART Village Technology: Menghubungkan komoditas desa dengan rantai pasok global untuk kesejahteraan masyarakat Indonesia.')}</p>
+			<p class="max-w-xl">{t('Platform rantai pasok ekspor komoditas desa: membantu petani, pengrajin, dan UMKM desa Indonesia menembus pasar global dengan standar ekspor yang benar.')}</p>
 			<nav class="flex gap-4 text-sm font-bold text-[#0b1d3a]/60 dark:text-white/60" aria-label="Footer">
 				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/about">{t('Tentang')}</a>
 				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/login">{t('Masuk')}</a>
