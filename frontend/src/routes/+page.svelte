@@ -63,41 +63,41 @@
 	];
 
 	const features = [
-		{ icon: SproutIcon, title: 'Smart Agriculture', text: 'AI-powered tools untuk monitoring kualitas, produktivitas, dan efisiensi produksi komoditas desa.' },
-		{ icon: GlobeIcon, title: 'Global Market Access', text: 'Akses ke pasar global dengan analisis HS, kepatuhan otomatis, dan rekomendasi regulasi per negara tujuan.' },
-		{ icon: ChartLineIcon, title: 'Market Intelligence', text: 'Data-driven insights untuk memahami tren pasar global, harga kompetitif, dan peluang ekspor baru.' },
-		{ icon: ReceiptTextIcon, title: 'Supply Chain Management', text: 'Manajemen rantai pasok terintegrasi dari petani hingga pembeli global dengan tracking real-time.' },
-		{ icon: ShieldCheckIcon, title: 'Compliance & Quality', text: 'Standar ekspor internasional, sertifikasi otomatis, dan dokumentasi lengkap untuk akses pasar tanpa hambatan.' },
-		{ icon: BoxesIcon, title: 'Digital Export Workspace', text: 'Platform semua-in-satu untuk mengelola katalog produk, costing, order, dan pengiriman dalam satu tempat.' }
+		{ icon: SproutIcon, title: 'Kesiapan Produk Ekspor', text: 'Katalog terstruktur, HS code otomatis, dan standar kualitas internasional untuk menjamin komoditas desa siap diterima pasar global.' },
+		{ icon: GlobeIcon, title: 'Analisis Pasar Tujuan', text: 'Rekomendasi negara tujuan berdasarkan data permintaan, tarif bea, dan kecocokan produk desa dengan kebutuhan buyer internasional.' },
+		{ icon: ShieldCheckIcon, title: 'Kepatuhan & Sertifikasi Ekspor', text: 'Cek kepatuhan otomatis: karantina pertanian, ISPM-15, halal, HACCP — semua persyaratan ekspor terverifikasi sebelum pengiriman.' },
+		{ icon: FileTextIcon, title: 'Dokumen Ekspor Lengkap', text: 'Packing list, invoice, bill of lading, certificate of origin, phytosanitary — semua dokumen ekspor tersedia dalam satu workspace.' },
+		{ icon: HandshakeIcon, title: 'Koneksi Pembeli Global', text: 'Matching otomatis antara komoditas desa dengan buyer internasional berdasarkan spesifikasi, volume, dan HS code.' },
+		{ icon: TruckIcon, title: 'Logistik & Pengiriman', text: 'Rekomendasi forwarder, kalkulasi biaya FCL/LCL, dan tracking pengiriman dari gudang desa hingga pelabuhan tujuan.' }
 	];
 
 	const steps = [
-		{ n: '01', icon: BoxesIcon, title: 'Capture', text: 'Complete business profile and structured product data.' },
-		{ n: '02', icon: GlobeIcon, title: 'Analyze', text: 'Run market analysis for HS, duties, and regulations.' },
-		{ n: '03', icon: ShipIcon, title: 'Execute', text: 'Quote, book freight, prepare documents, and track payment.' }
+		{ n: '01', icon: BoxesIcon, title: 'Standardisasi', text: 'Lengkapi profil komoditas: nama, HS code, spesifikasi, sertifikasi, dan kapasitas produksi.' },
+		{ n: '02', icon: ShieldCheckIcon, title: 'Kesiapan Ekspor', text: 'Jalankan cek kepatuhan otomatis: regulasi negara tujuan, persyaratan karantina, dan standar kemasan.' },
+		{ n: '03', icon: HandshakeIcon, title: 'Koneksi & Kirim', text: 'Terima buyer request, buat quotation, siapkan dokumen, dan booking pengiriman dengan forwarder terpercaya.' }
 	];
 
 	const roles = [
-		{ icon: SproutIcon, title: 'Petani & UMKM Desa', text: 'Akses pasar global, standardisasi ekspor, dan peningkatan kualitas produk dengan teknologi digital.' },
-		{ icon: BoxesIcon, title: 'Kooperatif Desa', text: 'Manajemen komoditas terpusat, branding bersama, dan akses ke buyer internasional tanpa perantara.' },
-		{ icon: GlobeIcon, title: 'Dinas Pertanian', text: 'Monitoring produktivitas desa, sertifikasi massal, dan linkage dengan rantai pasok global.' },
-		{ icon: ChartLineIcon, title: 'Investor Agrotech', text: 'Platform scalable untuk investasi di smart agriculture, supply chain tech, dan digital market access.' },
-		{ icon: PackageSearchIcon, title: 'Buyer Global', text: 'Akses langsung ke komoditas berkualitas dari desa Indonesia dengan tracing lengkap dan sustainability tracking.' }
+		{ icon: WheatIcon, title: 'Petani & Kelompok Tani', text: 'Standarisasi komoditas kebun dan sawah untuk memenuhi standar ekspor internasional dan akses ke pasar premium global.' },
+		{ icon: UsersIcon, title: 'BUMDes & Koperasi', text: 'Kelola komoditas anggota secara terpusat, bangun brand bersama, dan ekspor langsung ke buyer global tanpa perantara.' },
+		{ icon: AwardIcon, title: 'Kepala Desa & Dinas', text: 'Monitor kesiapan ekspor desa, koordinasi sertifikasi massal, dan pantau nilai ekspor komoditas daerah secara real-time.' },
+		{ icon: TruckIcon, title: 'Forwarder & Logistik', text: 'Terima RFQ dari kelompok tani dan BUMDes, berikan penawaran freight kompetitif, dan kelola dokumen ekspor.' },
+		{ icon: PackageSearchIcon, title: 'Buyer Internasional', text: 'Temukan komoditas unggulan desa Indonesia yang telah memenuhi standar ekspor dengan traceability dan sertifikasi lengkap.' }
 	];
 
 	const testimonials = [
-		{ quote: 'MauEkspor membantu desa kami mengekspor kopi Gayo langsung ke Jepang dengan standar ekspor yang benar.', name: 'Rizal Fahmi', role: 'Kooperatif Petani Kopi Gayo' },
-		{ quote: 'Dengan smart agriculture tools, produktivitas kerajinan tangan desa meningkat 40% dan kami bisa akses buyer Eropa.', name: 'Sinta Lestari', role: 'Pengrajin Jepara' },
-		{ quote: 'Platform digital ini mengubah cara kerja petani kami - dari isolation pasar lokal ke global supply chain dalam 6 bulan.', name: 'Dr. Bambang Santoso', role: 'Dinas Pertanian Kabupaten' }
+		{ quote: 'Dulu kopi Gayo kami ekspor via broker dengan harga sangat rendah. Dengan MauEkspor, kami bisa ekspor langsung ke Jepang dengan harga 3x lebih baik dan dokumen yang benar.', name: 'Rizal Fahmi', role: 'KSU Kopi Gayo Bener Meriah' },
+		{ quote: 'Standarisasi produk dan cek kepatuhan otomatis membuat kami berhasil lolos inspeksi bea cukai Eropa untuk pertama kalinya tanpa biaya konsultan yang mahal.', name: 'Sinta Lestari', role: 'BUMDes Jepara Craft' },
+		{ quote: 'Platform ini membantu 12 kelompok tani di kabupaten kami mempersiapkan ekspor rempah dengan dokumentasi yang benar dan terstandar dalam waktu singkat.', name: 'Dr. Bambang Santoso', role: 'Dinas Perdagangan Kabupaten' }
 	];
 </script>
 
 <svelte:head>
-	<title>MauEkspor - SMART Village Technology | Meningkatkan Komoditas Desa Ke Rantai Pasok Global</title>
-	<meta name="description" content="Smart Village Technology: Solusi digital untuk meningkatkan pelayanan, ekonomi, pendidikan, pertanian, dan kualitas hidup masyarakat desa. MauEkspor menghubungkan komoditas desa ke rantai pasok global." />
-	<meta name="keywords" content="smart village, technology desa, mauekspor, ekspor komoditas desa, UMKM pedesaan, rantai pasok global, ekonomi desa, pertanian modern" />
-	<meta property="og:title" content="MauEkspor - SMART Village Technology" />
-	<meta property="og:description" content="Solusi digital untuk meningkatkan pelayanan, ekonomi, pendidikan, pertanian, dan kualitas hidup masyarakat desa." />
+	<title>MauEkspor — Siapkan Komoditas Desa untuk Rantai Pasok Ekspor Global</title>
+	<meta name="description" content="Platform digital yang memandu petani, pengrajin, dan UMKM desa untuk mempersiapkan komoditas unggulan memasuki rantai pasok ekspor internasional — dari standarisasi hingga pembeli global." />
+	<meta name="keywords" content="ekspor komoditas desa, rantai pasok ekspor, kesiapan ekspor UMKM, mauekspor, kelompok tani ekspor, BUMDes ekspor, sertifikasi ekspor desa, HS code komoditas" />
+	<meta property="og:title" content="MauEkspor — Siapkan Komoditas Desa untuk Ekspor Global" />
+	<meta property="og:description" content="Platform digital yang memandu petani, pengrajin, dan UMKM desa untuk mempersiapkan komoditas unggulan memasuki rantai pasok ekspor internasional." />
 </svelte:head>
 
 <AosInit />
@@ -200,24 +200,26 @@
 			<div data-aos="fade-right">
 				<Badge variant="secondary" class="bg-[#0b3d91]/10 text-[#0b3d91] dark:bg-white/10 dark:text-white">
 					<SproutIcon class="size-3.5" />
-					{t('SMART Village Technology')}
+					{t('Platform Ekspor Komoditas Desa')}
 				</Badge>
 				<h1 class="mt-4 font-display text-5xl font-black leading-[0.95] tracking-tight text-[#0b1d3a] sm:text-6xl md:text-7xl dark:text-white">
-					<span class="text-[#1e63d6] dark:text-[#5ea1ff]">MauEkspor</span>: {t('Meningkatkan Komoditas Desa Ke Rantai Pasok Global')}
+					<span class="text-[#1e63d6] dark:text-[#5ea1ff]">MauEkspor</span>: {t('Siapkan Hasil Desa untuk Rantai Pasok Ekspor Global')}
 				</h1>
 				<p class="mt-5 max-w-2xl text-lg leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-					{t('Solusi digital untuk meningkatkan pelayanan, ekonomi, pendidikan, pertanian, dan kualitas hidup masyarakat desa. MauEkspor menghubungkan UMKM desa dengan pasar global melalui teknologi ekspor-impor yang terintegrasi.')}</p>
+					{t('Platform digital yang memandu petani, pengrajin, dan UMKM desa untuk mempersiapkan komoditas unggulan memasuki rantai pasok ekspor internasional — dari standarisasi komoditas hingga terhubung dengan pembeli global.')}</p>
 				<div class="mt-7 flex flex-wrap gap-3">
 					<Button size="lg" href="/register" class="h-11 bg-[#0b3d91] px-6 text-base text-white hover:bg-[#0b3d91]/85">
 						<PlaneTakeoffIcon class="size-4" />
-						Gabung Sekarang
+						{t('Mulai Persiapan Ekspor')}
 					</Button>
 					<Button variant="outline" size="lg" href="/dashboard" class="h-11 border-[#0b3d91]/20 px-6 text-base">{t('Pelajari Lebih Lanjut')}</Button>
 				</div>
 				<div class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-bold text-[#0b1d3a]/60 dark:text-white/60">
-					<span>{t('Smart Agriculture')}: {t('AI & IoT')}</span>
-					<span>{t('Digital Market Access')}: {t('Global Supply Chain')}</span>
-					<span>{t('Community Empowerment')}: {t('Economic Growth')}</span>
+					<span>{t('Standardisasi Komoditas')}</span>
+					<span>·</span>
+					<span>{t('Kepatuhan Ekspor')}</span>
+					<span>·</span>
+					<span>{t('Koneksi Pembeli Global')}</span>
 				</div>
 			</div>
 
@@ -287,40 +289,40 @@
 	<!-- Pain Points & Solutions -->
 	<section class="grid gap-6 rounded-3xl border border-[#0b3d91]/10 bg-gradient-to-br from-white to-[#f0f5ff] p-8 dark:border-white/10 dark:from-[#0a1730] dark:to-[#0c1f3d]" data-aos="fade-up">
 		<div class="max-w-2xl">
-			<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('SMART Village Technology')}</Badge>
-			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Transformasi Digital untuk Desa Indonesia')}</h2>
+			<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">{t('Hambatan & Solusi')}</Badge>
+			<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Mengapa Komoditas Desa Sulit Tembus Pasar Ekspor?')}</h2>
 		</div>
 		<div class="grid gap-4 md:grid-cols-2">
 			<div class="rounded-2xl border border-red-200 bg-red-50/60 p-6 dark:border-red-900/30 dark:bg-red-950/20" data-aos="fade-right">
 				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-red-600 dark:text-red-400">
-					<CircleXIcon class="size-6 shrink-0" /> {t('Tantangan Desa')}
+					<CircleXIcon class="size-6 shrink-0" /> {t('Hambatan Ekspor Desa')}
 				</h3>
 				<ul class="mt-4 grid gap-3">
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
-						{t('Akses terbatas ke pasar global dan rantai pasok internasional.')}</li>
+						{t('Komoditas berkualitas tapi tidak memiliki standar dan dokumentasi ekspor yang diakui pembeli internasional.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
-						{t('Komoditas berkualitas belum memiliki standar ekspor yang jelas.')}</li>
+						{t('Proses sertifikasi, karantina, dan dokumen ekspor sangat rumit dan memakan biaya besar tanpa panduan yang jelas.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
-						{t('Minim teknologi digital untuk monitoring kualitas dan efisiensi produksi.')}</li>
+						{t('Ketergantungan pada calo dan broker — margin keuntungan petani sangat tipis karena panjangnya rantai perantara.')}</li>
 				</ul>
 			</div>
 			<div class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 dark:border-emerald-900/30 dark:bg-emerald-950/20" data-aos="fade-left">
 				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-					<CircleCheckIcon class="size-6 shrink-0" /> {t('Solusi Smart Village')}
+					<CircleCheckIcon class="size-6 shrink-0" /> {t('Solusi MauEkspor')}
 				</h3>
 				<ul class="mt-4 grid gap-3">
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
-						{t('Platform digital terintegrasi untuk menghubungkan komoditas desa dengan rantai pasok global.')}</li>
+						{t('Standarisasi komoditas otomatis: katalog terstruktur, HS code, profil ekspor, dan sertifikasi lengkap yang diakui buyer global.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
-						{t('Smart agriculture tools dengan AI untuk peningkatan kualitas dan produktivitas.')}</li>
+						{t('Panduan step-by-step untuk kepatuhan ekspor: dari karantina pertanian, sertifikasi HACCP/halal, hingga dokumen pengiriman.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
 						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
-						{t('Market intelligence dan compliance check otomatis untuk akses pasar global tanpa hambatan.')}</li>
+						{t('Koneksi langsung dengan buyer global — tanpa perantara. Petani dan UMKM desa menerima harga yang lebih adil dan margin lebih besar.')}</li>
 				</ul>
 			</div>
 		</div>
