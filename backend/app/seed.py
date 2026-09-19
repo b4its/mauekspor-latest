@@ -1,12 +1,17 @@
 """Seed helper: muat data demo ke store in-memory saat startup (jika kosong)."""
+import logging
+
 from app import db
 from app.core.security import hash_password
 from app.core.config import settings
 from app.data import countries as country_data
 
+logger = logging.getLogger("mauekspor.seed")
+
 
 def seed_if_empty():
-    if db.loaded_records("users") and db.loaded_records("users") > 50:
+    user_count = db.loaded_records("users")
+    if user_count > 50:
         return  # sudah di-seed 100+
 
     # ---------- MASTER DATA: negara & regulasi ----------
@@ -20,10 +25,11 @@ def seed_if_empty():
             "createdAt": "2026-07-01",
         })
 
-    db.insert("exchange_rates", {
-        "id": db.gen_id("exchange_rates", "FX"),
-        "rate": 15800, "source": "seed", "updatedAt": "2026-08-06 10:00",
-    })
+    if not db.loaded_records("exchange_rates"):
+        db.insert("exchange_rates", {
+            "id": db.gen_id("exchange_rates", "FX"),
+            "rate": 15800, "source": "seed", "updatedAt": "2026-08-06 10:00",
+        })
 
     # ---------- AUTH / user ----------
     db.insert("users", {
@@ -433,11 +439,11 @@ def seed_if_empty():
         from app.seed_large import seed_100_records
         seed_100_records()
     except ImportError:
-        pass  # seed_large.py opsional
+        logger.info("seed_large.py tidak ditemukan — skipping 100-record seed")
 
     # ---------- KOMODITAS DESA: kurasi kopi, kakao, rempah, rotan, HHNK ----------
     try:
         from app.seed_village_commodities import seed_village_commodities
         seed_village_commodities()
     except ImportError:
-        pass  # seed_village_commodities.py opsional
+        logger.info("seed_village_commodities.py tidak ditemukan — skipping village commodities seed")

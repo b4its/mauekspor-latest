@@ -235,14 +235,6 @@ def get(table: str, record_id: str) -> dict[str, Any] | None:
     return None
 
 
-def _matches(r: dict, filters: dict) -> bool:
-    return _all_builtin(r.get(k) == v for k, v in filters.items())
-
-
-def _all_builtin(iterable):
-    return builtin_all(iterable)
-
-
 def _check_all(r: dict, filters: dict) -> bool:
     return builtin_all(r.get(k) == v for k, v in filters.items())
 

@@ -84,6 +84,8 @@ def create_refresh_token(user) -> str:
 def get_current_user(request: Request, credentials: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> dict:
     token = get_token(request, credentials)
     payload = decode_token(token)
+    if payload.get("type") != "access":
+        raise HTTPException(status_code=401, detail="Not an access token")
     from app.db import get
     user = get("users", payload["sub"])
     if not user:

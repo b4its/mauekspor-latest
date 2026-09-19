@@ -26,21 +26,14 @@ def is_food_product(product: dict) -> bool:
 
 def generate_market_intelligence(product: dict) -> dict[str, Any]:
     """Generate market intelligence untuk satu produk (1-per-produk, disimpan)."""
-    text = ai.complete(
+    parsed = ai.ask_json(
         "You are a market intelligence analyst for Indonesian exports. Return JSON with keys: "
         "recommended_countries (list of {country, code, score, reason, market_size, competition_level, "
         "price_range, entry_strategy}), countries_to_avoid (list of {country, code, reason}), "
         "market_trends (list), competitive_landscape (string), growth_opportunities (list), "
         "risks_and_challenges (list), overall_recommendation (string).",
         f"Product: {product.get('name', '')} ({product.get('category', '')} - {product.get('description', '')})",
-        kind="market_intelligence",
-    )
-    parsed = ai.ask_json(
-        "You are a market intelligence analyst for Indonesian exports. Return JSON with keys: "
-        "recommended_countries, countries_to_avoid, market_trends, competitive_landscape, "
-        "growth_opportunities, risks_and_challenges, overall_recommendation.",
-        f"Product: {product.get('name', '')} ({product.get('category', '')})",
-        kind="market_intelligence",
+        kind="market_insight",
     )
     if parsed and isinstance(parsed, dict):
         # Tambahkan forwarder recommendations per negara yang direkomendasikan
@@ -158,17 +151,11 @@ def generate_product_pricing(
 def generate_catalog_description(product: dict, save_to_catalog: bool = False, catalog: dict | None = None) -> dict[str, Any]:
     """Deskripsi internasional: export_description, technical_specs, safety_info."""
     food = is_food_product(product)
-    text = ai.complete(
+    parsed = ai.ask_json(
         "You write B2B international product copy for Indonesian exports. Return JSON with keys: "
         "export_buyer_description (string), technical_spec_sheet (list of {label, value}), "
         "safety_sheet (list of {label, value}).",
         f"Product: {product.get('name', '')} ({product.get('category', '')}). Food product: {food}.",
-        kind="catalog_description",
-    )
-    parsed = ai.ask_json(
-        "You write B2B international product copy. Return JSON with keys export_buyer_description, "
-        "technical_spec_sheet (list of {label,value}), safety_sheet (list of {label,value}).",
-        f"Product: {product.get('name', '')}. Food: {food}.",
         kind="catalog_description",
     )
     if parsed and isinstance(parsed, dict):

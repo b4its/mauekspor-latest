@@ -7,9 +7,15 @@ from typing import Any
 from app import db
 
 
-def recalculate_rating(forwarder: dict) -> dict:
-    """Hitung ulang average_rating + total_reviews dari semua review forwarder."""
+def recalculate_rating(forwarder: dict, persist: bool = True) -> dict:
+    """Hitung ulang average_rating + total_reviews dari semua review forwarder.
+
+    `persist=False` dipakai di path baca (list/get/recommend) untuk menghindari
+    write di setiap read; caller boleh persist=True setelah review dibuat/diupdate.
+    """
     reviews = db.find("forwarder_reviews", forwarderId=str(forwarder.get("id", "")))
+    old_avg = forwarder.get("averageRating")
+    old_count = forwarder.get("totalReviews")
     if not reviews:
         forwarder["averageRating"] = 0
         forwarder["totalReviews"] = 0
@@ -17,8 +23,10 @@ def recalculate_rating(forwarder: dict) -> dict:
         total = sum(float(r.get("rating", 0)) for r in reviews)
         forwarder["averageRating"] = round(total / len(reviews), 1)
         forwarder["totalReviews"] = len(reviews)
-    forwarder["updatedAt"] = "now"
-    db.save(forwarder)
+    # Hanya persist bila nilai berubah atau persist=True
+    if persist and (forwarder["averageRating"] != old_avg or forwarder["totalReviews"] != old_count):
+        forwarder["updatedAt"] = "now"
+        db.save(forwarder)
     return forwarder
 
 
@@ -35,8 +43,8 @@ def get_recommendations(destination_country: str, limit: int = 5) -> list[dict]:
         coverage = str(fwd.get("coverage", "")).lower()
         lanes = " ".join(str(x).lower() for x in (fwd.get("lanes") or []))
         if route in specialization or code in coverage.upper() or (country_name and country_name in coverage) or (country_name and country_name in lanes):
-            # Pastikan rating & jumlah review selalu tersedia (hitung dari review).
-            recalculate_rating(fwd)
+            # Hitung rating tanpa write (read-only) untuk path rekomendasi.
+            recalculate_rating(fwd, persist=False)
             candidates.append(fwd)
     candidates.sort(key=lambda f: (float(f.get("averageRating", 0) or 0), f.get("totalReviews", 0) or 0), reverse=True)
     return candidates[:limit]

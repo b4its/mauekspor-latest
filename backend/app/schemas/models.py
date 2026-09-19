@@ -88,14 +88,7 @@ class CreateForwarderPayload(BaseModel):
 
 
 # ---------- Catalogs ----------
-class CreateCatalogPayload(BaseModel):
-    title: str
-    targetMarket: str
-    moq: str
-    productId: str = ""
-    projectId: str = ""
-    leadTime: str = ""
-    priceRange: str = ""
+# CreateCatalogPayload didefinisikan di bagian bawah dengan field lengkap
 
 
 # ---------- Markets ----------
@@ -254,8 +247,7 @@ class IntegrationActionPayload(BaseModel):
 
 
 # ---------- Chat ----------
-class SendChatPayload(BaseModel):
-    text: str
+# SendChatPayload didefinisikan di bagian bawah
 
 
 # ---------- Audit ----------

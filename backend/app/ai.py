@@ -162,7 +162,10 @@ def fallback(kind: str) -> str | None:
 # Public API
 # ---------------------------------------------------------------------------
 def complete(system: str, user: str, kind: str = "") -> str | None:
-    """Kembalikan teks hasil AI, atau None bila mode remote gagal/tak terkonfigurasi."""
+    """Kembalikan teks hasil AI, atau None bila mode remote gagal/tak terkonfigurasi.
+
+    Pemanggil bertanggung jawab jatuh-kembali ke ai.fallback(kind) bila None.
+    """
     if mode() == REMOTE:
         return _remote(system, user)
     return _mock(kind)

@@ -73,6 +73,13 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "chat",
         "messages",
     },
+    "KepalaDesa": {
+        "products",
+        "compliance",
+        "documents",
+        "messages",
+        "notifications",
+    },
 }
 
 

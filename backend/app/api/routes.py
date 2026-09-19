@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import time
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, File, Form
 from fastapi.responses import FileResponse
@@ -167,7 +168,7 @@ def _issue_tokens(user: dict, response: Response) -> tuple[str, str]:
         "id": db.gen_id("refresh_tokens", "RFT"),
         "token": refresh,
         "userId": user["id"],
-        "createdAt": "2026-08-07",
+        "createdAt": datetime.now(timezone.utc).isoformat(),
         "expiresAt": None,
         "revoked": False,
     })
@@ -224,7 +225,7 @@ def register(payload: sc.RegisterPayload, response: Response):
         "organization": _sanitize_text(payload.organization, 100),
         "password": hash_password(payload.password),
         "status": "Active",
-        "createdAt": "2026-08-07",
+        "createdAt": datetime.now(timezone.utc).isoformat(),
         "lastLogin": "new",
     })
     access, _ = _issue_tokens(user, response)
@@ -253,7 +254,7 @@ def register_admin(payload: sc.RegisterAdminPayload, response: Response):
         "organization": "",
         "password": hash_password(payload.password),
         "status": "Active",
-        "createdAt": "2026-08-07",
+        "createdAt": datetime.now(timezone.utc).isoformat(),
         "lastLogin": "new",
     })
     access, _ = _issue_tokens(user, response)
@@ -748,8 +749,6 @@ def update_product(product_id: str, payload: sc.UpdateProductPayload):
     # Normalisasi field gabungan
     if data.get("hs_code") and not data.get("hs"):
         data["hs"] = data["hs_code"]
-    if data.get("netWeight"):
-        data["netWeight"] = data["netWeight"]
     record.update(data)
     record["readiness"] = compute_product_readiness(record)
     record["updatedAt"] = "now"
@@ -998,16 +997,16 @@ def dashboard_summary():
 # BUYER PROFILES (role Buyer) — didefinisikan sebelum route parameterized
 # ----------------------------------------------------------------------------
 @router.post("/buyers/profile/")
-def create_buyer_profile(payload: sc.CreateBuyerProfilePayload):
+def create_buyer_profile(payload: sc.CreateBuyerProfilePayload, current_user: dict = Depends(get_current_user)):
     data = _profile_payload(payload.model_dump())
-    existing = db.get_by("buyer_profiles", userId="current")
+    existing = db.get_by("buyer_profiles", userId=current_user["id"])
     if existing:
         existing.update(data)
         existing["updatedAt"] = "now"
         return _profile_one(existing)
     record = db.insert("buyer_profiles", {
         "id": db.gen_id("buyer_profiles", "BYP"),
-        "userId": "current",
+        "userId": current_user["id"],
         **data,
         "createdAt": "now",
     })
@@ -1015,8 +1014,8 @@ def create_buyer_profile(payload: sc.CreateBuyerProfilePayload):
 
 
 @router.get("/buyers/profile/me/")
-def get_my_buyer_profile():
-    record = db.get_by("buyer_profiles", userId="current")
+def get_my_buyer_profile(current_user: dict = Depends(get_current_user)):
+    record = db.get_by("buyer_profiles", userId=current_user["id"])
     if not record:
         record = db.get_by("buyer_profiles", userId="U-003")
     if not record:
@@ -1207,16 +1206,16 @@ def get_matched_umkm(request_id: str):
 # ----------------------------------------------------------------------------
 # (rute statis profile/rekomendasi didefinisikan sebelum route parameterized)
 @router.post("/forwarders/profile/")
-def create_forwarder_profile(payload: sc.CreateForwarderProfilePayload):
+def create_forwarder_profile(payload: sc.CreateForwarderProfilePayload, current_user: dict = Depends(get_current_user)):
     data = _profile_payload(payload.model_dump())
-    existing = db.get_by("forwarder_profiles", userId="current")
+    existing = db.get_by("forwarder_profiles", userId=current_user["id"])
     if existing:
         existing.update(data)
         existing["updatedAt"] = "now"
         return _profile_one(existing)
     record = db.insert("forwarder_profiles", {
         "id": db.gen_id("forwarder_profiles", "FWP"),
-        "userId": "current",
+        "userId": current_user["id"],
         **data,
         "averageRating": 0,
         "totalReviews": 0,
@@ -1226,8 +1225,8 @@ def create_forwarder_profile(payload: sc.CreateForwarderProfilePayload):
 
 
 @router.get("/forwarders/profile/me/")
-def get_my_forwarder_profile():
-    record = db.get_by("forwarder_profiles", userId="current")
+def get_my_forwarder_profile(current_user: dict = Depends(get_current_user)):
+    record = db.get_by("forwarder_profiles", userId=current_user["id"])
     if not record:
         record = db.get_by("forwarder_profiles", userId="FWD-003")
     if not record:
@@ -1311,7 +1310,7 @@ def request_forwarder_quote(forwarder_id: str):
 # FORWARDER REVIEWS / STATISTIK
 # ----------------------------------------------------------------------------
 @router.post("/forwarders/{forwarder_id}/reviews/")
-def create_forwarder_review(forwarder_id: str, payload: sc.CreateForwarderReviewPayload):
+def create_forwarder_review(forwarder_id: str, payload: sc.CreateForwarderReviewPayload, current_user: dict = Depends(get_current_user)):
     record = db.get("forwarders", forwarder_id)
     if not record:
         raise HTTPException(404, "Forwarder not found")
@@ -1322,9 +1321,9 @@ def create_forwarder_review(forwarder_id: str, payload: sc.CreateForwarderReview
         "forwarderId": forwarder_id,
         "rating": payload.rating,
         "reviewText": payload.review_text,
-        "umkmId": "U-002",
-        "reviewerName": "Rizal Fahmi",
-        "createdAt": "now",
+        "umkmId": current_user["id"],
+        "reviewerName": current_user.get("fullName") or current_user.get("name") or current_user.get("email", ""),
+        "createdAt": datetime.now(timezone.utc).isoformat(),
     })
     from app.services.forwarders import recalculate_rating
     recalculate_rating(record)
@@ -2080,7 +2079,7 @@ def recalculate_costing(costing_id: str):
     record["cifPrice"] = calc["cifPrice"]
     record["landedCost"] = round(calc["cifPrice"] * 1.12, 2)
     record["lines"] = calc["lines"]
-    record["container"] = calc["container"]
+    record["container"] = container
     record["updatedAt"] = "now"
     return _one(record)
 
@@ -2411,8 +2410,9 @@ def mark_payment_received(payment_id: str, payload: dict):
     if not record:
         raise HTTPException(404, "Payment not found")
     amount = payload.get("amount") or record.get("paid") or record.get("amount", 0)
+    owed = record.get("amount", 0)
     record["paid"] = amount
-    record["status"] = "Settled" if amount >= record.get("amount", amount) else "Deposit Paid"
+    record["status"] = "Settled" if amount >= owed else "Deposit Paid"
     record["updatedAt"] = "now"
     _notify(
         f"Pembayaran {record.get('status', '')}",
@@ -3336,7 +3336,7 @@ def create_analysis(payload: sc.CreateExportAnalysisPayload):
         "destination": country_code,
         "status": "Ready",
         "hsCode": product.get("hs", "TBD"),
-        "confidence": max(len(result["issues"]) == 0 and 91 or 80, 60),
+        "confidence": max(91 if not result["issues"] else 80, 60),
         "score": result["score"],
         "statusGrade": result["grade"],
         "complianceIssues": result["issues"],

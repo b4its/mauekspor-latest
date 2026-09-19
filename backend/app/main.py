@@ -331,7 +331,11 @@ async def require_auth_for_mutations(request, call_next):
     if token:
         try:
             payload = decode_token(token)
-            user = db.get("users", payload["sub"])
+            if payload.get("type") != "access":
+                payload = None
+                user = None
+            else:
+                user = db.get("users", payload["sub"])
         except Exception:
             payload = None
 

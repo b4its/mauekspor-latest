@@ -60,7 +60,7 @@ def match_buyer_request(request: dict) -> list[dict]:
     Skor akhir menggabungkan: kategori (35%), HS code (30%), spesifikasi (25%),
     kapabilitas (5%), volume (5%).
     """
-    catalogs = [c for c in db.all("catalogs") if str(c.get("status", "")).lower() in {"published", "published"}]
+    catalogs = [c for c in db.all("catalogs") if str(c.get("status", "")).lower() == "published"]
     # Fallback: katalog dengan status apa pun bila tidak ada yang published
     if not catalogs:
         catalogs = db.all("catalogs")
@@ -82,7 +82,7 @@ def match_buyer_request(request: dict) -> list[dict]:
     if not target_volume:
         qty = request.get("quantity") or request.get("targetVolume") or 0
         try:
-            target_volume = float(str(qty).replace(",", "").replace(".", "")) if isinstance(qty, str) and qty.replace(",", "").replace(".", "").isdigit() else float(qty or 0)
+            target_volume = float(str(qty).replace(",", ""))
         except (TypeError, ValueError):
             target_volume = 0.0
 
