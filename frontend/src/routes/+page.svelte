@@ -27,14 +27,11 @@
 	import MenuIcon from '@lucide/svelte/icons/menu';
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
-	import RocketIcon from '@lucide/svelte/icons/rocket';
-	import BriefcaseIcon from '@lucide/svelte/icons/briefcase';
-	import UsersIcon from '@lucide/svelte/icons/users';
-	import CircleXIcon from '@lucide/svelte/icons/circle-x';
-	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 	import HandshakeIcon from '@lucide/svelte/icons/handshake';
 	import WheatIcon from '@lucide/svelte/icons/wheat';
 	import AwardIcon from '@lucide/svelte/icons/award';
+	import UsersIcon from '@lucide/svelte/icons/users';
+	import FaIcon from '$lib/components/FaIcon.svelte';
 
 	let mobileNavOpen = $state(false);
 	let loggingOut = $state(false);
@@ -295,33 +292,33 @@
 		<div class="grid gap-4 md:grid-cols-2">
 			<div class="rounded-2xl border border-red-200 bg-red-50/60 p-6 dark:border-red-900/30 dark:bg-red-950/20" data-aos="fade-right">
 				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-red-600 dark:text-red-400">
-					<CircleXIcon class="size-6 shrink-0" /> {t('Hambatan Ekspor Desa')}
+					<FaIcon icon="fa-solid fa-circle-xmark" class="text-2xl shrink-0" /> {t('Hambatan Ekspor Desa')}
 				</h3>
 				<ul class="mt-4 grid gap-3">
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
+						<FaIcon icon="fa-solid fa-circle-xmark" class="mt-0.5 shrink-0 text-lg text-red-500 dark:text-red-400" />
 						{t('Komoditas berkualitas tapi tidak memiliki standar dan dokumentasi ekspor yang diakui pembeli internasional.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
+						<FaIcon icon="fa-solid fa-circle-xmark" class="mt-0.5 shrink-0 text-lg text-red-500 dark:text-red-400" />
 						{t('Proses sertifikasi, karantina, dan dokumen ekspor sangat rumit dan memakan biaya besar tanpa panduan yang jelas.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<CircleXIcon class="mt-0.5 size-5 shrink-0 text-red-500 dark:text-red-400" />
+						<FaIcon icon="fa-solid fa-circle-xmark" class="mt-0.5 shrink-0 text-lg text-red-500 dark:text-red-400" />
 						{t('Ketergantungan pada calo dan broker — margin keuntungan petani sangat tipis karena panjangnya rantai perantara.')}</li>
 				</ul>
 			</div>
 			<div class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 dark:border-emerald-900/30 dark:bg-emerald-950/20" data-aos="fade-left">
 				<h3 class="flex items-center gap-2 text-xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-					<CircleCheckIcon class="size-6 shrink-0" /> {t('Solusi MauEkspor')}
+					<FaIcon icon="fa-solid fa-circle-check" class="text-2xl shrink-0" /> {t('Solusi MauEkspor')}
 				</h3>
 				<ul class="mt-4 grid gap-3">
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+						<FaIcon icon="fa-solid fa-circle-check" class="mt-0.5 shrink-0 text-lg text-emerald-500 dark:text-emerald-400" />
 						{t('Standarisasi komoditas otomatis: katalog terstruktur, HS code, profil ekspor, dan sertifikasi lengkap yang diakui buyer global.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+						<FaIcon icon="fa-solid fa-circle-check" class="mt-0.5 shrink-0 text-lg text-emerald-500 dark:text-emerald-400" />
 						{t('Panduan step-by-step untuk kepatuhan ekspor: dari karantina pertanian, sertifikasi HACCP/halal, hingga dokumen pengiriman.')}</li>
 					<li class="flex items-start gap-3 text-sm leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
-						<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+						<FaIcon icon="fa-solid fa-circle-check" class="mt-0.5 shrink-0 text-lg text-emerald-500 dark:text-emerald-400" />
 						{t('Koneksi langsung dengan buyer global — tanpa perantara. Petani dan UMKM desa menerima harga yang lebih adil dan margin lebih besar.')}</li>
 				</ul>
 			</div>
@@ -478,22 +475,22 @@
 			<div class="grid content-start gap-4">
 				<Badge variant="outline" class="border-white/30 text-white">{t('Pilar Rantai Pasok Ekspor')}</Badge>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<SproutIcon class="size-6 text-emerald-400" />
+					<FaIcon icon="fa-solid fa-seedling" class="text-2xl text-emerald-400" />
 					<h4 class="mt-2 text-lg font-bold">{t('Kesiapan Produk')}</h4>
 					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Bantu setiap komoditas desa memenuhi standar mutu internasional — HS code, spesifikasi, kemasan, dan sertifikasi yang diakui buyer global.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<RocketIcon class="size-6 text-blue-400" />
+					<FaIcon icon="fa-solid fa-rocket" class="text-2xl text-blue-400" />
 					<h4 class="mt-2 text-lg font-bold">{t('Akses Pasar Global')}</h4>
 					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Koneksikan UMKM dan kelompok tani desa langsung dengan buyer internasional — tanpa ketergantungan pada perantara, margin lebih besar untuk petani.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<BriefcaseIcon class="size-6 text-amber-400" />
+					<FaIcon icon="fa-solid fa-briefcase" class="text-2xl text-amber-400" />
 					<h4 class="mt-2 text-lg font-bold">{t('Nilai Tambah Ekonomi')}</h4>
 					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Tingkatkan nilai jual komoditas desa melalui standarisasi, branding, dan akses ke rantai pasok premium global yang memberikan harga lebih adil.')}</p>
 				</div>
 				<div class="rounded-xl border border-white/15 bg-white/10 p-5">
-					<UsersIcon class="size-6 text-purple-400" />
+					<FaIcon icon="fa-solid fa-users" class="text-2xl text-purple-400" />
 					<h4 class="mt-2 text-lg font-bold">{t('Ekosistem Berkelanjutan')}</h4>
 					<p class="mt-1 text-sm leading-relaxed text-white/70">{t('Bangun ekosistem kolaboratif antara petani, koperasi, forwarder, dan buyer untuk rantai pasok ekspor yang adil dan berkelanjutan.')}</p>
 				</div>
