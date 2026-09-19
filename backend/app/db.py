@@ -297,8 +297,17 @@ def delete(table: str, record_id: str) -> bool:
 def gen_id(table: str, prefix: str | None = None) -> str:
     if prefix is None:
         prefix = table.rstrip("s").upper()
-    seq = len(all(table)) + 1
-    return f"{prefix}-{seq:03d}"
+    # Cari nomor urut tertinggi dari record yang ada (hindari duplikasi setelah delete)
+    max_seq = 0
+    for r in all(table):
+        rid = str(r.get("id", ""))
+        if rid.startswith(prefix + "-"):
+            try:
+                seq = int(rid[len(prefix) + 1:])
+                max_seq = max(max_seq, seq)
+            except ValueError:
+                pass
+    return f"{prefix}-{max_seq + 1:03d}"
 
 
 def loaded_records(table: str) -> int:

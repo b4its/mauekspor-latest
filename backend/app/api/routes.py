@@ -1385,11 +1385,14 @@ def list_forwarder_catalogs(search: str = "", tag: str = "", min_price: float = 
         items = [c for c in items if float(c.get("basePriceExw") or 0) >= min_price]
     if max_price:
         items = [c for c in items if float(c.get("basePriceExw") or 0) <= max_price]
+    output_items = []
     for item in items:
         product = db.get("products", str(item.get("productId", ""))) if item.get("productId") else None
-        item["sellerName"] = item.get("owner", "") or (product or {}).get("origin", "")
-        item["sellerId"] = item.get("ownerId", "")
-    return {"data": items, "meta": {}}
+        out_item = dict(item)
+        out_item["sellerName"] = item.get("owner", "") or (product or {}).get("origin", "")
+        out_item["sellerId"] = item.get("ownerId", "")
+        output_items.append(out_item)
+    return {"data": output_items, "meta": {}}
 
 
 @router.get("/catalogs/public/")
@@ -1928,11 +1931,11 @@ def create_costing(payload: sc.CreateCostingPayload):
 
     volume_m3, weight_kg, dims = _product_container_inputs(product)
     calc = pricing_svc.calculate_full_costing(
-        cogs_idr=float(cogs or 0),
-        packing_cost_idr=float(packing or 0),
-        margin_percent=float(margin or 20),
+        cogs_idr=float(cogs if cogs is not None else 0),
+        packing_cost_idr=float(packing if packing is not None else 0),
+        margin_percent=float(margin if margin is not None else 20),
         destination=str(payload.destination),
-        distance_km=float(distance or 200),
+        distance_km=float(distance if distance is not None else 200),
         product_volume_m3=volume_m3,
         product_weight_kg=weight_kg,
     )
@@ -1983,18 +1986,20 @@ def update_costing(costing_id: str, payload: sc.UpdateCostingPayload):
     if payload.exchange_rate is not None:
         pricing_svc.set_exchange_rate(float(payload.exchange_rate), source="manual")
         record["exchangeRate"] = payload.exchange_rate
-    margin = record.get("margin", 20)
+    margin = record.get("margin")
+    if margin is None:
+        margin = 20
     cogs = record.get("cogs_per_unit_idr") or record.get("cogsPerUnitIdr") or 0
     packing = record.get("packing_cost_idr") or record.get("packingCostIdr") or 0
     distance = record.get("distance_km") or record.get("distanceKm") or 200
     linked_product = db.get("products", str(record.get("productId") or "")) if record.get("productId") else None
     volume_m3, weight_kg, dims = _product_container_inputs(linked_product)
     calc = pricing_svc.calculate_full_costing(
-        cogs_idr=float(cogs or 0),
-        packing_cost_idr=float(packing or 0),
-        margin_percent=float(margin or 20),
+        cogs_idr=float(cogs if cogs is not None else 0),
+        packing_cost_idr=float(packing if packing is not None else 0),
+        margin_percent=float(margin if margin is not None else 20),
         destination=str(record.get("destination", "")),
-        distance_km=float(distance or 200),
+        distance_km=float(distance if distance is not None else 200),
         product_volume_m3=volume_m3,
         product_weight_kg=weight_kg,
     )
@@ -3353,7 +3358,7 @@ def create_analysis(payload: sc.CreateExportAnalysisPayload):
     return _one(record)
 
 
-def _compare_analyses_results(product: dict, country_codes: list[str]) -> tuple[dict, list[dict]]:
+def _compare_analyses_results(product: dict, country_codes: list[str]) -> dict:
     """Jalankan/dapatkan analisis per negara & urutkan berdasarkan skor (dipakai compare JSON + PDF)."""
     from app.services import compliance as compliance_svc
 

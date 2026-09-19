@@ -378,7 +378,7 @@ def village_regulatory_issues(product: dict, country_code: str, group: str) -> l
         severity = "critical" if item.get("priority") == "critical" else ("major" if item.get("priority") == "major" else "minor")
         needs_evidence = item.get("priority") != "minor"
 
-        if not has_evidence or (needs_evidence and not _evidence_in_record(certs, ["halal","certificate"])):
+        if not has_evidence:
             issues.append({
                 "type": "Regulation",
                 "rule_key": f"village_priority_{item.get('title','').replace(' ','')}",
@@ -478,7 +478,7 @@ def snapshot_product(product: dict) -> dict[str, Any]:
         "weight_gross": product.get("weight_gross"),
         "hs": product.get("hs", "TBD"),
         "hs_code": product.get("hs", "TBD"),
-        "sku": (enriched or {}).get("sku") or product.get("sku", ""),
+        "sku": (enriched or {}).get("skuGenerated") or product.get("sku", ""),
         "origin": product.get("origin", ""),
         "updatedAt": product.get("updatedAt", ""),
     }
