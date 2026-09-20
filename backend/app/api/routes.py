@@ -1585,6 +1585,7 @@ def add_catalog_image(catalog_id: str, payload: dict):
     })
     record["images"] = len(db.find("catalog_images", catalogId=catalog_id))
     record["updatedAt"] = "now"
+    db.save(record)
     return _one(image)
 
 
@@ -1610,6 +1611,7 @@ def delete_catalog_image(catalog_id: str, image_id: str):
     record = db.get("catalogs", catalog_id)
     if record:
         record["images"] = len(db.find("catalog_images", catalogId=catalog_id))
+        db.save(record)
     return {"data": {"status": "deleted"}, "meta": {}}
 
 
@@ -2054,6 +2056,8 @@ def update_costing(costing_id: str, payload: sc.UpdateCostingPayload):
         "exwPrice": calc["exwPrice"],
         "fobPrice": calc["fobPrice"],
         "cifPrice": calc["cifPrice"],
+        "landedCost": round(calc["cifPrice"] * 1.12, 2),
+        "profit": round(calc["exwPrice"] - (cogs + packing) / (calc["exchangeRate"] or 1), 2),
         "lines": calc["lines"],
         "container": container,
         "status": "Ready",
@@ -2113,6 +2117,7 @@ def recalculate_costing(costing_id: str):
     record["fobPrice"] = calc["fobPrice"]
     record["cifPrice"] = calc["cifPrice"]
     record["landedCost"] = round(calc["cifPrice"] * 1.12, 2)
+    record["profit"] = round(calc["exwPrice"] - (cogs + packing) / (calc["exchangeRate"] or 1), 2)
     record["lines"] = calc["lines"]
     record["container"] = container
     record["updatedAt"] = "now"
@@ -3291,7 +3296,7 @@ def get_chat_session(session_id: str):
     if not record:
         raise HTTPException(404, "Chat session not found")
     record["messageCount"] = len(record.get("messages", []) or [])
-    return _save_one(record)
+    return _one(record)
 
 
 @router.delete("/chat/sessions/{session_id}/")
