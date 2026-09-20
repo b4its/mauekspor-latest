@@ -128,9 +128,13 @@ def _profile_one(record) -> dict:
     return {"data": out, "meta": {}}
 
 
-def _notify(title: str, description: str, module: str, severity: str = "Info", href: str = "") -> None:
-    """Buat notifikasi internal (dipanggil pada aksi penting)."""
-    db.insert("notifications", {
+def _notify(title: str, description: str, module: str, severity: str = "Info", href: str = "", owner_id: str | None = None) -> None:
+    """Buat notifikasi internal (dipanggil pada aksi penting).
+    
+    If owner_id is provided, notification is shown only to that user.
+    If owner_id is None, notification is broadcast to all users.
+    """
+    notification = {
         "id": db.gen_id("notifications", "NTF"),
         "title": title,
         "description": description,
@@ -139,7 +143,10 @@ def _notify(title: str, description: str, module: str, severity: str = "Info", h
         "status": "Unread",
         "time": "now",
         "href": href,
-    })
+    }
+    if owner_id:
+        notification["ownerId"] = owner_id
+    db.insert("notifications", notification)
 
 
 # ----------------------------------------------------------------------------
@@ -851,8 +858,12 @@ def create_product_pricing(product_id: str, payload: dict):
     if not product:
         raise HTTPException(404, "Product not found")
     from app.services.market_intel import generate_product_pricing
-    cogs = payload.get("cogs_per_unit_idr") or payload.get("cogsPerUnitIdr") or 0
-    margin = payload.get("target_margin_percent") or payload.get("targetMarginPercent") or 30
+    cogs = payload.get("cogs_per_unit_idr")
+    if cogs is None:
+        cogs = payload.get("cogsPerUnitIdr", 0)
+    margin = payload.get("target_margin_percent")
+    if margin is None:
+        margin = payload.get("targetMarginPercent", 30)
     country = payload.get("target_country_code") or payload.get("targetCountryCode") or "JP"
     result = generate_product_pricing(product, float(cogs), float(margin), str(country))
     existing = db.get_by("pricing_results", productId=product_id)
@@ -1769,8 +1780,12 @@ def create_catalog_pricing(catalog_id: str, payload: dict):
         raise HTTPException(404, "Catalog not found")
     product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else record
     from app.services.market_intel import generate_product_pricing
-    cogs = payload.get("cogs_per_unit_idr") or payload.get("cogsPerUnitIdr") or 0
-    margin = payload.get("target_margin_percent") or payload.get("targetMarginPercent") or 30
+    cogs = payload.get("cogs_per_unit_idr")
+    if cogs is None:
+        cogs = payload.get("cogsPerUnitIdr", 0)
+    margin = payload.get("target_margin_percent")
+    if margin is None:
+        margin = payload.get("targetMarginPercent", 30)
     country = payload.get("target_country_code") or payload.get("targetCountryCode") or "JP"
     result = generate_product_pricing(product or record, float(cogs), float(margin), str(country))
     existing = db.get_by("pricing_results", productId=str(record.get("productId", "")))

@@ -213,20 +213,31 @@ async def general_rate_limit(request, call_next):
 
 
 # ── Account lockout (login gagal berulang) ─────────────────────────
-_login_failures: dict[str, int] = {}
+_login_failures: dict[str, tuple[int, float]] = {}  # (count, first_failure_time)
 _LOCKOUT_THRESHOLD = 10
 _LOCKOUT_SECONDS = 300
 
 
 def _is_locked_out(identifier: str) -> bool:
-    failures = _login_failures.get(identifier, 0)
-    if failures >= _LOCKOUT_THRESHOLD:
+    entry = _login_failures.get(identifier)
+    if not entry:
+        return False
+    count, first_time = entry
+    if count >= _LOCKOUT_THRESHOLD:
+        if time.time() - first_time > _LOCKOUT_SECONDS:
+            _login_failures.pop(identifier, None)
+            return False
         return True
     return False
 
 
 def _record_login_failure(identifier: str) -> None:
-    _login_failures[identifier] = _login_failures.get(identifier, 0) + 1
+    entry = _login_failures.get(identifier)
+    if entry:
+        count, first_time = entry
+        _login_failures[identifier] = (count + 1, first_time)
+    else:
+        _login_failures[identifier] = (1, time.time())
 
 
 def _clear_login_failures(identifier: str) -> None:
