@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, Upload
 from fastapi.responses import FileResponse
 
 from app import ai, db
+from app.core.config import settings
 from app.core.security import (
     hash_password,
     verify_password,
@@ -1969,7 +1970,7 @@ def create_costing(payload: sc.CreateCostingPayload):
     data.update({
         "id": db.gen_id("costing", "CST"),
         "margin": margin,
-        "currency": "USD",
+        "currency": settings.display_currency,
         "status": "Ready",
         "cogs_per_unit_idr": cogs,
         "exchangeRate": calc["exchangeRate"],
@@ -2205,7 +2206,7 @@ def create_quotation(payload: sc.CreateQuotationPayload):
     data = payload.model_dump()
     data["id"] = db.gen_id("quotations", "Q")
     data.setdefault("status", "Draft")
-    data.setdefault("currency", "USD")
+    data.setdefault("currency", settings.display_currency)
     data.setdefault("value", 0)
     data.setdefault("costLines", [])
     data["updatedAt"] = "now"
@@ -3985,7 +3986,8 @@ DEFAULT_SETTINGS = {
     "entityType": "Manufacturer exporter",
     "nib": "",
     "taxId": "",
-    "currency": "IDR",
+    "currency": settings.base_currency,      # mata uang input (biaya/COGS)
+    "displayCurrency": settings.display_currency,  # mata uang output (harga ekspor)
     "language": "id",
     "notifications": True,
     "security": {"sessionType": "cookie"},
@@ -4014,6 +4016,58 @@ def update_settings(payload: dict):
     record["updatedAt"] = "now"
     db.save(record)
     return _save_one(record)
+
+
+@router.get("/settings/currencies/")
+def get_available_currencies():
+    """Daftar mata uang yang didukung untuk konversi."""
+    from app.services.pricing import get_exchange_rate, BASE_CURRENCY, DISPLAY_CURRENCY
+    fx = get_exchange_rate()
+    return {
+        "data": {
+            "baseCurrency": BASE_CURRENCY,
+            "displayCurrency": DISPLAY_CURRENCY,
+            "exchangeRate": float(fx.get("rate", 1.0)),
+            "exchangeSource": fx.get("source", "fallback"),
+            "available": [
+                {"code": "IDR", "name": "Rupiah Indonesia", "symbol": "Rp"},
+                {"code": "USD", "name": "US Dollar", "symbol": "$"},
+                {"code": "EUR", "name": "Euro", "symbol": "€"},
+                {"code": "JPY", "name": "Japanese Yen", "symbol": "¥"},
+                {"code": "GBP", "name": "British Pound", "symbol": "£"},
+                {"code": "SGD", "name": "Singapore Dollar", "symbol": "S$"},
+                {"code": "AUD", "name": "Australian Dollar", "symbol": "A$"},
+                {"code": "CNY", "name": "Chinese Yuan", "symbol": "¥"},
+                {"code": "KRW", "name": "Korean Won", "symbol": "₩"},
+                {"code": "MYR", "name": "Malaysian Ringgit", "symbol": "RM"},
+                {"code": "THB", "name": "Thai Baht", "symbol": "฿"},
+                {"code": "AED", "name": "UAE Dirham", "symbol": "د.إ"},
+                {"code": "SAR", "name": "Saudi Riyal", "symbol": "﷼"},
+            ],
+        },
+        "meta": {}
+    }
+
+
+@router.post("/settings/display-currency/")
+def set_display_currency(payload: dict):
+    """Ubah mata uang tampilan (display currency) untuk seluruh perhitungan harga."""
+    from app.services import pricing as pricing_svc
+    new_currency = str(payload.get("currency", "")).upper()
+    if not new_currency or len(new_currency) != 3:
+        raise HTTPException(422, "Currency code must be 3-letter ISO code")
+    pricing_svc.DISPLAY_CURRENCY = new_currency
+    settings.display_currency = new_currency
+    fx = pricing_svc.get_exchange_rate()
+    return {
+        "data": {
+            "baseCurrency": pricing_svc.BASE_CURRENCY,
+            "displayCurrency": new_currency,
+            "exchangeRate": float(fx.get("rate", 1.0)),
+            "exchangeSource": fx.get("source", "fallback"),
+        },
+        "meta": {}
+    }
 
 
 # ----------------------------------------------------------------------------

@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     seed_admin_password: str = "admin123"
     seed_exporter_email: str = "rizal@kopigayo.example"
     seed_exporter_password: str = "rizal123"
+    # Currency configuration: base = mata uang input biaya (default IDR),
+    # display = mata uang output harga (default IDR, bisa USD/EUR/JPY/dll)
+    base_currency: str = "IDR"
+    display_currency: str = "IDR"
+    fallback_rate: float = 1.0  # base→display fallback rate (IDR→IDR = 1.0)
 
     @model_validator(mode="after")
     def _warn_default_secret(self) -> "Settings":

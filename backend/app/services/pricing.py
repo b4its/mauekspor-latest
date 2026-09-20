@@ -14,8 +14,12 @@ from typing import Any
 import httpx
 
 from app import db, ai
+from app.core.config import settings
 
-FALLBACK_RATE = 15800.0
+# Currency defaults dari config (base = IDR, display = IDR/USD/EUR/dll)
+BASE_CURRENCY = settings.base_currency  # mata uang input biaya
+DISPLAY_CURRENCY = settings.display_currency  # mata uang output harga
+FALLBACK_RATE = settings.fallback_rate
 RATE_STALE_HOURS = 24
 
 
@@ -23,7 +27,7 @@ RATE_STALE_HOURS = 24
 # Exchange rate
 # ---------------------------------------------------------------------------
 def get_exchange_rate() -> dict[str, Any]:
-    """Rate IDR/USD terbaru; auto-fetch bila basi >24 jam; fallback 15800."""
+    """Rate base→display terbaru; auto-fetch bila basi >24 jam; fallback."""
     rates = db.all("exchange_rates")
     record = rates[0] if rates else None
     now = datetime.now(timezone.utc)
@@ -49,17 +53,21 @@ def get_exchange_rate() -> dict[str, Any]:
         record = db.insert("exchange_rates", {
             "id": db.gen_id("exchange_rates", "FX"),
             "rate": rate, "source": source, "updatedAt": now.isoformat(),
+            "baseCurrency": BASE_CURRENCY, "targetCurrency": DISPLAY_CURRENCY,
         })
     return record
 
 
 def fetch_live_exchange_rate() -> float | None:
+    """Fetch live rate dari exchangerate-api (base→display)."""
+    if BASE_CURRENCY == DISPLAY_CURRENCY:
+        return 1.0
     try:
-        resp = httpx.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=5)
+        resp = httpx.get(f"https://api.exchangerate-api.com/v4/latest/{BASE_CURRENCY}", timeout=5)
         resp.raise_for_status()
         data = resp.json()
-        idr = data.get("rates", {}).get("IDR")
-        return float(idr) if idr else None
+        target = data.get("rates", {}).get(DISPLAY_CURRENCY)
+        return float(target) if target else None
     except Exception:
         return None
 
@@ -74,6 +82,7 @@ def set_exchange_rate(rate: float, source: str = "manual") -> dict[str, Any]:
     else:
         record = db.insert("exchange_rates", {
             "id": db.gen_id("exchange_rates", "FX"), "rate": rate, "source": source, "updatedAt": now,
+            "baseCurrency": BASE_CURRENCY, "targetCurrency": DISPLAY_CURRENCY,
         })
     return record
 
@@ -264,6 +273,9 @@ def calculate_full_costing(
     return {
         "exchangeRate": rate,
         "exchangeSource": fx.get("source", "fallback"),
+        "baseCurrency": BASE_CURRENCY,
+        "displayCurrency": DISPLAY_CURRENCY,
+        "currency": DISPLAY_CURRENCY,
         "exwPrice": exw,
         "fobPrice": fob,
         "cifPrice": cif,
