@@ -9,6 +9,7 @@
 	import { products, projects, buyers, exportAnalyses } from '$lib/data/trade';
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
 	import { t } from '$lib/i18n.svelte';
+	import { formatCurrency } from '$lib/utils/format';
 
 	import MenuIcon from '@lucide/svelte/icons/menu';
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
@@ -217,7 +218,7 @@
 						<span class="mt-1.5 block text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Akun pembeli')}</span>
 					</div>
 					<div class="rounded-xl border border-[#0b3d91]/10 bg-white p-4 dark:border-white/10 dark:bg-[#0a1730]">
-						<strong class="block text-3xl font-bold tracking-tight text-[#0b3d91] dark:text-[#5ea1ff]">${(pipelineValue / 1000).toFixed(0)}k</strong>
+						<strong class="block text-3xl font-bold tracking-tight text-[#0b3d91] dark:text-[#5ea1ff]">{formatCurrency(pipelineValue / 1000).replace(/\D+$/, '')}k</strong>
 						<span class="mt-1.5 block text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Nilai pipeline')}</span>
 					</div>
 				</div>

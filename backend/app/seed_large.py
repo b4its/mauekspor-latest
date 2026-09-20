@@ -634,9 +634,9 @@ def seed_100_records():
             "cogsPerUnitIdr": cogs, "targetMarginPercent": mv,
             "targetCountryCode": _pick(["JP","US","DE","SG","KR"], n()),
             "exchangeRateUsed": exr,
-            "exwPriceUsd": round(cogs/exr, 2),
-            "fobPriceUsd": round(cogs/exr*(1+mv/100), 2),
-            "cifPriceUsd": round(cogs/exr*(1+mv/100)*1.12, 2),
+            "exwPrice": round(cogs/exr, 2),
+            "fobPrice": round(cogs/exr*(1+mv/100), 2),
+            "cifPrice": round(cogs/exr*(1+mv/100)*1.12, 2),
             "generatedAt": "now"})
 
     # -- HS CODES (pool komoditas desa) --

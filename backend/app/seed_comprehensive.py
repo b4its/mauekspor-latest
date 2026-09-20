@@ -1054,11 +1054,11 @@ def _seed_pricing_results():
                 "cogsPerUnitIdr": 28500,
                 "targetMarginPercent": 22,
                 "exchangeRateUsed": 15800,
-                "exwPriceUsd": 2.20,
-                "fobPriceUsd": 2.44,
-                "cifPriceUsd": 2.66,
+                "exwPrice": 2.20,
+                "fobPrice": 2.44,
+                "cifPrice": 2.66,
                 "pricingInsight": "Harga kompetitif untuk segmen specialty.",
-                "pricingBreakdown": {"HPP (IDR)": 28500, "Margin": "22%", "EXW (USD)": 2.20},
+                "pricingBreakdown": {"HPP (IDR)": 28500, "Margin": "22%", "EXW": 2.20},
                 "generatedAt": "2026-08-06",
             })
 

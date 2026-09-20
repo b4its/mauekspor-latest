@@ -387,9 +387,9 @@ def seed_if_empty():
     db.insert("pricing_results", {
         "id": "PRC-COF-001", "productId": "PRD-COF-001",
         "cogsPerUnitIdr": 28500, "targetMarginPercent": 22, "targetCountryCode": "JP",
-        "exchangeRateUsed": 15800, "exwPriceUsd": 2.20, "fobPriceUsd": 2.44, "cifPriceUsd": 2.66,
+        "exchangeRateUsed": 15800, "exwPrice": 2.20, "fobPrice": 2.44, "cifPrice": 2.66,
         "pricingInsight": "Harga kompetitif untuk segmen specialty; pastikan margin menutup biaya label.",
-        "pricingBreakdown": {"HPP (IDR)": 28500, "Margin": "22%", "EXW (USD)": 2.20, "FOB (USD)": 2.44, "CIF (USD)": 2.66},
+        "pricingBreakdown": {"HPP (IDR)": 28500, "Margin": "22%", "EXW": 2.20, "FOB": 2.44, "CIF": 2.66},
         "generatedAt": "2026-08-06 10:40",
     })
 

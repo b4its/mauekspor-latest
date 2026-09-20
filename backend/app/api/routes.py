@@ -1800,8 +1800,11 @@ def generate_catalog_ai_description(catalog_id: str, payload: dict):
 # (exchange rate routes didefinisikan sebelum route parameterized {costing_id})
 @router.get("/costing/exchange-rate/")
 def get_exchange_rate_endpoint():
-    from app.services.pricing import get_exchange_rate
-    return _one(get_exchange_rate())
+    from app.services.pricing import get_exchange_rate, BASE_CURRENCY, DISPLAY_CURRENCY
+    rec = get_exchange_rate()
+    rec.setdefault("baseCurrency", BASE_CURRENCY)
+    rec.setdefault("targetCurrency", DISPLAY_CURRENCY)
+    return _one(rec)
 
 
 @router.put("/costing/exchange-rate/")

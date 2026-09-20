@@ -22,6 +22,8 @@ export type ExchangeRate = {
 	rate: number;
 	source: string;
 	updatedAt: string;
+	baseCurrency?: string;
+	targetCurrency?: string;
 };
 
 export function listCostingScenarios() {
