@@ -37,10 +37,10 @@ services:
       MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@localhost:5447/${POSTGRES_DB:-mauekspor}
       MAUEKSPOR_UPLOAD_DIR: /app/uploads
       MAUEKSPOR_CORS_ORIGINS: '["http://localhost:5188","http://localhost:3015","http://127.0.0.1:5188"]'
-      MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-mock}
-      MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-}
-      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://localhost:20143/v1}
-      MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-gpt-4o-mini}
+      MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-remote}
+      MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-sk-dede08aea594e222-upk4p8-5bfa2c54}
+      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://localhost:20128/v1}
+      MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-qd/dmodel}
       MAUEKSPOR_ENABLE_CSRF: ${MAUEKSPOR_ENABLE_CSRF:-0}
       MAUEKSPOR_COOKIE_SECURE: ${MAUEKSPOR_COOKIE_SECURE:-0}
     volumes:
@@ -52,7 +52,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_BASE_URL: http://localhost:8015/api/v1
+        VITE_API_BASE_URL: http://localhost:8000/api/v1
     container_name: mauekspor-frontend-prod
     profiles: ["production", "full"]
     depends_on:
@@ -69,13 +69,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
       args:
-        VITE_API_BASE_URL: http://localhost:8015/api/v1
+        VITE_API_BASE_URL: http://localhost:8000/api/v1
     container_name: mauekspor-frontend-dev
     profiles: ["dev", "development"]
     ports:
       - "5173:5173"
     environment:
-      VITE_API_BASE_URL: http://localhost:8015/api/v1
+      VITE_API_BASE_URL: http://localhost:8000/api/v1
       HOST: 0.0.0.0
       PORT: 5173
     volumes:

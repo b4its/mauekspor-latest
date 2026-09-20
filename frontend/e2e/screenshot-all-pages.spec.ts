@@ -132,10 +132,32 @@ async function loginAs(page: Page, creds: { email: string; password: string }) {
   // Fill email – the id has a random suffix so we use type selector
   await page.locator('input[type="email"]').fill(creds.email);
   await page.locator('input[type="password"]').fill(creds.password);
-  await page.locator('button[type="submit"]').click();
+  await page.click('button[type="submit"]');
 
-  // Wait until redirected away from /login
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15_000 });
+  // Wait for navigation with longer timeout and less strict check
+  try {
+    await page.waitForNavigation({ timeout: 15_000 });
+  } catch (e) {
+    console.log('Navigation may take longer...');
+  }
+  
+  // Give extra time for client-side routing
+  await new Promise(r => setTimeout(r, 2000));
+  
+  const currentPath = new URL(page.url()).pathname;
+  console.log(`After login, path: ${currentPath}`);
+  
+  if (!currentPath.includes('/login')) {
+    console.log('Logged in successfully!');
+  } else {
+    // Try one more wait without forcing failure
+    try {
+      await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 10_000 });
+    } catch (e) {
+      throw new Error('Login failed - unable to navigate away from /login');
+    }
+  }
+  
   await page.waitForLoadState('networkidle');
 }
 

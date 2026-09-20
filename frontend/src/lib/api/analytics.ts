@@ -20,3 +20,12 @@ export function getAnalyticsLanes() {
 export function refreshAnalytics() {
 	return apiFetch<AnalyticsMetric[]>('/analytics/refresh/', { method: 'POST' });
 }
+
+export interface AnalyticsAiSummary {
+	summary: string;
+	fromCache: boolean;
+}
+
+export function getAnalyticsAiSummary() {
+	return apiFetch<AnalyticsAiSummary>('/analytics/ai/summary/', { method: 'POST' });
+}

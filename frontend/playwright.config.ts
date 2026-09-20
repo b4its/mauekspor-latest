@@ -12,7 +12,7 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5188',
     // Keep browser state across tests within a describe (shared context)
     trace: 'retain-on-failure',
     screenshot: 'on',            // always save screenshot on failure

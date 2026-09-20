@@ -78,6 +78,14 @@ _MOCK_OUTPUTS: dict[str, Any] = {
         "bukti label dan dokumen pelaporan sudah lengkap sebelum quote dikirim. "
         "Ada hal lain yang ingin Anda tanya?"
     ),
+    "analytics_summary": (
+        "Pipeline ekspor menunjukkan 3 trade lane aktif dengan readiness rata-rata 82%. "
+        "Lane Japan Coffee memiliki readiness tertinggi (82%) dan siap masuk tahap shipment. "
+        "Fokus utama: selesaikan 2 compliance blocker critical, dan percepat quotation untuk "
+        "EU Rattan Furniture (risk High, readiness 74%). Cash flow sehat dengan receivable "
+        "terkendali. Rekomendasi: prioritaskan pengiriman Japan Coffee dan mulai siapkan "
+        "dokumen Singapore Organic Snacks (readiness 91%, risk Low)."
+    ),
 }
 
 

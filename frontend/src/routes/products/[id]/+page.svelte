@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { enrichProduct, deleteProduct } from '$lib/api/products';
+	import { enrichProduct, deleteProduct, generateCatalogDescription, type CatalogDescription } from '$lib/api/products';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
@@ -12,6 +12,9 @@
 	let enriched = $state(false);
 	let enrichError = $state('');
 	let deleting = $state(false);
+	let catalogDesc = $state<CatalogDescription | null>(null);
+	let catalogLoading = $state(false);
+	let catalogError = $state('');
 
 	async function runEnrichment() {
 		enriching = true;
@@ -34,6 +37,20 @@
 			window.location.href = '/products';
 		} catch {
 			deleting = false;
+		}
+	}
+
+	async function handleGenerateCatalog() {
+		catalogLoading = true;
+		catalogError = '';
+		catalogDesc = null;
+		try {
+			const res = await generateCatalogDescription(data.product.id);
+			catalogDesc = res.data;
+		} catch {
+			catalogError = t('Gagal menghasilkan deskripsi katalog.');
+		} finally {
+			catalogLoading = false;
 		}
 	}
 
@@ -120,10 +137,28 @@
 			<CardHeader class="p-0"><CardTitle>{t('Pemasaran AI')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2 p-0 pt-4">
 				<Button variant="outline" href="/marketing" class="w-fit">{t('Market Intelligence & Pricing')}</Button>
+				<Button
+					variant="outline"
+					disabled={catalogLoading || data.product.status !== 'Enriched'}
+					onclick={handleGenerateCatalog}
+					class="w-fit"
+				>
+					{#if catalogLoading}
+						<span class="inline-flex items-center gap-2">
+							<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+							{t('Generating...')}
+						</span>
+					{:else}
+						{catalogDesc ? t('Regenerate Deskripsi Katalog') : t('Generate Deskripsi Katalog AI')}
+					{/if}
+				</Button>
 				{#if data.product.status === 'Enriched'}
 					<span class="text-xs font-semibold text-muted-foreground">{t('Produk siap dianalisis pasar (HS & SKU tersedia).')}</span>
 				{:else}
 					<span class="text-xs font-semibold text-muted-foreground">{t('Jalankan enrichment dulu sebelum analisis pasar.')}</span>
+				{/if}
+				{#if catalogError}
+					<p class="text-sm font-bold text-destructive">{catalogError}</p>
 				{/if}
 			</CardContent>
 		</Card>
@@ -144,5 +179,47 @@
 				{/if}
 			</CardContent>
 		</Card>
+
+		{#if catalogDesc}
+			<Card class="md:col-span-2 border-primary/20">
+				<CardHeader class="p-0">
+					<Badge variant="outline" class="border-primary/30 text-primary w-fit">🤖 AI</Badge>
+					<CardTitle class="mt-2">{t('Deskripsi Katalog AI')}</CardTitle>
+					<CardDescription class="mt-1">{t('Deskripsi B2B yang dihasilkan AI untuk katalog ekspor produk ini.')}</CardDescription>
+				</CardHeader>
+				<CardContent class="grid gap-4 p-0 pt-4">
+					<div class="rounded-lg border bg-muted/30 p-4">
+						<p class="text-sm font-semibold text-muted-foreground mb-2">{t('Deskripsi Ekspor')}</p>
+						<p class="leading-relaxed">{catalogDesc.export_description}</p>
+					</div>
+					{#if catalogDesc.technical_specs?.length}
+						<div class="rounded-lg border bg-muted/30 p-4">
+							<p class="text-sm font-semibold text-muted-foreground mb-2">{t('Spesifikasi Teknis')}</p>
+							<dl class="grid gap-2 sm:grid-cols-2">
+								{#each catalogDesc.technical_specs as spec}
+									<div>
+										<dt class="text-xs font-bold text-muted-foreground">{spec.label}</dt>
+										<dd class="text-sm font-medium">{spec.value}</dd>
+									</div>
+								{/each}
+							</dl>
+						</div>
+					{/if}
+					{#if catalogDesc.safety_info?.length}
+						<div class="rounded-lg border bg-muted/30 p-4">
+							<p class="text-sm font-semibold text-muted-foreground mb-2">{t('Informasi Keselamatan')}</p>
+							<dl class="grid gap-2 sm:grid-cols-2">
+								{#each catalogDesc.safety_info as info}
+									<div>
+										<dt class="text-xs font-bold text-muted-foreground">{info.label}</dt>
+										<dd class="text-sm font-medium">{info.value}</dd>
+									</div>
+								{/each}
+							</dl>
+						</div>
+					{/if}
+				</CardContent>
+			</Card>
+		{/if}
 	</div>
 </AppShell>

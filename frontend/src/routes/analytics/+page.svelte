@@ -15,7 +15,7 @@
 	} from '$lib/data/trade';
 	import { currency } from '$lib/utils/format';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
-	import { getAnalyticsOverview, getAnalyticsLanes, refreshAnalytics, type AnalyticsLane } from '$lib/api/analytics';
+	import { getAnalyticsOverview, getAnalyticsLanes, refreshAnalytics, getAnalyticsAiSummary, type AnalyticsLane, type AnalyticsAiSummary } from '$lib/api/analytics';
 	import { listBuyers } from '$lib/api/buyers';
 	import { listComplianceRequirements } from '$lib/api/compliance';
 	import { listPayments } from '$lib/api/payments';
@@ -26,6 +26,8 @@
 	let refreshed = $state(false);
 	let refreshing = $state(false);
 	let error = $state('');
+	let aiSummary = $state<AnalyticsAiSummary | null>(null);
+	let aiLoading = $state(false);
 	let projects = createRemoteList(listTradeProjects, seedProjects);
 	let payments = createRemoteList(listPayments, seedPayments);
 	let complianceRequirements = createRemoteList(listComplianceRequirements, seedCompliance);
@@ -80,6 +82,20 @@
 			refreshing = false;
 		}
 	}
+
+	async function handleAiSummary() {
+		error = '';
+		aiLoading = true;
+		aiSummary = null;
+		try {
+			const res = await getAnalyticsAiSummary();
+			aiSummary = res.data;
+		} catch {
+			error = t('Gagal menghasilkan AI insights.');
+		} finally {
+			aiLoading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -109,6 +125,39 @@
 			<span class="block text-sm text-muted-foreground">{t('Data disegarkan dari backend.')}</span>
 		</div>
 	{/if}
+
+	<!-- AI Insights Section -->
+	<Card class="border-primary/20 bg-primary/5">
+		<CardHeader class="p-5">
+			<div class="flex items-center justify-between">
+				<div>
+					<Badge variant="outline" class="border-primary/30 text-primary">🤖 AI Insights</Badge>
+					<CardTitle class="mt-2">{t('Executive AI Summary')}</CardTitle>
+					<CardDescription class="mt-1">{t('AI-generated analysis of your trade pipeline, risks, and recommended actions.')}</CardDescription>
+				</div>
+				<Button onclick={handleAiSummary} disabled={aiLoading} variant="outline" class="shrink-0">
+					{#if aiLoading}
+						<span class="inline-flex items-center gap-2">
+							<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+							{t('Generating...')}
+						</span>
+					{:else}
+						{aiSummary ? t('Regenerate') : t('Generate AI Summary')}
+					{/if}
+				</Button>
+			</div>
+		</CardHeader>
+		{#if aiSummary}
+			<CardContent class="p-5 pt-0">
+				<div class="rounded-lg border bg-background p-4 text-sm leading-relaxed whitespace-pre-line">
+					{aiSummary.summary}
+				</div>
+				{#if aiSummary.fromCache}
+					<p class="mt-2 text-xs text-muted-foreground">⚡ {t('From cache')}</p>
+				{/if}
+			</CardContent>
+		{/if}
+	</Card>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		{#each metrics as metric}

@@ -2590,6 +2590,49 @@ def analytics_lanes():
     return {"data": lanes, "meta": {}}
 
 
+@router.post("/analytics/ai/summary/")
+def analytics_ai_summary(current_user: dict = Depends(get_current_user)):
+    """Generate an AI executive summary of the current analytics data."""
+    if not ai.configured():
+        return {"data": {"summary": ai.fallback("analytics_summary") or "AI tidak tersedia.", "fromCache": True}, "meta": {}}
+
+    overview = analytics_overview()["data"]
+    lanes_data = analytics_lanes()["data"]
+
+    # Build context for AI
+    metrics_text = "\n".join(
+        f"- {m['label']}: {m['value']} ({m.get('change', '')})"
+        for m in overview
+    )
+    lanes_text = "\n".join(
+        f"- {lane['label']}: readiness {lane['readiness']}%, risk {lane['risk']}, stage {lane.get('stage', 'N/A')}"
+        for lane in lanes_data[:5]
+    ) if lanes_data else "No trade lane data available."
+
+    system_prompt = (
+        "You are an expert trade and export intelligence analyst for MauEkspor, "
+        "an Indonesian export-import platform. Provide a concise executive summary "
+        "in Bahasa Indonesia (max 200 words) covering:\n"
+        "1. Overall pipeline health and key metrics\n"
+        "2. Risk concentrations and compliance blockers\n"
+        "3. Top recommended next actions for the export team\n"
+        "Be specific, use the data provided, and be actionable."
+    )
+    user_prompt = (
+        f"Current analytics metrics:\n{metrics_text}\n\n"
+        f"Top trade lanes:\n{lanes_text}\n\n"
+        "Provide the executive summary."
+    )
+
+    summary = ai.complete(system_prompt, user_prompt, kind="analytics_summary")
+    if not summary:
+        summary = ai.fallback("analytics_summary") or (
+            "Pipeline menunjukkan aktivitas yang baik. "
+            "Fokus pada penyelesaian compliance blocker dan percepatan shipment lane dengan readiness tertinggi."
+        )
+    return {"data": {"summary": summary, "fromCache": False}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # NOTIFICATIONS / AUDIT / TEAM / TEMPLATES / AUTOMATIONS / INTEGRATIONS
 # ----------------------------------------------------------------------------
