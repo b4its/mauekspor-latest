@@ -38,3 +38,5 @@ guideline/
 # Coverage artifacts
 backend/.coverage
 backend/**/,cover
+frontend/test-results/
+frontend/playwright-report/

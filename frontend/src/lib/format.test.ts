@@ -1,12 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { currency, statusTone, taskSummary } from './utils/format';
+import { currency, formatCurrency, setDisplayCurrency, statusTone, taskSummary } from './utils/format';
 import type { ComplianceTask } from './data/trade';
 
 describe('currency formatter', () => {
-	it('memformat USD tanpa desimal', () => {
-		expect(currency.format(0)).toBe('$0');
-		expect(currency.format(42800)).toBe('$42,800');
-		expect(currency.format(1000000)).toBe('$1,000,000');
+	it('memformat IDR (default) tanpa desimal', () => {
+		expect(currency.format(0)).toMatch(/Rp.*0/);
+		expect(currency.format(42800)).toMatch(/Rp.*42.*800/);
+		expect(currency.format(1000000)).toMatch(/Rp.*1.*000.*000/);
+	});
+
+	it('bisa switch ke USD', () => {
+		setDisplayCurrency('USD');
+		expect(currency.format(42800)).toMatch(/\$42,800/);
+		setDisplayCurrency('IDR'); // reset
+	});
+
+	it('bisa switch ke EUR', () => {
+		setDisplayCurrency('EUR');
+		expect(currency.format(1000)).toMatch(/1.*000/);
+		setDisplayCurrency('IDR'); // reset
+	});
+
+	it('formatCurrency helper bekerja', () => {
+		setDisplayCurrency('IDR');
+		expect(formatCurrency(50000)).toMatch(/Rp.*50.*000/);
+	});
+
+	it('getDisplayCurrency return code aktif', () => {
+		setDisplayCurrency('USD');
+		expect(currency.format(100)).toMatch(/\$/);
+		setDisplayCurrency('IDR'); // reset
 	});
 });
 

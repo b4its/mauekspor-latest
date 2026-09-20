@@ -44,7 +44,7 @@
 				rfqId: data.rfq.id,
 				incoterm: data.rfq.incoterm,
 				value: 42800,
-				currency: 'USD',
+				currency: 'IDR',
 				validUntil: '2026-09-30'
 			});
 			quoteCreated = true;

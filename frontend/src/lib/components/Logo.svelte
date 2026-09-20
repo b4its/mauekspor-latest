@@ -12,8 +12,8 @@
 	let src = $derived(
 		variant === 'landscape'
 			? theme === 'dark'
-				? '/images/logo/logoDarklscape.png'
-				: '/images/logo/logoLightlscape.png'
+				? '/images/logo/logoDark.png'
+				: '/images/logo/logoLight.png'
 			: theme === 'dark'
 				? '/images/logo/logoDark.png'
 				: '/images/logo/logoLight.png'

@@ -96,7 +96,7 @@
 				</div>
 				<div class="grid gap-4 sm:grid-cols-3">
 					<div class="grid gap-2">
-						<Label for="cs-cogs">{t('COGS per unit (IDR)')}</Label>
+						<Label for="cs-cogs">{t('COGS per unit')}</Label>
 						<Input id="cs-cogs" bind:value={cogs} inputmode="decimal" />
 					</div>
 					<div class="grid gap-2">

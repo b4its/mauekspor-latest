@@ -161,7 +161,7 @@
 							<Input bind:value={incoterm} placeholder="FOB Tanjung Priok" />
 						</div>
 						<div class="field grid gap-2">
-							<Label>{t('Nilai target USD')}</Label>
+							<Label>{t('Nilai target')}</Label>
 							<Input bind:value={targetValue} inputmode="decimal" placeholder="42800" />
 						</div>
 						<div class="field grid gap-2">

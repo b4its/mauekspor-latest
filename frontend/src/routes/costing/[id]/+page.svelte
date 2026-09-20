@@ -118,7 +118,7 @@
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
 					<CardTitle>{t('Scenario Summary')}</CardTitle>
-					<CardDescription class="mt-1.5 max-w-2xl">{t('Kalkulasi nyata EXW → FOB → CIF dengan kurs')} {data.scenario.exchangeRate ?? '—'} IDR/USD ({data.scenario.exchangeSource ?? ''}).</CardDescription>
+					<CardDescription class="mt-1.5 max-w-2xl">{t('Kalkulasi nyata EXW → FOB → CIF dengan kurs')} {data.scenario.exchangeRate ?? '—'} ({data.scenario.exchangeSource ?? ''}).</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/costing/${data.scenario.id}/edit`}>{t('Edit skenario')}</Button>

@@ -12,6 +12,7 @@
 	import type { MarketIntelligence, ProductPricing } from '$lib/api/marketing';
 	import type { Product } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
+	import { formatCurrency } from '$lib/utils/format';
 
 	let products = createRemoteList<Product>(listProducts, seedProducts);
 	$effect(() => {
@@ -101,9 +102,9 @@
 		return 'secondary';
 	}
 
-	function fmtUsd(n: number | undefined) {
+	function fmtPrice(n: number | undefined) {
 		if (n == null) return '—';
-		return `$${n.toFixed(2)}`;
+		return formatCurrency(n);
 	}
 </script>
 
@@ -328,7 +329,7 @@
 					{:else}
 						<div class="grid gap-3 sm:grid-cols-3">
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
-								{t('HPP (IDR / unit)')}
+								{t('HPP per unit')}
 								<Input type="number" bind:value={cogs} />
 							</label>
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
@@ -363,15 +364,15 @@
 							<div class="grid gap-3 sm:grid-cols-3">
 								<div class="rounded-xl border bg-muted/40 p-4 text-center">
 									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">EXW</span>
-									<strong class="mt-1 block text-2xl font-bold">{fmtUsd(pricing.exwPriceUsd)}</strong>
+									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.exwPriceUsd)}</strong>
 								</div>
 								<div class="rounded-xl border bg-muted/40 p-4 text-center">
 									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">FOB</span>
-									<strong class="mt-1 block text-2xl font-bold">{fmtUsd(pricing.fobPriceUsd)}</strong>
+									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.fobPriceUsd)}</strong>
 								</div>
 								<div class="rounded-xl border bg-muted/40 p-4 text-center">
 									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">CIF</span>
-									<strong class="mt-1 block text-2xl font-bold">{fmtUsd(pricing.cifPriceUsd)}</strong>
+									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.cifPriceUsd)}</strong>
 								</div>
 							</div>
 
@@ -391,7 +392,7 @@
 									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">{t('Wawasan AI')}</h4>
 									<p>{pricing.pricingInsight ?? t('Harga kompetitif untuk pasar tujuan.')}</p>
 									<p class="mt-2 text-xs text-muted-foreground">
-										{t('Kurs dipakai:')} {pricing.exchangeRateUsed} IDR/USD · {t('Margin')} {pricing.targetMarginPercent}%
+										{t('Kurs dipakai:')} {pricing.exchangeRateUsed} · · {t('Margin')} {pricing.targetMarginPercent}%
 									</p>
 								</div>
 							</div>

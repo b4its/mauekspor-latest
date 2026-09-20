@@ -53,7 +53,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				rfqId: seed?.rfqId ?? 'rfq-001',
 				incoterm: seed?.incoterm ?? 'FOB Tanjung Priok',
 				value: seed?.value ?? 42800,
-				currency: (seed?.currency as 'USD' | 'IDR') ?? 'USD',
+				currency: (seed?.currency as string) ?? 'IDR',
 				validUntil: seed?.validUntil ?? '2026-09-30'
 			});
 			created = true;

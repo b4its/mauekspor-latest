@@ -90,10 +90,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			destination: 'Negara tujuan',
 			incoterm: 'Incoterm',
 			margin: 'Margin (%)',
-			exchangeRate: 'Kurs (IDR/USD)',
-			exwPrice: 'EXW (USD)',
-			fobPrice: 'FOB (USD)',
-			cifPrice: 'CIF (USD)',
+			exchangeRate: 'Kurs',
+			exwPrice: 'EXW',
+			fobPrice: 'FOB',
+			cifPrice: 'CIF',
 			status: 'Status'
 		};
 		return labels[col] ?? col;
