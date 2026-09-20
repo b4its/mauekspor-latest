@@ -171,6 +171,7 @@ import time as _time
 
 _RL_WINDOW = 60
 _RL_DEFAULT = 120  # max requests per window per IP
+_RL_LOGIN = int(os.getenv("MAUEKSPOR_RL_LOGIN", "5"))  # login rate limit (5 by default)
 _RL_ENABLED = os.getenv("MAUEKSPOR_DISABLE_PERSISTENCE", "").lower() not in {"1", "true", "yes"}
 
 
@@ -198,7 +199,7 @@ async def general_rate_limit(request, call_next):
     """Rate limit semua request API (120/60s per IP). Login lebih ketat."""
     if _RL_ENABLED and request.url.path.startswith("/api/v1/"):
         ip = _rate_limit_key(request)
-        limit = 5 if request.url.path == "/api/v1/auth/login/" else _RL_DEFAULT
+        limit = _RL_LOGIN if request.url.path == "/api/v1/auth/login/" else _RL_DEFAULT
         if _rate_limited(ip, limit):
             return JSONResponse(
                 status_code=429,
