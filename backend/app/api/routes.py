@@ -2537,13 +2537,13 @@ def analytics_overview():
     total_orders = sum(o.get("value", 0) or 0 for o in orders)
     return {"data": [
         {"label": "Active projects", "value": str(len(projects)), "change": "+1 this month", "tone": "green"},
-        {"label": "Pipeline value", "value": f"${total:,}", "change": "+12%", "tone": "blue"},
+        {"label": "Pipeline value", "value": f"{total:,}", "change": "+12%", "tone": "blue"},
         {"label": "Products", "value": str(len(products)), "change": f"{sum(1 for p in products if p.get('status') == 'Enriched')} enriched", "tone": "green"},
         {"label": "Market analyses", "value": str(len(analyses)), "change": f"{sum(1 for a in analyses if a.get('status') == 'Ready')} ready", "tone": "blue"},
         {"label": "Published catalogs", "value": str(sum(1 for c in catalogs if c.get('status') == 'Published')), "change": f"{len(catalogs)} total", "tone": "green"},
         {"label": "Active buyers", "value": str(len(buyers)), "change": "CRM", "tone": "orange"},
         {"label": "Verified forwarders", "value": str(sum(1 for f in forwarders if f.get('status') == 'Verified')), "change": f"{len(forwarders)} total", "tone": "blue"},
-        {"label": "Order value", "value": f"${total_orders:,}", "change": "booked", "tone": "green"},
+        {"label": "Order value", "value": f"{total_orders:,}", "change": "booked", "tone": "green"},
     ], "meta": {}}
 
 
@@ -3126,8 +3126,8 @@ def generate_report(report_id: str):
     pipeline_value = sum(p.get("value", 0) or 0 for p in projects)
     order_value = sum(o.get("value", 0) or 0 for o in orders)
     record["sections"] = [
-        {"title": "Pipeline value", "value": f"${pipeline_value:,}", "detail": f"{len(projects)} proyek aktif"},
-        {"title": "Order value", "value": f"${order_value:,}", "detail": f"{len(orders)} order"},
+        {"title": "Pipeline value", "value": f"{pipeline_value:,}", "detail": f"{len(projects)} proyek aktif"},
+        {"title": "Order value", "value": f"{order_value:,}", "detail": f"{len(orders)} order"},
         {"title": "Products", "value": str(len(products)), "detail": f"{sum(1 for p in products if p.get('status') == 'Enriched')} enriched"},
         {"title": "Market analyses", "value": str(len(analyses)), "detail": f"{sum(1 for a in analyses if a.get('status') == 'Ready')} ready"},
         {"title": "Active buyers", "value": str(len(buyers)), "detail": "CRM pipeline"},

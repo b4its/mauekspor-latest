@@ -364,15 +364,15 @@
 							<div class="grid gap-3 sm:grid-cols-3">
 								<div class="rounded-xl border bg-muted/40 p-4 text-center">
 									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">EXW</span>
-									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.exwPriceUsd)}</strong>
+									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.exwPrice)}</strong>
 								</div>
 								<div class="rounded-xl border bg-muted/40 p-4 text-center">
 									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">FOB</span>
-									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.fobPriceUsd)}</strong>
+									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.fobPrice)}</strong>
 								</div>
 								<div class="rounded-xl border bg-muted/40 p-4 text-center">
 									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">CIF</span>
-									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.cifPriceUsd)}</strong>
+									<strong class="mt-1 block text-2xl font-bold">{fmtPrice(pricing.cifPrice)}</strong>
 								</div>
 							</div>
 

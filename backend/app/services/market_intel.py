@@ -120,7 +120,7 @@ def generate_product_pricing(
     cif = round(fob * _SHIPPING_MULTIPLIER.get(region, 1.12), 2)
     insight = ai.complete(
         "You are an export pricing advisor. Reply concisely in Indonesian with pricing insight.",
-        f"Product {product.get('name', '')}: EXW ${exw}, FOB ${fob}, CIF ${cif} to {target_country_code}.",
+        f"Product {product.get('name', '')}: EXW {exw} {pricing_svc.DISPLAY_CURRENCY}, FOB {fob} {pricing_svc.DISPLAY_CURRENCY}, CIF {cif} {pricing_svc.DISPLAY_CURRENCY} to {target_country_code}.",
         kind="pricing_insight",
     )
     return {
@@ -129,16 +129,17 @@ def generate_product_pricing(
         "targetMarginPercent": target_margin_percent,
         "targetCountryCode": target_country_code,
         "exchangeRateUsed": rate,
-        "exwPriceUsd": exw,
-        "fobPriceUsd": fob,
-        "cifPriceUsd": cif,
+        "currency": pricing_svc.DISPLAY_CURRENCY,
+        "exwPrice": exw,
+        "fobPrice": fob,
+        "cifPrice": cif,
         "pricingInsight": insight or "Harga kompetitif untuk pasar tujuan; pantau kurs.",
         "pricingBreakdown": {
             "HPP (IDR)": cogs_per_unit_idr,
             "Margin": f"{target_margin_percent}%",
-            "EXW (USD)": exw,
-            "FOB (USD)": fob,
-            "CIF (USD)": cif,
+            f"EXW ({pricing_svc.DISPLAY_CURRENCY})": exw,
+            f"FOB ({pricing_svc.DISPLAY_CURRENCY})": fob,
+            f"CIF ({pricing_svc.DISPLAY_CURRENCY})": cif,
             "Exchange rate": rate,
         },
         "generatedAt": "now",

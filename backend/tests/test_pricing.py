@@ -33,6 +33,7 @@ def test_get_exchange_rate_fresh_tidak_fetch(monkeypatch):
     db.insert("exchange_rates", {
         "id": "FX-1", "rate": 15800.0, "source": "manual",
         "updatedAt": datetime.now(timezone.utc).isoformat(),
+        "baseCurrency": pricing.BASE_CURRENCY, "targetCurrency": pricing.DISPLAY_CURRENCY,
     })
     rec = pricing.get_exchange_rate()
     assert rec["rate"] == 15800.0
@@ -42,7 +43,8 @@ def test_get_exchange_rate_fresh_tidak_fetch(monkeypatch):
 def test_get_exchange_rate_stale_memicu_fetch(monkeypatch):
     monkeypatch.setattr(pricing, "fetch_live_exchange_rate", lambda: 16100.0)
     old = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
-    db.insert("exchange_rates", {"id": "FX-1", "rate": 15800.0, "source": "manual", "updatedAt": old})
+    db.insert("exchange_rates", {"id": "FX-1", "rate": 15800.0, "source": "manual", "updatedAt": old,
+        "baseCurrency": pricing.BASE_CURRENCY, "targetCurrency": pricing.DISPLAY_CURRENCY})
     rec = pricing.get_exchange_rate()
     assert rec["rate"] == 16100.0
     assert rec["source"] == "auto_fetched"
@@ -66,12 +68,12 @@ def test_set_exchange_rate_update_dan_create():
 
 # ---------- Kalkulasi harga ----------
 def test_trucking_cost_bands():
-    assert pricing._trucking_cost_usd(30, 15800) == pytest.approx(30 * 0.50, abs=0.001)
-    assert pricing._trucking_cost_usd(100, 15800) == pytest.approx(100 * 0.40, abs=0.001)
-    assert pricing._trucking_cost_usd(300, 15800) == pytest.approx(300 * 0.30, abs=0.001)
-    assert pricing._trucking_cost_usd(1000, 15800) == pytest.approx(1000 * 0.25, abs=0.001)
+    assert pricing._trucking_cost(30) == pytest.approx(30 * 0.50, abs=0.001)
+    assert pricing._trucking_cost(100) == pytest.approx(100 * 0.40, abs=0.001)
+    assert pricing._trucking_cost(300) == pytest.approx(300 * 0.30, abs=0.001)
+    assert pricing._trucking_cost(1000) == pytest.approx(1000 * 0.25, abs=0.001)
     # melewati semua band -> band terakhir
-    assert pricing._trucking_cost_usd(20000, 15800) == pytest.approx(20000 * 0.25, abs=0.001)
+    assert pricing._trucking_cost(20000) == pytest.approx(20000 * 0.25, abs=0.001)
 
 
 def test_calculate_exw_fob_cif():

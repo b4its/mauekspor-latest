@@ -73,9 +73,9 @@ def test_product_pricing_generate():
         })
         assert r.status_code == 200, r.text
         pr = r.json()["data"]
-        assert pr["exwPriceUsd"] > 0
-        assert pr["fobPriceUsd"] > pr["exwPriceUsd"]
-        assert pr["cifPriceUsd"] > pr["fobPriceUsd"]
+        assert pr["exwPrice"] > 0
+        assert pr["fobPrice"] > pr["exwPrice"]
+        assert pr["cifPrice"] > pr["fobPrice"]
 
 
 def test_catalog_description_generate():

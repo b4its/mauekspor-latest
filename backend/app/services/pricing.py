@@ -38,6 +38,9 @@ def get_exchange_rate() -> dict[str, Any]:
             stale = (now - updated) > timedelta(hours=RATE_STALE_HOURS)
         except Exception:
             stale = True
+        # Treat currency pair mismatch as stale
+        if record.get("baseCurrency") != BASE_CURRENCY or record.get("targetCurrency") != DISPLAY_CURRENCY:
+            stale = True
     if record and not stale:
         return record
     rate = fetch_live_exchange_rate()
@@ -47,7 +50,8 @@ def get_exchange_rate() -> dict[str, Any]:
     else:
         source = "auto_fetched"
     if record:
-        record.update({"rate": rate, "source": source, "updatedAt": now.isoformat()})
+        record.update({"rate": rate, "source": source, "updatedAt": now.isoformat(),
+                       "baseCurrency": BASE_CURRENCY, "targetCurrency": DISPLAY_CURRENCY})
         db.save(record)
     else:
         record = db.insert("exchange_rates", {
@@ -77,7 +81,8 @@ def set_exchange_rate(rate: float, source: str = "manual") -> dict[str, Any]:
     record = rates[0] if rates else None
     now = datetime.now(timezone.utc).isoformat()
     if record:
-        record.update({"rate": rate, "source": source, "updatedAt": now})
+        record.update({"rate": rate, "source": source, "updatedAt": now,
+                       "baseCurrency": BASE_CURRENCY, "targetCurrency": DISPLAY_CURRENCY})
         db.save(record)
     else:
         record = db.insert("exchange_rates", {
@@ -90,9 +95,9 @@ def set_exchange_rate(rate: float, source: str = "manual") -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Kalkulasi harga EXW / FOB / CIF
 # ---------------------------------------------------------------------------
-# Tarif truk per km (IDR) per jarak (referensi ExportReadyAI)
+# Tarif truk per km (USD) per jarak (referensi ExportReadyAI) — dikonversi ke display currency
 _TRUCKING_BANDS = [(50, 0.50), (200, 0.40), (500, 0.30), (10_000, 0.25)]
-_DOCUMENT_COST_USD = 50.0
+_DOCUMENT_COST = 50.0  # USD
 _INSURANCE_PERCENT = 0.005  # 0.5%
 
 # Freight % dari FOB per region
@@ -107,10 +112,11 @@ _FREIGHT_PERCENT = {
 }
 
 
-def _trucking_cost_usd(distance_km: float, rate: float) -> float:
-    for band_km, usd_per_km in _TRUCKING_BANDS:
+def _trucking_cost(distance_km: float) -> float:
+    """Trucking cost (dalam display currency, mengikuti band USD-scale)."""
+    for band_km, per_km in _TRUCKING_BANDS:
         if distance_km <= band_km:
-            return distance_km * usd_per_km
+            return distance_km * per_km
     return distance_km * _TRUCKING_BANDS[-1][1]
 
 
@@ -119,15 +125,15 @@ def calculate_exw(cogs_idr: float, packing_cost_idr: float, margin_percent: floa
     return round(total_idr / rate, 2)
 
 
-def calculate_fob(exw_usd: float, distance_km: float, rate: float) -> float:
-    trucking = _trucking_cost_usd(distance_km, rate)
-    return round(exw_usd + trucking + _DOCUMENT_COST_USD, 2)
+def calculate_fob(exw: float, distance_km: float, rate: float) -> float:
+    trucking = _trucking_cost(distance_km)
+    return round(exw + trucking + _DOCUMENT_COST, 2)
 
 
-def calculate_cif(fob_usd: float, region: str) -> float:
-    freight = fob_usd * _FREIGHT_PERCENT.get(region, 0.12)
-    insurance = (fob_usd + freight) * _INSURANCE_PERCENT
-    return round(fob_usd + freight + insurance, 2)
+def calculate_cif(fob: float, region: str) -> float:
+    freight = fob * _FREIGHT_PERCENT.get(region, 0.12)
+    insurance = (fob + freight) * _INSURANCE_PERCENT
+    return round(fob + freight + insurance, 2)
 
 
 # ---------------------------------------------------------------------------
@@ -285,8 +291,8 @@ def calculate_full_costing(
             {"category": "Production", "label": "COGS", "amount": round(cogs_idr / rate, 2)},
             {"category": "Production", "label": "Packing cost", "amount": round(packing_cost_idr / rate, 2)},
             {"category": "Margin", "label": f"Target margin {margin_percent}%", "amount": round(exw - (cogs_idr + packing_cost_idr) / rate, 2)},
-            {"category": "Local logistics", "label": "Trucking to port", "amount": round(fob - exw - 50.0, 2)},
-            {"category": "Documents", "label": "Documentation fee", "amount": 50.0},
+            {"category": "Local logistics", "label": "Trucking to port", "amount": round(fob - exw - _DOCUMENT_COST, 2)},
+            {"category": "Documents", "label": "Documentation fee", "amount": _DOCUMENT_COST},
             {"category": "Freight", "label": f"Ocean freight ({region})", "amount": round(cif - fob - (fob + (cif - fob - fob * _INSURANCE_PERCENT) / (1 + _INSURANCE_PERCENT)) * _INSURANCE_PERCENT, 2)},
             {"category": "Insurance", "label": "Cargo insurance 0.5%", "amount": round((fob + (cif - fob) * 0.9) * _INSURANCE_PERCENT, 2)},
         ],

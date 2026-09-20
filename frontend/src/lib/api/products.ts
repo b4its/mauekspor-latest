@@ -64,9 +64,9 @@ export type ProductPricing = {
 	targetMarginPercent: number;
 	targetCountryCode: string;
 	exchangeRateUsed: number;
-	exwPriceUsd: number;
-	fobPriceUsd: number;
-	cifPriceUsd?: number;
+	exwPrice: number;
+	fobPrice: number;
+	cifPrice?: number;
 	pricingInsight?: string;
 	pricingBreakdown?: Record<string, unknown>;
 	generatedAt?: string;

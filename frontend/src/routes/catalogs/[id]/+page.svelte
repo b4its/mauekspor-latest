@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, formatCurrency } from '$lib/utils/format';
 	import {
 		generateCatalogDescription,
 		publishCatalog,
@@ -30,9 +30,9 @@
 	import { t } from '$lib/i18n.svelte';
 
 	type CatalogPricing = {
-		exwPriceUsd?: number;
-		fobPriceUsd?: number;
-		cifPriceUsd?: number;
+		exwPrice?: number;
+		fobPrice?: number;
+		cifPrice?: number;
 		pricingInsight?: string;
 		exchangeRateUsed?: number;
 		pricingBreakdown?: Record<string, unknown>;
@@ -598,15 +598,15 @@
 					<div class="grid gap-2 sm:grid-cols-3">
 						<div class="rounded-lg border bg-muted/40 p-3 text-center">
 							<span class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">EXW</span>
-							<strong class="mt-1 block text-lg font-bold">${pricing.exwPriceUsd?.toFixed(2)}</strong>
+							<strong class="mt-1 block text-lg font-bold">{formatCurrency(pricing.exwPrice ?? 0)}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-center">
 							<span class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">FOB</span>
-							<strong class="mt-1 block text-lg font-bold">${pricing.fobPriceUsd?.toFixed(2)}</strong>
+							<strong class="mt-1 block text-lg font-bold">{formatCurrency(pricing.fobPrice ?? 0)}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-center">
 							<span class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">CIF</span>
-							<strong class="mt-1 block text-lg font-bold">${pricing.cifPriceUsd?.toFixed(2)}</strong>
+							<strong class="mt-1 block text-lg font-bold">{formatCurrency(pricing.cifPrice ?? 0)}</strong>
 						</div>
 					</div>
 					{#if pricing.pricingInsight}

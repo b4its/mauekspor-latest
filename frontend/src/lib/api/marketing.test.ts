@@ -46,22 +46,22 @@ describe('marketing getOrCreate fallback', () => {
 		const fetchMock = vi
 			.fn()
 			.mockResolvedValueOnce(jsonResponse(404, { message: 'not found' }))
-			.mockResolvedValueOnce(jsonResponse(200, { data: { exwPriceUsd: 100, cogsPerUnitIdr: 50, targetMarginPercent: 20, targetCountryCode: 'JP', exchangeRateUsed: 15800 } }));
+			.mockResolvedValueOnce(jsonResponse(200, { data: { exwPrice: 100, cogsPerUnitIdr: 50, targetMarginPercent: 20, targetCountryCode: 'JP', exchangeRateUsed: 15800 } }));
 		vi.stubGlobal('fetch', fetchMock);
 
 		const result = await getOrCreateProductPricing('P-1', { cogs_per_unit_idr: 5000, target_margin_percent: 20, target_country_code: 'JP' });
-		expect(result.exwPriceUsd).toBe(100);
+		expect(result.exwPrice).toBe(100);
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 		const postInit = fetchMock.mock.calls[1][1] as RequestInit;
 		expect(JSON.parse(String(postInit.body)).target_country_code).toBe('JP');
 	});
 
 	it('getOrCreateProductPricing: GET sukses -> tidak memanggil POST', async () => {
-		const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(200, { data: { exwPriceUsd: 200, cogsPerUnitIdr: 50, targetMarginPercent: 20, targetCountryCode: 'JP', exchangeRateUsed: 15800 } }));
+		const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(200, { data: { exwPrice: 200, cogsPerUnitIdr: 50, targetMarginPercent: 20, targetCountryCode: 'JP', exchangeRateUsed: 15800 } }));
 		vi.stubGlobal('fetch', fetchMock);
 
 		const result = await getOrCreateProductPricing('P-1', { cogs_per_unit_idr: 5000, target_margin_percent: 20, target_country_code: 'JP' });
-		expect(result.exwPriceUsd).toBe(200);
+		expect(result.exwPrice).toBe(200);
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 });

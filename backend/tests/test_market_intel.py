@@ -61,9 +61,9 @@ def test_generate_product_pricing():
     result = market_intel.generate_product_pricing(product, cogs_per_unit_idr=10000, target_margin_percent=20, target_country_code="JP")
     assert result["productId"] == "P-1"
     assert result["targetCountryCode"] == "JP"
-    assert result["exwPriceUsd"] > 0
-    assert result["fobPriceUsd"] > result["exwPriceUsd"]
-    assert result["cifPriceUsd"] > result["fobPriceUsd"]
+    assert result["exwPrice"] > 0
+    assert result["fobPrice"] > result["exwPrice"]
+    assert result["cifPrice"] > result["fobPrice"]
     assert "pricingBreakdown" in result
     assert result["pricingInsight"]  # fallback insight dari ai.complete mock
 

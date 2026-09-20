@@ -1382,7 +1382,6 @@ const dictionary: Record<string, Entry> = {
 	'Rekomendasi': { id: 'Rekomendasi', en: 'Recommendation' },
 	'Tutup': { id: 'Tutup', en: 'Close' },
 	'Margin (%)': { id: 'Margin (%)', en: 'Margin (%)' },
-	'Kurs (IDR/USD)': { id: 'Kurs (IDR/USD)', en: 'Rate (IDR/USD)' },
 
 	// --- Trade projects ---
 	'Search buyer, product, country...': { id: 'Cari pembeli, produk, negara...', en: 'Search buyer, product, country...' },

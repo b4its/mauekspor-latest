@@ -126,7 +126,7 @@ class CreateQuotationPayload(BaseModel):
     buyer: str = ""
     supplier: str = ""
     value: float = 0
-    currency: str = "USD"
+    currency: str = ""
     incoterm: str = "FOB"
     validUntil: str = ""
     margin: float = 0
@@ -145,7 +145,7 @@ class CreateOrderPayload(BaseModel):
     # Field tambahan yang dikirim frontend & seed data
     buyer: str = ""
     supplier: str = ""
-    currency: str = "USD"
+    currency: str = ""
     paymentTerms: str = ""
     deliveryWindow: str = ""
     readiness: int = 0
