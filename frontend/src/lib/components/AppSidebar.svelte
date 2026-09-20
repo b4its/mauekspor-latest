@@ -34,7 +34,7 @@
 	import UserCogIcon from '@lucide/svelte/icons/user-cog';
 	import BellIcon from '@lucide/svelte/icons/bell';
 	import PlugIcon from '@lucide/svelte/icons/plug';
-	import { logout } from '$lib/stores/session.svelte';
+	import { logout, getUser } from '$lib/stores/session.svelte';
 	import LayoutTemplateIcon from '@lucide/svelte/icons/layout-template';
 	import WorkflowIcon from '@lucide/svelte/icons/workflow';
 	import BookIcon from '@lucide/svelte/icons/book';
@@ -58,7 +58,7 @@
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 
 	const sidebar = useSidebar();
-	const currentUser = userAccounts[0];
+	const currentUser = $derived(getUser() ?? userAccounts[0]);
 	let openRiskCount = $derived(projects.filter((project) => project.risk !== 'Low').length);
 
 	const groupIconFor: Record<string, typeof RouteIcon> = {

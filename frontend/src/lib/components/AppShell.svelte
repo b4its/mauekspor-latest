@@ -118,13 +118,14 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				liveResults = [];
 			}
 		}, 250);
+		return () => clearTimeout(searchTimer);
 	});
 
 	let filteredCommands = $derived<{ label: string; href: string; group: string; sub?: string }[]>([
 		...liveResults,
 		...commands
 			.filter((item) => item.label.toLowerCase().includes(commandQuery.trim().toLowerCase()))
-			.slice(0, 8 - liveResults.length)
+			.slice(0, Math.max(0, 8 - liveResults.length))
 	]);
 </script>
 
