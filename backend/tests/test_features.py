@@ -340,6 +340,8 @@ def test_dashboard_summary_and_admin_flow():
         })
         assert r.status_code == 200, r.text
         admin_id = r.json()["data"]["id"]
+        # Login ulang sebagai admin utama (register-admin menimpa session cookie)
+        _login(c)
         r = c.delete(f"/api/v1/users/{admin_id}/")
         assert r.status_code == 200, r.text
 

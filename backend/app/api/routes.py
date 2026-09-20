@@ -76,6 +76,13 @@ def _filtered_query(
 
 
 def _one(record) -> dict:
+    """Serialize record untuk response (read-only, tidak persist)."""
+    return {"data": _serialize(record), "meta": {}}
+
+
+def _save_one(record) -> dict:
+    """Persist record ke disk lalu serialize untuk response."""
+    db.save(record)
     return {"data": _serialize(record), "meta": {}}
 
 
@@ -304,7 +311,9 @@ def refresh(request: Request, response: Response):
 # USERS
 # ----------------------------------------------------------------------------
 @router.get("/users/")
-def list_users(search: str = "", role: str = "", limit: int = 0, offset: int = 0):
+def list_users(search: str = "", role: str = "", limit: int = 0, offset: int = 0, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     items = db.all("users")
     if search:
         q = search.lower()
@@ -318,7 +327,9 @@ def list_users(search: str = "", role: str = "", limit: int = 0, offset: int = 0
 
 
 @router.get("/users/{user_id}/")
-def get_user(user_id: str):
+def get_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin" and current_user.get("id") != user_id:
+        raise HTTPException(403, "Admin access required")
     record = db.get("users", user_id)
     if not record:
         raise HTTPException(404, "User not found")
@@ -326,7 +337,11 @@ def get_user(user_id: str):
 
 
 @router.delete("/users/{user_id}/")
-def delete_user(user_id: str):
+def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
+    if current_user.get("id") == user_id:
+        raise HTTPException(400, "Cannot delete your own account")
     record = db.get("users", user_id)
     if not record:
         raise HTTPException(404, "User not found")
@@ -928,7 +943,7 @@ def put_profile(profile_id: str, payload: sc.CreateBusinessProfilePayload):
     record.update(data)
     record["readiness"] = min(40 + len(data.get("certifications", []) or []) * 8, 100)
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.patch("/business-profiles/{profile_id}/")
@@ -947,7 +962,7 @@ def update_certifications(profile_id: str, payload: sc.UpdateCertificationsPaylo
     record["certifications"] = payload.certifications
     record["readiness"] = min(40 + len(payload.certifications) * 8, 100)
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/business-profiles/dashboard/summary/")
@@ -1072,7 +1087,7 @@ def qualify_buyer(buyer_id: str):
     record["status"] = "Qualified"
     record["fitScore"] = max(record.get("fitScore", 50), 60)
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/buyers/{buyer_id}/contacts/")
@@ -1083,7 +1098,7 @@ def log_buyer_contact(buyer_id: str, payload: dict):
     record.setdefault("notes", []).append(payload.get("note", ""))
     record["lastContact"] = "now"
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -1113,7 +1128,7 @@ def create_buyer_request(payload: sc.CreateBuyerRequestPayload):
     # Trigger matching on-demand
     from app.services.matching import match_buyer_request
     record["matches"] = match_buyer_request(record)
-    return _one(record)
+    return _save_one(record)
 
 
 @router.put("/buyer-requests/{request_id}/")
@@ -1129,7 +1144,7 @@ def update_buyer_request(request_id: str, payload: dict):
     record["updatedAt"] = "now"
     from app.services.matching import match_buyer_request
     record["matches"] = match_buyer_request(record)
-    return _one(record)
+    return _save_one(record)
 
 
 @router.patch("/buyer-requests/{request_id}/status/")
@@ -1143,7 +1158,7 @@ def update_buyer_request_status(request_id: str, payload: sc.UpdateBuyerRequestS
     if payload.umkm or payload.umkm_id:
         record["selectedUmkm"] = payload.umkm_id or payload.umkm
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/buyer-requests/{request_id}/")
@@ -1170,7 +1185,7 @@ def match_buyer_request(request_id: str):
             "Buyer Requests", "Info", f"/buyer-requests/{request_id}",
         )
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/buyer-requests/{request_id}/matched-catalogs/")
@@ -1299,7 +1314,7 @@ def request_forwarder_quote(forwarder_id: str):
     if not record:
         raise HTTPException(404, "Forwarder not found")
     record["lastQuoteRequest"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -1479,7 +1494,7 @@ def update_catalog(catalog_id: str, payload: sc.UpdateCatalogPayload):
             record["readiness"] = max(record.get("readiness", 0), 95)
     record.update(data)
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/catalogs/{catalog_id}/")
@@ -1505,7 +1520,7 @@ def publish_catalog(catalog_id: str):
     record["status"] = "Published"
     record["readiness"] = max(record.get("readiness", 0), 95)
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/catalogs/{catalog_id}/unpublish/")
@@ -1515,7 +1530,7 @@ def unpublish_catalog(catalog_id: str):
         raise HTTPException(404, "Catalog not found")
     record["status"] = "Draft"
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/catalogs/{catalog_id}/generate-description/")
@@ -1963,7 +1978,7 @@ def create_costing(payload: sc.CreateCostingPayload):
         "fobPrice": calc["fobPrice"],
         "cifPrice": calc["cifPrice"],
         "landedCost": round(calc["cifPrice"] * 1.12, 2),
-        "profit": round(calc["exwPrice"] - (cogs + packing) / calc["exchangeRate"], 2),
+        "profit": round(calc["exwPrice"] - (cogs + packing) / (calc["exchangeRate"] or 1), 2),
         "confidence": 84,
         "lines": calc["lines"],
         "container": container,
@@ -2082,7 +2097,7 @@ def recalculate_costing(costing_id: str):
     record["lines"] = calc["lines"]
     record["container"] = container
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2125,7 +2140,7 @@ def refresh_market(market_id: str):
     if insight and insight.get("insight"):
         record.setdefault("insight", insight["insight"])
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2166,7 +2181,7 @@ def shortlist_rfq(rfq_id: str, payload: dict):
     record.setdefault("matches", [])
     record["matches"].append({"supplier": payload.get("supplier", ""), "score": 50, "reason": "Shortlisted"})
     record["status"] = "Matching"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2204,7 +2219,7 @@ def accept_quotation(quotation_id: str):
         raise HTTPException(404, "Quotation not found")
     record["status"] = "Accepted"
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2237,7 +2252,7 @@ def confirm_order(order_id: str):
         raise HTTPException(404, "Order not found")
     record["status"] = "Confirmed"
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2269,7 +2284,7 @@ def upload_compliance_evidence(req_id: str, payload: dict):
         record["currentEvidence"],
         "Compliance", "Info", f"/compliance/{req_id}",
     )
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2341,7 +2356,7 @@ def approve_document(document_id: str):
         raise HTTPException(404, "Document not found")
     record["status"] = "Approved"
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2374,7 +2389,7 @@ def update_shipment_milestone(shipment_id: str, payload: dict):
         f"Progres {record.get('progress', 0)}%.",
         "Shipments", "Info", f"/shipments/{shipment_id}",
     )
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/shipments/{shipment_id}/exceptions/resolve/")
@@ -2386,7 +2401,7 @@ def resolve_shipment_exception(shipment_id: str):
     record.pop("exception", None)
     record["updatedAt"] = "now"
     _notify("Exception shipment diselesaikan", "Shipment kembali In Transit.", "Shipments", "Info", f"/shipments/{shipment_id}")
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2410,8 +2425,8 @@ def mark_payment_received(payment_id: str, payload: dict):
     record = db.get("payments", payment_id)
     if not record:
         raise HTTPException(404, "Payment not found")
-    amount = payload.get("amount") or record.get("paid") or record.get("amount", 0)
-    owed = record.get("amount", 0)
+    amount = float(payload.get("amount") or record.get("paid") or record.get("amount", 0))
+    owed = float(record.get("amount", 0))
     record["paid"] = amount
     record["status"] = "Settled" if amount >= owed else "Deposit Paid"
     record["updatedAt"] = "now"
@@ -2420,7 +2435,7 @@ def mark_payment_received(payment_id: str, payload: dict):
         f"Tercatat {amount} untuk {record.get('buyer', '')}.",
         "Payments", "Info", f"/payments/{payment_id}",
     )
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/payments/{payment_id}/send-reminder/")
@@ -2429,7 +2444,7 @@ def send_payment_reminder(payment_id: str):
     if not record:
         raise HTTPException(404, "Payment not found")
     record["remindersSent"] = record.get("remindersSent", 0) + 1
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2456,7 +2471,7 @@ def complete_task(task_id: str):
     record["status"] = "Done"
     record["updatedAt"] = "now"
     _notify(f"Task selesai: {record.get('title', '')}", "Task ditandai selesai.", "Tasks", "Info", f"/tasks/{task_id}")
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/tasks/{task_id}/assign/")
@@ -2466,7 +2481,7 @@ def assign_task(task_id: str, payload: dict):
         raise HTTPException(404, "Task not found")
     record["owner"] = payload.get("owner", record.get("owner"))
     record["status"] = "In Progress"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2492,7 +2507,7 @@ def verify_supplier(supplier_id: str):
         raise HTTPException(404, "Supplier not found")
     record["status"] = "Verified"
     record["complianceScore"] = max(record.get("complianceScore", 0), 90)
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/suppliers/{supplier_id}/request-evidence/")
@@ -2502,7 +2517,7 @@ def request_supplier_evidence(supplier_id: str):
         raise HTTPException(404, "Supplier not found")
     record["evidenceRequested"] = record.get("evidenceRequested", 0) + 1
     record["status"] = "Needs Evidence"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2590,7 +2605,8 @@ def stream_notifications(request: Request):
                     break
             except Exception:
                 pass
-            unread = [n for n in db.find("notifications") if n.get("status") == "Unread"]
+            unread = [n for n in db.find("notifications") if n.get("status") == "Unread"
+                      and (not n.get("ownerId") or n.get("ownerId") == user["id"])]
             count = len(unread)
             if count != last_count:
                 last_count = count
@@ -2612,7 +2628,7 @@ def mark_notification_read(notification_id: str):
     if not record:
         raise HTTPException(404, "Notification not found")
     record["status"] = "Read"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/notifications/{notification_id}/archive/")
@@ -2621,7 +2637,7 @@ def archive_notification(notification_id: str):
     if not record:
         raise HTTPException(404, "Notification not found")
     record["status"] = "Archived"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/audit/")
@@ -2679,7 +2695,7 @@ def update_team_member_role(member_id: str, payload: dict):
         raise HTTPException(404, "Team member not found")
     record["role"] = payload.get("role", record.get("role"))
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/templates/")
@@ -2705,7 +2721,7 @@ def use_template(template_id: str):
     if not record:
         raise HTTPException(404, "Template not found")
     record["usedCount"] = record.get("usedCount", 0) + 1
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/automations/")
@@ -2719,7 +2735,7 @@ def activate_automation(automation_id: str):
     if not record:
         raise HTTPException(404, "Automation not found")
     record["status"] = "Active"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/automations/{automation_id}/run/")
@@ -2755,7 +2771,7 @@ def connect_integration(integration_id: str):
     if not record:
         raise HTTPException(404, "Integration not found")
     record["status"] = "Connected"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/integrations/{integration_id}/sync/")
@@ -2764,7 +2780,7 @@ def sync_integration(integration_id: str):
     if not record:
         raise HTTPException(404, "Integration not found")
     record["lastSync"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -2781,24 +2797,31 @@ def publish_knowledge(article_id: str):
     if not record:
         raise HTTPException(404, "Article not found")
     record["status"] = "Published"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/educational/")
 def list_educational_modules():
     modules = db.all("educational_modules")
+    out = []
     for m in modules:
-        m["articleCount"] = len(db.find("educational_articles", moduleId=m.get("id")))
-    return {"data": modules, "meta": {}}
+        item = dict(m)
+        item["articleCount"] = len(db.find("educational_articles", moduleId=m.get("id")))
+        out.append(item)
+    return {"data": out, "meta": {}}
 
 
 @router.get("/educational/modules/")
 def list_educational_modules_v2():
     modules = db.all("educational_modules")
+    out = []
     for m in modules:
-        m["articles"] = db.find("educational_articles", moduleId=m.get("id"))
-        m["articleCount"] = len(m["articles"])
-    return {"data": modules, "meta": {}}
+        item = dict(m)
+        articles = db.find("educational_articles", moduleId=m.get("id"))
+        item["articles"] = articles
+        item["articleCount"] = len(articles)
+        out.append(item)
+    return {"data": out, "meta": {}}
 
 
 @router.post("/educational/modules/")
@@ -2820,9 +2843,10 @@ def get_educational_module(module_id: str):
     record = db.get("educational_modules", module_id)
     if not record:
         raise HTTPException(404, "Module not found")
-    record["articles"] = db.find("educational_articles", moduleId=module_id)
-    record["articleCount"] = len(record["articles"])
-    return _one(record)
+    out = dict(record)
+    out["articles"] = db.find("educational_articles", moduleId=module_id)
+    out["articleCount"] = len(out["articles"])
+    return {"data": _serialize(out), "meta": {}}
 
 
 @router.put("/educational/modules/{module_id}/")
@@ -2834,7 +2858,7 @@ def update_educational_module(module_id: str, payload: sc.UpdateEducationalModul
     record["description"] = payload.description
     record["orderIndex"] = payload.order_index
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/educational/modules/{module_id}/")
@@ -2855,7 +2879,7 @@ def publish_educational_module(module_id: str):
     if not record:
         raise HTTPException(404, "Module not found")
     record["status"] = "Published"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/educational/articles/")
@@ -2900,7 +2924,7 @@ def update_educational_article(article_id: str, payload: sc.UpdateEducationalArt
     record["fileUrl"] = payload.file_url
     record["orderIndex"] = payload.order_index
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/educational/articles/{article_id}/")
@@ -2928,7 +2952,7 @@ def upload_educational_file(article_id: str, file: UploadFile = File(...)):
     record["fileUrl"] = f"/files/storage/{stored_name}"
     record["fileName"] = safe_name
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/educational/articles/{article_id}/publish/")
@@ -2937,7 +2961,7 @@ def publish_educational_article(article_id: str):
     if not record:
         raise HTTPException(404, "Article not found")
     record["status"] = "Published"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/calendar/")
@@ -2960,7 +2984,7 @@ def mark_calendar_done(event_id: str):
     if not record:
         raise HTTPException(404, "Calendar event not found")
     record["status"] = "Done"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/files/")
@@ -3046,7 +3070,7 @@ def verify_file(file_id: str):
     if not record:
         raise HTTPException(404, "File not found")
     record["status"] = "Verified"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/messages/")
@@ -3062,7 +3086,7 @@ def send_message(message_id: str, payload: dict):
     record["lastMessage"] = payload.get("body", "")
     record["status"] = "Open"
     record["time"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/messages/{message_id}/resolve/")
@@ -3071,7 +3095,7 @@ def resolve_message(message_id: str):
     if not record:
         raise HTTPException(404, "Message not found")
     record["status"] = "Resolved"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/reports/")
@@ -3119,7 +3143,7 @@ def generate_report(report_id: str):
         record["insights"].append("Tidak ada insight tambahan untuk periode ini.")
     record["status"] = "Ready"
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/reports/{report_id}/schedule/")
@@ -3128,7 +3152,7 @@ def schedule_report(report_id: str):
     if not record:
         raise HTTPException(404, "Report not found")
     record["status"] = "Scheduled"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/billing/")
@@ -3142,7 +3166,7 @@ def change_billing_plan(payload: dict):
     record = records[0] if records else None
     if record:
         record["plan"] = payload.get("plan", record.get("plan"))
-    return _one(record) if record else {"data": None, "meta": {}}
+    return _save_one(record) if record else {"data": None, "meta": {}}
 
 
 @router.post("/billing/{billing_id}/invoice/")
@@ -3151,7 +3175,7 @@ def download_invoice(billing_id: str):
     if not record:
         raise HTTPException(404, "Billing record not found")
     record["invoiceDownloaded"] = record.get("invoiceDownloaded", 0) + 1
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -3183,7 +3207,7 @@ def resolve_support(ticket_id: str):
     if not record:
         raise HTTPException(404, "Ticket not found")
     record["status"] = "Resolved"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/api-keys/")
@@ -3212,7 +3236,7 @@ def revoke_api_key(key_id: str):
     if not record:
         raise HTTPException(404, "API key not found")
     record["status"] = "Revoked"
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -3245,7 +3269,7 @@ def get_chat_session(session_id: str):
     if not record:
         raise HTTPException(404, "Chat session not found")
     record["messageCount"] = len(record.get("messages", []) or [])
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/chat/sessions/{session_id}/")
@@ -3264,7 +3288,7 @@ def rename_chat_session(session_id: str, payload: sc.RenameChatSessionPayload):
         raise HTTPException(404, "Chat session not found")
     record["title"] = payload.title
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/chat/sessions/{session_id}/messages/")
@@ -3292,7 +3316,7 @@ def send_session_message(session_id: str, payload: sc.SendChatPayload):
         record["title"] = payload.text[:40]
     record["updatedAt"] = "now"
     record["messageCount"] = len(record["messages"])
-    return _one(record)
+    return _save_one(record)
 
 
 @router.get("/chat/suggestions/")
@@ -3466,7 +3490,7 @@ def reanalyze_analysis(analysis_id: str):
     # Hapus cache rekomendasi regulasi
     for cached in db.find("regulation_recommendations", analysisId=analysis_id):
         db.delete("regulation_recommendations", cached.get("id"))
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/export-analysis/{analysis_id}/")
@@ -3553,7 +3577,7 @@ def run_regulation_check(analysis_id: str, payload: dict | None = None):
     # Sinkronkan dengan cache regulasi 10-bagian
     for cached in db.find("regulation_recommendations", analysisId=analysis_id):
         db.delete("regulation_recommendations", cached.get("id"))
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
@@ -3720,8 +3744,10 @@ def create_hs_code(payload: sc.CreateHSCodePayload):
 # ADMIN PANEL — Generic CRUD untuk SEMUA tabel
 # ----------------------------------------------------------------------------
 @router.get("/admin/tables/")
-def admin_list_tables():
+def admin_list_tables(current_user: dict = Depends(get_current_user)):
     """Daftar semua tabel di database beserta jumlah record."""
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     tables = []
     for name in db._TABLES:
         tables.append({"name": name, "count": db.loaded_records(name)})
@@ -3734,8 +3760,10 @@ def _admin_validate_table(table: str) -> None:
 
 
 @router.get("/admin/data/{table}/")
-def admin_list_records(table: str, search: str = "", limit: int = 50, offset: int = 0):
+def admin_list_records(table: str, search: str = "", limit: int = 50, offset: int = 0, current_user: dict = Depends(get_current_user)):
     """List record dari tabel tertentu (search + pagination)."""
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     _admin_validate_table(table)
     items = db.all(table)
     if search:
@@ -3753,8 +3781,10 @@ def admin_list_records(table: str, search: str = "", limit: int = 50, offset: in
 
 
 @router.post("/admin/data/{table}/")
-def admin_create_record(table: str, payload: dict):
+def admin_create_record(table: str, payload: dict, current_user: dict = Depends(get_current_user)):
     """Buat record baru di tabel (payload = objek JSON)."""
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     _admin_validate_table(table)
     if "id" not in payload:
         payload["id"] = db.gen_id(table)
@@ -3763,7 +3793,9 @@ def admin_create_record(table: str, payload: dict):
 
 
 @router.get("/admin/data/{table}/{record_id}/")
-def admin_get_record(table: str, record_id: str):
+def admin_get_record(table: str, record_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     _admin_validate_table(table)
     record = db.get(table, record_id)
     if not record:
@@ -3772,19 +3804,26 @@ def admin_get_record(table: str, record_id: str):
 
 
 @router.put("/admin/data/{table}/{record_id}/")
-def admin_update_record(table: str, record_id: str, payload: dict):
+def admin_update_record(table: str, record_id: str, payload: dict, current_user: dict = Depends(get_current_user)):
     """Update record: merge payload ke record yang ada."""
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     _admin_validate_table(table)
     record = db.get(table, record_id)
     if not record:
         raise HTTPException(404, "Record not found")
-    record.update(payload)
+    # Proteksi field sensitif: jangan izinkan overwrite password plaintext
+    _ADMIN_FORBIDDEN_FIELDS = {"password", "__table"}
+    safe_payload = {k: v for k, v in payload.items() if k not in _ADMIN_FORBIDDEN_FIELDS}
+    record.update(safe_payload)
     db.save(record)
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/admin/data/{table}/{record_id}/")
-def admin_delete_record(table: str, record_id: str):
+def admin_delete_record(table: str, record_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     _admin_validate_table(table)
     if not db.delete(table, record_id):
         raise HTTPException(404, "Record not found")
@@ -3795,7 +3834,9 @@ def admin_delete_record(table: str, record_id: str):
 # ADMIN COUNTRIES & REGULATIONS
 # ----------------------------------------------------------------------------
 @router.post("/admin/countries/")
-def admin_create_country(payload: sc.CreateCountryPayload):
+def admin_create_country(payload: sc.CreateCountryPayload, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     from app.data.countries import get_country
     if get_country(payload.country_code):
         raise HTTPException(409, "Country already exists")
@@ -3810,7 +3851,9 @@ def admin_create_country(payload: sc.CreateCountryPayload):
 
 
 @router.put("/admin/countries/{country_code}/")
-def admin_update_country(country_code: str, payload: sc.UpdateCountryPayload):
+def admin_update_country(country_code: str, payload: sc.UpdateCountryPayload, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     record = db.get_by("countries", country_code=country_code.upper())
     if not record:
         raise HTTPException(404, "Country not found")
@@ -3819,11 +3862,13 @@ def admin_update_country(country_code: str, payload: sc.UpdateCountryPayload):
     if payload.region:
         record["region"] = payload.region
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/admin/countries/{country_code}/delete/")
-def admin_delete_country(country_code: str):
+def admin_delete_country(country_code: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     record = db.get_by("countries", country_code=country_code.upper())
     if not record:
         raise HTTPException(404, "Country not found")
@@ -3834,7 +3879,9 @@ def admin_delete_country(country_code: str):
 
 
 @router.get("/admin/countries/{country_code}/regulations/")
-def admin_list_regulations(country_code: str, rule_category: str = ""):
+def admin_list_regulations(country_code: str, rule_category: str = "", current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     from app.data.countries import get_regulations
     code = country_code.upper()
     items: list[dict] = []
@@ -3856,7 +3903,9 @@ def admin_list_regulations(country_code: str, rule_category: str = ""):
 
 
 @router.post("/admin/countries/{country_code}/regulations/create/")
-def admin_create_regulation(country_code: str, payload: sc.CreateRegulationPayload):
+def admin_create_regulation(country_code: str, payload: sc.CreateRegulationPayload, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     from app.data.countries import get_country
     code = country_code.upper()
     # Negara bisa berasal dari master data statis ATAU buatan admin (tersimpan di db)
@@ -3877,7 +3926,9 @@ def admin_create_regulation(country_code: str, payload: sc.CreateRegulationPaylo
 
 
 @router.put("/admin/regulations/{regulation_id}/")
-def admin_update_regulation(regulation_id: str, payload: sc.UpdateRegulationPayload):
+def admin_update_regulation(regulation_id: str, payload: sc.UpdateRegulationPayload, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     record = db.get("regulations", regulation_id)
     if not record:
         raise HTTPException(404, "Regulation not found")
@@ -3886,11 +3937,13 @@ def admin_update_regulation(regulation_id: str, payload: sc.UpdateRegulationPayl
     record["requiredSpecs"] = payload.required_specs
     record["descriptionRule"] = payload.description_rule
     record["updatedAt"] = "now"
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/admin/regulations/{regulation_id}/delete/")
-def admin_delete_regulation(regulation_id: str):
+def admin_delete_regulation(regulation_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     record = db.get("regulations", regulation_id)
     if not record:
         raise HTTPException(404, "Regulation not found")
@@ -3899,7 +3952,9 @@ def admin_delete_regulation(regulation_id: str):
 
 
 @router.post("/admin/regulations/import/")
-def admin_import_regulations(file: UploadFile = File(...)):
+def admin_import_regulations(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(403, "Admin access required")
     import csv as _csv
     content = file.file.read().decode("utf-8", errors="replace")
     reader = _csv.DictReader(content.splitlines())
@@ -3958,7 +4013,7 @@ def update_settings(payload: dict):
         record[key] = value
     record["updatedAt"] = "now"
     db.save(record)
-    return _one(record)
+    return _save_one(record)
 
 
 # ----------------------------------------------------------------------------
