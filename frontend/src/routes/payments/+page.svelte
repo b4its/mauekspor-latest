@@ -147,7 +147,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					<a href={`/payments/${payment.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(payment.status))}>{payment.status}</Badge>
-							<strong class="text-2xl font-bold tracking-tight">{Math.round((payment.paid / payment.amount) * 100)}%</strong>
+							<strong class="text-2xl font-bold tracking-tight">{payment.amount ? Math.round((payment.paid / payment.amount) * 100) : 0}%</strong>
 						</div>
 						<h3 class="text-2xl font-bold tracking-tight">{payment.id}</h3>
 						<p class="text-sm text-muted-foreground">{payment.buyer} · {payment.orderId}</p>

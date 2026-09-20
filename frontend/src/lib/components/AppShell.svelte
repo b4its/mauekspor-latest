@@ -28,7 +28,9 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	let loggingOut = $state(false);
 
 	$effect(() => {
-		fetchSession();
+		if (getStatus() === 'loading') {
+			fetchSession();
+		}
 	});
 
 	let user = $derived(getUser());

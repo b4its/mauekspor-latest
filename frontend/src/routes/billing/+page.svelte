@@ -139,7 +139,7 @@
 						<span class="text-sm text-muted-foreground">{item.used} / {item.limit}</span>
 					</CardHeader>
 					<CardContent class="p-0">
-						<Progress value={Math.round((item.used / item.limit) * 100)} />
+						<Progress value={item.limit ? Math.round((item.used / item.limit) * 100) : 0} />
 					</CardContent>
 				</Card>
 			{/each}
