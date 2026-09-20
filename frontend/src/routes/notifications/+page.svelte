@@ -91,6 +91,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pagedItems = $derived(paginate(filteredNotifications ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredNotifications?.length ?? 0, paginationPageSize));
 
+	$effect(() => {
+		activeFilter;
+		query;
+		paginationPage = 1;
+	});
+
 </script>
 
 <svelte:head>

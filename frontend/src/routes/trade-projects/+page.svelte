@@ -41,6 +41,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pagedItems = $derived(paginate(filtered ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filtered?.length ?? 0, paginationPageSize));
 
+	$effect(() => {
+		search;
+		paginationPage = 1;
+	});
+
 </script>
 
 <svelte:head>

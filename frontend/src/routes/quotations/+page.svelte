@@ -68,6 +68,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pagedItems = $derived(paginate(filteredQuotations ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredQuotations?.length ?? 0, paginationPageSize));
 
+	$effect(() => {
+		activeFilter;
+		query;
+		paginationPage = 1;
+	});
+
 </script>
 
 <svelte:head>
