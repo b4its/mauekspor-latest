@@ -737,7 +737,7 @@ def enrich_product(product_id: str):
             "marketingHighlights": record.get("marketing_highlights", []),
             "lastUpdatedAi": "now",
         })
-    return _one(record)
+    return _save_one(record)
 
 
 @router.post("/products/batch/delete/")
@@ -792,7 +792,7 @@ def update_product(product_id: str, payload: sc.UpdateProductPayload):
                 **enrich_patch,
                 "lastUpdatedAi": "now",
             })
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/products/{product_id}/")
@@ -1587,7 +1587,7 @@ def update_catalog_image(catalog_id: str, image_id: str, payload: dict):
         if payload.get(mapped) is not None or payload.get(key) is not None:
             image[key] = payload.get(mapped) if payload.get(mapped) is not None else payload.get(key)
     image["updatedAt"] = "now"
-    return _one(image)
+    return _save_one(image)
 
 
 @router.delete("/catalogs/{catalog_id}/images/{image_id}/")
@@ -1665,7 +1665,7 @@ def update_catalog_variant_type(catalog_id: str, type_id: str, payload: sc.Updat
     if payload.sort_order is not None:
         vt["sortOrder"] = payload.sort_order
     vt["updatedAt"] = "now"
-    return _one(vt)
+    return _save_one(vt)
 
 
 @router.delete("/catalogs/{catalog_id}/variant-types/{type_id}/")
@@ -1709,7 +1709,7 @@ def update_catalog_variant_option(catalog_id: str, type_id: str, option_id: str,
     option["sortOrder"] = payload.sort_order
     option["isAvailable"] = payload.is_available
     option["updatedAt"] = "now"
-    return _one(option)
+    return _save_one(option)
 
 
 @router.delete("/catalogs/{catalog_id}/variant-types/{type_id}/options/{option_id}/")
@@ -2044,7 +2044,7 @@ def update_costing(costing_id: str, payload: sc.UpdateCostingPayload):
         "status": "Ready",
         "updatedAt": "now",
     })
-    return _one(record)
+    return _save_one(record)
 
 
 @router.delete("/costing/{costing_id}/")
@@ -2950,6 +2950,9 @@ def upload_educational_file(article_id: str, file: UploadFile = File(...)):
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(413, "File terlalu besar (maks 10MB)")
     safe_name = os.path.basename(file.filename or "file.bin")
+    ext = os.path.splitext(safe_name)[1].lower()
+    if ext not in _ALLOWED_EXTENSIONS:
+        raise HTTPException(400, f"Tipe file '{ext}' tidak diizinkan.")
     stored_name = f"{int(time.time() * 1000)}-{safe_name}"
     with open(os.path.join(UPLOAD_DIR, stored_name), "wb") as out:
         out.write(content)
