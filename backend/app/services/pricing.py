@@ -113,7 +113,7 @@ _FREIGHT_PERCENT = {
 
 
 def _trucking_cost(distance_km: float) -> float:
-    """Trucking cost (dalam display currency, mengikuti band USD-scale)."""
+    """Trucking cost in USD (base currency for logistics costs)."""
     for band_km, per_km in _TRUCKING_BANDS:
         if distance_km <= band_km:
             return distance_km * per_km

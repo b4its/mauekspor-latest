@@ -80,7 +80,7 @@ def test_calculate_exw_fob_cif():
     exw = pricing.calculate_exw(10000, 2000, 20, 15800)
     assert exw == pytest.approx(round(12000 * 1.2 / 15800, 2), abs=0.001)
     fob = pricing.calculate_fob(100.0, 200, 15800)
-    # trucking 200km = 80 USD + doc 50
+    # trucking 200km = 80 USD + doc 50 (both in USD, which is display currency when rate=15800)
     assert fob == pytest.approx(100 + 80 + 50, abs=0.001)
     cif = pricing.calculate_cif(200.0, "Asia")
     freight = 200 * 0.08
