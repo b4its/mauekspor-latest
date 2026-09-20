@@ -1,536 +1,340 @@
-import { test, expect } from '@playwright/test';
-import { Page } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Account credentials from seed.py
-const ACCOUNTS = {
-  admin: { email: 'admin@mauekspor.example', password: 'admin123', role: 'Admin' },
-  exporter: { email: 'rizal@kopigayo.example', password: 'rizal123', role: 'Exporter' },
-  buyer: { email: 'aya@hikari.example', password: 'buyer123', role: 'Buyer' }
-};
+// ─── Credentials from seed.py ────────────────────────────────────────────────
+const ADMIN    = { email: 'admin@mauekspor.example',  password: 'admin123'  };
+const EXPORTER = { email: 'rizal@kopigayo.example',   password: 'rizal123'  };
+const BUYER    = { email: 'aya@hikari.example',        password: 'buyer123'  };
 
-const BASE_URL = 'http://localhost:5173';
+// ─── All protected pages (route → screenshot folder name) ────────────────────
+const ALL_PAGES: Array<{ route: string; name: string }> = [
+  { route: '/dashboard',            name: '01-dashboard'          },
+  { route: '/products',             name: '02-products'           },
+  { route: '/export-analysis',      name: '03-export-analysis'    },
+  { route: '/catalogs',             name: '04-catalogs'           },
+  { route: '/costing',              name: '05-costing'            },
+  { route: '/buyer-requests',       name: '06-buyer-requests'     },
+  { route: '/buyers',               name: '07-buyers'             },
+  { route: '/forwarders',           name: '08-forwarders'         },
+  { route: '/markets',              name: '09-markets'            },
+  { route: '/trade-projects',       name: '10-trade-projects'     },
+  { route: '/business-profile',     name: '11-business-profile'   },
+  { route: '/rfq',                  name: '12-rfq'                },
+  { route: '/quotations',           name: '13-quotations'         },
+  { route: '/orders',               name: '14-orders'             },
+  { route: '/compliance',           name: '15-compliance'         },
+  { route: '/documents',            name: '16-documents'          },
+  { route: '/shipments',            name: '17-shipments'          },
+  { route: '/payments',             name: '18-payments'           },
+  { route: '/tasks',                name: '19-tasks'              },
+  { route: '/notifications',        name: '20-notifications'      },
+  { route: '/calendar',             name: '21-calendar'           },
+  { route: '/messages',             name: '22-messages'           },
+  { route: '/chat',                 name: '23-chat'               },
+  { route: '/files',                name: '24-files'              },
+  { route: '/reports',              name: '25-reports'            },
+  { route: '/analytics',            name: '26-analytics'          },
+  { route: '/audit',                name: '27-audit'              },
+  { route: '/team',                 name: '28-team'               },
+  { route: '/settings',             name: '29-settings'           },
+  { route: '/billing',              name: '30-billing'            },
+  { route: '/support',              name: '31-support'            },
+  { route: '/api-keys',             name: '32-api-keys'           },
+  { route: '/integrations',         name: '33-integrations'       },
+  { route: '/automations',          name: '34-automations'        },
+  { route: '/templates',            name: '35-templates'          },
+  { route: '/knowledge',            name: '36-knowledge'          },
+  { route: '/educational',          name: '37-educational'        },
+  { route: '/marketing',            name: '38-marketing'          },
+  { route: '/suppliers',            name: '39-suppliers'          },
+  { route: '/countries',            name: '40-countries'          },
+  { route: '/hs-codes',             name: '41-hs-codes'           },
+  { route: '/users',                name: '42-users'              },
+  { route: '/admin',                name: '43-admin'              },
+];
 
-// Helper function to wait for page to fully load
-async function waitForFullLoad(page: Page) {
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000); // Extra time for animations
+// ─── Screenshot helper ───────────────────────────────────────────────────────
+const SS_ROOT = path.join(process.cwd(), 'test-results', 'screenshots');
+
+function ensureDir(dir: string) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-// Helper function to take section screenshots
-async function screenshotSections(page: Page, pageName: string, sections: string[]) {
-  const screenshotDir = `test-results/screenshots/${pageName}`;
-  
-  for (let i = 0; i < sections.length; i++) {
-    const selector = sections[i];
-    try {
-      // Try to find the element
-      const element = page.locator(selector).first();
-      if (await element.isVisible({ timeout: 2000 })) {
-        await element.screenshot({ 
-          path: `${screenshotDir}/section-${String(i + 1).padStart(2, '0')}.png` 
-        });
-        console.log(`✓ ${pageName} - Section ${i + 1} captured`);
+async function screenshotPage(page: Page, folderName: string) {
+  const dir = path.join(SS_ROOT, folderName);
+  ensureDir(dir);
+
+  // 1. Full-page screenshot
+  await page.screenshot({
+    path: path.join(dir, '00-full-page.png'),
+    fullPage: true,
+  });
+
+  // 2. Screenshot of every visible top-level section element
+  const sectionSelectors = [
+    'header',
+    'nav',
+    'main > section',
+    'main > div > section',
+    // card grids / stat cards
+    '[class*="card"]',
+    // data tables
+    'table',
+    // common SvelteKit layouts
+    '[data-testid]',
+    // headings with their siblings as context
+    'h1', 'h2',
+    // sidebar
+    '[class*="sidebar"]',
+    // toolbar / search bar area
+    '[class*="toolbar"]',
+    '[class*="filter"]',
+    // footer
+    'footer',
+  ];
+
+  const seen = new Set<string>();
+  let idx = 1;
+
+  for (const sel of sectionSelectors) {
+    const elements = await page.locator(sel).all();
+    for (const el of elements) {
+      try {
+        const visible = await el.isVisible();
+        if (!visible) continue;
+
+        // Bounding box dedup – skip duplicates that are fully inside an already-shot element
+        const box = await el.boundingBox();
+        if (!box) continue;
+        const key = `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        // Skip tiny elements (< 100 px wide or tall)
+        if (box.width < 100 || box.height < 30) continue;
+
+        const filename = `${String(idx).padStart(2, '0')}-${sel.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').slice(0, 30)}.png`;
+        await el.screenshot({ path: path.join(dir, filename) });
+        idx++;
+      } catch {
+        // element may have been removed after query – skip silently
       }
-    } catch (e) {
-      console.log(`⚠ ${pageName} - Section ${i + 1} not found or not visible`);
     }
   }
-  
-  // Always take full page screenshot
-  await page.screenshot({ 
-    path: `${screenshotDir}/full-page.png`,
-    fullPage: true 
-  });
-  console.log(`✓ ${pageName} - Full page captured`);
 }
 
-// Login helper
-async function login(page: Page, account: typeof ACCOUNTS.admin) {
-  await page.goto(`${BASE_URL}/login`);
-  await page.fill('input[name="email"]', account.email);
-  await page.fill('input[name="password"]', account.password);
-  await page.click('button[type="submit"]');
-  await waitForFullLoad(page);
-  await page.waitForURL('**/dashboard', { timeout: 10000 });
+// ─── Login helper (persists cookies in context) ──────────────────────────────
+async function loginAs(page: Page, creds: { email: string; password: string }) {
+  await page.goto('/login');
+  await page.waitForLoadState('networkidle');
+
+  // Fill email – the id has a random suffix so we use type selector
+  await page.locator('input[type="email"]').fill(creds.email);
+  await page.locator('input[type="password"]').fill(creds.password);
+  await page.locator('button[type="submit"]').click();
+
+  // Wait until redirected away from /login
+  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15_000 });
+  await page.waitForLoadState('networkidle');
 }
 
-test.describe('Landing Page (Public)', () => {
-  test('screenshot landing page sections', async ({ page }) => {
-    await page.goto(BASE_URL);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '01-landing', [
-      'header', // Header/navigation
-      'h1', // Hero section title
-      '[class*="hero"]', // Hero section
-      '[class*="features"]', // Features section
-      '[class*="workflow"]', // Workflow section
-      '[class*="testimonial"]', // Testimonials
-      '[class*="cta"]', // Call to action
-      'footer' // Footer
-    ]);
-  });
+// ─── Full page load helper ───────────────────────────────────────────────────
+async function loadFully(page: Page) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('networkidle');
+  // Extra pause so lazy-loaded components, charts, AOS animations settle
+  await page.waitForTimeout(1500);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// TEST: Landing page (public)
+// ═════════════════════════════════════════════════════════════════════════════
+test('00 – Landing page (no auth) – screenshot all sections', async ({ page }) => {
+  await page.goto('/');
+  await loadFully(page);
+
+  const dir = path.join(SS_ROOT, '00-landing');
+  ensureDir(dir);
+
+  // Full page
+  await page.screenshot({ path: path.join(dir, '00-full-page.png'), fullPage: true });
+
+  // Viewport (above the fold)
+  await page.screenshot({ path: path.join(dir, '01-viewport.png') });
+
+  // Scroll through the whole page and capture 6 vertical strips
+  const totalHeight = await page.evaluate(() => document.body.scrollHeight);
+  const viewH = page.viewportSize()!.height;
+  const strips = Math.ceil(totalHeight / viewH);
+
+  for (let i = 0; i < strips; i++) {
+    await page.evaluate((y) => window.scrollTo(0, y), i * viewH);
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(dir, `0${i + 2}-scroll-${i + 1}.png`) });
+  }
+
+  // Reset scroll
+  await page.evaluate(() => window.scrollTo(0, 0));
 });
 
-test.describe('Admin Pages', () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page, ACCOUNTS.admin);
-  });
+// ═════════════════════════════════════════════════════════════════════════════
+// TEST: Login page
+// ═════════════════════════════════════════════════════════════════════════════
+test('01 – Login page – screenshot', async ({ page }) => {
+  await page.goto('/login');
+  await loadFully(page);
 
-  test('Dashboard', async ({ page }) => {
-    await page.goto(`${BASE_URL}/dashboard`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '02-dashboard', [
-      '[class*="sidebar"]', // Sidebar
-      'h1, h2', // Page title
-      '[class*="stat"]', // Stats cards
-      '[class*="chart"]', // Charts
-      '[class*="table"]' // Tables
-    ]);
-  });
-
-  test('Products List', async ({ page }) => {
-    await page.goto(`${BASE_URL}/products`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '03-products-list', [
-      'h1, h2', // Page title
-      '[class*="filter"]', // Filters
-      '[class*="table"]', // Products table
-      '[class*="pagination"]' // Pagination
-    ]);
-  });
-
-  test('Business Profile', async ({ page }) => {
-    await page.goto(`${BASE_URL}/business-profile`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '04-business-profile', [
-      'h1, h2', // Page title
-      '[class*="profile"]', // Profile info
-      '[class*="certification"]', // Certifications
-      'button' // Action buttons
-    ]);
-  });
-
-  test('Export Analysis', async ({ page }) => {
-    await page.goto(`${BASE_URL}/export-analysis`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '05-export-analysis', [
-      'h1, h2', // Page title
-      '[class*="analysis"]', // Analysis cards
-      '[class*="compliance"]', // Compliance section
-      '[class*="market"]' // Market analysis
-    ]);
-  });
-
-  test('Catalogs', async ({ page }) => {
-    await page.goto(`${BASE_URL}/catalogs`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '06-catalogs', [
-      'h1, h2', // Page title
-      '[class*="catalog"]', // Catalog cards
-      '[class*="product"]' // Product info
-    ]);
-  });
-
-  test('Costing', async ({ page }) => {
-    await page.goto(`${BASE_URL}/costing`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '07-costing', [
-      'h1, h2', // Page title
-      '[class*="cost"]', // Cost breakdown
-      '[class*="price"]', // Pricing info
-      '[class*="container"]' // Container capacity
-    ]);
-  });
-
-  test('Buyer Requests', async ({ page }) => {
-    await page.goto(`${BASE_URL}/buyer-requests`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '08-buyer-requests', [
-      'h1, h2', // Page title
-      '[class*="request"]', // Request cards
-      '[class*="match"]' // Match results
-    ]);
-  });
-
-  test('Forwarders', async ({ page }) => {
-    await page.goto(`${BASE_URL}/forwarders`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '09-forwarders', [
-      'h1, h2', // Page title
-      '[class*="forwarder"]', // Forwarder cards
-      '[class*="rating"]', // Rating info
-      '[class*="route"]' // Route info
-    ]);
-  });
-
-  test('Quotations', async ({ page }) => {
-    await page.goto(`${BASE_URL}/quotations`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '10-quotations', [
-      'h1, h2', // Page title
-      '[class*="quotation"]', // Quotation cards
-      '[class*="status"]' // Status badges
-    ]);
-  });
-
-  test('Orders', async ({ page }) => {
-    await page.goto(`${BASE_URL}/orders`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '11-orders', [
-      'h1, h2', // Page title
-      '[class*="order"]', // Order cards
-      '[class*="payment"]' // Payment info
-    ]);
-  });
-
-  test('Compliance', async ({ page }) => {
-    await page.goto(`${BASE_URL}/compliance`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '12-compliance', [
-      'h1, h2', // Page title
-      '[class*="requirement"]', // Requirements
-      '[class*="evidence"]', // Evidence section
-      '[class*="score"]' // Readiness score
-    ]);
-  });
-
-  test('Documents', async ({ page }) => {
-    await page.goto(`${BASE_URL}/documents`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '13-documents', [
-      'h1, h2', // Page title
-      '[class*="document"]', // Document cards
-      '[class*="generate"]' // Generate buttons
-    ]);
-  });
-
-  test('Shipments', async ({ page }) => {
-    await page.goto(`${BASE_URL}/shipments`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '14-shipments', [
-      'h1, h2', // Page title
-      '[class*="shipment"]', // Shipment cards
-      '[class*="milestone"]', // Milestones
-      '[class*="tracking"]' // Tracking info
-    ]);
-  });
-
-  test('Payments', async ({ page }) => {
-    await page.goto(`${BASE_URL}/payments`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '15-payments', [
-      'h1, h2', // Page title
-      '[class*="payment"]', // Payment cards
-      '[class*="invoice"]', // Invoice info
-      '[class*="status"]' // Status badges
-    ]);
-  });
-
-  test('Chat (AI)', async ({ page }) => {
-    await page.goto(`${BASE_URL}/chat`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '16-chat', [
-      'h1, h2', // Page title
-      '[class*="session"]', // Chat sessions
-      '[class*="message"]', // Messages
-      '[class*="input"]' // Input area
-    ]);
-  });
-
-  test('Messages', async ({ page }) => {
-    await page.goto(`${BASE_URL}/messages`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '17-messages', [
-      'h1, h2', // Page title
-      '[class*="message"]', // Message cards
-      '[class*="conversation"]' // Conversations
-    ]);
-  });
-
-  test('Analytics', async ({ page }) => {
-    await page.goto(`${BASE_URL}/analytics`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '18-analytics', [
-      'h1, h2', // Page title
-      '[class*="chart"]', // Charts
-      '[class*="stat"]', // Statistics
-      '[class*="overview"]' // Overview cards
-    ]);
-  });
-
-  test('Reports', async ({ page }) => {
-    await page.goto(`${BASE_URL}/reports`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '19-reports', [
-      'h1, h2', // Page title
-      '[class*="report"]', // Report cards
-      '[class*="schedule"]' // Schedule info
-    ]);
-  });
-
-  test('Knowledge Base', async ({ page }) => {
-    await page.goto(`${BASE_URL}/knowledge`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '20-knowledge', [
-      'h1, h2', // Page title
-      '[class*="article"]', // Articles
-      '[class*="category"]' // Categories
-    ]);
-  });
-
-  test('Educational', async ({ page }) => {
-    await page.goto(`${BASE_URL}/educational`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '21-educational', [
-      'h1, h2', // Page title
-      '[class*="module"]', // Modules
-      '[class*="lesson"]' // Lessons
-    ]);
-  });
-
-  test('Settings', async ({ page }) => {
-    await page.goto(`${BASE_URL}/settings`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '22-settings', [
-      'h1, h2', // Page title
-      '[class*="setting"]', // Settings forms
-      '[class*="company"]', // Company info
-      '[class*="security"]' // Security settings
-    ]);
-  });
-
-  test('Admin Panel', async ({ page }) => {
-    await page.goto(`${BASE_URL}/admin`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '23-admin', [
-      'h1, h2', // Page title
-      '[class*="table"]', // Data tables
-      '[class*="action"]', // Action buttons
-      '[class*="modal"]' // Modals if any
-    ]);
-  });
-
-  test('Notifications', async ({ page }) => {
-    await page.goto(`${BASE_URL}/notifications`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '24-notifications', [
-      'h1, h2', // Page title
-      '[class*="notification"]', // Notification cards
-      '[class*="unread"]' // Unread indicator
-    ]);
-  });
-
-  test('Team', async ({ page }) => {
-    await page.goto(`${BASE_URL}/team`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '25-team', [
-      'h1, h2', // Page title
-      '[class*="member"]', // Team members
-      '[class*="invite"]' // Invite section
-    ]);
-  });
-
-  test('API Keys', async ({ page }) => {
-    await page.goto(`${BASE_URL}/api-keys`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '26-api-keys', [
-      'h1, h2', // Page title
-      '[class*="key"]', // API key cards
-      '[class*="create"]' // Create button
-    ]);
-  });
-
-  test('Audit Log', async ({ page }) => {
-    await page.goto(`${BASE_URL}/audit`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '27-audit', [
-      'h1, h2', // Page title
-      '[class*="log"]', // Log entries
-      '[class*="filter"]' // Filters
-    ]);
-  });
-
-  test('Calendar', async ({ page }) => {
-    await page.goto(`${BASE_URL}/calendar`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '28-calendar', [
-      'h1, h2', // Page title
-      '[class*="calendar"]', // Calendar view
-      '[class*="event"]' // Events
-    ]);
-  });
-
-  test('Tasks', async ({ page }) => {
-    await page.goto(`${BASE_URL}/tasks`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '29-tasks', [
-      'h1, h2', // Page title
-      '[class*="task"]', // Task cards
-      '[class*="status"]' // Status indicators
-    ]);
-  });
-
-  test('Templates', async ({ page }) => {
-    await page.goto(`${BASE_URL}/templates`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '30-templates', [
-      'h1, h2', // Page title
-      '[class*="template"]', // Template cards
-      '[class*="use"]' // Use buttons
-    ]);
-  });
-
-  test('Automations', async ({ page }) => {
-    await page.goto(`${BASE_URL}/automations`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '31-automations', [
-      'h1, h2', // Page title
-      '[class*="automation"]', // Automation cards
-      '[class*="trigger"]' // Trigger info
-    ]);
-  });
-
-  test('Integrations', async ({ page }) => {
-    await page.goto(`${BASE_URL}/integrations`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '32-integrations', [
-      'h1, h2', // Page title
-      '[class*="integration"]', // Integration cards
-      '[class*="connect"]' // Connect buttons
-    ]);
-  });
-
-  test('Billing', async ({ page }) => {
-    await page.goto(`${BASE_URL}/billing`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '33-billing', [
-      'h1, h2', // Page title
-      '[class*="plan"]', // Plan cards
-      '[class*="invoice"]', // Invoice history
-      '[class*="upgrade"]' // Upgrade button
-    ]);
-  });
-
-  test('Support', async ({ page }) => {
-    await page.goto(`${BASE_URL}/support`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '34-support', [
-      'h1, h2', // Page title
-      '[class*="ticket"]', // Support tickets
-      '[class*="create"]' // Create button
-    ]);
-  });
-
-  test('Countries', async ({ page }) => {
-    await page.goto(`${BASE_URL}/countries`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '35-countries', [
-      'h1, h2', // Page title
-      '[class*="country"]', // Country cards
-      '[class*="regulation"]' // Regulation info
-    ]);
-  });
-
-  test('HS Codes', async ({ page }) => {
-    await page.goto(`${BASE_URL}/hs-codes`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '36-hs-codes', [
-      'h1, h2', // Page title
-      '[class*="hs"]', // HS code cards
-      '[class*="search"]' // Search bar
-    ]);
-  });
-
-  test('Users (Admin)', async ({ page }) => {
-    await page.goto(`${BASE_URL}/users`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '37-users', [
-      'h1, h2', // Page title
-      '[class*="user"]', // User cards
-      '[class*="role"]', // Role badges
-      '[class*="table"]' // Users table
-    ]);
-  });
+  const dir = path.join(SS_ROOT, '00-login');
+  ensureDir(dir);
+  await page.screenshot({ path: path.join(dir, '00-full-page.png'), fullPage: true });
+  await page.screenshot({ path: path.join(dir, '01-viewport.png') });
 });
 
-test.describe('Exporter Pages (Exporter Role)', () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page, ACCOUNTS.exporter);
+// ═════════════════════════════════════════════════════════════════════════════
+// TEST SUITE – All protected pages (Admin role)
+// ═════════════════════════════════════════════════════════════════════════════
+test.describe('Protected pages – Admin role', () => {
+  let ctx: BrowserContext;
+
+  test.beforeAll(async ({ browser }) => {
+    ctx = await browser.newContext();
+    const pg = await ctx.newPage();
+    await loginAs(pg, ADMIN);
+    await pg.close();
   });
 
-  test('Exporter Dashboard', async ({ page }) => {
-    await page.goto(`${BASE_URL}/dashboard`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '38-exporter-dashboard', [
-      'h1, h2',
-      '[class*="stat"]',
-      '[class*="chart"]'
-    ]);
-  });
+  test.afterAll(async () => { await ctx.close(); });
+
+  for (const { route, name } of ALL_PAGES) {
+    test(`${name} – ${route}`, async () => {
+      const page = await ctx.newPage();
+      try {
+        await page.goto(route);
+        await loadFully(page);
+
+        // Verify the page actually loaded (not stuck on login)
+        const currentPath = new URL(page.url()).pathname;
+        expect(
+          currentPath,
+          `Expected to be on ${route} but got ${currentPath}`
+        ).toContain(route.split('/')[1]);
+
+        // Take screenshots
+        await screenshotPage(page, name);
+
+        // Additional: scroll through the whole page and capture vertical strips
+        const pageDir = path.join(SS_ROOT, name);
+        const totalHeight = await page.evaluate(() => document.body.scrollHeight);
+        const viewH = page.viewportSize()!.height;
+        const strips = Math.ceil(totalHeight / viewH);
+
+        for (let i = 0; i < strips; i++) {
+          await page.evaluate((y) => window.scrollTo(0, y), i * viewH);
+          await page.waitForTimeout(300);
+          await page.screenshot({ path: path.join(pageDir, `scroll-${String(i + 1).padStart(2, '0')}.png`) });
+        }
+      } finally {
+        await page.close();
+      }
+    });
+  }
 });
 
-test.describe('Buyer Pages (Buyer Role)', () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page, ACCOUNTS.buyer);
+// ═════════════════════════════════════════════════════════════════════════════
+// TEST SUITE – Exporter role pages
+// ═════════════════════════════════════════════════════════════════════════════
+test.describe('Protected pages – Exporter role', () => {
+  let ctx: BrowserContext;
+
+  test.beforeAll(async ({ browser }) => {
+    ctx = await browser.newContext();
+    const pg = await ctx.newPage();
+    await loginAs(pg, EXPORTER);
+    await pg.close();
   });
 
-  test('Buyer Dashboard', async ({ page }) => {
-    await page.goto(`${BASE_URL}/dashboard`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '39-buyer-dashboard', [
-      'h1, h2',
-      '[class*="stat"]',
-      '[class*="request"]'
-    ]);
+  test.afterAll(async () => { await ctx.close(); });
+
+  const EXPORTER_PAGES = [
+    { route: '/dashboard',        name: 'exp-01-dashboard'     },
+    { route: '/products',         name: 'exp-02-products'      },
+    { route: '/export-analysis',  name: 'exp-03-export-analysis'},
+    { route: '/catalogs',         name: 'exp-04-catalogs'      },
+    { route: '/costing',          name: 'exp-05-costing'       },
+    { route: '/forwarders',       name: 'exp-06-forwarders'    },
+    { route: '/business-profile', name: 'exp-07-biz-profile'   },
+    { route: '/compliance',       name: 'exp-08-compliance'    },
+  ];
+
+  for (const { route, name } of EXPORTER_PAGES) {
+    test(`${name} – ${route}`, async () => {
+      const page = await ctx.newPage();
+      try {
+        await page.goto(route);
+        await loadFully(page);
+        await screenshotPage(page, name);
+
+        // Scroll captures
+        const pageDir = path.join(SS_ROOT, name);
+        const totalHeight = await page.evaluate(() => document.body.scrollHeight);
+        const viewH = page.viewportSize()!.height;
+        const strips = Math.ceil(totalHeight / viewH);
+        for (let i = 0; i < strips; i++) {
+          await page.evaluate((y) => window.scrollTo(0, y), i * viewH);
+          await page.waitForTimeout(300);
+          await page.screenshot({ path: path.join(pageDir, `scroll-${String(i + 1).padStart(2, '0')}.png`) });
+        }
+      } finally {
+        await page.close();
+      }
+    });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// TEST SUITE – Buyer role pages
+// ═════════════════════════════════════════════════════════════════════════════
+test.describe('Protected pages – Buyer role', () => {
+  let ctx: BrowserContext;
+
+  test.beforeAll(async ({ browser }) => {
+    ctx = await browser.newContext();
+    const pg = await ctx.newPage();
+    await loginAs(pg, BUYER);
+    await pg.close();
   });
 
-  test('My Buyer Profile', async ({ page }) => {
-    await page.goto(`${BASE_URL}/buyers/my-profile`);
-    await waitForFullLoad(page);
-    
-    await screenshotSections(page, '40-buyer-profile', [
-      'h1, h2',
-      '[class*="profile"]',
-      '[class*="preference"]'
-    ]);
-  });
+  test.afterAll(async () => { await ctx.close(); });
+
+  const BUYER_PAGES = [
+    { route: '/dashboard',         name: 'buy-01-dashboard'    },
+    { route: '/buyer-requests',    name: 'buy-02-buyer-requests'},
+    { route: '/quotations',        name: 'buy-03-quotations'   },
+    { route: '/orders',            name: 'buy-04-orders'       },
+    { route: '/buyers/my-profile', name: 'buy-05-my-profile'   },
+  ];
+
+  for (const { route, name } of BUYER_PAGES) {
+    test(`${name} – ${route}`, async () => {
+      const page = await ctx.newPage();
+      try {
+        await page.goto(route);
+        await loadFully(page);
+        await screenshotPage(page, name);
+
+        const pageDir = path.join(SS_ROOT, name);
+        const totalHeight = await page.evaluate(() => document.body.scrollHeight);
+        const viewH = page.viewportSize()!.height;
+        const strips = Math.ceil(totalHeight / viewH);
+        for (let i = 0; i < strips; i++) {
+          await page.evaluate((y) => window.scrollTo(0, y), i * viewH);
+          await page.waitForTimeout(300);
+          await page.screenshot({ path: path.join(pageDir, `scroll-${String(i + 1).padStart(2, '0')}.png`) });
+        }
+      } finally {
+        await page.close();
+      }
+    });
+  }
 });
