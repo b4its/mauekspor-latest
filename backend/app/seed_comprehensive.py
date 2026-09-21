@@ -219,7 +219,7 @@ def _commodity_group_for_hs(hs_code: str) -> str:
     """Map HS code ke commodity group."""
     try:
         chapter = int(str(hs_code)[:2])
-    except:
+    except (ValueError, TypeError):
         return "pertanian"
     
     if chapter == 3:
