@@ -54,6 +54,7 @@ help:
 	@echo "    dev-backend   - Backend lokal port $(DEV_BACKEND_PORT)"
 	@echo "    dev-frontend  - Frontend dev port $(DEV_FRONTEND_PORT)"
 	@echo "    backend-local - Backend + AI access (port 8016, real AI not mock)"
+	@echo "    ngrok-with-ai - Production stack + AI public via ngrok (RECOMMENDED)"
 	@echo "    dev-down      - Stop semua proses dev"
 	@echo ""
 	@echo "  TESTING:"
@@ -181,6 +182,15 @@ backend-local:
 dev-down:
 	@bash -c "pkill -f 'uvicorn.*$(DEV_BACKEND_PORT)' 2>/dev/null || true; echo 'Dev backend stopped'"
 	@bash -c "pkill -f '$(DEV_FRONTEND_PORT)' 2>/dev/null || true; echo 'Dev frontend stopped'"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NGROK WITH AI SERVICE (production + public AI access)
+# ─────────────────────────────────────────────────────────────────────────────
+# Start production backend/frontend AND expose AI service via ngrok tunnel
+# Use this when you want full stack accessible publicly WITH real AI responses
+ngrok-with-ai:
+	@bash scripts/ngrok-with-ai.sh
+
 # ─────────────────────────────────────────────────────────────────────────────
 build:
 	cd frontend && pnpm build && echo "✅ Frontend build selesai!"
