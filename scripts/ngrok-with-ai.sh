@@ -15,7 +15,7 @@ echo "    2. AI service reverse proxy to ngrok"
 echo "    3. Connect everything together"
 echo ""
 
-NGROK_TOKEN="${NGROK_TOKEN:-3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf}"
+NGROK_TOKEN="${NGROK_TOKEN:?NGROK_TOKEN not set — check .env}"
 AI_PORT="${AI_PORT:-20128}"
 BACKEND_PORT="${BACKEND_PORT:-8015}"
 FRONTEND_PORT="${FRONTEND_PORT:-3015}"

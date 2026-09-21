@@ -4,7 +4,7 @@ set -e
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-NGROK_TOKEN="${NGROK_TOKEN:-3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf}"
+NGROK_TOKEN="${NGROK_TOKEN:?NGROK_TOKEN not set — check .env}"
 NGINX_PORT="${NGINX_PORT:-8080}"
 NGROK_LOG="/tmp/ngrok-mauekspor.log"
 

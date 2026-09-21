@@ -17,7 +17,7 @@ services:
     profiles: ["ngrok", "tunnel"]
     restart: unless-stopped
     environment:
-      - AUTHTOKEN=3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
+      - AUTHTOKEN=${NGROK_TOKEN:?Set NGROK_TOKEN in .env}
       - PORT=8016
       - SERVICE_NAME=backend
     networks:
@@ -35,7 +35,7 @@ services:
     profiles: ["ngrok", "tunnel"]
     restart: unless-stopped
     environment:
-      - AUTHTOKEN=3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
+      - AUTHTOKEN=${NGROK_TOKEN:?Set NGROK_TOKEN in .env}
       - PORT=5188
       - SERVICE_NAME=frontend-dev
     networks:
@@ -53,7 +53,7 @@ services:
     profiles: ["ngrok", "tunnel"]
     restart: unless-stopped
     environment:
-      - AUTHTOKEN=3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
+      - AUTHTOKEN=${NGROK_TOKEN:?Set NGROK_TOKEN in .env}
       - PORT=3015
       - SERVICE_NAME=frontend-prod
     networks:

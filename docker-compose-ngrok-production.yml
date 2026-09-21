@@ -10,7 +10,7 @@ services:
     container_name: mauekspor-ngrok-prod
     restart: unless-stopped
     environment:
-      - AUTHToken=3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
+      - AUTHToken=${NGROK_TOKEN:?Set NGROK_TOKEN in .env}
       - PORT=8080
       - SERVICE_NAME=nginx-prod
     ports:

@@ -32,7 +32,7 @@ set +a
 # Override AI settings for local access
 export MAUEKSPOR_AI_MODE=remote
 export MAUEKSPOR_AI_BASE_URL="http://localhost:20128/v1"
-export MAUEKSPOR_AI_API_KEY="sk-dede08aea594e222-upk4p8-5bfa2c54"
+export MAUEKSPOR_AI_API_KEY="${MAUEKSPOR_AI_API_KEY:?Set MAUEKSPOR_AI_API_KEY in .env}"
 export MAUEKSPOR_AI_MODEL="qd/dmodel"
 
 # Set backend port
