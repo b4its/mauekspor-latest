@@ -50,9 +50,10 @@ help:
 	@echo "    ngrok-tunnel-stop  - Stop ngrok"
 	@echo "    ngrok-show-urls    - Tampilkan public URL aktif"
 	@echo ""
-	@echo "  DEVELOPMENT (port berbeda, tidak tabrakan dengan prod):"
+	@echo "  DEVELOPMENT:"
 	@echo "    dev-backend   - Backend lokal port $(DEV_BACKEND_PORT)"
 	@echo "    dev-frontend  - Frontend dev port $(DEV_FRONTEND_PORT)"
+	@echo "    backend-local - Backend + AI access (port 8016, real AI not mock)"
 	@echo "    dev-down      - Stop semua proses dev"
 	@echo ""
 	@echo "  TESTING:"
@@ -168,9 +169,14 @@ dev-frontend:
 		--port $(DEV_FRONTEND_PORT)
 
 dev-up:
-	@echo "🔧 Dev services (jalankan di dua terminal):"
+	@echo "🔧 Dev services:"
 	@echo "   Terminal 1: make dev-backend   (port $(DEV_BACKEND_PORT))"
 	@echo "   Terminal 2: make dev-frontend  (port $(DEV_FRONTEND_PORT))"
+
+# Backend lokal dengan AI access (port 8016, connect ke PostgreSQL Docker port 5447)
+# Gunakan ini saat butuh AI features yang real (bukan mock)
+backend-local:
+	@bash scripts/backend-local.sh
 
 dev-down:
 	@bash -c "pkill -f 'uvicorn.*$(DEV_BACKEND_PORT)' 2>/dev/null || true; echo 'Dev backend stopped'"
