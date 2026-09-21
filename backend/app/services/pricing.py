@@ -121,6 +121,19 @@ def _trucking_cost(distance_km: float) -> float:
 
 
 def calculate_exw(cogs_idr: float, packing_cost_idr: float, margin_percent: float, rate: float) -> float:
+    """Calculate EXW price in display currency.
+
+    Args:
+        cogs_idr: Cost of goods sold in base currency (IDR)
+        packing_cost_idr: Packing cost in base currency (IDR)
+        margin_percent: Target margin percentage (0-100)
+        rate: Exchange rate (base → display). Must be > 0.
+
+    Raises:
+        ValueError: If rate is zero or negative (would cause division by zero)
+    """
+    if not rate or rate <= 0:
+        raise ValueError(f"Exchange rate must be positive, got: {rate!r}")
     total_idr = (cogs_idr + packing_cost_idr) * (1 + margin_percent / 100.0)
     return round(total_idr / rate, 2)
 
@@ -271,6 +284,8 @@ def calculate_full_costing(
 
     fx = get_exchange_rate()
     rate = float(fx.get("rate", FALLBACK_RATE))
+    if not rate or rate <= 0:
+        rate = float(FALLBACK_RATE) if FALLBACK_RATE and FALLBACK_RATE > 0 else 1.0
     exw = calculate_exw(cogs_idr, packing_cost_idr, margin_percent, rate)
     fob = calculate_fob(exw, distance_km, rate)
     region = region_of(destination)
