@@ -50,7 +50,7 @@
 
 			// Ensure container exists
 			if (!mapContainer) {
-				console.warn('Leaflet: Container not found');
+				console.error('[VillagePotentialMap] Container not found');
 				return;
 			}
 
@@ -101,11 +101,11 @@
 			const group = L.featureGroup(markers);
 			mapInstance.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 6 });
 			
-			console.log(`✓ Leaflet map initialized with ${markers.length} village markers`);
+			console.log('[VillagePotentialMap] ✓ Initialized with ' + markers.length + ' village markers');
 			isLoading = false;
 			
 		} catch (error) {
-			console.error('❌ Leaflet initialization error:', error);
+			console.error('[VillagePotentialMap] Initialization failed:', error);
 			isLoading = false;
 		}
 	});

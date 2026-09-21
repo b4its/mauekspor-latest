@@ -224,7 +224,7 @@ def _is_locked_out(identifier: str) -> bool:
         return False
     count, first_time = entry
     if count >= _LOCKOUT_THRESHOLD:
-        if time.time() - first_time > _LOCKOUT_SECONDS:
+        if _time.time() - first_time > _LOCKOUT_SECONDS:
             _login_failures.pop(identifier, None)
             return False
         return True
@@ -237,7 +237,7 @@ def _record_login_failure(identifier: str) -> None:
         count, first_time = entry
         _login_failures[identifier] = (count + 1, first_time)
     else:
-        _login_failures[identifier] = (1, time.time())
+        _login_failures[identifier] = (1, _time.time())
 
 
 def _clear_login_failures(identifier: str) -> None:
