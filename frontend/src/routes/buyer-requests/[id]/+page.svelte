@@ -72,7 +72,7 @@
 			.catch(() =>
 				getMatchedCatalogs(data.request.id)
 					.then((res) => (matches = res.data))
-					.catch(() => {})
+					.catch((e) => console.error("API error:", e))
 			);
 	});
 

@@ -29,7 +29,7 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 	$effect(() => {
 		getForwarderStatistics(data.forwarder.id)
 			.then((res) => (stats = res.data))
-			.catch(() => {});
+			.catch((e) => console.error("API error:", e));
 	});
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {

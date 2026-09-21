@@ -19,7 +19,7 @@
 		// Statistik dari forwarder seed (untuk demo role Forwarder)
 		getForwarderStatistics(seedForwarders[0].id)
 			.then((res) => (stats = res.data))
-			.catch(() => {});
+			.catch((e) => console.error("API error:", e));
 	});
 </script>
 

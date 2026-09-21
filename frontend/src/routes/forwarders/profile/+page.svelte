@@ -31,7 +31,7 @@
 				specializationRoutes = (p.specializationRoutes ?? []).join('\n');
 				serviceTypes = (p.serviceTypes ?? []).join('\n');
 			})
-			.catch(() => {});
+			.catch((e) => console.error("API error:", e));
 	});
 
 	let valid = $derived(companyName.trim().length > 2 && contactEmail.trim().length > 4);
