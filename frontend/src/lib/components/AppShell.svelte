@@ -85,16 +85,25 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				}
 			});
 			source.onerror = () => {
+				// Clear any existing timer before creating a new one to prevent leaks
+				if (timer) clearInterval(timer);
 				source?.close();
 				source = undefined;
 				timer = setInterval(refreshNotifications, 30_000);
 			};
 		} catch {
+			// SSE not supported or blocked → fall back to polling
+			if (timer) clearInterval(timer);
 			timer = setInterval(refreshNotifications, 30_000);
 		}
 		return () => {
+			// Cleanup: close SSE and cancel interval on component unmount
 			source?.close();
-			if (timer) clearInterval(timer);
+			source = undefined;
+			if (timer) {
+				clearInterval(timer);
+				timer = undefined;
+			}
 		};
 	});
 
