@@ -13,6 +13,11 @@
 # Ctrl+C to stop the watchdog.
 
 set -e
+
+# Load .env (secrets) — real env vars take precedence
+set -a
+[ -f "$(dirname "$0")/../.env" ] && . "$(dirname "$0")/../.env"
+set +a
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 

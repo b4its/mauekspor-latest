@@ -91,8 +91,12 @@ def configured() -> bool:
 
 
 def get_base_url() -> str:
-    """Return the AI base URL from env, with sensible default."""
-    return os.environ.get("MAUEKSPOR_AI_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+    """Return the AI base URL from env, normalized to include /v1."""
+    url = os.environ.get("MAUEKSPOR_AI_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+    # Normalize: callers append /chat/completions & /models, which live under /v1
+    if not url.endswith("/v1"):
+        url = f"{url}/v1"
+    return url
 
 
 def model_name() -> str:
@@ -112,10 +116,24 @@ HEALTH_CHECK_INTERVAL: int = 300   # re-probe every 5 minutes
 
 
 def _probe_health(url: str) -> bool:
-    """Return True if /models endpoint responds 200."""
+    """Return True if /models endpoint responds 200 with JSON."""
+    headers: dict[str, str] = {"ngrok-skip-browser-warning": "true"}
+    api_key_value = get_api_key()
+    if api_key_value:
+        # Remote endpoints (behind tunnels) may require the key even for /models
+        headers["Authorization"] = f"Bearer {api_key_value}"
     try:
-        r = httpx.get(f"{url}/models", timeout=3, follow_redirects=True)
-        return r.status_code == 200
+        r = httpx.get(
+            f"{url}/models",
+            timeout=5,
+            follow_redirects=True,
+            headers=headers,
+        )
+        if r.status_code != 200:
+            return False
+        # Guard against ngrok interstitial HTML pages that return 200
+        content_type = r.headers.get("content-type", "")
+        return "json" in content_type or r.text.strip().startswith("{") or r.text.strip().startswith("[")
     except Exception:
         return False
 
@@ -217,7 +235,11 @@ def _call_remote(system: str, user: str) -> Optional[str]:
         _cb_record_failure()
         return None
 
-    headers: dict[str, str] = {}
+    headers: dict[str, str] = {
+        # Required when AI endpoint is behind ngrok free tier (skips browser
+        # warning interstitial). Ignored by non-ngrok endpoints.
+        "ngrok-skip-browser-warning": "true",
+    }
     if api_key_value:
         headers["Authorization"] = f"Bearer {api_key_value}"
 

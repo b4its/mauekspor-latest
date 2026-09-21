@@ -9,20 +9,26 @@
 .PHONY: help \
         ngrok-prod-build ngrok-prod-up ngrok-prod-down ngrok-prod-stop \
         ngrok-prod-logs ngrok-prod-reseed ngrok-prod-status \
-        ngrok-tunnel-start ngrok-tunnel-stop ngrok-show-urls \
+        ngrok-tunnel-start ngrok-tunnel-stop ngrok-show-urls ngrok-with-ai \
         dev-backend dev-frontend dev-up dev-down \
         stop stop-all build docker-up docker-down \
         test test-backend test-frontend
 
-# ─── Ports ───────────────────────────────────────────────────────────────────
-BACKEND_PORT     := 8015
-NGINX_PORT       := 8080
-FRONTEND_PORT    := 3015
-DB_PORT          := 5447
-DEV_BACKEND_PORT := 8016
-DEV_FRONTEND_PORT := 5188
+# ─── Load .env (secrets & config) ─────────────────────────────────────────────
+# .env is gitignored; make 'include' parses KEY=VALUE lines, 'export' passes
+# them to every recipe shell. Override precedence: real env vars win.
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
 
-NGROK_TOKEN := ${NGROK_TOKEN}
+# ─── Ports (defaults; .env values win via ?=) ─────────────────────────────────
+BACKEND_PORT      ?= 8015
+NGINX_PORT        ?= 8080
+FRONTEND_PORT     ?= 3015
+DB_PORT           ?= 5447
+DEV_BACKEND_PORT  ?= 8016
+DEV_FRONTEND_PORT ?= 5188
 
 SHELL := /bin/bash
 
@@ -54,7 +60,7 @@ help:
 	@echo "    dev-backend   - Backend lokal port $(DEV_BACKEND_PORT)"
 	@echo "    dev-frontend  - Frontend dev port $(DEV_FRONTEND_PORT)"
 	@echo "    backend-local - Backend + AI access (port 8016, real AI not mock)"
-	@echo "    ngrok-with-ai - Production stack + AI public via ngrok (RECOMMENDED)"
+	@echo "    ngrok-with-ai - Prod ngrok + AI via cloudflared (REAL AI, RECOMMENDED)"
 	@echo "    dev-down      - Stop semua proses dev"
 	@echo ""
 	@echo "  TESTING:"

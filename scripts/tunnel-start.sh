@@ -1,6 +1,11 @@
 #!/bin/bash
 # scripts/tunnel-start.sh — Buka ngrok public tunnel ke nginx:8080
 set -e
+
+# Load .env (secrets) — real env vars take precedence
+set -a
+[ -f "$(dirname "$0")/../.env" ] && . "$(dirname "$0")/../.env"
+set +a
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 

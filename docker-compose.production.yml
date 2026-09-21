@@ -52,6 +52,12 @@ services:
       - "${BACKEND_PORT:-8015}:8000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # Local resolver NXDOMAINs *.trycloudflare.com (AI quick-tunnel domain).
+    # Public DNS resolves it correctly — containers inherit the broken local
+    # resolver by default, so pin public DNS for the backend.
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     environment:
       # Override via .env — do NOT hardcode secrets here
       MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
