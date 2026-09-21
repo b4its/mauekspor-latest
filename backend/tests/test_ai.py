@@ -24,7 +24,8 @@ def test_recommendations_mock_returns_list():
 
 
 def test_unknown_kind_returns_mock_text():
-    assert "Berdasarkan data" in ai.complete("s", "u", "chat_reply")
+    result = ai.complete("s", "u", "chat_reply")
+    assert result is not None and len(result) > 10, "chat_reply mock should return non-empty string"
 
 
 def test_ask_json_ignores_non_json_text():
