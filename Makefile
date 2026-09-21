@@ -127,6 +127,11 @@ ngrok-tunnel-start:
 ngrok-tunnel-stop:
 	@bash scripts/tunnel-stop.sh
 
+# Watchdog: auto-restart ngrok kalau mati (untuk free tier yang sering expire)
+# Run di terminal terpisah: make tunnel-keep-alive
+tunnel-keep-alive:
+	@bash scripts/tunnel-monitor.sh
+
 ngrok-show-urls:
 	@echo ""
 	@echo "  🌍 Public Tunnel URLs:"

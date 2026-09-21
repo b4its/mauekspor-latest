@@ -13,6 +13,12 @@ echo "  🌐 Starting Ngrok Public Tunnel"
 echo "  Target: localhost:${NGINX_PORT}"
 echo "  Log:    ${NGROK_LOG}"
 echo "═══════════════════════════════════════════"
+echo ""
+echo "  ⚠️  NOTE (free tier):"
+echo "     Tunnel akan mati otomatis setelah ~1-2 jam"
+echo "     atau kalau proses ngrok mati."
+echo "     Untuk auto-restart: make tunnel-keep-alive"
+echo ""
 
 # Hentikan ngrok lama (ignore error jika tidak ada)
 pkill -f "ngrok http" 2>/dev/null || true
