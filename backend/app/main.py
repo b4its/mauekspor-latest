@@ -379,10 +379,12 @@ async def require_auth_for_mutations(request, call_next):
 @app.middleware("http")
 async def audit_mutations(request, call_next):
     response = await call_next(request)
+    # Only audit successful mutations (2xx) and client errors (4xx).
+    # Skip 5xx: server errors are logged by the exception handler, not audited.
     if (
         request.url.path.startswith("/api/v1/")
         and request.method in {"POST", "PATCH", "PUT", "DELETE"}
-        and response.status_code < 500
+        and 200 <= response.status_code < 500
     ):
         db.insert("audit_events", {
             "id": db.gen_id("audit_events", "AUD"),
@@ -391,7 +393,7 @@ async def audit_mutations(request, call_next):
             "action": f"{request.method} {request.url.path}",
             "module": request.url.path.strip("/").split("/")[2] if len(request.url.path.strip("/").split("/")) > 2 else "API",
             "entity": request.url.path,
-            "severity": "Info" if response.status_code < 400 else "Warning",
+            "severity": "Info" if response.status_code < 300 else "Warning",
             "detail": f"HTTP {response.status_code}",
         })
     return response
