@@ -1,9 +1,16 @@
 # MauEkspor Docker Compose - Production Mode with Nginx Reverse Proxy
-# Architecture:
-#   - Frontend at / (root)  
-#   - Backend API at /backend
-#   - Nginx acts as reverse proxy
-#   - Ngrok exposes nginx to public internet
+#
+# PORT LAYOUT (tidak tabrakan dengan dev services):
+#   db         : host 5447 -> container 5432
+#   backend    : host 8015 -> container 8000
+#   frontend   : host 3015 -> container 3000
+#   nginx      : host 8080 -> container 80
+#
+# Dev services (local, BUKAN container ini):
+#   backend    : 8016  (uvicorn --port 8016)
+#   frontend   : 5188  (vite dev --port 5188)
+#
+# Ngrok tunnel: localhost:8080 (nginx) -> public URL
 
 services:
   # ── DATABASE (PostgreSQL) ──────────────────────────────────────────
@@ -11,7 +18,7 @@ services:
     image: postgres:16-alpine
     container_name: mauekspor-db-prod
     ports:
-      - "5447:5432"
+      - "${DB_PORT:-5447}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-mauekspor}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mauekspor}
@@ -22,7 +29,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mauekspor} -d ${POSTGRES_DB:-mauekspor}"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 12
+      start_period: 10s
     restart: unless-stopped
     networks:
       - mauekspor-backend
@@ -35,14 +43,23 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8015:8000"
+      - "${BACKEND_PORT:-8015}:8000"
     environment:
       MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
       MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@db:5432/${POSTGRES_DB:-mauekspor}
       MAUEKSPOR_UPLOAD_DIR: /app/uploads
-      MAUEKSPOR_CORS_ORIGINS: '["http://localhost","https://*.ngrok-free.app","https://*.trycloudflare.com"]'
+      # Izinkan request dari localhost, ngrok, cloudflare tunnel, dan ngrok-free.app
+      MAUEKSPOR_CORS_ORIGINS: >-
+        ["http://localhost",
+         "http://localhost:8080",
+         "http://localhost:3015",
+         "http://localhost:5188",
+         "https://*.ngrok-free.app",
+         "https://*.ngrok.io",
+         "https://*.trycloudflare.com"]
       MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-remote}
       MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-sk-dede08aea594e222-upk4p8-5bfa2c54}
+      # host.docker.internal agar container bisa reach AI service di host port 20128
       MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://host.docker.internal:20128/v1}
       MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-qd/dmodel}
       MAUEKSPOR_ENABLE_CSRF: ${MAUEKSPOR_ENABLE_CSRF:-0}
@@ -50,11 +67,11 @@ services:
     volumes:
       - backend-prod-uploads:/app/uploads
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/')\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')\""]
       interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
+      timeout: 8s
+      retries: 12
+      start_period: 20s
     restart: unless-stopped
     networks:
       - mauekspor-backend
@@ -67,14 +84,17 @@ services:
         VITE_API_BASE_URL: /api/v1
     container_name: mauekspor-frontend-prod
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
-      - "3015:3000"
+      - "${FRONTEND_PORT:-3015}:3000"
     environment:
-      # Derive origin dari header proxy (X-Forwarded-*) agar valid juga
-      # saat diakses via ngrok / domain publik
+      # Derive origin dari X-Forwarded-* header (set oleh nginx)
+      # Diperlukan agar SvelteKit SSR tahu base URL saat diakses via ngrok
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: x-forwarded-host
+      PORT: "3000"
+      HOST: "0.0.0.0"
     restart: unless-stopped
     networks:
       - mauekspor-backend
@@ -84,7 +104,7 @@ services:
     image: nginx:alpine
     container_name: mauekspor-nginx-prod
     ports:
-      - "8080:80"
+      - "${NGINX_PORT:-8080}:80"
     volumes:
       - ./nginx.production.conf:/etc/nginx/nginx.conf:ro
     depends_on:

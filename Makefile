@@ -1,190 +1,207 @@
 # MauEkspor Makefile - Production with Ngrok Tunnel
+#
+# PORT LAYOUT (anti-tabrakan):
+#   Production Docker  : db=5447, backend=8015, frontend=3015, nginx=8080
+#   Development local  : backend=8016, frontend=5188 (vite dev dengan proxy)
+#   AI endpoint lokal  : 20128
+#   Ngrok admin UI     : 4040
 
-.PHONY: help ngrok-prod-up ngrok-prod-down ngrok-prod-build ngrok-prod-logs ngrok-prod-reseed \
-        ngrok-tunnel-start ngrok-tunnel-stop ngrok-tunnel-docker ngrok-show-urls \
-        local stop restart build docker-up docker-down test test-backend test-frontend
+.PHONY: help \
+        ngrok-prod-build ngrok-prod-up ngrok-prod-down ngrok-prod-stop \
+        ngrok-prod-logs ngrok-prod-reseed ngrok-prod-status \
+        ngrok-tunnel-start ngrok-tunnel-stop ngrok-show-urls \
+        dev-backend dev-frontend dev-up dev-down \
+        stop stop-all build docker-up docker-down \
+        test test-backend test-frontend
+
+# ─── Ports ───────────────────────────────────────────────────────────────────
+BACKEND_PORT     := 8015
+NGINX_PORT       := 8080
+FRONTEND_PORT    := 3015
+DB_PORT          := 5447
+DEV_BACKEND_PORT := 8016
+DEV_FRONTEND_PORT := 5188
 
 NGROK_TOKEN := 3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf
-BACKEND_PORT := 8015
-NGINX_PORT := 8080
-FRONTEND_PORT := 3015
-DATABASE_PORT := 5447
 
 SHELL := /bin/bash
-.ONESHELL:
-.SILENT:
 
+# ─────────────────────────────────────────────────────────────────────────────
 help:
-	@echo "=========================================="
-	@echo "🌍 MauEkspor - Deployment"
-	@echo "=========================================="
+	@echo "════════════════════════════════════════════════════════"
+	@echo "  🌍  MauEkspor - Deployment Guide"
+	@echo "════════════════════════════════════════════════════════"
 	@echo ""
-	@echo "Quick Start:"
-	@echo "  make ngrok-prod-build    # Build all Docker images"
-	@echo "  make ngrok-prod-up       # Start production services"
-	@echo "  make ngrok-tunnel-start  # Start public ngrok tunnel"
+	@echo "  QUICK START:"
+	@echo "    make ngrok-prod-build   # Build Docker images (sekali)"
+	@echo "    make ngrok-prod-up      # Start production stack"
+	@echo "    make ngrok-tunnel-start # Buka tunnel publik"
 	@echo ""
-	@echo "Commands:"
-	@echo "  make ngrok-prod-up       - Start production services (db/backend/frontend/nginx)"
-	@echo "  make ngrok-prod-down     - Stop production services"
-	@echo "  make ngrok-tunnel-start  - Start ngrok public tunnel (Docker preferred)"
-	@echo "  make ngrok-tunnel-stop   - Stop ngrok tunnel"
-	@echo "  make ngrok-show-urls     - Show public tunnel URLs"
-	@echo "  make ngrok-prod-logs     - View production service logs"
-	@echo "  make test                - Run all tests"
-	@echo "  make test-backend        - Run backend tests"
-	@echo "  make test-frontend       - Run frontend tests"
+	@echo "  PRODUCTION:"
+	@echo "    ngrok-prod-build  - Build semua Docker images"
+	@echo "    ngrok-prod-up     - Start db/backend/frontend/nginx (Docker)"
+	@echo "    ngrok-prod-down   - Stop & remove production containers"
+	@echo "    ngrok-prod-status - Cek status semua services"
+	@echo "    ngrok-prod-logs   - Tail logs production"
+	@echo "    ngrok-prod-reseed - Reset & seed ulang database"
 	@echo ""
+	@echo "  TUNNEL:"
+	@echo "    ngrok-tunnel-start - Buka ngrok -> nginx:$(NGINX_PORT)"
+	@echo "    ngrok-tunnel-stop  - Stop ngrok"
+	@echo "    ngrok-show-urls    - Tampilkan public URL aktif"
+	@echo ""
+	@echo "  DEVELOPMENT (port berbeda, tidak tabrakan dengan prod):"
+	@echo "    dev-backend   - Backend lokal port $(DEV_BACKEND_PORT)"
+	@echo "    dev-frontend  - Frontend dev port $(DEV_FRONTEND_PORT)"
+	@echo "    dev-down      - Stop semua proses dev"
+	@echo ""
+	@echo "  TESTING:"
+	@echo "    test          - Run semua tests"
+	@echo "    test-backend  - Backend pytest"
+	@echo "    test-frontend - Frontend vitest"
+	@echo ""
+	@echo "  PORT LAYOUT:"
+	@echo "    Prod Docker: db=$(DB_PORT) | backend=$(BACKEND_PORT) | frontend=$(FRONTEND_PORT) | nginx=$(NGINX_PORT)"
+	@echo "    Dev local:   backend=$(DEV_BACKEND_PORT) | frontend=$(DEV_FRONTEND_PORT)"
+	@echo "════════════════════════════════════════════════════════"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# BUILD
+# ─────────────────────────────────────────────────────────────────────────────
 ngrok-prod-build:
-	@echo "Building Docker images..."
+	@echo "🔨 Building Docker images..."
 	docker compose -f docker-compose.production.yml build db backend frontend-prod nginx
-	@echo "✅ Build complete!"
+	@echo "✅ Build selesai!"
 
-ngrok-prod-up: 
-	@echo "Starting production services..."
-	@echo "Checking for port conflicts on :$(BACKEND_PORT), :$(NGINX_PORT), :$(FRONTEND_PORT)..."
-	@# Stop local uvicorn if it's occupying port 8015
-	-pkill -f "uvicorn.*$(BACKEND_PORT)" 2>/dev/null || true
-	-sleep 2
-	
-	@echo "Stopping any existing production containers..."
-	-docker compose -f docker-compose.production.yml down
-	-docker rm -f mauekspor-db-prod mauekspor-backend-prod mauekspor-frontend-prod mauekspor-nginx-prod mauekspor-ngrok-prod 2>/dev/null || true
-	
-	@echo "Starting database..."
-	docker compose -f docker-compose.production.yml up -d db
-	@sleep 5
-	
-	@echo "Starting backend, frontend, and nginx..."
-	docker compose -f docker-compose.production.yml up -d backend frontend-prod nginx
-	@sleep 8
-	
-	@echo ""
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "✅ Services Running!"
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo ""
-	@echo "Local URLs:"
-	@echo "  Frontend: http://localhost:$(FRONTEND_PORT)"
-	@echo "  Backend:  http://localhost:$(BACKEND_PORT)/api/v1"
-	@echo "  Nginx:    http://localhost:$(NGINX_PORT)"
-	@echo ""
-	@echo "Next step for public URL:"
-	@echo "  make ngrok-tunnel-start"
-	@echo "=========================================="
+# ─────────────────────────────────────────────────────────────────────────────
+# PRODUCTION UP
+# ─────────────────────────────────────────────────────────────────────────────
+ngrok-prod-up:
+	@bash scripts/prod-up.sh
 
 ngrok-prod-down:
-	@echo "Stopping production services..."
-	-docker compose -f docker-compose.production.yml down
-	-docker rm -f mauekspor-db-prod mauekspor-backend-prod mauekspor-frontend-prod mauekspor-nginx-prod mauekspor-ngrok-prod 2>/dev/null || true
-	@echo "✅ Stopped!"
+	@echo "🛑 Stopping production stack..."
+	@docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
+	@docker rm -f mauekspor-db-prod mauekspor-backend-prod mauekspor-frontend-prod mauekspor-nginx-prod mauekspor-ngrok-prod 2>/dev/null || true
+	@echo "✅ Production stack dihentikan"
 
 ngrok-prod-stop: ngrok-prod-down
 
+ngrok-prod-status:
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  📊 Production Stack Status"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@docker ps --format "  {{.Names}}\t{{.Status}}\t{{.Ports}}" \
+		--filter "name=mauekspor" 2>/dev/null | column -t || echo "  (tidak ada container)"
+	@echo ""
+	@echo "  Local URLs:"
+	@echo "    Frontend → http://localhost:$(FRONTEND_PORT)"
+	@echo "    Backend  → http://localhost:$(BACKEND_PORT)/api/v1"
+	@echo "    Nginx    → http://localhost:$(NGINX_PORT)"
+	@echo ""
+	@echo "  run: make ngrok-tunnel-start untuk public URL"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 ngrok-prod-logs:
-	@docker compose -f docker-compose.production.yml logs -f
+	docker compose -f docker-compose.production.yml logs -f --tail=100
 
 ngrok-prod-reseed:
-	@echo "WARNING: Deletes ALL data!"
-	@read -p "Type YES: " confirm && \
+	@echo "⚠️  WARNING: Ini akan MENGHAPUS semua data!"
+	@read -p "Ketik YES untuk lanjut: " confirm; \
 	if [ "$$confirm" = "YES" ]; then \
-		docker exec mauekspor-db-prod psql -U mauekspor -d mauekspor -c "DROP SCHEMA public CASCADE;" 2>/dev/null || true; \
-		docker exec mauekspor-db-prod psql -U mauekspor -d mauekspor -c "CREATE SCHEMA public;" 2>/dev/null || true; \
-		docker exec mauekspor-backend-prod python -c "from app.seed import seed_if_empty; seed_if_empty()" 2>/dev/null || true; \
-		echo "✅ Re-seeded!"; \
+		docker exec mauekspor-db-prod psql -U mauekspor -d mauekspor \
+			-c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true; \
+		docker exec mauekspor-backend-prod python -c \
+			"from app.seed import seed_if_empty; seed_if_empty()" 2>/dev/null || true; \
+		echo "✅ Re-seed selesai!"; \
 	else \
-		echo "Cancelled"; \
+		echo "Dibatalkan."; \
 	fi
 
-ngrok-tunnel-docker:
-	@echo "═══════════════════════════════════════"
-	@echo "🌐 Starting NGROK TUNNEL (Docker)"
-	@echo "═══════════════════════════════════════"
-	@docker compose -f docker-compose.ngrok-production.yml --profile ngrok up -d ngrok
-	@sleep 8
-	@echo ""
-	@echo "✅ Ngrok tunnel container started!"
-	@echo ""
-	@echo "Public URLs:"
-	@sleep 2
-	@make ngrok-show-urls
-	@echo ""
-	@echo "To view logs: docker compose -f docker-compose.ngrok-production.yml logs -f ngrok"
-
+# ─────────────────────────────────────────────────────────────────────────────
+# NGROK TUNNEL
+# ─────────────────────────────────────────────────────────────────────────────
 ngrok-tunnel-start:
-	@echo "═══════════════════════════════════════"
-	@echo "🌐 Starting NGROK TUNNEL"
-	@echo "═══════════════════════════════════════"
-	@echo ""
-	@echo "Target: localhost:$(NGINX_PORT) (nginx)"
-	@echo "Creating PUBLIC URL from internet..."
-	@echo ""
-	@# Prefer Docker tunnel; fall back to local binary
-	if docker compose -f docker-compose.ngrok-production.yml --profile ngrok up -d ngrok >/dev/null 2>&1; then \
-		sleep 8; \
-		echo "✅ Docker ngrok tunnel started"; \
-		echo ""; \
-		echo "Public URLs:"; \
-		make ngrok-show-urls; \
-		exit 0; \
-	fi
-	@echo "Docker tunnel failed, trying local ngrok binary..."
-	-ngrok stop 2>/dev/null || true
-	ngrok http $(NGINX_PORT) --log stdout --authtoken $(NGROK_TOKEN)
+	@bash scripts/tunnel-start.sh
 
 ngrok-tunnel-stop:
-	@echo "Stopping ngrok..."
-	-docker compose -f docker-compose.ngrok-production.yml --profile ngrok down 2>/dev/null || true
-	-ngrok stop 2>/dev/null || true
-	-pkill -f ngrok 2>/dev/null || true
-	-docker rm -f mauekspor-ngrok-prod 2>/dev/null || true
-	@echo "✅ Stopped"
+	@bash scripts/tunnel-stop.sh
 
 ngrok-show-urls:
-	@# Try Docker ngrok API first, then local
-	@docker exec mauekspor-ngrok-prod curl -s http://localhost:4040/api/tunnels 2>/dev/null | python3 -m json.tool 2>/dev/null || \
-	curl -s http://localhost:4040/api/tunnels | python3 -m json.tool
-
-local:
-	@echo "Local mode:"
-	@echo "  Backend:  cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8015"
-	@echo "  Frontend: cd frontend && pnpm dev"
+	@echo ""
+	@echo "  🌍 Public Tunnel URLs:"
+	@curl -s http://127.0.0.1:4040/api/tunnels 2>/dev/null \
+		| python3 -c "\
+import sys, json; \
+d = json.load(sys.stdin); \
+tunnels = d.get('tunnels', []); \
+[print('  ➤', t['public_url']) for t in tunnels] \
+if tunnels else print('  (belum aktif — coba: make ngrok-tunnel-start)')" \
+		2>/dev/null || echo "  (ngrok API tidak dapat dijangkau)"
+	@echo ""
 
 stop:
-	-pkill -f uvicorn 2>/dev/null || true
+	@pkill -f "uvicorn" 2>/dev/null && echo "✅ uvicorn dihentikan" || echo "✅ tidak ada uvicorn"
 
-restart: stop local
+stop-all:
+	@bash -c "pkill -f 'uvicorn' 2>/dev/null || true"
+	@bash -c "pkill -f 'vite.*$(DEV_FRONTEND_PORT)' 2>/dev/null || true"
+	@bash -c "pkill -f 'ngrok http' 2>/dev/null || true"
+	@echo "✅ Semua service lokal dihentikan"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# DEVELOPMENT (port terpisah: 8016 / 5188, tidak tabrakan dengan prod 8015)
+# ─────────────────────────────────────────────────────────────────────────────
+dev-backend:
+	@echo "🔧 Starting dev backend → http://localhost:$(DEV_BACKEND_PORT)"
+	cd backend && .venv/bin/uvicorn app.main:app \
+		--host 0.0.0.0 --port $(DEV_BACKEND_PORT) --reload
+
+dev-frontend:
+	@echo "🔧 Starting dev frontend → http://localhost:$(DEV_FRONTEND_PORT)"
+	cd frontend && BACKEND_ORIGIN=http://localhost:$(DEV_BACKEND_PORT) pnpm dev \
+		--port $(DEV_FRONTEND_PORT)
+
+dev-up:
+	@echo "🔧 Dev services (jalankan di dua terminal):"
+	@echo "   Terminal 1: make dev-backend   (port $(DEV_BACKEND_PORT))"
+	@echo "   Terminal 2: make dev-frontend  (port $(DEV_FRONTEND_PORT))"
+
+dev-down:
+	@bash -c "pkill -f 'uvicorn.*$(DEV_BACKEND_PORT)' 2>/dev/null || true; echo 'Dev backend stopped'"
+	@bash -c "pkill -f '$(DEV_FRONTEND_PORT)' 2>/dev/null || true; echo 'Dev frontend stopped'"
+# ─────────────────────────────────────────────────────────────────────────────
 build:
-	cd frontend && pnpm build
-	@echo "Built!"
+	cd frontend && pnpm build && echo "✅ Frontend build selesai!"
 
 docker-up:
-	docker compose -f docker-compose.production.yml up -d
-	@echo "Up!"
+	docker compose -f docker-compose.production.yml up -d && echo "✅ Up!"
 
 docker-down:
-	docker compose -f docker-compose.production.yml down
-	@echo "Down!"
+	docker compose -f docker-compose.production.yml down && echo "✅ Down!"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# TESTING
+# ─────────────────────────────────────────────────────────────────────────────
 test-backend:
-	cd backend && .venv/bin/python -m pytest tests/ -q --tb=line
+	@echo "🧪 Backend tests..."
+	cd backend && .venv/bin/python -m pytest tests/ --tb=short -q
 
 test-frontend:
+	@echo "🧪 Frontend tests..."
 	cd frontend && pnpm test
 
 test: test-backend test-frontend
+	@echo "✅ All tests done"
 
-# Alternative: Use Cloudflare Tunnel instead of Ngrok
+# ─────────────────────────────────────────────────────────────────────────────
+# CLOUDFLARE TUNNEL (alternatif ngrok)
+# ─────────────────────────────────────────────────────────────────────────────
 cloudflared-install:
-	@echo "Installing Cloudflared..."
-	cd /tmp && curl -L --output cloudflare.tar.gz https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && \
-	sudo dpkg -i cloudflared-linux-amd64.deb && \
-	rm cloudflared-linux-amd64.deb && \
-	echo "✅ Cloudflared installed!"
+	@cd /tmp && curl -L --output cloudflare.deb \
+		https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb \
+		&& sudo dpkg -i cloudflare.deb && rm cloudflare.deb && echo "✅ Cloudflared installed!"
 
 cloudflared-tunnel-start:
-	@echo "Starting Cloudflare Tunnel..."
-	@echo "You'll need to configure tunnel first with: sudo cloudflared tunnel create my-tunnel"
-	cloudflared tunnel run my-tunnel
+	@echo "Starting Cloudflare Tunnel → http://localhost:$(NGINX_PORT)"
+	cloudflared tunnel --url http://localhost:$(NGINX_PORT)
