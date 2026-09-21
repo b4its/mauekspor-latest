@@ -1,9 +1,11 @@
 FROM ubuntu:22.04
 
-RUN apt-get update && apt-get install -y curl dumb-init unzip && \
+RUN apt-get update && apt-get install -y curl dumb-init unzip jq wget && \
     rm -rf /var/lib/apt/lists/*
 
-RUN curl -LO https://bin.equinox.io/c/bNyj1mQVAI4d/ngrok-stable-linux-amd64.tgz && \
+# Download ngrok from official releases
+RUN cd /tmp && \
+    wget https://bin.equinox.io/c/bNyj1mQVAI4/ngrok-stable-linux-amd64.tgz && \
     tar xzf ngrok-stable-linux-amd64.tgz && \
     mv ngrok /usr/local/bin/ && \
     chmod +x /usr/local/bin/ngrok && \
@@ -11,6 +13,16 @@ RUN curl -LO https://bin.equinox.io/c/bNyj1mQVAI4d/ngrok-stable-linux-amd64.tgz 
 
 WORKDIR /app
 
+COPY ./docker/ngrok/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# ENV defaults - override via docker-compose
+ENV AUTHTOKEN=""
+ENV PORT=8080
+ENV SERVICE_NAME=nginx
+ENV REGION=ap
+
 HEALTHCHECK --interval=30s --timeout=10s CMD pgrep ngrok || exit 1
 
-CMD ["dumb-init", "ngrok", "http", "8080", "--log", "stdout", "--authtoken", "3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD []

@@ -1,0 +1,34 @@
+# MauEkspor Docker Compose - Production + Ngrok Tunnel
+# One command to start production services and expose via ngrok
+#
+# Usage:
+#   docker compose -f docker-compose.ngrok-production.yml up -d
+#   docker compose -f docker-compose.ngrok-production.yml logs -f ngrok
+#
+# The ngrok container will tunnel to nginx:8080 automatically.
+
+include:
+  - docker-compose.production.yml
+
+services:
+  # ── NGROK TUNNEL TO NGINX ───────────────────────────────────────────
+  ngrok:
+    build:
+      context: .
+      dockerfile: ./docker/ngrok/Dockerfile.ngrok-tunnel
+    container_name: mauekspor-ngrok-prod
+    profiles: ["ngrok"]
+    environment:
+      - AUTHTOKEN=${NGROK_TOKEN:-3IGWSdWwxcOQkQcxP0BcRkfHa5m_3nMcbXKdN93eUqsM1Hxjf}
+      - PORT=8080
+      - SERVICE_NAME=nginx
+      - REGION=ap
+    ports:
+      - "4040:4040"
+    depends_on:
+      nginx:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - mauekspor-backend
+    command: []

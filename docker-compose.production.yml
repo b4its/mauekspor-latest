@@ -49,6 +49,12 @@ services:
       MAUEKSPOR_COOKIE_SECURE: ${MAUEKSPOR_COOKIE_SECURE:-0}
     volumes:
       - backend-prod-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/')\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     restart: unless-stopped
     networks:
       - mauekspor-backend
@@ -82,8 +88,10 @@ services:
     volumes:
       - ./nginx.production.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - backend
-      - frontend-prod
+      backend:
+        condition: service_healthy
+      frontend-prod:
+        condition: service_started
     restart: unless-stopped
     networks:
       - mauekspor-backend

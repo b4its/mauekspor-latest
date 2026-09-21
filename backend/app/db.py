@@ -91,24 +91,38 @@ def _connect_sqlite() -> sqlite3.Connection:
     return conn
 
 
-def _connect_pg():
-    """Return a psycopg2 connection for PostgreSQL backend."""
+def _connect_pg(max_retries: int = 10, delay_seconds: float = 1.0):
+    """Return a psycopg2 connection for PostgreSQL backend.
+
+    Retries connection to give Docker DNS/network time to become ready.
+    """
+    import time
     import psycopg2
 
-    conn = psycopg2.connect(**_pg_params())
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS records (
-                table_name TEXT NOT NULL,
-                id TEXT NOT NULL,
-                payload JSONB NOT NULL,
-                PRIMARY KEY (table_name, id)
-            )
-            """
-        )
-    conn.commit()
-    return conn
+    last_error = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            conn = psycopg2.connect(**_pg_params())
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS records (
+                        table_name TEXT NOT NULL,
+                        id TEXT NOT NULL,
+                        payload JSONB NOT NULL,
+                        PRIMARY KEY (table_name, id)
+                    )
+                    """
+                )
+            conn.commit()
+            return conn
+        except psycopg2.OperationalError as exc:
+            last_error = exc
+            if attempt < max_retries:
+                print(f"[db] PostgreSQL connection attempt {attempt}/{max_retries} failed, retrying in {delay_seconds}s... ({exc})")
+                time.sleep(delay_seconds)
+
+    raise last_error
 
 
 def _connect():
