@@ -5,7 +5,11 @@ from app import ai
 
 def test_mock_default_mode():
     assert ai.mode() == "mock"
-    assert ai.configured()
+    # Mock mode is not "configured" in the sense of using real AI,
+    # but it's ready to serve canned responses
+    assert not ai.configured()
+    # Verify mock responses are available
+    assert ai.complete("s", "u", kind="chat_reply") is not None
 
 
 def test_classify_mock_returns_dict():
@@ -30,4 +34,9 @@ def test_ask_json_ignores_non_json_text():
 def test_remote_without_key_returns_none(monkeypatch):
     monkeypatch.setenv("MAUEKSPOR_AI_MODE", "remote")
     monkeypatch.delenv("MAUEKSPOR_AI_API_KEY", raising=False)
-    assert ai.complete("s", "u", kind="classify") is None
+    # When remote mode fails (no API key), should fall back to mock responses
+    result = ai.complete("s", "u", kind="classify")
+    # Should get mock response, not None
+    assert result is not None
+    # Verify it's a mock response (contains expected mock data)
+    assert "hsCode" in result or "Klasifikasi" in result

@@ -338,7 +338,7 @@ async def require_auth_for_mutations(request, call_next):
     module = _module_of(request.url.path)
     if not (request.url.path.startswith("/api/v1/") and module):
         return await call_next(request)
-    if module in {"auth"}:
+    if module in {"auth", "ai"}:  # ai endpoints are public for status checks
         return await call_next(request)
     if request.method == "OPTIONS":
         return await call_next(request)

@@ -3368,6 +3368,7 @@ def send_session_message(session_id: str, payload: sc.SendChatPayload):
         raise HTTPException(404, "Chat session not found")
     record.setdefault("messages", []).append({"role": "user", "text": payload.text})
     history = "\n".join(f"{m.get('role', '')}: {m.get('text', '')}" for m in record["messages"][-8:])
+    
     reply = ai.complete(
         "You are MauEkspor Copilot, a trade assistant for Indonesian exporters. "
         "Answer concisely in Indonesian, grounded in the workspace context given. "
@@ -3377,16 +3378,24 @@ def send_session_message(session_id: str, payload: sc.SendChatPayload):
         f"Conversation so far:\n{history}",
         kind="chat_reply",
     )
+    
+    # Get AI status for debugging transparency
+    ai_status = ai.get_ai_status()
+    meta = {"ai_mode": ai_status["mode"], "ai_health": ai_status["health"]}
+    
     if not reply:
-        # Remote mode gagal/tak terjangkau → jatuh ke jawaban statis agar chat tetap berfungsi.
+        # Fallback ke mock response dengan clear indication
         reply = ai.fallback("chat_reply")
+        logger.warning(f"AI unavailable (status: {ai_status['health']}), using mock response")
+        meta["ai_fallback"] = True
+    
     if reply:
         record["messages"].append({"role": "ai", "text": reply})
     if record.get("title") in ("", "Percakapan baru") and payload.text:
         record["title"] = payload.text[:40]
     record["updatedAt"] = "now"
     record["messageCount"] = len(record["messages"])
-    return _save_one(record)
+    return {"data": record, "meta": meta}
 
 
 @router.get("/chat/suggestions/")
@@ -3400,6 +3409,47 @@ def chat_suggestions():
         suggestions.append({"question": f"Apa syarat kepatuhan untuk {products[0].get('name', 'produk')}?", "context": "compliance"})
         suggestions.append({"question": "Berapa estimasi harga EXW/FOB/CIF produk saya?", "context": "pricing"})
     return {"data": suggestions, "meta": {}}
+
+@router.get("/ai/status/")
+def ai_status():
+    """Check AI service availability and mode.
+    
+    Returns information about AI configuration:
+    - mode: remote/localhost/mock
+    - health: healthy/unhealthy
+    - using_remote: true/false
+    - using_mock: true/false
+    """
+    return {"data": ai.get_ai_status(), "meta": {}}
+
+
+@router.post("/ai/test/")
+def ai_test():
+    """Quick test to verify AI is responding.
+    
+    Tests the AI with a simple prompt to ensure real AI is accessible,
+    not just fallback mock responses.
+    """
+    try:
+        test_reply = ai.complete(
+            "You are a helpful test assistant.",
+            "Say 'AI test successful' in Indonesian.",
+            kind="test"
+        )
+        status = ai.get_ai_status()
+        return {
+            "data": {
+                "response": test_reply,
+                "ai_mode": status["mode"],
+                "ai_health": status["health"],
+                "success": bool(test_reply)
+            },
+            "meta": {}
+        }
+    except Exception as e:
+        logger.error(f"AI test failed: {e}")
+        return {"data": {"response": None, "success": False, "error": str(e)}, "meta": {}}
+
 
 
 # ----------------------------------------------------------------------------
