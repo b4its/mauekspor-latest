@@ -6,7 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { integrations } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
-	import { listIntegrations, connectIntegration, syncIntegration } from '$lib/api/integrations';
+	import { listIntegrations, connectIntegration, syncIntegration, disconnectIntegration, createIntegration, updateIntegration, deleteIntegration } from '$lib/api/integrations';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
@@ -14,6 +14,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Logistics', 'Finance', 'Compliance', 'Commerce', 'AI'];
+	const categories = ['Logistics', 'Finance', 'Compliance', 'Commerce', 'AI'];
 
 	function trCat(x: string) {
 		return t(x === 'All' ? 'Semua' : x === 'Logistics' ? 'Logistik' : x === 'Finance' ? 'Keuangan' : x === 'Compliance' ? 'Kepatuhan' : x === 'Commerce' ? 'Commerce' : 'Kecerdasan buatan');
@@ -28,7 +29,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let syncing = $state(false);
 	let connected = $state(false);
 	let error = $state('');
+	let message = $state('');
 	let connectedId = $state('');
+	let busyId = $state('');
+	let showForm = $state(false);
+	let saving = $state(false);
+	let formError = $state('');
+	let editingId = $state('');
+	let fName = $state('');
+	let fCategory = $state('Logistics');
+	let fDescription = $state('');
+	let fScopes = $state('');
 
 	let items = createRemoteList(listIntegrations, integrations);
 	$effect(() => {
@@ -74,6 +85,92 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			error = t('Gagal menghubungkan integrasi.');
 		}
 	}
+
+	function resetForm() {
+		editingId = '';
+		fName = '';
+		fCategory = 'Logistics';
+		fDescription = '';
+		fScopes = '';
+	}
+
+	function openCreate() {
+		resetForm();
+		formError = '';
+		showForm = true;
+	}
+
+	function openEdit(item: { id: string; name: string; category: string; description?: string; scopes?: string[] }) {
+		editingId = item.id;
+		fName = item.name;
+		fCategory = item.category;
+		fDescription = item.description ?? '';
+		fScopes = (item.scopes ?? []).join(', ');
+		formError = '';
+		showForm = true;
+	}
+
+	async function handleSave() {
+		formError = '';
+		if (!fName.trim()) {
+			formError = t('Nama integrasi wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const payload = {
+				name: fName.trim(),
+				category: fCategory,
+				description: fDescription.trim(),
+				scopes: fScopes.split(',').map((s) => s.trim()).filter(Boolean)
+			};
+			if (editingId) {
+				await updateIntegration(editingId, payload);
+				message = `Integrasi "${payload.name}" diperbarui.`;
+			} else {
+				await createIntegration(payload);
+				message = `Integrasi "${payload.name}" dibuat.`;
+			}
+			await items.load();
+			showForm = false;
+			resetForm();
+		} catch {
+			formError = t('Gagal menyimpan integrasi.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDisconnect(itemId: string) {
+		error = '';
+		busyId = itemId;
+		try {
+			await disconnectIntegration(itemId);
+			connectedId = '';
+			const idx = items.items.findIndex((i) => i.id === itemId);
+			if (idx >= 0) items.items[idx] = { ...items.items[idx], status: 'Disconnected' };
+			message = t('Integrasi diputus.');
+		} catch {
+			error = t('Gagal memutus integrasi.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleDelete(item: { id: string; name: string }) {
+		error = '';
+		busyId = item.id;
+		try {
+			await deleteIntegration(item.id);
+			const idx = items.items.findIndex((i) => i.id === item.id);
+			if (idx >= 0) items.items.splice(idx, 1);
+			message = `Integrasi "${item.name}" dihapus.`;
+		} catch {
+			error = t('Gagal menghapus integrasi.');
+		} finally {
+			busyId = '';
+		}
+	}
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredIntegrations ?? [], paginationPage, paginationPageSize));
@@ -98,12 +195,46 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={handleSync} disabled={syncing}>{synced ? t('Tersinkronisasi') : syncing ? t('Menyinkronkan...') : t('Sinkronkan yang terhubung')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Tambah integrasi')}</Button>
 			<Badge variant="secondary">{t('Terhubung')} {connectedCount}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nama integrasi')}
+						<Input bind:value={fName} placeholder="Forwarder Rate Gateway" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kategori')}
+						<select bind:value={fCategory} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each categories as category}
+								<option value={category}>{trCat(category)}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Deskripsi')}
+					<Input bind:value={fDescription} placeholder={t('Deskripsi singkat integrasi...')} />
+				</label>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Lingkup (dipisah koma)')}
+					<Input bind:value={fScopes} placeholder="Rates, Bookings" />
+				</label>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : editingId ? t('Simpan perubahan') : t('Simpan integrasi')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if items.error}
@@ -180,6 +311,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						</div>
 					</CardContent>
 					<Button variant="outline" onclick={() => handleConnect(item.id)}>{(connected || connectedId === item.id) && item.status === 'Needs Auth' ? t('Terhubung') : item.status === 'Connected' ? t('Hubungkan ulang') : t('Hubungkan')}</Button>
+					{#if item.status === 'Connected' || connectedId === item.id}
+						<Button variant="outline" disabled={busyId === item.id} onclick={() => handleDisconnect(item.id)}>{t('Putuskan')}</Button>
+					{/if}
+					<div class="grid grid-cols-2 gap-2">
+						<Button variant="outline" disabled={busyId === item.id} onclick={() => openEdit(item)}>{t('Edit')}</Button>
+						<Button variant="outline" class="text-destructive" disabled={busyId === item.id} onclick={() => handleDelete(item)}>{t('Hapus')}</Button>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada integrasi yang cocok dengan pencarian.')}</div>
