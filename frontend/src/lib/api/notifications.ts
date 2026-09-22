@@ -12,3 +12,7 @@ export function markNotificationRead(id: string) {
 export function archiveNotification(id: string) {
 	return apiFetch<NotificationItem>(`/notifications/${id}/archive/`, { method: 'POST' });
 }
+
+export function deleteNotification(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/notifications/${id}/`, { method: 'DELETE' });
+}

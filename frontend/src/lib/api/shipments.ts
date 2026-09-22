@@ -28,3 +28,11 @@ export function resolveShipmentException(payload: ShipmentExceptionPayload) {
 		body: JSON.stringify(payload)
 	});
 }
+
+export function updateShipment(id: string, payload: Partial<Shipment>) {
+	return apiFetch<Shipment>(`/shipments/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteShipment(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/shipments/${id}/`, { method: 'DELETE' });
+}

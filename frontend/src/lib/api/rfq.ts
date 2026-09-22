@@ -31,3 +31,11 @@ export function shortlistRFQMatch(id: string, supplier: string) {
 		body: JSON.stringify({ supplier })
 	});
 }
+
+export function updateRFQ(id: string, payload: Partial<RFQ>) {
+	return apiFetch<RFQ>(`/rfqs/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteRFQ(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/rfqs/${id}/`, { method: 'DELETE' });
+}

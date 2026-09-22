@@ -25,3 +25,11 @@ export function createMarketInsight(payload: CreateMarketInsightPayload) {
 export function refreshMarketInsight(id: string) {
 	return apiFetch<MarketInsight>(`/markets/${id}/refresh/`, { method: 'POST' });
 }
+
+export function updateMarketInsight(id: string, payload: Partial<MarketInsight>) {
+	return apiFetch<MarketInsight>(`/markets/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteMarketInsight(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/markets/${id}/`, { method: 'DELETE' });
+}

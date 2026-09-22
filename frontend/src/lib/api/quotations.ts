@@ -27,3 +27,11 @@ export function createQuotation(payload: CreateQuotationPayload) {
 export function acceptQuotation(id: string) {
 	return apiFetch<Quotation>(`/quotations/${id}/accept/`, { method: 'POST' });
 }
+
+export function updateQuotation(id: string, payload: Partial<Quotation>) {
+	return apiFetch<Quotation>(`/quotations/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteQuotation(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/quotations/${id}/`, { method: 'DELETE' });
+}

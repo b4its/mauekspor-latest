@@ -34,6 +34,14 @@ export function logBuyerContact(id: string, note: string) {
 	});
 }
 
+export function updateBuyer(id: string, payload: Partial<Buyer>) {
+	return apiFetch<Buyer>(`/buyers/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteBuyer(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/buyers/${id}/`, { method: 'DELETE' });
+}
+
 // ---------- Buyer profiles (role Buyer) ----------
 export type BuyerProfile = {
 	id?: string;

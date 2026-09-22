@@ -12,3 +12,11 @@ export function sendMessage(threadId: string, body: string) {
 export function resolveMessageThread(threadId: string) {
 	return apiFetch<MessageThread>(`/messages/${threadId}/resolve/`, { method: 'POST' });
 }
+
+export function updateMessageThread(threadId: string, payload: Partial<MessageThread>) {
+	return apiFetch<MessageThread>(`/messages/${threadId}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteMessageThread(threadId: string) {
+	return apiFetch<{ status: string; id: string }>(`/messages/${threadId}/`, { method: 'DELETE' });
+}

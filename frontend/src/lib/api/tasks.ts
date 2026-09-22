@@ -19,3 +19,11 @@ export function assignTask(id: string, owner: string) {
 		body: JSON.stringify({ owner })
 	});
 }
+
+export function updateTask(id: string, payload: Partial<WorkTask>) {
+	return apiFetch<WorkTask>(`/tasks/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteTask(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/tasks/${id}/`, { method: 'DELETE' });
+}

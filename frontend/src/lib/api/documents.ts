@@ -24,3 +24,11 @@ export function generateTradeDocument(payload: GenerateDocumentPayload) {
 export function approveTradeDocument(id: string) {
 	return apiFetch<TradeDocument>(`/documents/${id}/approve/`, { method: 'POST' });
 }
+
+export function updateTradeDocument(id: string, payload: Partial<TradeDocument>) {
+	return apiFetch<TradeDocument>(`/documents/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteTradeDocument(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/documents/${id}/`, { method: 'DELETE' });
+}

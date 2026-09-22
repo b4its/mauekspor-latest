@@ -26,3 +26,11 @@ export function createTradeProject(payload: CreateTradeProjectPayload) {
 		body: JSON.stringify(payload)
 	});
 }
+
+export function updateTradeProject(id: string, payload: Partial<TradeProject>) {
+	return apiFetch<TradeProject>(`/trade-projects/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteTradeProject(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/trade-projects/${id}/`, { method: 'DELETE' });
+}

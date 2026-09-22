@@ -21,3 +21,14 @@ export function uploadComplianceEvidence(payload: EvidencePayload) {
 		body: JSON.stringify(payload)
 	});
 }
+
+export function updateComplianceRequirement(id: string, payload: Partial<ComplianceRequirement>) {
+	return apiFetch<ComplianceRequirement>(`/compliance/requirements/${id}/`, {
+		method: 'PATCH',
+		body: JSON.stringify(payload)
+	});
+}
+
+export function deleteComplianceRequirement(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/compliance/requirements/${id}/`, { method: 'DELETE' });
+}

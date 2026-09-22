@@ -16,3 +16,11 @@ export function verifySupplier(id: string) {
 export function requestSupplierEvidence(id: string) {
 	return apiFetch<Supplier>(`/suppliers/${id}/request-evidence/`, { method: 'POST' });
 }
+
+export function updateSupplier(id: string, payload: Partial<Supplier>) {
+	return apiFetch<Supplier>(`/suppliers/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteSupplier(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/suppliers/${id}/`, { method: 'DELETE' });
+}

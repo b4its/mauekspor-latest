@@ -25,3 +25,11 @@ export function createOrder(payload: CreateOrderPayload) {
 export function confirmOrder(id: string) {
 	return apiFetch<SalesOrder>(`/orders/${id}/confirm/`, { method: 'POST' });
 }
+
+export function updateOrder(id: string, payload: Partial<SalesOrder>) {
+	return apiFetch<SalesOrder>(`/orders/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteOrder(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/orders/${id}/`, { method: 'DELETE' });
+}
