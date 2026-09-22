@@ -176,6 +176,23 @@ _RL_ENABLED = os.getenv("MAUEKSPOR_DISABLE_PERSISTENCE", "").lower() not in {"1"
 
 
 def _rate_limit_key(request) -> str:
+    """Identitas klien untuk rate limiting & lockout.
+
+    Di belakang proxy (ngrok tunnel / nginx), request.client.host adalah IP
+    proxy — SEMUA user publik share satu IP sehingga rate limit per-IP
+    memblokir seluruh pengunjung setelah 5 login (bug 429 massal).
+    Gunakan X-Forwarded-For (di-set ngrok & nginx) agar tiap user asli
+    punya kuota sendiri. Fallback: IP socket langsung.
+    """
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded:
+        # Hop pertama = klien asli
+        first = forwarded.split(",")[0].strip()
+        if first:
+            return first
+    real_ip = request.headers.get("x-real-ip", "").strip()
+    if real_ip:
+        return real_ip
     ip = request.client.host if request.client else "unknown"
     return ip
 

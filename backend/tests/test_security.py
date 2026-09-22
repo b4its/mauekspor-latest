@@ -96,3 +96,33 @@ def test_get_token_tanpa_apapun_401():
     with pytest.raises(HTTPException) as exc:
         security.get_token(req, None)
     assert exc.value.status_code == 401
+
+
+def test_rate_limit_key_pakai_x_forwarded_for():
+    """Di belakang ngrok/nginx, tiap user asli (XFF) harus punya kuota sendiri.
+
+    Bug: semua user tunnel share IP proxy → login ke-2 langsung 429 massal.
+    """
+    from app.main import _rate_limit_key
+
+    class FakeRequest:
+        def __init__(self, headers, client_host="10.0.0.1"):
+            self.headers = headers
+            self.client = type("C", (), {"host": client_host})()
+
+    # XFF ada → pakai IP klien asli (hop pertama)
+    r = FakeRequest({"x-forwarded-for": "103.1.2.3, 172.18.0.5"})
+    assert _rate_limit_key(r) == "103.1.2.3"
+
+    # X-Real-Only fallback
+    r2 = FakeRequest({"x-real-ip": "103.9.9.9"})
+    assert _rate_limit_key(r2) == "103.9.9.9"
+
+    # Tanpa header → IP socket
+    r3 = FakeRequest({})
+    assert _rate_limit_key(r3) == "10.0.0.1"
+
+    # Dua user berbeda via tunnel → key berbeda (tidak saling blokir)
+    a = FakeRequest({"x-forwarded-for": "1.1.1.1"})
+    b = FakeRequest({"x-forwarded-for": "2.2.2.2"})
+    assert _rate_limit_key(a) != _rate_limit_key(b)
