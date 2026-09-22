@@ -2638,6 +2638,30 @@ def get_compliance(req_id: str):
     return _one(record)
 
 
+@router.post("/compliance/requirements/")
+def create_compliance(payload: dict):
+    title = str(payload.get("title", "")).strip()
+    if not title:
+        raise HTTPException(422, "title is required")
+    record = db.insert("compliance_requirements", {
+        "id": db.gen_id("compliance_requirements", "REQ"),
+        "projectId": payload.get("projectId", ""),
+        "productId": payload.get("productId", ""),
+        "title": title,
+        "category": payload.get("category", "General"),
+        "severity": payload.get("severity", "Medium"),
+        "status": payload.get("status", "Open"),
+        "owner": payload.get("owner", "Exporter"),
+        "due": payload.get("dueDate") or payload.get("due", "-"),
+        "source": payload.get("source", ""),
+        "requiredEvidence": payload.get("requiredEvidence", ""),
+        "currentEvidence": payload.get("currentEvidence", ""),
+        "confidence": payload.get("confidence", 80),
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
 @router.post("/compliance/requirements/{req_id}/evidence/")
 def upload_compliance_evidence(req_id: str, payload: dict):
     record = db.get("compliance_requirements", req_id)
@@ -2689,6 +2713,24 @@ def get_document(document_id: str):
     record = db.get("documents", document_id)
     if not record:
         raise HTTPException(404, "Document not found")
+    return _one(record)
+
+
+@router.post("/documents/")
+def create_document(payload: dict):
+    doc_type = payload.get("type") or "Commercial Invoice"
+    record = db.insert("documents", {
+        "id": db.gen_id("documents", "DOC"),
+        "projectId": payload.get("projectId", ""),
+        "type": doc_type,
+        "status": payload.get("status", "Draft"),
+        "version": payload.get("version", "v1.0"),
+        "owner": payload.get("owner", "Operations"),
+        "updatedAt": "now",
+        "validationScore": payload.get("validationScore", 0),
+        "fields": payload.get("fields", {}),
+        "checks": payload.get("checks", []),
+    })
     return _one(record)
 
 
@@ -2785,6 +2827,25 @@ def get_shipment(shipment_id: str):
     return _one(record)
 
 
+@router.post("/shipments/")
+def create_shipment(payload: dict):
+    record = db.insert("shipments", {
+        "id": db.gen_id("shipments", "SHP"),
+        "projectId": payload.get("projectId", ""),
+        "forwarder": payload.get("forwarder", ""),
+        "mode": payload.get("mode", "Ocean LCL"),
+        "route": payload.get("route", ""),
+        "status": payload.get("status", "Booking"),
+        "eta": payload.get("eta", "-"),
+        "progress": payload.get("progress", 0),
+        "container": payload.get("container", "-"),
+        "bookingNo": payload.get("bookingNo", ""),
+        "milestones": [],
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
 @router.post("/shipments/{shipment_id}/milestones/")
 def update_shipment_milestone(shipment_id: str, payload: dict):
     record = db.get("shipments", shipment_id)
@@ -2849,6 +2910,26 @@ def get_payment(payment_id: str):
     record = db.get("payments", payment_id)
     if not record:
         raise HTTPException(404, "Payment not found")
+    return _one(record)
+
+
+@router.post("/payments/")
+def create_payment(payload: dict):
+    record = db.insert("payments", {
+        "id": db.gen_id("payments", "PAY"),
+        "orderId": payload.get("orderId", ""),
+        "projectId": payload.get("projectId", ""),
+        "buyer": payload.get("buyer", ""),
+        "status": payload.get("status", "Pending"),
+        "currency": payload.get("currency", "USD"),
+        "amount": payload.get("amount", 0),
+        "paid": payload.get("paid", 0),
+        "dueDate": payload.get("dueDate", ""),
+        "method": payload.get("method", "Bank Transfer"),
+        "risk": payload.get("risk", "Low"),
+        "milestones": payload.get("milestones", []),
+        "updatedAt": "now",
+    })
     return _one(record)
 
 
@@ -2927,6 +3008,27 @@ def get_task(task_id: str):
     return _one(record)
 
 
+@router.post("/tasks/")
+def create_task(payload: dict):
+    title = str(payload.get("title", "")).strip()
+    if not title:
+        raise HTTPException(422, "title is required")
+    record = db.insert("tasks", {
+        "id": db.gen_id("tasks", "TSK"),
+        "title": title,
+        "module": payload.get("module", "General"),
+        "projectId": payload.get("projectId", ""),
+        "owner": payload.get("owner", "Unassigned"),
+        "priority": payload.get("priority", "Medium"),
+        "status": payload.get("status", "Open"),
+        "due": payload.get("dueDate") or payload.get("due", "-"),
+        "dueDate": payload.get("dueDate", ""),
+        "description": payload.get("description", ""),
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
 @router.post("/tasks/{task_id}/complete/")
 def complete_task(task_id: str):
     record = db.get("tasks", task_id)
@@ -2983,6 +3085,32 @@ def get_supplier(supplier_id: str):
     record = db.get("suppliers", supplier_id)
     if not record:
         raise HTTPException(404, "Supplier not found")
+    return _one(record)
+
+
+@router.post("/suppliers/")
+def create_supplier(payload: dict):
+    name = str(payload.get("name", "")).strip()
+    if not name:
+        raise HTTPException(422, "name is required")
+    record = db.insert("suppliers", {
+        "id": db.gen_id("suppliers", "SUP"),
+        "name": name,
+        "location": payload.get("location", ""),
+        "category": payload.get("category", "Supplier"),
+        "status": payload.get("status", "In Review"),
+        "capabilityScore": payload.get("capabilityScore", 50),
+        "capacity": payload.get("capacity", "-"),
+        "leadTime": payload.get("leadTime", "-"),
+        "qualityScore": payload.get("qualityScore", 50),
+        "complianceScore": payload.get("complianceScore", 50),
+        "contact": payload.get("contact", ""),
+        "certificates": payload.get("certificates", []),
+        "risks": payload.get("risks", []),
+        "nextAudit": payload.get("nextAudit", "-"),
+        "productIds": payload.get("productIds", []),
+        "updatedAt": "now",
+    })
     return _one(record)
 
 
