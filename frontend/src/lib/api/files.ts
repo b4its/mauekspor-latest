@@ -15,6 +15,14 @@ export function verifyFileAsset(id: string) {
 	return apiFetch<FileAsset>(`/files/${id}/verify/`, { method: 'POST' });
 }
 
+export function updateFileAsset(id: string, payload: Partial<Pick<FileAsset, 'name' | 'type' | 'projectId' | 'status' | 'tags'>>) {
+	return apiFetch<FileAsset>(`/files/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteFileAsset(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/files/${id}/`, { method: 'DELETE' });
+}
+
 export async function uploadFileBinary(file: File, type: string, projectId: string, tags: string[]) {
 	const form = new FormData();
 	form.append('file', file);

@@ -12,3 +12,11 @@ export function createCalendarEvent(payload: Pick<CalendarEvent, 'title' | 'date
 export function markCalendarEventDone(id: string) {
 	return apiFetch<CalendarEvent>(`/calendar/${id}/done/`, { method: 'POST' });
 }
+
+export function updateCalendarEvent(id: string, payload: Partial<CalendarEvent>) {
+	return apiFetch<CalendarEvent>(`/calendar/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteCalendarEvent(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/calendar/${id}/`, { method: 'DELETE' });
+}

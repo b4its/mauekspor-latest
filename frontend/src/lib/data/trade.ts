@@ -394,7 +394,7 @@ export type Integration = {
 	id: string;
 	name: string;
 	category: 'Logistics' | 'Finance' | 'Compliance' | 'Commerce' | 'AI';
-	status: 'Connected' | 'Available' | 'Needs Auth' | 'Error';
+	status: 'Connected' | 'Available' | 'Needs Auth' | 'Error' | 'Disconnected';
 	description: string;
 	lastSync: string;
 	scopes: string[];

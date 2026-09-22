@@ -18,3 +18,11 @@ export function updateTeamMemberRole(id: string, role: TeamMember['role']) {
 		body: JSON.stringify({ role })
 	});
 }
+
+export function updateTeamMember(id: string, payload: Partial<Pick<TeamMember, 'name' | 'email' | 'role' | 'status'>>) {
+	return apiFetch<TeamMember>(`/team/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function removeTeamMember(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/team/${id}/`, { method: 'DELETE' });
+}

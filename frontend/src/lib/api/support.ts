@@ -12,3 +12,11 @@ export function createSupportTicket(payload: Pick<SupportTicket, 'subject' | 'ca
 export function resolveSupportTicket(id: string) {
 	return apiFetch<SupportTicket>(`/support/${id}/resolve/`, { method: 'POST' });
 }
+
+export function updateSupportTicket(id: string, payload: Partial<SupportTicket>) {
+	return apiFetch<SupportTicket>(`/support/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export function deleteSupportTicket(id: string) {
+	return apiFetch<{ status: string; id: string }>(`/support/${id}/`, { method: 'DELETE' });
+}
