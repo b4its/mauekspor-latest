@@ -36,11 +36,22 @@ def test_recalculate_rating_tanpa_review():
 
 def test_recalculate_rating_dengan_review():
     fwd = db.insert("forwarders", {"id": "FWD-1", "name": "NGL"})
-    for rating in [5, 5, 4]:
-        db.insert("forwarder_reviews", {"id": f"RV-{rating}", "forwarderId": "FWD-1", "rating": rating})
+    # id unik per review — insert() kini idempotent per id (duplikat id = update)
+    for i, rating in enumerate([5, 5, 4], start=1):
+        db.insert("forwarder_reviews", {"id": f"RV-RATE-{i}", "forwarderId": "FWD-1", "rating": rating})
     result = forwarders.recalculate_rating(fwd)
     assert result["totalReviews"] == 3
     assert result["averageRating"] == round(14 / 3, 1)
+
+
+def test_insert_idempotent_update_bukan_duplikat():
+    """insert() dengan id yang sama harus update, bukan membuat record dobel."""
+    fwd = db.insert("forwarders", {"id": "FWD-IDEM", "name": "A"})
+    db.insert("forwarder_reviews", {"id": "RV-IDEM-1", "forwarderId": "FWD-IDEM", "rating": 5})
+    db.insert("forwarder_reviews", {"id": "RV-IDEM-1", "forwarderId": "FWD-IDEM", "rating": 3})
+    reviews = [r for r in db.all("forwarder_reviews") if r["forwarderId"] == "FWD-IDEM"]
+    assert len(reviews) == 1, "duplikat id harus update-in-place"
+    assert reviews[0]["rating"] == 3
 
 
 def test_get_recommendations_berdasarkan_rute_dan_rating():
