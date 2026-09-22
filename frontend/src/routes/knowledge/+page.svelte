@@ -7,20 +7,31 @@
 	import { knowledgeArticles as seedArticles } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { listKnowledgeArticles } from '$lib/api/knowledge';
+	import { listKnowledgeArticles, publishKnowledgeArticle, createKnowledgeArticle, updateKnowledgeArticle, deleteKnowledgeArticle } from '$lib/api/knowledge';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
-	import { publishKnowledgeArticle } from '$lib/api/knowledge';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Export Basics', 'Compliance', 'Logistics', 'Finance', 'Platform'];
+	const categories = ['Export Basics', 'Compliance', 'Logistics', 'Finance', 'Platform'];
 	let activeFilter = $state('All');
 	let query = $state('');
 	let published = $state(false);
 	let articles = createRemoteList(listKnowledgeArticles, seedArticles);
 	let error = $state('');
+	let message = $state('');
 	let publishedId = $state('');
+	let busyId = $state('');
+	let showForm = $state(false);
+	let saving = $state(false);
+	let formError = $state('');
+	let editingId = $state('');
+	let fTitle = $state('');
+	let fCategory = $state('Export Basics');
+	let fSummary = $state('');
+	let fSteps = $state('');
+	let fReadTime = $state('5 min');
 	let filteredArticles = $derived(
 		articles.items.filter(
 			(article) =>
@@ -41,15 +52,91 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		articles.load();
 	});
 
-	async function handlePublish() {
+	async function handlePublish(id?: string) {
 		error = '';
-		const draft = articles.items.find((article) => article.status === 'Draft') ?? articles.items[0];
+		const target = id ? articles.items.find((article) => article.id === id) : (articles.items.find((article) => article.status === 'Draft') ?? articles.items[0]);
+		if (!target) return;
 		try {
-			await publishKnowledgeArticle(draft.id);
+			await publishKnowledgeArticle(target.id);
 			published = true;
-			publishedId = draft.id;
+			publishedId = target.id;
+			const idx = articles.items.findIndex((a) => a.id === target.id);
+			if (idx >= 0) articles.items[idx] = { ...articles.items[idx], status: 'Published' };
 		} catch {
 			error = t('Gagal mempublikasikan artikel.');
+		}
+	}
+
+	function resetForm() {
+		editingId = '';
+		fTitle = '';
+		fCategory = 'Export Basics';
+		fSummary = '';
+		fSteps = '';
+		fReadTime = '5 min';
+	}
+
+	function openCreate() {
+		resetForm();
+		formError = '';
+		showForm = true;
+	}
+
+	function openEdit(article: { id: string; title: string; category: string; summary?: string; steps?: string[]; readTime?: string }) {
+		editingId = article.id;
+		fTitle = article.title;
+		fCategory = article.category;
+		fSummary = article.summary ?? '';
+		fSteps = (article.steps ?? []).join('\n');
+		fReadTime = article.readTime ?? '5 min';
+		formError = '';
+		showForm = true;
+	}
+
+	async function handleSave() {
+		formError = '';
+		if (!fTitle.trim()) {
+			formError = t('Judul artikel wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const payload = {
+				title: fTitle.trim(),
+				category: fCategory,
+				summary: fSummary.trim(),
+				steps: fSteps.split('\n').map((s) => s.trim()).filter(Boolean),
+				readTime: fReadTime.trim() || '5 min'
+			};
+			if (editingId) {
+				await updateKnowledgeArticle(editingId, payload);
+				message = `Artikel "${payload.title}" diperbarui.`;
+			} else {
+				await createKnowledgeArticle(payload);
+				message = `Artikel "${payload.title}" dibuat.`;
+			}
+			await articles.load();
+			showForm = false;
+			resetForm();
+		} catch {
+			formError = t('Gagal menyimpan artikel.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDelete(article: { id: string; title: string }) {
+		error = '';
+		busyId = article.id;
+		try {
+			await deleteKnowledgeArticle(article.id);
+			const idx = articles.items.findIndex((a) => a.id === article.id);
+			if (idx >= 0) articles.items.splice(idx, 1);
+			message = `Artikel "${article.title}" dihapus.`;
+		} catch {
+			error = t('Gagal menghapus artikel.');
+		} finally {
+			busyId = '';
 		}
 	}
 	let paginationPage = $state(1);
@@ -71,13 +158,51 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Publish practical playbooks for product readiness, HS review, Incoterms, shipment exceptions, finance, and platform usage.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handlePublish}>{published ? t('Article published') : t('Publish article')}</Button>
+			<Button onclick={() => handlePublish()}>{published ? t('Article published') : t('Publish article')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Buat artikel')}</Button>
 			<Badge>{t('Published')} {publishedCount}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Judul')}
+						<Input bind:value={fTitle} placeholder={t('Contoh: Panduan HS Code')} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kategori')}
+						<select bind:value={fCategory} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each categories as category}
+								<option value={category}>{category}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Ringkasan')}
+					<Input bind:value={fSummary} placeholder={t('Ringkasan singkat...')} />
+				</label>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Langkah (satu per baris)')}
+					<textarea bind:value={fSteps} rows="3" class="rounded-md border bg-background px-3 py-2 text-sm" placeholder={t('Langkah 1\nLangkah 2')}></textarea>
+				</label>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Waktu baca')}
+					<Input bind:value={fReadTime} placeholder="5 min" />
+				</label>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : editingId ? t('Simpan perubahan') : t('Simpan artikel')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if articles.error}
@@ -139,6 +264,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					<ol class="m-0 list-decimal space-y-1.5 pl-5 font-bold text-muted-foreground">
 						{#each article.steps as step}<li>{step}</li>{/each}
 					</ol>
+					<div class="grid grid-cols-3 gap-2">
+						{#if article.status !== 'Published'}
+							<Button variant="outline" disabled={busyId === article.id} onclick={() => handlePublish(article.id)}>{t('Publish')}</Button>
+						{:else}
+							<div></div>
+						{/if}
+						<Button variant="outline" disabled={busyId === article.id} onclick={() => openEdit(article)}>{t('Edit')}</Button>
+						<Button variant="outline" class="text-destructive" disabled={busyId === article.id} onclick={() => handleDelete(article)}>{t('Hapus')}</Button>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No article matched your search.')}</div>
