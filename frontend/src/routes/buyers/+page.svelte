@@ -17,9 +17,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Lead', 'Qualified', 'Negotiating', 'Active', 'At Risk'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let created = $state(false);
-	let creating = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let showForm = $state(false);
+	let creating = $state(false);
+	let formError = $state('');
+	let fName = $state('');
+	let fCountry = $state('');
+	let fSegment = $state('');
+	let fProducts = $state('');
 
 	let buyers = createRemoteList(listBuyers, seedBuyers);
 	$effect(() => {
@@ -41,20 +47,41 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pipelineValue = $derived(buyers.items.reduce((sum, buyer) => sum + buyer.estimatedAnnualValue, 0));
 	let avgFit = $derived(Math.round(buyers.items.reduce((sum, buyer) => sum + buyer.fitScore, 0) / (buyers.items.length || 1)));
 
+	function openCreate() {
+		formError = '';
+		fName = '';
+		fCountry = '';
+		fSegment = '';
+		fProducts = '';
+		showForm = true;
+	}
+
 	async function handleCreate() {
-		error = '';
+		formError = '';
+		if (!fName.trim()) {
+			formError = t('Nama wajib diisi.');
+			return;
+		}
 		creating = true;
 		try {
-			const seed = seedBuyers[0];
 			await createBuyer({
-				name: seed?.name ?? 'New Buyer Co.',
-				country: seed?.country ?? 'Japan',
-				segment: seed?.segment ?? 'Food & Beverage',
-				interestedProducts: seed?.interestedProducts ?? ['Coffee Beans']
+				name: fName.trim(),
+				country: fCountry.trim(),
+				segment: fSegment.trim(),
+				interestedProducts: fProducts
+					.split(',')
+					.map((item) => item.trim())
+					.filter(Boolean)
 			});
-			created = true;
+			await buyers.load();
+			message = `Buyer "${fName.trim()}" ditambahkan.`;
+			showForm = false;
+			fName = '';
+			fCountry = '';
+			fSegment = '';
+			fProducts = '';
 		} catch {
-			error = t('Gagal menambahkan buyer.');
+			formError = t('Gagal menambahkan buyer.');
 		} finally {
 			creating = false;
 		}
@@ -91,11 +118,39 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Qualify buyers, track contact context, connect accounts to projects, and prioritize the next action that moves export deals forward.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating} class="w-full">{created ? t('Lead captured') : creating ? t('Adding...') : t('Add buyer lead')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Add buyer lead')}</Button>
 			<Button href={csvExportUrl('/buyers/export.csv')} variant="outline">CSV</Button>
 			<Button href={csvExportUrl('/buyers/export.xlsx')} variant="outline">Excel (.xlsx)</Button>
 			<Badge variant="secondary">{t('Active')} {activeCount}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nama')}
+						<Input bind:value={fName} placeholder="Hikari Foods Co." />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Negara')}
+						<Input bind:value={fCountry} placeholder="Japan" />
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Segmen')}
+						<Input bind:value={fSegment} placeholder={t('Food & Beverage')} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Produk diminati')}
+						<Input bind:value={fProducts} placeholder="Coffee Beans, Spices" />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Adding...') : t('Simpan buyer')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -106,11 +161,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{buyers.error}</p>
 	{/if}
 
-	{#if created}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Buyer lead captured.')}</strong>
-			<span class="block text-sm text-muted-foreground">{t('Lead tersimpan di backend.')}</span>
-		</div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">

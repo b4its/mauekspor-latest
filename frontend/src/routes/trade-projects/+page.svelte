@@ -1,10 +1,11 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { projects as seedProjects } from '$lib/data/trade';
-	import { listTradeProjects } from '$lib/api/trade-projects';
+	import { listTradeProjects, createTradeProject } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
@@ -13,6 +14,18 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let search = $state('');
+	let error = $state('');
+	let message = $state('');
+	let showForm = $state(false);
+	let creating = $state(false);
+	let formError = $state('');
+	let fName = $state('');
+	let fCountry = $state('');
+	let fProjectType = $state('');
+	let fProduct = $state('');
+	let fBuyer = $state('');
+	let fIncoterm = $state('FOB');
+	let fTargetValue = $state('');
 	let projects = createRemoteList(listTradeProjects, seedProjects);
 	$effect(() => {
 		projects.load();
@@ -35,6 +48,50 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		if (tone === 'red') return 'destructive';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
+	}
+	function openCreate() {
+		formError = '';
+		fName = '';
+		fCountry = '';
+		fProjectType = '';
+		fProduct = '';
+		fBuyer = '';
+		fIncoterm = 'FOB';
+		fTargetValue = '';
+		showForm = true;
+	}
+
+	async function handleCreate() {
+		formError = '';
+		if (!fName.trim()) {
+			formError = t('Nama proyek wajib diisi.');
+			return;
+		}
+		creating = true;
+		try {
+			await createTradeProject({
+				name: fName.trim(),
+				country: fCountry.trim(),
+				projectType: fProjectType.trim(),
+				product: fProduct.trim(),
+				buyer: fBuyer.trim(),
+				incoterm: fIncoterm,
+				targetValue: Number(fTargetValue) || 0
+			});
+			await projects.load();
+			message = `Proyek "${fName.trim()}" dibuat.`;
+			showForm = false;
+			fName = '';
+			fCountry = '';
+			fProjectType = '';
+			fProduct = '';
+			fBuyer = '';
+			fTargetValue = '';
+		} catch {
+			formError = t('Gagal membuat proyek.');
+		} finally {
+			creating = false;
+		}
 	}
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
@@ -63,8 +120,65 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					documents, and shipment milestones.
 				</CardDescription>
 			</div>
-			<Input bind:value={search} type="search" placeholder={t('Search buyer, product, country...')} class="min-w-[min(380px,100%)]" />
+			<div class="grid gap-2">
+				<Input bind:value={search} type="search" placeholder={t('Search buyer, product, country...')} class="min-w-[min(380px,100%)]" />
+				<Button variant="outline" class="w-fit" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create project')}</Button>
+			</div>
 		</CardHeader>
+
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nama')}
+						<Input bind:value={fName} placeholder="Gayo Coffee Export Program" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Negara')}
+						<Input bind:value={fCountry} placeholder="Japan" />
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Tipe proyek')}
+						<Input bind:value={fProjectType} placeholder={t('Export program')} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Produk')}
+						<Input bind:value={fProduct} placeholder="Coffee Beans" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Buyer')}
+						<Input bind:value={fBuyer} placeholder="Hikari Foods Co." />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Incoterm')}
+						<select bind:value={fIncoterm} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['FOB', 'CIF', 'EXW', 'DAP'] as term}
+								<option value={term}>{term}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Target nilai')}
+						<Input bind:value={fTargetValue} type="number" placeholder="0" />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Creating...') : t('Simpan proyek')}</Button>
+			</CardContent>
+		{/if}
+
+		{#if error}
+			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		{/if}
+		{#if message}
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		{/if}
 
 		<CardContent class="mt-6 grid gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
 			{#if projects.error}

@@ -17,9 +17,19 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Draft', 'Confirmed', 'Document Prep', 'In Shipment'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let created = $state(false);
-	let creating = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let showForm = $state(false);
+	let creating = $state(false);
+	let formError = $state('');
+	let fBuyer = $state('');
+	let fSupplier = $state('');
+	let fQuotation = $state('');
+	let fValue = $state('');
+	let fIncoterm = $state('FOB');
+	let fCurrency = $state('USD');
+	let fPaymentTerms = $state('30 days after B/L');
+	let fDeliveryWindow = $state('2-3 weeks');
 
 	let orders = createRemoteList(listOrders, seedOrders);
 	$effect(() => {
@@ -47,19 +57,38 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
+	function openCreate() {
+		formError = '';
+		showForm = true;
+	}
+
 	async function handleCreate() {
-		error = '';
+		formError = '';
+		if (!fBuyer.trim()) {
+			formError = t('Buyer wajib diisi.');
+			return;
+		}
 		creating = true;
 		try {
-			const seed = seedOrders[0];
-			await createOrder({
-				quotationId: seed?.quotationId ?? 'q-001',
-				paymentTerms: seed?.paymentTerms ?? '30 days after B/L',
-				deliveryWindow: seed?.deliveryWindow ?? '2-3 weeks'
+			const res = await createOrder({
+				buyer: fBuyer.trim(),
+				supplier: fSupplier.trim(),
+				quotationId: fQuotation.trim(),
+				value: Number(fValue) || 0,
+				incoterm: fIncoterm,
+				currency: fCurrency,
+				paymentTerms: fPaymentTerms.trim(),
+				deliveryWindow: fDeliveryWindow.trim()
 			});
-			created = true;
+			await orders.load();
+			message = `Order "${res.data.id}" dibuat.`;
+			showForm = false;
+			fBuyer = '';
+			fSupplier = '';
+			fQuotation = '';
+			fValue = '';
 		} catch {
-			error = t('Gagal membuat order.');
+			formError = t('Gagal membuat order.');
 		} finally {
 			creating = false;
 		}
@@ -89,24 +118,74 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Track payment terms, delivery windows, order lines, document readiness, and shipment handoff from one operational view.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? t('Order draft created') : creating ? t('Creating...') : t('Create order')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create order')}</Button>
 			<Badge variant="secondary">{t('Pipeline')} {currency.format(totalValue)}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Buyer')}
+						<Input bind:value={fBuyer} placeholder="Hikari Foods Co." />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Supplier')}
+						<Input bind:value={fSupplier} placeholder="PT Kopi Gayo Nusantara" />
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Quotation ID')}
+						<Input bind:value={fQuotation} placeholder="Q-001" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nilai')}
+						<Input bind:value={fValue} type="number" placeholder="0" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Incoterm')}
+						<select bind:value={fIncoterm} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['FOB', 'CIF', 'EXW', 'DAP'] as term}
+								<option value={term}>{term}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Mata uang')}
+						<select bind:value={fCurrency} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['USD', 'IDR', 'EUR'] as cur}
+								<option value={cur}>{cur}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Syarat pembayaran')}
+						<Input bind:value={fPaymentTerms} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Jendela pengiriman')}
+						<Input bind:value={fDeliveryWindow} />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Creating...') : t('Simpan order')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+	{/if}
 
 	{#if orders.error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{orders.error}</p>
-	{/if}
-
-	{#if created}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Order draft ready.')}</strong>
-			<span class="block text-sm text-muted-foreground">{t('Order tersimpan di backend.')}</span>
-		</div>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">

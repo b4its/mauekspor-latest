@@ -16,9 +16,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'In Review', 'Revision Needed', 'Accepted'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let created = $state(false);
-	let creating = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let showForm = $state(false);
+	let creating = $state(false);
+	let formError = $state('');
+	let fBuyer = $state('');
+	let fSupplier = $state('');
+	let fValue = $state('');
+	let fIncoterm = $state('FOB');
+	let fCurrency = $state('USD');
+	let fValidUntil = $state('');
+	let fMargin = $state('');
 
 	let quotations = createRemoteList(listQuotations, seedQuotations);
 	$effect(() => {
@@ -44,21 +53,45 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
+	function openCreate() {
+		formError = '';
+		fBuyer = '';
+		fSupplier = '';
+		fValue = '';
+		fIncoterm = 'FOB';
+		fCurrency = 'USD';
+		fValidUntil = '';
+		fMargin = '';
+		showForm = true;
+	}
+
 	async function handleCreate() {
-		error = '';
+		formError = '';
+		if (!fBuyer.trim()) {
+			formError = t('Buyer wajib diisi.');
+			return;
+		}
 		creating = true;
 		try {
-			const seed = seedQuotations[0];
 			await createQuotation({
-				rfqId: seed?.rfqId ?? 'rfq-001',
-				incoterm: seed?.incoterm ?? 'FOB Tanjung Priok',
-				value: seed?.value ?? 42800,
-				currency: (seed?.currency === 'USD' ? 'USD' : 'IDR') satisfies 'USD' | 'IDR',
-				validUntil: seed?.validUntil ?? '2026-09-30'
+				buyer: fBuyer.trim(),
+				supplier: fSupplier.trim(),
+				value: Number(fValue) || 0,
+				incoterm: fIncoterm,
+				currency: fCurrency,
+				validUntil: fValidUntil,
+				margin: Number(fMargin) || 0
 			});
-			created = true;
+			await quotations.load();
+			message = `Quotation "${fBuyer.trim()}" dibuat.`;
+			showForm = false;
+			fBuyer = '';
+			fSupplier = '';
+			fValue = '';
+			fValidUntil = '';
+			fMargin = '';
 		} catch {
-			error = t('Gagal membuat quotation.');
+			formError = t('Gagal membuat quotation.');
 		} finally {
 			creating = false;
 		}
@@ -88,9 +121,59 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Separate EXW, FOB, CIF, landed-cost assumptions, freight validity, currency, named place, margin, and revision history.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? t('Quotation draft created') : creating ? t('Creating...') : t('Create quotation')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create quotation')}</Button>
 			<Badge variant="secondary">{t('Pipeline')} {currency.format(totalValue)}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Buyer')}
+						<Input bind:value={fBuyer} placeholder="Hikari Foods Co." />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Supplier')}
+						<Input bind:value={fSupplier} placeholder="PT Kopi Gayo Nusantara" />
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nilai')}
+						<Input bind:value={fValue} type="number" placeholder="0" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Incoterm')}
+						<select bind:value={fIncoterm} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['FOB', 'CIF', 'EXW', 'DAP'] as term}
+								<option value={term}>{term}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Mata uang')}
+						<select bind:value={fCurrency} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['USD', 'IDR', 'EUR'] as cur}
+								<option value={cur}>{cur}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Valid until')}
+						<Input bind:value={fValidUntil} type="date" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Margin')}
+						<Input bind:value={fMargin} type="number" placeholder="0" />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Creating...') : t('Simpan quotation')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -101,11 +184,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{quotations.error}</p>
 	{/if}
 
-	{#if created}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Quotation draft ready.')}</strong>
-			<span class="block text-sm text-muted-foreground">{t('Quotation tersimpan di backend.')}</span>
-		</div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">

@@ -16,9 +16,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Matching', 'Quoted', 'Accepted'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let created = $state(false);
-	let creating = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let showForm = $state(false);
+	let creating = $state(false);
+	let formError = $state('');
+	let fBuyer = $state('');
+	let fProduct = $state('');
+	let fDestination = $state('');
+	let fQuantity = $state('');
+	let fIncoterm = $state('FOB');
+	let fDeadline = $state('');
 
 	let rfqs = createRemoteList(listRFQs, seedRFQs);
 	$effect(() => {
@@ -45,22 +53,43 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
+	function openCreate() {
+		formError = '';
+		fBuyer = '';
+		fProduct = '';
+		fDestination = '';
+		fQuantity = '';
+		fIncoterm = 'FOB';
+		fDeadline = '';
+		showForm = true;
+	}
+
 	async function handleCreate() {
-		error = '';
+		formError = '';
+		if (!fBuyer.trim()) {
+			formError = t('Buyer wajib diisi.');
+			return;
+		}
 		creating = true;
 		try {
-			const seed = seedRFQs[0];
 			await createRFQ({
-				buyer: seed?.buyer ?? 'Hikari Foods Co.',
-				product: seed?.product ?? 'Gayo Arabica Coffee Beans',
-				destination: seed?.destination ?? 'Tokyo, Japan',
-				quantity: seed?.quantity ?? '500 kg',
-				incoterm: seed?.incoterm ?? 'FOB Tanjung Priok',
-				deadline: seed?.deadline ?? '2026-09-30'
+				buyer: fBuyer.trim(),
+				product: fProduct.trim(),
+				destination: fDestination.trim(),
+				quantity: fQuantity.trim(),
+				incoterm: fIncoterm,
+				deadline: fDeadline
 			});
-			created = true;
+			await rfqs.load();
+			message = `RFQ "${fProduct.trim() || fBuyer.trim()}" dibuat.`;
+			showForm = false;
+			fBuyer = '';
+			fProduct = '';
+			fDestination = '';
+			fQuantity = '';
+			fDeadline = '';
 		} catch {
-			error = t('Gagal membuat RFQ.');
+			formError = t('Gagal membuat RFQ.');
 		} finally {
 			creating = false;
 		}
@@ -88,9 +117,49 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? t('RFQ draft created') : creating ? t('Creating...') : t('Create RFQ')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create RFQ')}</Button>
 			<Badge variant="secondary">{t('Avg match')} {averageMatch}%</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Buyer')}
+						<Input bind:value={fBuyer} placeholder="Hikari Foods Co." />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Produk')}
+						<Input bind:value={fProduct} placeholder="Gayo Arabica Coffee Beans" />
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Tujuan')}
+						<Input bind:value={fDestination} placeholder="Tokyo, Japan" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kuantitas')}
+						<Input bind:value={fQuantity} placeholder="500 kg" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Incoterm')}
+						<select bind:value={fIncoterm} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['FOB', 'CIF', 'EXW', 'DAP'] as term}
+								<option value={term}>{term}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Deadline')}
+						<Input bind:value={fDeadline} type="date" />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Creating...') : t('Simpan RFQ')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -101,12 +170,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{rfqs.error}</p>
 	{/if}
 
-	{#if created}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('RFQ draft ready.')}</strong>
-			<span class="mt-1 block text-sm text-muted-foreground">
-				{t('RFQ tersimpan di backend.')}</span>
-		</div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
