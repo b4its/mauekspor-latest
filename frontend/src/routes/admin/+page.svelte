@@ -37,7 +37,7 @@
 	let search = $state('');
 	let error = $state('');
 	let page = $state(1);
-	let pageSize = $state(20);
+	let pageSize = $state(5);
 
 	// Edit/create modal
 	let editOpen = $state(false);

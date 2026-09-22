@@ -18,7 +18,7 @@
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
 	let paginationPage = $state(1);
-	let paginationPageSize = $state(20);
+	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(codes ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(codes?.length ?? 0, paginationPageSize));
 

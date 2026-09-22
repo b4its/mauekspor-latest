@@ -12,7 +12,7 @@
 	import type { UserAccount } from '$lib/data/trade';
 
 	const roleFilters = ['All', 'Admin', 'UMKM', 'Buyer', 'Forwarder'];
-	const PAGE_SIZE = 8;
+	const PAGE_SIZE = 5;
 	let roleFilter = $state('All');
 	let query = $state('');
 	let deleting = $state('');

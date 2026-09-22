@@ -72,7 +72,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 	}
 	let paginationPage = $state(1);
-	let paginationPageSize = $state(20);
+	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredMarkets ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredMarkets?.length ?? 0, paginationPageSize));
 

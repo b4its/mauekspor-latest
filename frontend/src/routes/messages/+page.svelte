@@ -74,7 +74,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 	}
 	let paginationPage = $state(1);
-	let paginationPageSize = $state(20);
+	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredThreads ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredThreads?.length ?? 0, paginationPageSize));
 

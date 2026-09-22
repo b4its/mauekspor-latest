@@ -17,7 +17,7 @@
 		totalItems?: number;
 	} = $props();
 
-	const pageSizes = [8, 12, 20, 50, 100];
+	const pageSizes = [5, 8, 12, 20, 50, 100];
 
 	function goNext() { if (page < totalPages) page++; }
 	function goPrev() { if (page > 1) page--; }

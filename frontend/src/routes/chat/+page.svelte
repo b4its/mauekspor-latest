@@ -78,7 +78,7 @@
 
 	// ── Pagination & grouping sesi ──
 	let sessionPage = $state(1);
-	const SESSION_PAGE_SIZE = 30;
+	const SESSION_PAGE_SIZE = 5;
 	let sessionTotalPages = $derived(Math.max(1, Math.ceil(filteredSessions.length / SESSION_PAGE_SIZE)));
 	let pagedSessions = $derived(
 		filteredSessions.slice((sessionPage - 1) * SESSION_PAGE_SIZE, sessionPage * SESSION_PAGE_SIZE)

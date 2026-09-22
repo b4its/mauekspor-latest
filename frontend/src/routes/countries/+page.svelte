@@ -36,7 +36,7 @@
 	let filtered = $derived(filterCountries(countries.items, { search, region, onlyDetailed }));
 
 	let paginationPage = $state(1);
-	let paginationPageSize = $state(24);
+	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filtered ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filtered?.length ?? 0, paginationPageSize));
 

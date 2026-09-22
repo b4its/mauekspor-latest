@@ -123,7 +123,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 	let paginationPage_articles = $state(1);
-	let paginationPageSize_articles = $state(20);
+	let paginationPageSize_articles = $state(5);
 	let pagedItems_articles = $derived(paginate(articles.items ?? [], paginationPage_articles, paginationPageSize_articles));
 	let paginationTotalPages_articles = $derived(calcTotalPages(articles.items?.length ?? 0, paginationPageSize_articles));
 
