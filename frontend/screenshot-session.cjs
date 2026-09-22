@@ -120,8 +120,23 @@ async function login(page) {
 // Helper: fully load a page with animations and lazy content
 async function loadPageFully(page, url) {
   await page.goto(url, { waitUntil: 'networkidle' });
-  // Give time for lazy loading, AOS animations, charts to render
-  await new Promise(r => setTimeout(r, 2000));
+  await new Promise(r => setTimeout(r, 1500));
+  // Scroll through the page to trigger lazy loading & AOS scroll animations
+  await page.evaluate(async () => {
+    const step = window.innerHeight;
+    for (let y = 0; y < document.body.scrollHeight; y += step) {
+      window.scrollTo(0, y);
+      await new Promise(r => setTimeout(r, 150));
+    }
+    window.scrollTo(0, 0);
+  });
+  await new Promise(r => setTimeout(r, 500));
+  // Force AOS-animated elements visible (fullPage/element screenshots don't
+  // trigger scroll events, so data-aos elements would stay opacity:0)
+  await page.addStyleTag({
+    content: '[data-aos]{opacity:1!important;transform:none!important;}'
+  });
+  await new Promise(r => setTimeout(r, 300));
   return page.url();
 }
 
