@@ -3,18 +3,38 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { pipeline as seedPipeline } from '$lib/data/trade';
 	import { listComplianceRequirements } from '$lib/api/compliance';
 	import { listTradeDocuments } from '$lib/api/documents';
+	import { updateTradeProject, deleteTradeProject } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import type { ComplianceRequirement, TradeDocument } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
+	import { goto } from '$app/navigation';
 	import { currency, statusTone } from '$lib/utils/format';
 
 	let { data } = $props();
 	let selectedTab = $state('Compliance');
 	const tabs = ['Compliance', 'Quotation', 'Documents', 'Shipment'];
+	let editing = $state(false);
+	let saving = $state(false);
+	let deleting = $state(false);
+	let message = $state('');
+	let error = $state('');
+	let editName = $state('');
+	let editStage = $state('');
+	let editReadiness = $state('');
+	let editRisk = $state('');
+	let savedName = $state('');
+	let savedStage = $state('');
+	let savedReadiness = $state<number | null>(null);
+	let savedRisk = $state('');
+	let localName = $derived(savedName || data.project.name);
+	let localStage = $derived(savedStage || data.project.stage);
+	let localReadiness = $derived(savedReadiness ?? data.project.readiness);
+	let localRisk = $derived(savedRisk || data.project.risk);
 
 	let compliance = createRemoteList<ComplianceRequirement>(listComplianceRequirements, []);
 	let docs = createRemoteList<TradeDocument>(listTradeDocuments, []);
@@ -60,19 +80,70 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+
+	function openEdit() {
+		editName = data.project.name;
+		editStage = data.project.stage;
+		editReadiness = String(data.project.readiness);
+		editRisk = data.project.risk;
+		error = '';
+		editing = true;
+	}
+
+	async function handleSave() {
+		error = '';
+		if (!editName.trim()) {
+			error = t('Nama proyek wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const payload: Record<string, string | number> = {};
+			if (editName.trim() !== data.project.name) payload.name = editName.trim();
+			if (editStage.trim() !== data.project.stage) payload.stage = editStage.trim();
+			if (editRisk.trim() !== data.project.risk) payload.risk = editRisk.trim();
+			const readinessNum = Number(editReadiness);
+			if (!Number.isNaN(readinessNum) && readinessNum !== data.project.readiness) payload.readiness = readinessNum;
+			const res = await updateTradeProject(data.project.id, payload);
+			savedName = res.data.name;
+			savedStage = res.data.stage;
+			savedRisk = res.data.risk;
+			savedReadiness = res.data.readiness;
+			message = t('Proyek diperbarui.');
+			editing = false;
+		} catch {
+			error = t('Gagal menyimpan proyek.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus proyek ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteTradeProject(data.project.id);
+			goto('/trade-projects');
+		} catch {
+			error = t('Gagal menghapus proyek.');
+		} finally {
+			deleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
-	<title>{data.project.name} | MauEkspor</title>
+	<title>{localName} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.project.id} eyebrow={data.project.name}>
+<AppShell title={data.project.id} eyebrow={localName}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(data.project.risk))}>{data.project.risk} {t('risiko')}</Badge>
+				<Badge variant={toneVariant(statusTone(localRisk))}>{localRisk} {t('risiko')}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
-					{data.project.name}
+					{localName}
 				</CardTitle>
 				<CardDescription class="mt-2">{data.project.product} for {data.project.buyer} in {data.project.country}</CardDescription>
 			</div>
@@ -81,13 +152,43 @@
 				<strong class="mt-1 block text-3xl font-bold tracking-tight">{currency.format(data.project.value)}</strong>
 			</div>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+		</div>
+		{#if editing}
+			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nama')}
+						<Input bind:value={editName} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Tahap')}
+						<Input bind:value={editStage} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kesiapan (%)')}
+						<Input type="number" bind:value={editReadiness} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Risiko')}
+						<Input bind:value={editRisk} />
+					</label>
+				</div>
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : t('Simpan perubahan')}</Button>
+			</div>
+		{/if}
+		{#if message}
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		{/if}
 	</Card>
 
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row items-center justify-between gap-3">
 				<CardTitle>{t('Pipeline Eksekusi')}</CardTitle>
-				<Badge variant="secondary">{t('Tahap saat ini:')} {data.project.stage}</Badge>
+				<Badge variant="secondary">{t('Tahap saat ini:')} {localStage} · {localReadiness}%</Badge>
 			</CardHeader>
 			<CardContent class="grid gap-4 sm:grid-cols-3">
 				{#each pipeline as item}

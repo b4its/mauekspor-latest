@@ -4,15 +4,33 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
+	import { deleteUser } from '$lib/api/users';
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
+	let error = $state('');
+	let deleting = $state(false);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
 		if (tone === 'red') return 'destructive';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus pengguna ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteUser(data.user.id);
+			goto('/users');
+		} catch {
+			error = t('Gagal menghapus pengguna.');
+		} finally {
+			deleting = false;
+		}
 	}
 </script>
 
@@ -32,6 +50,12 @@
 			</div>
 			<Badge variant="secondary">{data.user.role}</Badge>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+		</div>
+		{#if error}
+			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		{/if}
 	</Card>
 
 	<Card>

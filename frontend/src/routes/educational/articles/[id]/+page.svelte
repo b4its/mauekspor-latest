@@ -6,8 +6,26 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { fileDownloadUrl } from '$lib/api/files';
+	import { deleteEducationalArticle } from '$lib/api/educational-articles';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
+	let error = $state('');
+	let deleting = $state(false);
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus artikel ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteEducationalArticle(data.article.id);
+			goto('/educational');
+		} catch {
+			error = t('Gagal menghapus artikel.');
+		} finally {
+			deleting = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -73,7 +91,11 @@
 			{#if fileUrl}
 				<Button variant="outline" size="sm" href={fileUrl}>{t('Unduh file')}</Button>
 			{/if}
+			<Button variant="outline" size="sm" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 		</CardContent>
+		{#if error}
+			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		{/if}
 	</Card>
 
 	{#if embedUrl}

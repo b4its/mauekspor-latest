@@ -7,7 +7,8 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { uploadComplianceEvidence } from '$lib/api/compliance';
+	import { uploadComplianceEvidence, updateComplianceRequirement, deleteComplianceRequirement } from '$lib/api/compliance';
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
@@ -17,8 +18,24 @@
 	let verifying = $state(false);
 	let verified = $state(false);
 	let error = $state('');
+	let editing = $state(false);
+	let saving = $state(false);
+	let deleting = $state(false);
+	let message = $state('');
+	let editTitle = $state('');
+	let editStatus = $state('');
+	let editSeverity = $state('');
+	let editOwner = $state('');
+	let savedTitle = $state('');
+	let savedStatus = $state('');
+	let savedSeverity = $state('');
+	let savedOwner = $state('');
+	let localTitle = $derived(savedTitle || data.requirement.title);
+	let localStatus = $derived(savedStatus || data.requirement.status);
+	let localSeverity = $derived(savedSeverity || data.requirement.severity);
+	let localOwner = $derived(savedOwner || data.requirement.owner);
 
-	let displayStatus = $derived(verified ? 'Verified' : uploaded ? 'Evidence Uploaded' : data.requirement.status);
+	let displayStatus = $derived(verified ? 'Verified' : uploaded ? 'Evidence Uploaded' : localStatus);
 
 	async function uploadEvidence() {
 		error = '';
@@ -47,6 +64,56 @@
 		}, 650);
 	}
 
+	function openEdit() {
+		editTitle = data.requirement.title;
+		editStatus = data.requirement.status;
+		editSeverity = data.requirement.severity;
+		editOwner = data.requirement.owner;
+		error = '';
+		editing = true;
+	}
+
+	async function handleSave() {
+		error = '';
+		if (!editTitle.trim()) {
+			error = t('Judul requirement wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const payload: Record<string, string> = {};
+			if (editTitle.trim() !== data.requirement.title) payload.title = editTitle.trim();
+			if (editStatus.trim() !== data.requirement.status) payload.status = editStatus.trim();
+			if (editSeverity.trim() !== data.requirement.severity) payload.severity = editSeverity.trim();
+			if (editOwner.trim() !== data.requirement.owner) payload.owner = editOwner.trim();
+			const res = await updateComplianceRequirement(data.requirement.id, payload);
+			savedTitle = res.data.title;
+			savedStatus = res.data.status;
+			savedSeverity = res.data.severity;
+			savedOwner = res.data.owner;
+			message = t('Requirement diperbarui.');
+			editing = false;
+		} catch {
+			error = t('Gagal menyimpan requirement.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus requirement ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteComplianceRequirement(data.requirement.id);
+			goto('/compliance');
+		} catch {
+			error = t('Gagal menghapus requirement.');
+		} finally {
+			deleting = false;
+		}
+	}
+
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
 		if (tone === 'red') return 'destructive';
@@ -56,7 +123,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.requirement.title} | MauEkspor</title>
+	<title>{localTitle} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title={data.requirement.id} eyebrow={t('Compliance requirement detail')}>
@@ -65,7 +132,7 @@
 			<div class="min-w-0">
 				<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
-					{data.requirement.title}
+					{localTitle}
 				</CardTitle>
 				<CardDescription class="mt-2">{data.project?.name ?? data.requirement.projectId} - {data.product?.name ?? data.requirement.productId}</CardDescription>
 			</div>
@@ -74,6 +141,36 @@
 				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{data.requirement.confidence}%</strong>
 			</div>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+		</div>
+		{#if editing}
+			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Judul')}
+						<Input bind:value={editTitle} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Status')}
+						<Input bind:value={editStatus} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Tingkat keparahan')}
+						<Input bind:value={editSeverity} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Pemilik')}
+						<Input bind:value={editOwner} />
+					</label>
+				</div>
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : t('Simpan perubahan')}</Button>
+			</div>
+		{/if}
+		{#if message}
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		{/if}
 	</Card>
 
 	<div class="grid gap-4 md:grid-cols-2">

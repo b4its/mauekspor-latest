@@ -4,14 +4,16 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
-	import { recalculateCostingScenario, costingPdfUrl, getExchangeRate, updateExchangeRate, refreshExchangeRate } from '$lib/api/costing';
+	import { recalculateCostingScenario, costingPdfUrl, getExchangeRate, updateExchangeRate, refreshExchangeRate, deleteCostingScenario } from '$lib/api/costing';
 	import type { ExchangeRate } from '$lib/api/costing';
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let recalculated = $state(false);
 	let fxShock = $state(false);
 	let error = $state('');
+	let deleting = $state(false);
 	let fx = $state<ExchangeRate | null>(null);
 	let fxEdit = $state('');
 	let fxError = $state('');
@@ -50,6 +52,20 @@
 			recalculated = true;
 		} catch {
 			error = t('Gagal menghitung ulang costing.');
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus skenario costing ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteCostingScenario(data.scenario.id);
+			goto('/costing');
+		} catch {
+			error = t('Gagal menghapus skenario costing.');
+		} finally {
+			deleting = false;
 		}
 	}
 
@@ -122,6 +138,7 @@
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/costing/${data.scenario.id}/edit`}>{t('Edit skenario')}</Button>
+					<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 					<Button variant="outline" onclick={handleFx}>{fx ? `FX ${fx.rate} (${fx.source})` : t('Tampilkan kurs FX')}</Button>
 					{#if fx}
 						<Button variant="outline" size="sm" disabled={fxSaving} onclick={handleFxRefresh}>{fxSaving ? t('Memperbarui...') : t('Perbarui dari sumber')}</Button>

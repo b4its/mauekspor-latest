@@ -4,13 +4,15 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { matchBuyerRequest, getMatchedCatalogs, getMatchedUmkm, updateBuyerRequestStatus } from '$lib/api/buyer-requests';
+	import { matchBuyerRequest, getMatchedCatalogs, getMatchedUmkm, updateBuyerRequestStatus, deleteBuyerRequest } from '$lib/api/buyer-requests';
 	import type { MatchedItem } from '$lib/api/buyer-requests';
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let matches = $state<MatchedItem[]>([]);
 	let matching = $state(false);
+	let deleting = $state(false);
 	let error = $state('');
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -41,6 +43,20 @@
 			data.request.status = 'Closed';
 		} catch {
 			error = t('Gagal menutup permintaan.');
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus permintaan pembeli ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteBuyerRequest(data.request.id);
+			goto('/buyer-requests');
+		} catch {
+			error = t('Gagal menghapus permintaan.');
+		} finally {
+			deleting = false;
 		}
 	}
 
@@ -103,6 +119,7 @@
 				{#if data.request.status !== 'Closed'}
 					<Button variant="outline" onclick={handleClose}>{t('Tutup permintaan')}</Button>
 				{/if}
+				<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 			</div>
 		</div>
 	</Card>

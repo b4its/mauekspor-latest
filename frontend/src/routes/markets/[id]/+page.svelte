@@ -3,15 +3,29 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { refreshMarketInsight } from '$lib/api/markets';
+	import { refreshMarketInsight, updateMarketInsight, deleteMarketInsight } from '$lib/api/markets';
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let refreshed = $state(false);
 	let refreshing = $state(false);
 	let error = $state('');
+	let editing = $state(false);
+	let saving = $state(false);
+	let deleting = $state(false);
+	let message = $state('');
+	let editCountry = $state('');
+	let editStatus = $state('');
+	let editScore = $state('');
+	let savedCountry = $state('');
+	let savedStatus = $state('');
+	let savedScore = $state<number | null>(null);
+	let localCountry = $derived(savedCountry || data.market.country);
+	let localStatus = $derived(savedStatus || data.market.status);
 	let selectedScenario = $state('Base');
 	const scenarios = ['Base', 'Optimistic', 'Conservative'];
 
@@ -21,12 +35,12 @@
 
 	let displayScore = $derived(
 		selectedScenario === 'Optimistic'
-			? Math.min(data.market.marketScore + 6, 100)
+			? Math.min((savedScore ?? data.market.marketScore) + 6, 100)
 			: selectedScenario === 'Conservative'
-				? Math.max(data.market.marketScore - 8, 0)
+				? Math.max((savedScore ?? data.market.marketScore) - 8, 0)
 				: refreshed
-					? Math.min(data.market.marketScore + 2, 100)
-					: data.market.marketScore
+					? Math.min((savedScore ?? data.market.marketScore) + 2, 100)
+					: (savedScore ?? data.market.marketScore)
 	);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -48,17 +62,65 @@
 			refreshing = false;
 		}
 	}
+
+	function openEdit() {
+		editCountry = data.market.country;
+		editStatus = data.market.status;
+		editScore = String(data.market.marketScore);
+		error = '';
+		editing = true;
+	}
+
+	async function handleSave() {
+		error = '';
+		if (!editCountry.trim()) {
+			error = t('Negara wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const payload: Record<string, string | number> = {};
+			if (editCountry.trim() !== data.market.country) payload.country = editCountry.trim();
+			if (editStatus.trim() !== data.market.status) payload.status = editStatus.trim();
+			const scoreNum = Number(editScore);
+			if (!Number.isNaN(scoreNum) && scoreNum !== data.market.marketScore) payload.marketScore = scoreNum;
+			const res = await updateMarketInsight(data.market.id, payload);
+			savedCountry = res.data.country;
+			savedStatus = res.data.status;
+			savedScore = res.data.marketScore;
+			message = t('Insight pasar diperbarui.');
+			editing = false;
+		} catch {
+			error = t('Gagal menyimpan insight pasar.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus insight pasar ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteMarketInsight(data.market.id);
+			goto('/markets');
+		} catch {
+			error = t('Gagal menghapus insight pasar.');
+		} finally {
+			deleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
-	<title>{data.market.country} Market | MauEkspor</title>
+	<title>{localCountry} Market | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.market.country} eyebrow={t('Market insight detail')}>
+<AppShell title={localCountry} eyebrow={t('Market insight detail')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(data.market.status))}>{data.market.status}</Badge>
+				<Badge variant={toneVariant(statusTone(localStatus))}>{localStatus}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.product?.name ?? data.market.productId}
 				</CardTitle>
@@ -69,6 +131,32 @@
 				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{displayScore}%</strong>
 			</div>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+		</div>
+		{#if editing}
+			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-3">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Negara')}
+						<Input bind:value={editCountry} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Status')}
+						<Input bind:value={editStatus} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Skor pasar')}
+						<Input type="number" bind:value={editScore} />
+					</label>
+				</div>
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : t('Simpan perubahan')}</Button>
+			</div>
+		{/if}
+		{#if message}
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		{/if}
 	</Card>
 
 	<div class="grid gap-4 md:grid-cols-2">

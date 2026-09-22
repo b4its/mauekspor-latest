@@ -6,6 +6,8 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
+	import { deleteEducationalModule } from '$lib/api/educational';
+	import { goto } from '$app/navigation';
 
 	import PlayCircleIcon from '@lucide/svelte/icons/play-circle';
 	import BookOpenIcon from '@lucide/svelte/icons/book-open';
@@ -22,6 +24,22 @@
 	let lessons = $state(initialLessons.map((lesson) => ({ ...lesson })));
 	let initialIndex = initialLessons.findIndex((lesson) => !lesson.completed);
 	let activeIndex = $state(initialIndex === -1 ? 0 : initialIndex);
+	let deleting = $state(false);
+	let error = $state('');
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus modul ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteEducationalModule(data.module.id);
+			goto('/educational');
+		} catch {
+			error = t('Gagal menghapus modul.');
+		} finally {
+			deleting = false;
+		}
+	}
 
 	let activeLesson = $derived(lessons[activeIndex]);
 	let completedCount = $derived(lessons.filter((lesson) => lesson.completed).length);
@@ -73,6 +91,12 @@
 				<span class="mt-1.5 block text-xs font-semibold text-muted-foreground">{completedCount} {t('dari')} {lessons.length} {t('pelajaran selesai')}</span>
 			</div>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+		</div>
+		{#if error}
+			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		{/if}
 	</Card>
 
 	<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
