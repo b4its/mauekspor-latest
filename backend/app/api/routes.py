@@ -945,6 +945,29 @@ def create_project(payload: sc.CreateTradeProjectPayload):
     return _one(db.insert("projects", data))
 
 
+@router.patch("/trade-projects/{project_id}/")
+def update_project(project_id: str, payload: dict):
+    record = db.get("projects", project_id)
+    if not record:
+        raise HTTPException(404, "Project not found")
+    for field in ("name", "buyer", "country", "productId", "product", "stage",
+                  "readiness", "risk", "value", "hsCode", "port", "payment",
+                  "incoterm", "targetValue", "notes", "owner"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/trade-projects/{project_id}/")
+def delete_project(project_id: str):
+    record = db.get("projects", project_id)
+    if not record:
+        raise HTTPException(404, "Project not found")
+    db.delete("projects", project_id)
+    return {"data": {"status": "deleted", "id": project_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # BUSINESS PROFILES
 # ----------------------------------------------------------------------------
@@ -987,6 +1010,15 @@ def update_profile(profile_id: str, payload: dict):
     if not record:
         raise HTTPException(404, "Business profile not found")
     return _one(record)
+
+
+@router.delete("/business-profiles/{profile_id}/")
+def delete_profile(profile_id: str):
+    record = db.get("business_profiles", profile_id)
+    if not record:
+        raise HTTPException(404, "Business profile not found")
+    db.delete("business_profiles", profile_id)
+    return {"data": {"status": "deleted", "id": profile_id}, "meta": {}}
 
 
 @router.post("/business-profiles/{profile_id}/certifications/")
@@ -1282,6 +1314,28 @@ def log_buyer_contact(buyer_id: str, payload: dict):
     record["lastContact"] = "now"
     record["updatedAt"] = "now"
     return _save_one(record)
+
+
+@router.patch("/buyers/{buyer_id}/")
+def update_buyer(buyer_id: str, payload: dict):
+    record = db.get("buyers", buyer_id)
+    if not record:
+        raise HTTPException(404, "Buyer not found")
+    for field in ("name", "country", "segment", "status", "fitScore", "contact",
+                  "estimatedAnnualValue", "paymentProfile", "nextStep", "signals", "notes"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/buyers/{buyer_id}/")
+def delete_buyer(buyer_id: str):
+    record = db.get("buyers", buyer_id)
+    if not record:
+        raise HTTPException(404, "Buyer not found")
+    db.delete("buyers", buyer_id)
+    return {"data": {"status": "deleted", "id": buyer_id}, "meta": {}}
 
 
 # ----------------------------------------------------------------------------
@@ -2368,6 +2422,28 @@ def refresh_market(market_id: str):
     return _save_one(record)
 
 
+@router.patch("/markets/{market_id}/")
+def update_market(market_id: str, payload: dict):
+    record = db.get("markets", market_id)
+    if not record:
+        raise HTTPException(404, "Market not found")
+    for field in ("destination", "products", "status", "marketScore", "insight",
+                  "strategy", "tariff", "requirements", "notes"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/markets/{market_id}/")
+def delete_market(market_id: str):
+    record = db.get("markets", market_id)
+    if not record:
+        raise HTTPException(404, "Market not found")
+    db.delete("markets", market_id)
+    return {"data": {"status": "deleted", "id": market_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # RFQ
 # ----------------------------------------------------------------------------
@@ -2409,6 +2485,28 @@ def shortlist_rfq(rfq_id: str, payload: dict):
     return _save_one(record)
 
 
+@router.patch("/rfqs/{rfq_id}/")
+def update_rfq(rfq_id: str, payload: dict):
+    record = db.get("rfqs", rfq_id)
+    if not record:
+        raise HTTPException(404, "RFQ not found")
+    for field in ("buyer", "product", "destination", "quantity", "incoterm",
+                  "deadline", "status", "matchScore", "requirements", "notes"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/rfqs/{rfq_id}/")
+def delete_rfq(rfq_id: str):
+    record = db.get("rfqs", rfq_id)
+    if not record:
+        raise HTTPException(404, "RFQ not found")
+    db.delete("rfqs", rfq_id)
+    return {"data": {"status": "deleted", "id": rfq_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # QUOTATIONS
 # ----------------------------------------------------------------------------
@@ -2447,6 +2545,28 @@ def accept_quotation(quotation_id: str):
     return _save_one(record)
 
 
+@router.patch("/quotations/{quotation_id}/")
+def update_quotation(quotation_id: str, payload: dict):
+    record = db.get("quotations", quotation_id)
+    if not record:
+        raise HTTPException(404, "Quotation not found")
+    for field in ("buyer", "product", "value", "currency", "incoterm", "status",
+                  "validUntil", "costLines", "notes", "destination", "quantity"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/quotations/{quotation_id}/")
+def delete_quotation(quotation_id: str):
+    record = db.get("quotations", quotation_id)
+    if not record:
+        raise HTTPException(404, "Quotation not found")
+    db.delete("quotations", quotation_id)
+    return {"data": {"status": "deleted", "id": quotation_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # ORDERS
 # ----------------------------------------------------------------------------
@@ -2480,6 +2600,28 @@ def confirm_order(order_id: str):
     return _save_one(record)
 
 
+@router.patch("/orders/{order_id}/")
+def update_order(order_id: str, payload: dict):
+    record = db.get("orders", order_id)
+    if not record:
+        raise HTTPException(404, "Order not found")
+    for field in ("buyer", "product", "quantity", "value", "currency", "incoterm",
+                  "destination", "status", "eta", "notes", "projectId"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/orders/{order_id}/")
+def delete_order(order_id: str):
+    record = db.get("orders", order_id)
+    if not record:
+        raise HTTPException(404, "Order not found")
+    db.delete("orders", order_id)
+    return {"data": {"status": "deleted", "id": order_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # COMPLIANCE
 # ----------------------------------------------------------------------------
@@ -2510,6 +2652,28 @@ def upload_compliance_evidence(req_id: str, payload: dict):
         "Compliance", "Info", f"/compliance/{req_id}",
     )
     return _save_one(record)
+
+
+@router.patch("/compliance/requirements/{req_id}/")
+def update_compliance(req_id: str, payload: dict):
+    record = db.get("compliance_requirements", req_id)
+    if not record:
+        raise HTTPException(404, "Compliance requirement not found")
+    for field in ("title", "source", "status", "severity", "owner", "dueDate",
+                  "projectId", "description", "currentEvidence", "requirement"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/compliance/requirements/{req_id}/")
+def delete_compliance(req_id: str):
+    record = db.get("compliance_requirements", req_id)
+    if not record:
+        raise HTTPException(404, "Compliance requirement not found")
+    db.delete("compliance_requirements", req_id)
+    return {"data": {"status": "deleted", "id": req_id}, "meta": {}}
 
 
 # ----------------------------------------------------------------------------
@@ -2584,6 +2748,27 @@ def approve_document(document_id: str):
     return _save_one(record)
 
 
+@router.patch("/documents/{document_id}/")
+def update_document(document_id: str, payload: dict):
+    record = db.get("documents", document_id)
+    if not record:
+        raise HTTPException(404, "Document not found")
+    for field in ("type", "status", "version", "owner", "projectId", "validationScore", "fields", "checks"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/documents/{document_id}/")
+def delete_document(document_id: str):
+    record = db.get("documents", document_id)
+    if not record:
+        raise HTTPException(404, "Document not found")
+    db.delete("documents", document_id)
+    return {"data": {"status": "deleted", "id": document_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # SHIPMENTS
 # ----------------------------------------------------------------------------
@@ -2627,6 +2812,28 @@ def resolve_shipment_exception(shipment_id: str):
     record["updatedAt"] = "now"
     _notify("Exception shipment diselesaikan", "Shipment kembali In Transit.", "Shipments", "Info", f"/shipments/{shipment_id}")
     return _save_one(record)
+
+
+@router.patch("/shipments/{shipment_id}/")
+def update_shipment(shipment_id: str, payload: dict):
+    record = db.get("shipments", shipment_id)
+    if not record:
+        raise HTTPException(404, "Shipment not found")
+    for field in ("status", "progress", "milestones", "forwarder", "route", "booking",
+                  "container", "eta", "etd", "trackingNo", "projectId", "exception"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/shipments/{shipment_id}/")
+def delete_shipment(shipment_id: str):
+    record = db.get("shipments", shipment_id)
+    if not record:
+        raise HTTPException(404, "Shipment not found")
+    db.delete("shipments", shipment_id)
+    return {"data": {"status": "deleted", "id": shipment_id}, "meta": {}}
 
 
 # ----------------------------------------------------------------------------
@@ -2682,6 +2889,28 @@ def send_payment_reminder(payment_id: str):
     return _save_one(record)
 
 
+@router.patch("/payments/{payment_id}/")
+def update_payment(payment_id: str, payload: dict):
+    record = db.get("payments", payment_id)
+    if not record:
+        raise HTTPException(404, "Payment not found")
+    for field in ("buyer", "amount", "paid", "currency", "status", "method",
+                  "dueDate", "orderId", "projectId", "notes", "milestone"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/payments/{payment_id}/")
+def delete_payment(payment_id: str):
+    record = db.get("payments", payment_id)
+    if not record:
+        raise HTTPException(404, "Payment not found")
+    db.delete("payments", payment_id)
+    return {"data": {"status": "deleted", "id": payment_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # TASKS
 # ----------------------------------------------------------------------------
@@ -2719,6 +2948,28 @@ def assign_task(task_id: str, payload: dict):
     return _save_one(record)
 
 
+@router.patch("/tasks/{task_id}/")
+def update_task(task_id: str, payload: dict):
+    record = db.get("tasks", task_id)
+    if not record:
+        raise HTTPException(404, "Task not found")
+    for field in ("title", "status", "owner", "priority", "dueDate", "module",
+                  "projectId", "description", "blockers"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/tasks/{task_id}/")
+def delete_task(task_id: str):
+    record = db.get("tasks", task_id)
+    if not record:
+        raise HTTPException(404, "Task not found")
+    db.delete("tasks", task_id)
+    return {"data": {"status": "deleted", "id": task_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # SUPPLIERS
 # ----------------------------------------------------------------------------
@@ -2753,6 +3004,28 @@ def request_supplier_evidence(supplier_id: str):
     record["evidenceRequested"] = record.get("evidenceRequested", 0) + 1
     record["status"] = "Needs Evidence"
     return _save_one(record)
+
+
+@router.patch("/suppliers/{supplier_id}/")
+def update_supplier(supplier_id: str, payload: dict):
+    record = db.get("suppliers", supplier_id)
+    if not record:
+        raise HTTPException(404, "Supplier not found")
+    for field in ("name", "product", "location", "status", "complianceScore",
+                  "category", "contact", "certifications", "notes"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/suppliers/{supplier_id}/")
+def delete_supplier(supplier_id: str):
+    record = db.get("suppliers", supplier_id)
+    if not record:
+        raise HTTPException(404, "Supplier not found")
+    db.delete("suppliers", supplier_id)
+    return {"data": {"status": "deleted", "id": supplier_id}, "meta": {}}
 
 
 # ----------------------------------------------------------------------------
@@ -2916,6 +3189,15 @@ def archive_notification(notification_id: str):
         raise HTTPException(404, "Notification not found")
     record["status"] = "Archived"
     return _save_one(record)
+
+
+@router.delete("/notifications/{notification_id}/")
+def delete_notification(notification_id: str):
+    record = db.get("notifications", notification_id)
+    if not record:
+        raise HTTPException(404, "Notification not found")
+    db.delete("notifications", notification_id)
+    return {"data": {"status": "deleted", "id": notification_id}, "meta": {}}
 
 
 @router.get("/audit/")
@@ -3652,9 +3934,51 @@ def resolve_message(message_id: str):
     return _save_one(record)
 
 
+@router.patch("/messages/{message_id}/")
+def update_message(message_id: str, payload: dict):
+    record = db.get("messages", message_id)
+    if not record:
+        raise HTTPException(404, "Message not found")
+    for field in ("subject", "lastMessage", "status", "participants", "party",
+                  "thread", "channel", "projectId"):
+        if field in payload:
+            record[field] = payload[field]
+    record["time"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/messages/{message_id}/")
+def delete_message(message_id: str):
+    record = db.get("messages", message_id)
+    if not record:
+        raise HTTPException(404, "Message not found")
+    db.delete("messages", message_id)
+    return {"data": {"status": "deleted", "id": message_id}, "meta": {}}
+
+
 @router.get("/reports/")
 def list_reports():
     return _list_query("reports")
+
+
+@router.post("/reports/")
+def create_report(payload: dict):
+    title = str(payload.get("title", "")).strip()
+    if not title:
+        raise HTTPException(422, "title is required")
+    record = db.insert("reports", {
+        "id": db.gen_id("reports", "RPT"),
+        "title": title,
+        "type": payload.get("type", "Summary"),
+        "owner": payload.get("owner", "System"),
+        "period": payload.get("period", ""),
+        "status": payload.get("status", "Draft"),
+        "schedule": payload.get("schedule", "Manual"),
+        "sections": [],
+        "insights": [],
+        "updatedAt": "now",
+    })
+    return _one(record)
 
 
 @router.get("/reports/{report_id}/")
@@ -3707,6 +4031,27 @@ def schedule_report(report_id: str):
         raise HTTPException(404, "Report not found")
     record["status"] = "Scheduled"
     return _save_one(record)
+
+
+@router.patch("/reports/{report_id}/")
+def update_report(report_id: str, payload: dict):
+    record = db.get("reports", report_id)
+    if not record:
+        raise HTTPException(404, "Report not found")
+    for field in ("title", "type", "owner", "period", "status", "schedule", "sections", "insights"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/reports/{report_id}/")
+def delete_report(report_id: str):
+    record = db.get("reports", report_id)
+    if not record:
+        raise HTTPException(404, "Report not found")
+    db.delete("reports", report_id)
+    return {"data": {"status": "deleted", "id": report_id}, "meta": {}}
 
 
 @router.get("/billing/")
