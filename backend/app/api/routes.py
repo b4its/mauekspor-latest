@@ -2976,6 +2976,27 @@ def update_team_member_role(member_id: str, payload: dict):
     return _save_one(record)
 
 
+@router.patch("/team/{member_id}/")
+def update_team_member(member_id: str, payload: dict):
+    record = db.get("team_members", member_id)
+    if not record:
+        raise HTTPException(404, "Team member not found")
+    for field in ("name", "email", "role", "status", "permissions", "workload"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/team/{member_id}/")
+def remove_team_member(member_id: str):
+    record = db.get("team_members", member_id)
+    if not record:
+        raise HTTPException(404, "Team member not found")
+    db.delete("team_members", member_id)
+    return {"data": {"status": "deleted", "id": member_id}, "meta": {}}
+
+
 @router.get("/templates/")
 def list_templates():
     return _list_query("templates")
@@ -2987,10 +3008,41 @@ def create_template(payload: dict):
         "id": db.gen_id("templates", "TPL"),
         "title": payload.get("title", "Template"),
         "category": payload.get("category", "Document"),
-        "status": "Draft",
+        "description": payload.get("description", ""),
+        "status": payload.get("status", "Draft"),
+        "usedCount": 0,
         "updatedAt": "now",
     })
     return _one(record)
+
+
+@router.get("/templates/{template_id}/")
+def get_template(template_id: str):
+    record = db.get("templates", template_id)
+    if not record:
+        raise HTTPException(404, "Template not found")
+    return _one(record)
+
+
+@router.patch("/templates/{template_id}/")
+def update_template(template_id: str, payload: dict):
+    record = db.get("templates", template_id)
+    if not record:
+        raise HTTPException(404, "Template not found")
+    for field in ("title", "category", "description", "status", "fields"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/templates/{template_id}/")
+def delete_template(template_id: str):
+    record = db.get("templates", template_id)
+    if not record:
+        raise HTTPException(404, "Template not found")
+    db.delete("templates", template_id)
+    return {"data": {"status": "deleted", "id": template_id}, "meta": {}}
 
 
 @router.post("/templates/{template_id}/use/")
@@ -2999,6 +3051,7 @@ def use_template(template_id: str):
     if not record:
         raise HTTPException(404, "Template not found")
     record["usedCount"] = record.get("usedCount", 0) + 1
+    record["lastUsedAt"] = "now"
     return _save_one(record)
 
 
@@ -3007,12 +3060,72 @@ def list_automations():
     return _list_query("automations")
 
 
+@router.post("/automations/")
+def create_automation(payload: dict):
+    name = str(payload.get("name", "")).strip()
+    if not name:
+        raise HTTPException(422, "name is required")
+    record = db.insert("automations", {
+        "id": db.gen_id("automations", "AUT"),
+        "name": name,
+        "trigger": payload.get("trigger", ""),
+        "action": payload.get("action", ""),
+        "module": payload.get("module", ""),
+        "description": payload.get("description", ""),
+        "status": payload.get("status", "Paused"),
+        "runs": 0,
+        "lastRun": None,
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.get("/automations/{automation_id}/")
+def get_automation(automation_id: str):
+    record = db.get("automations", automation_id)
+    if not record:
+        raise HTTPException(404, "Automation not found")
+    return _one(record)
+
+
+@router.patch("/automations/{automation_id}/")
+def update_automation(automation_id: str, payload: dict):
+    record = db.get("automations", automation_id)
+    if not record:
+        raise HTTPException(404, "Automation not found")
+    for field in ("name", "trigger", "action", "module", "description", "status"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/automations/{automation_id}/")
+def delete_automation(automation_id: str):
+    record = db.get("automations", automation_id)
+    if not record:
+        raise HTTPException(404, "Automation not found")
+    db.delete("automations", automation_id)
+    return {"data": {"status": "deleted", "id": automation_id}, "meta": {}}
+
+
 @router.post("/automations/{automation_id}/activate/")
 def activate_automation(automation_id: str):
     record = db.get("automations", automation_id)
     if not record:
         raise HTTPException(404, "Automation not found")
     record["status"] = "Active"
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.post("/automations/{automation_id}/pause/")
+def pause_automation(automation_id: str):
+    record = db.get("automations", automation_id)
+    if not record:
+        raise HTTPException(404, "Automation not found")
+    record["status"] = "Paused"
+    record["updatedAt"] = "now"
     return _save_one(record)
 
 
@@ -3044,12 +3157,66 @@ def list_integrations():
     return _list_query("integrations")
 
 
+@router.post("/integrations/")
+def create_integration(payload: dict):
+    name = str(payload.get("name", "")).strip()
+    if not name:
+        raise HTTPException(422, "name is required")
+    record = db.insert("integrations", {
+        "id": db.gen_id("integrations", "INT"),
+        "name": name,
+        "category": payload.get("category", "Custom"),
+        "description": payload.get("description", ""),
+        "status": payload.get("status", "Disconnected"),
+        "scopes": payload.get("scopes", []),
+        "lastSync": None,
+    })
+    return _one(record)
+
+
+@router.get("/integrations/{integration_id}/")
+def get_integration(integration_id: str):
+    record = db.get("integrations", integration_id)
+    if not record:
+        raise HTTPException(404, "Integration not found")
+    return _one(record)
+
+
+@router.patch("/integrations/{integration_id}/")
+def update_integration(integration_id: str, payload: dict):
+    record = db.get("integrations", integration_id)
+    if not record:
+        raise HTTPException(404, "Integration not found")
+    for field in ("name", "category", "description", "status", "scopes"):
+        if field in payload:
+            record[field] = payload[field]
+    return _save_one(record)
+
+
+@router.delete("/integrations/{integration_id}/")
+def delete_integration(integration_id: str):
+    record = db.get("integrations", integration_id)
+    if not record:
+        raise HTTPException(404, "Integration not found")
+    db.delete("integrations", integration_id)
+    return {"data": {"status": "deleted", "id": integration_id}, "meta": {}}
+
+
 @router.post("/integrations/{integration_id}/connect/")
 def connect_integration(integration_id: str):
     record = db.get("integrations", integration_id)
     if not record:
         raise HTTPException(404, "Integration not found")
     record["status"] = "Connected"
+    return _save_one(record)
+
+
+@router.post("/integrations/{integration_id}/disconnect/")
+def disconnect_integration(integration_id: str):
+    record = db.get("integrations", integration_id)
+    if not record:
+        raise HTTPException(404, "Integration not found")
+    record["status"] = "Disconnected"
     return _save_one(record)
 
 
@@ -3070,12 +3237,60 @@ def list_knowledge():
     return _list_query("knowledge_articles")
 
 
+@router.post("/knowledge/")
+def create_knowledge(payload: dict):
+    title = str(payload.get("title", "")).strip()
+    if not title:
+        raise HTTPException(422, "title is required")
+    record = db.insert("knowledge_articles", {
+        "id": db.gen_id("knowledge_articles", "KB"),
+        "title": title,
+        "category": payload.get("category", "Guide"),
+        "summary": payload.get("summary", ""),
+        "steps": payload.get("steps", []),
+        "readTime": payload.get("readTime", "5 min"),
+        "status": payload.get("status", "Draft"),
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.get("/knowledge/{article_id}/")
+def get_knowledge(article_id: str):
+    record = db.get("knowledge_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    return _one(record)
+
+
+@router.patch("/knowledge/{article_id}/")
+def update_knowledge(article_id: str, payload: dict):
+    record = db.get("knowledge_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    for field in ("title", "category", "summary", "steps", "readTime", "status"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/knowledge/{article_id}/")
+def delete_knowledge(article_id: str):
+    record = db.get("knowledge_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    db.delete("knowledge_articles", article_id)
+    return {"data": {"status": "deleted", "id": article_id}, "meta": {}}
+
+
 @router.post("/knowledge/{article_id}/publish/")
 def publish_knowledge(article_id: str):
     record = db.get("knowledge_articles", article_id)
     if not record:
         raise HTTPException(404, "Article not found")
     record["status"] = "Published"
+    record["updatedAt"] = "now"
     return _save_one(record)
 
 
@@ -3269,7 +3484,29 @@ def mark_calendar_done(event_id: str):
     if not record:
         raise HTTPException(404, "Calendar event not found")
     record["status"] = "Done"
+    record["updatedAt"] = "now"
     return _save_one(record)
+
+
+@router.patch("/calendar/{event_id}/")
+def update_calendar_event(event_id: str, payload: dict):
+    record = db.get("calendar_events", event_id)
+    if not record:
+        raise HTTPException(404, "Calendar event not found")
+    for field in ("title", "date", "time", "type", "module", "notes", "status"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/calendar/{event_id}/")
+def delete_calendar_event(event_id: str):
+    record = db.get("calendar_events", event_id)
+    if not record:
+        raise HTTPException(404, "Calendar event not found")
+    db.delete("calendar_events", event_id)
+    return {"data": {"status": "deleted", "id": event_id}, "meta": {}}
 
 
 @router.get("/files/")
@@ -3355,7 +3592,39 @@ def verify_file(file_id: str):
     if not record:
         raise HTTPException(404, "File not found")
     record["status"] = "Verified"
+    record["updatedAt"] = "now"
     return _save_one(record)
+
+
+@router.patch("/files/{file_id}/")
+def update_file(file_id: str, payload: dict):
+    record = db.get("files", file_id)
+    if not record:
+        raise HTTPException(404, "File not found")
+    for field in ("name", "type", "projectId", "status", "tags"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/files/{file_id}/")
+def delete_file(file_id: str):
+    record = db.get("files", file_id)
+    if not record:
+        raise HTTPException(404, "File not found")
+    db.delete("files", file_id)
+    # Bersihkan berkas fisik bila tersimpan di disk (best-effort).
+    stored = record.get("storageName")
+    if stored:
+        storage_path = os.path.join(UPLOAD_DIR, stored)
+        try:
+            # Cegah path traversal: hanya hapus bila benar-benar di dalam UPLOAD_DIR.
+            if os.path.commonpath([os.path.abspath(storage_path), os.path.abspath(UPLOAD_DIR)]) == os.path.abspath(UPLOAD_DIR):
+                os.remove(storage_path)
+        except (OSError, ValueError):
+            logger.warning("Gagal menghapus berkas fisik untuk %s", file_id)
+    return {"data": {"status": "deleted", "id": file_id}, "meta": {}}
 
 
 @router.get("/messages/")
@@ -3492,7 +3761,29 @@ def resolve_support(ticket_id: str):
     if not record:
         raise HTTPException(404, "Ticket not found")
     record["status"] = "Resolved"
+    record["updatedAt"] = "now"
     return _save_one(record)
+
+
+@router.patch("/support/{ticket_id}/")
+def update_support(ticket_id: str, payload: dict):
+    record = db.get("support_tickets", ticket_id)
+    if not record:
+        raise HTTPException(404, "Ticket not found")
+    for field in ("subject", "category", "description", "status", "priority", "owner"):
+        if field in payload:
+            record[field] = payload[field]
+    record["updatedAt"] = "now"
+    return _save_one(record)
+
+
+@router.delete("/support/{ticket_id}/")
+def delete_support(ticket_id: str):
+    record = db.get("support_tickets", ticket_id)
+    if not record:
+        raise HTTPException(404, "Ticket not found")
+    db.delete("support_tickets", ticket_id)
+    return {"data": {"status": "deleted", "id": ticket_id}, "meta": {}}
 
 
 @router.get("/api-keys/")
