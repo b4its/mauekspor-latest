@@ -6,7 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { fileAssets, projects as seedProjects } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
-	import { uploadFileAsset, uploadFileBinary, verifyFileAsset, listFiles, fileDownloadUrl } from '$lib/api/files';
+	import { uploadFileAsset, uploadFileBinary, verifyFileAsset, listFiles, fileDownloadUrl, updateFileAsset, deleteFileAsset } from '$lib/api/files';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -80,8 +80,56 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		try {
 			await verifyFileAsset(fileId);
 			verifiedId = fileId;
+			const idx = files.items.findIndex((f) => f.id === fileId);
+			if (idx >= 0) files.items[idx] = { ...files.items[idx], status: 'Verified' };
 		} catch {
 			error = t('Gagal memverifikasi file.');
+		}
+	}
+
+	let message = $state('');
+	let busyId = $state('');
+	let showRename = $state('');
+	let renameValue = $state('');
+
+	function openRename(file: { id: string; name: string }) {
+		showRename = file.id;
+		renameValue = file.name;
+		error = '';
+	}
+
+	async function handleRename(fileId: string) {
+		error = '';
+		if (!renameValue.trim()) {
+			error = t('Nama file wajib diisi.');
+			return;
+		}
+		busyId = fileId;
+		try {
+			const res = await updateFileAsset(fileId, { name: renameValue.trim() });
+			const idx = files.items.findIndex((f) => f.id === fileId);
+			if (idx >= 0) files.items[idx] = { ...files.items[idx], ...res.data };
+			message = t('Nama file diperbarui.');
+			showRename = '';
+		} catch {
+			error = t('Gagal mengganti nama file.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleDelete(file: { id: string; name: string }) {
+		error = '';
+		busyId = file.id;
+		try {
+			await deleteFileAsset(file.id);
+			const idx = files.items.findIndex((f) => f.id === file.id);
+			if (idx >= 0) files.items.splice(idx, 1);
+			message = `File "${file.name}" dihapus.`;
+		} catch {
+			error = t('Gagal menghapus file.');
+		} finally {
+			busyId = '';
 		}
 	}
 	let paginationPage = $state(1);
@@ -123,6 +171,9 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if files.error}
@@ -206,6 +257,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					{/if}
 					<Button variant="outline" onclick={() => handleVerify(file.id)}>{verifiedId === file.id ? t('Terverifikasi') : t('Verifikasi file')}</Button>
 				</div>
+				{#if showRename === file.id}
+					<div class="flex flex-wrap items-center gap-2">
+						<Input bind:value={renameValue} class="w-[min(240px,100%)]" placeholder={t('Nama file baru...')} />
+						<Button variant="outline" disabled={busyId === file.id} onclick={() => handleRename(file.id)}>{t('Simpan')}</Button>
+						<Button variant="outline" onclick={() => (showRename = '')}>{t('Batal')}</Button>
+					</div>
+				{:else}
+					<div class="grid grid-cols-2 gap-2">
+						<Button variant="outline" disabled={busyId === file.id} onclick={() => openRename(file)}>{t('Ganti nama')}</Button>
+						<Button variant="outline" class="text-destructive" disabled={busyId === file.id} onclick={() => handleDelete(file)}>{t('Hapus')}</Button>
+					</div>
+				{/if}
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada file yang cocok dengan pencarian.')}</div>
