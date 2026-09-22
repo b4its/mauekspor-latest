@@ -73,14 +73,28 @@ function ratio(fg, bg) {
 
         // Extract computed colors of key text elements for contrast analysis
         const samples = await page.evaluate(() => {
+          // Composite rgba bg over ancestor opaque bg (alpha-aware)
           function bgOf(el) {
             let n = el;
+            let r = 255, g = 255, b = 255; // fallback white
+            const stack = [];
             while (n && n !== document.documentElement) {
               const bg = getComputedStyle(n).backgroundColor;
-              if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+              const m = bg && bg.match(/rgba?\(([\d.]+), ([\d.]+), ([\d.]+)(?:, ([\d.]+))?\)/);
+              if (m && parseFloat(m[4] ?? '1') > 0) {
+                stack.push({ r: +m[1], g: +m[2], b: +m[3], a: parseFloat(m[4] ?? '1') });
+                if ((m[4] ?? '1') === '1') break; // opaque — stop
+              }
               n = n.parentElement;
             }
-            return 'rgb(255,255,255)';
+            // composite from outermost inward
+            for (let i = stack.length - 1; i >= 0; i--) {
+              const { r: cr, g: cg, b: cb, a } = stack[i];
+              r = cr * a + r * (1 - a);
+              g = cg * a + g * (1 - a);
+              b = cb * a + b * (1 - a);
+            }
+            return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
           }
           const pick = (sel, label) => {
             const el = document.querySelector(sel);
