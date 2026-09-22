@@ -59,6 +59,13 @@
 
 	const sidebar = useSidebar();
 	const currentUser = $derived(getUser() ?? userAccounts[0]);
+	// SessionUser memakai `name`, seed userAccounts memakai `fullName`.
+	const displayName = $derived(
+		(currentUser as { name?: string; fullName?: string }).name ??
+			(currentUser as { fullName?: string }).fullName ??
+			currentUser.email ??
+			'User'
+	);
 	let openRiskCount = $derived(projects.filter((project) => project.risk !== 'Low').length);
 
 	const groupIconFor: Record<string, typeof RouteIcon> = {
@@ -124,8 +131,9 @@
 		return items.some((item) => isActive(item.href));
 	}
 
-	function initials(name: string) {
-		return name
+	function initials(name?: string) {
+		return (name ?? '')
+			.trim()
 			.split(' ')
 			.map((part) => part[0])
 			.slice(0, 2)
@@ -247,11 +255,11 @@
 							>
 								<Avatar.Root class="size-8 rounded-lg">
 									<Avatar.Fallback class="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-										{initials(currentUser.fullName)}
+										{initials(displayName)}
 									</Avatar.Fallback>
 								</Avatar.Root>
 								<div class="grid flex-1 text-left text-sm leading-tight">
-									<span class="truncate font-medium">{currentUser.fullName}</span>
+									<span class="truncate font-medium">{displayName}</span>
 									<span class="truncate text-xs text-sidebar-foreground/60">{currentUser.email}</span>
 								</div>
 								<ChevronsUpDownIcon class="ms-auto size-4" />
@@ -268,11 +276,11 @@
 							<div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 								<Avatar.Root class="size-8 rounded-lg">
 									<Avatar.Fallback class="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-										{initials(currentUser.fullName)}
+										{initials(displayName)}
 									</Avatar.Fallback>
 								</Avatar.Root>
 								<div class="grid flex-1 text-left text-sm leading-tight">
-									<span class="truncate font-medium">{currentUser.fullName}</span>
+									<span class="truncate font-medium">{displayName}</span>
 									<span class="truncate text-xs text-muted-foreground">{currentUser.email}</span>
 								</div>
 							</div>
