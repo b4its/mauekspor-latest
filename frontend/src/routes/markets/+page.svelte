@@ -17,8 +17,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Recommended', 'Watchlist', 'Needs Research'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let generated = $state(false);
-	let generating = $state(false);
+	let message = $state('');
+	let showForm = $state(false);
+	let saving = $state(false);
+	let formError = $state('');
+	let fCountry = $state('');
+	let fProductId = $state('');
+	let fEntryStrategy = $state('');
 	let error = $state('');
 
 	let marketInsights = createRemoteList(listMarketInsights, seedMarkets);
@@ -54,21 +59,34 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
-	async function handleGenerate() {
-		error = '';
-		generating = true;
+	function openCreate() {
+		fCountry = '';
+		fProductId = '';
+		fEntryStrategy = '';
+		formError = '';
+		showForm = true;
+	}
+
+	async function handleCreate() {
+		formError = '';
+		if (!fCountry.trim()) {
+			formError = t('Negara wajib diisi.');
+			return;
+		}
+		saving = true;
 		try {
-			const seed = seedMarkets[0];
 			await createMarketInsight({
-				productId: seed?.productId ?? 'prd-001',
-				country: seed?.country ?? 'Japan',
-				projectId: seed?.projectId
+				country: fCountry.trim(),
+				productId: fProductId,
+				entryStrategy: fEntryStrategy.trim()
 			});
-			generated = true;
+			await marketInsights.load();
+			message = `Insight pasar untuk "${fCountry.trim()}" dibuat.`;
+			showForm = false;
 		} catch {
-			error = t('Gagal generate insight pasar.');
+			formError = t('Gagal generate insight pasar.');
 		} finally {
-			generating = false;
+			saving = false;
 		}
 	}
 	let paginationPage = $state(1);
@@ -94,9 +112,36 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleGenerate} disabled={generating}>{generated ? t('Insight generated') : generating ? t('Generating...') : t('Generate insight')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Generate insight')}</Button>
 			<Badge variant="secondary">{t('Avg score')} {averageScore}%</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Negara')}
+						<Input bind:value={fCountry} placeholder="Japan" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Produk')}
+						<select bind:value={fProductId} class="h-10 rounded-md border bg-background px-3 text-sm">
+							<option value="">{t('Pilih produk')}</option>
+							{#each products.items as product}
+								<option value={product.id}>{product.name}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Strategi masuk')}
+						<Input bind:value={fEntryStrategy} placeholder="Distributor partnership" />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={saving} onclick={handleCreate}>{saving ? t('Menyimpan...') : t('Simpan insight')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -107,12 +152,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{marketInsights.error}</p>
 	{/if}
 
-	{#if generated}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Market insight draft ready.')}</strong>
-			<span class="mt-1 block text-sm text-muted-foreground">
-				{t('Insight dibuat di backend.')}</span>
-		</div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">

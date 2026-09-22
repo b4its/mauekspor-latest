@@ -5,6 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, tradeDocuments as seedDocuments } from '$lib/data/trade';
+	import type { TradeDocument } from '$lib/data/trade';
 	import { listTradeDocuments, generateTradeDocument } from '$lib/api/documents';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -18,7 +19,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let activeFilter = $state('All');
 	let query = $state('');
 	let generating = $state(false);
-	let generated = $state(false);
+	let message = $state('');
+	let showForm = $state(false);
+	let formError = $state('');
+	let fProjectId = $state('');
+	let fType = $state('Commercial Invoice');
 	let error = $state('');
 
 	let tradeDocuments = createRemoteList(listTradeDocuments, seedDocuments);
@@ -48,17 +53,30 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return projects.items.find((project) => project.id === projectId)?.name ?? projectId;
 	}
 
+	function openCreate() {
+		fProjectId = '';
+		fType = 'Commercial Invoice';
+		formError = '';
+		showForm = true;
+	}
+
 	async function generateDocument() {
-		error = '';
+		formError = '';
+		if (!fProjectId) {
+			formError = t('Project wajib dipilih.');
+			return;
+		}
 		generating = true;
 		try {
 			await generateTradeDocument({
-				projectId: projects.items[0]?.id ?? seedProjects[0]?.id ?? '',
-				type: 'Commercial Invoice'
+				projectId: fProjectId,
+				type: fType as TradeDocument['type']
 			});
-			generated = true;
+			await tradeDocuments.load();
+			message = `Dokumen ${fType} dibuat.`;
+			showForm = false;
 		} catch {
-			error = 'Gagal generate dokumen.';
+			formError = t('Gagal generate dokumen.');
 		} finally {
 			generating = false;
 		}
@@ -100,11 +118,36 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button disabled={generating} onclick={generateDocument}>
-				{generating ? 'Generating...' : generated ? 'Document generated' : 'Generate document'}
-			</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Generate document')}</Button>
 			<Badge variant="secondary">Avg validation {averageScore}%</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Project')}
+						<select bind:value={fProjectId} class="h-10 rounded-md border bg-background px-3 text-sm">
+							<option value="">{t('Pilih project')}</option>
+							{#each projects.items as project}
+								<option value={project.id}>{project.name}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Tipe dokumen')}
+						<select bind:value={fType} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['Commercial Invoice', 'Packing List', 'COO', 'Proforma'] as type}
+								<option value={type}>{type}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={generating} onclick={generateDocument}>{generating ? t('Generating...') : t('Generate document')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -115,13 +158,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{tradeDocuments.error}</p>
 	{/if}
 
-	{#if generated}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Draf siap dibuat.')}</strong>
-			<span class="mt-1 block text-sm text-muted-foreground">
-				Dokumen berhasil dibuat di backend.
-			</span>
-		</div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
