@@ -5,15 +5,17 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { calendarEvents as seedCalendarEvents, projects as seedProjects } from '$lib/data/trade';
+	import type { CalendarEvent } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { listCalendarEvents } from '$lib/api/calendar';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
-	import { createCalendarEvent, markCalendarEventDone } from '$lib/api/calendar';
+	import { createCalendarEvent, markCalendarEventDone, updateCalendarEvent, deleteCalendarEvent } from '$lib/api/calendar';
 
 	const filters = ['All', 'Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
+	const types = ['Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
 	let activeFilter = $state('All');
 	let query = $state('');
 	let events = createRemoteList(listCalendarEvents, seedCalendarEvents);
@@ -22,7 +24,16 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	let creating = $state(false);
 	let done = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let busyId = $state('');
 	let doneEventId = $state('');
+	let showForm = $state(false);
+	let editingId = $state('');
+	let fTitle = $state('');
+	let fDate = $state('');
+	let fTime = $state('09:00');
+	let fType = $state<CalendarEvent['type']>('Buyer');
+	let fProjectId = $state('');
 	let filteredEvents = $derived(
 		events.items.filter(
 			(event) =>
@@ -49,19 +60,72 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 
 	async function handleCreate() {
 		error = '';
+		if (!fTitle.trim() || !fDate) {
+			error = t('Judul dan tanggal wajib diisi.');
+			return;
+		}
 		creating = true;
 		try {
-			await createCalendarEvent({
-				title: 'Follow-up: buyer meeting',
-				date: new Date().toISOString().slice(0, 10),
-				type: 'Buyer',
-				projectId: projects.items[0]?.id ?? 'p-001'
-			});
-			created = true;
+			const payload = {
+				title: fTitle.trim(),
+				date: fDate,
+				time: fTime,
+				type: fType,
+				projectId: fProjectId || (projects.items[0]?.id ?? '')
+			};
+			if (editingId) {
+				await updateCalendarEvent(editingId, payload);
+				message = `Event "${payload.title}" diperbarui.`;
+			} else {
+				await createCalendarEvent(payload as Parameters<typeof createCalendarEvent>[0]);
+				created = true;
+				message = `Event "${payload.title}" dibuat.`;
+			}
+			await events.load();
+			showForm = false;
+			editingId = '';
+			fTitle = '';
 		} catch {
 			error = t('Gagal membuat event kalender.');
 		} finally {
 			creating = false;
+		}
+	}
+
+	function openCreate() {
+		editingId = '';
+		fTitle = '';
+		fDate = new Date().toISOString().slice(0, 10);
+		fTime = '09:00';
+		fType = 'Buyer';
+		fProjectId = projects.items[0]?.id ?? '';
+		error = '';
+		showForm = true;
+	}
+
+	function openEdit(event: { id: string; title: string; date: string; time?: string; type: string; projectId: string }) {
+		editingId = event.id;
+		fTitle = event.title;
+		fDate = event.date;
+		fTime = event.time ?? '09:00';
+		fType = event.type as CalendarEvent['type'];
+		fProjectId = event.projectId;
+		error = '';
+		showForm = true;
+	}
+
+	async function handleDelete(event: { id: string; title: string }) {
+		error = '';
+		busyId = event.id;
+		try {
+			await deleteCalendarEvent(event.id);
+			const idx = events.items.findIndex((e) => e.id === event.id);
+			if (idx >= 0) events.items.splice(idx, 1);
+			message = `Event "${event.title}" dihapus.`;
+		} catch {
+			error = t('Gagal menghapus event.');
+		} finally {
+			busyId = '';
 		}
 	}
 
@@ -70,6 +134,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		try {
 			await markCalendarEventDone(eventId);
 			doneEventId = eventId;
+			const idx = events.items.findIndex((e) => e.id === eventId);
+			if (idx >= 0) events.items[idx] = { ...events.items[idx], status: 'Done' };
 		} catch {
 			error = t('Gagal menandai event selesai.');
 		}
@@ -92,13 +158,51 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? t('Event created') : creating ? t('Creating...') : t('Create event')}</Button>
+			<Button onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create event')}</Button>
 			<Badge variant="destructive">{t('Needs action')} {dueSoon}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Judul')}
+					<Input bind:value={fTitle} placeholder={t('Contoh: Follow-up buyer meeting')} />
+				</label>
+				<div class="grid gap-2 sm:grid-cols-3">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Tanggal')}
+						<Input type="date" bind:value={fDate} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Waktu')}
+						<Input type="time" bind:value={fTime} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Tipe')}
+						<select bind:value={fType} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each types as type}
+								<option value={type}>{type}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Proyek')}
+					<select bind:value={fProjectId} class="h-10 rounded-md border bg-background px-3 text-sm">
+						{#each projects.items as project}
+							<option value={project.id}>{project.name}</option>
+						{/each}
+					</select>
+				</label>
+				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Creating...') : editingId ? t('Simpan perubahan') : t('Simpan event')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if events.error}
@@ -157,7 +261,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
 							<small class="block text-xs text-muted-foreground">{event.type} · {projectName(event.projectId)} · {event.owner}</small>
 						</div>
-						<Button variant="outline" onclick={() => handleDone(event.id)}>{t('Mark done')}</Button>
+						<div class="flex flex-col gap-2">
+							<Button variant="outline" disabled={busyId === event.id} onclick={() => handleDone(event.id)}>{t('Mark done')}</Button>
+							<Button variant="outline" disabled={busyId === event.id} onclick={() => openEdit(event)}>{t('Edit')}</Button>
+							<Button variant="outline" class="text-destructive" disabled={busyId === event.id} onclick={() => handleDelete(event)}>{t('Hapus')}</Button>
+						</div>
 					</CardContent>
 				</Card>
 			{:else}
