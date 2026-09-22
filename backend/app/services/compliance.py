@@ -401,15 +401,46 @@ def village_regulatory_issues(product: dict, country_code: str, group: str) -> l
     return issues
 
 
+def product_regulation_issues(product: dict, country_code: str) -> list[dict]:
+    """Cek regulasi berbasis produk (EUDR, EU Plant Health, PPWR) dari regulatory_intel.
+
+    Sumber: lampiran 7.1 dokumen proposal — EUDR (EU 2023/1115) wajib bagi
+    kopi/kakao/karet/kayu ke EU mulai 30 Des 2026, dengan traceability geolokasi.
+    """
+    hs = str(product.get("hs") or product.get("hsCode") or product.get("hs_code") or "")
+    if not hs:
+        return []
+    from app.data.regulatory_intel import product_regulations_for
+
+    issues: list[dict] = []
+    for reg in product_regulations_for(hs, country_code):
+        issues.append({
+            "rule_key": reg.get("id", "PRODUCT-REG"),
+            "type": "product_regulation",
+            "severity": "critical" if reg.get("id") == "EUDR" else "major",
+            "title": reg.get("name", "Product regulation"),
+            "detail": f"{reg.get('requirement', '')} ({reg.get('ref', '')}). "
+                      f"Deadline: {reg.get('deadline', '-')} {reg.get('risk_note', '')}".strip(),
+            "source": (reg.get("sources") or [{}])[0].get("url", ""),
+            "evidence_fields": ["due_diligence", "geolocation", "traceability"]
+            if reg.get("id") == "EUDR"
+            else ["certificate", "compliance_doc"],
+        })
+    return issues
+
+
 def analyze_product_compliance(product: dict, country_code: str, jenis_komoditas: str | None = None) -> dict[str, Any]:
     """Jalankan semua checker pada data produk dengan prioritas desa.
 
     pertanian → PP 28/2024+Phyto, kerajinan → CITES+SVLK.
+    Ditambah regulasi produk global: EUDR (kopi/kakao/karet/kayu → EU),
+    EU Plant Health (buah segar), EU PPWR (kemasan).
     Return menyimpan `commodityGroup`.
     """
     group = normalize_jenis_komoditas(jenis_komoditas) or infer_commodity_group(product)
     issues = []
     issues += village_regulatory_issues(product, country_code, group)
+    issues += product_regulation_issues(product, country_code)
     issues += check_ingredient_compliance(product, country_code)
     issues += check_specification_compliance(product, country_code)
     issues += check_packaging_compliance(product, country_code)

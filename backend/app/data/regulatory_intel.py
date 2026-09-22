@@ -588,3 +588,113 @@ def risk_level_for(country_code: str) -> str:
     if code in {"BR", "IN", "US", "CN", "TR", "EG", "NG", "AR"}:
         return "Elevated"
     return "Moderate" if has_profile(code) else "Low"
+
+
+# ----------------------------------------------------------------------------
+# REGULASI BERBASIS PRODUK (lampiran 7.1 dokumen proposal MauEkspor)
+# Regulatory Key: Origin + Destination + HS + Product Attributes + End User
+#                 + Incoterm + Value + FTA + Date
+# ----------------------------------------------------------------------------
+# HS chapter (2 digit pertama) -> daftar regulasi produk yang berlaku global.
+PRODUCT_REGULATIONS: dict[str, list[dict[str, Any]]] = {
+    # 09: Kopi | 18: Kakao | 40: Karet — EUDR (EU 2023/1115)
+    "09": [{
+        "id": "EUDR",
+        "name": "EUDR — EU Deforestation Regulation",
+        "ref": "Regulation (EU) 2023/1115",
+        "scope": "Kopi, kakao, karet, kelapa sawit, kayu, soya, sapi (dan produk turunannya)",
+        "requirement": "Produk wajib bebas deforestasi & degradasi hutan, dengan due diligence "
+                       "statement + traceability geolokasi lahan produksi (plot-level coordinates).",
+        "deadline": "Berlaku penuh 30 Desember 2026 (perusahaan besar); mikro/usaha kecil 30 Juni 2027.",
+        "destinations": ["EU"],
+        "risk_note": "±90% kakao global berasal dari petani kecil yang rentan kepatuhan (Springer, 2026). "
+                     "Petani desa perlu pemetaan lahan & bukti asal sejak dini.",
+        "sources": [{"name": "EU EUDR", "url": "https://environment.ec.europa.eu/topics/forests/deforestation-regulation_en"}],
+    }],
+    "18": [{
+        "id": "EUDR",
+        "name": "EUDR — EU Deforestation Regulation",
+        "ref": "Regulation (EU) 2023/1115",
+        "scope": "Kakao & produk turunan (butter, powder, paste)",
+        "requirement": "Bebas deforestasi + due diligence + geolokasi lahan petani.",
+        "deadline": "30 Desember 2026.",
+        "destinations": ["EU"],
+        "risk_note": "Kakao smallholder paling terdampak — siapkan pemetaan lahan petani.",
+        "sources": [{"name": "EU EUDR", "url": "https://environment.ec.europa.eu/topics/forests/deforestation-regulation_en"}],
+    }],
+    "40": [{
+        "id": "EUDR",
+        "name": "EUDR — EU Deforestation Regulation",
+        "ref": "Regulation (EU) 2023/1115",
+        "scope": "Karet alam & produk turunan",
+        "requirement": "Bebas deforestasi + due diligence + geolokasi lahan.",
+        "deadline": "30 Desember 2026.",
+        "destinations": ["EU"],
+        "risk_note": "Traceability petani karet desa wajib disiapkan.",
+        "sources": [{"name": "EU EUDR", "url": "https://environment.ec.europa.eu/topics/forests/deforestation-regulation_en"}],
+    }],
+    # 44: Kayu — EUDR + ISPM-15 relevan
+    "44": [{
+        "id": "EUDR",
+        "name": "EUDR — EU Deforestation Regulation",
+        "ref": "Regulation (EU) 2023/1115",
+        "scope": "Kayu & produk kayu (termasuk furnitur, kerajinan kayu)",
+        "requirement": "Legalitas kayu + bebas deforestasi + due diligence (timpa SVLK/EUTR).",
+        "deadline": "30 Desember 2026.",
+        "destinations": ["EU"],
+        "risk_note": "Dokumen legalitas kayu (SVLK) + geolokasi hutan sumber.",
+        "sources": [{"name": "EU EUDR", "url": "https://environment.ec.europa.eu/topics/forests/deforestation-regulation_en"}],
+    }],
+    # 08: Buah-buahan (manggis dll) — karantina EU
+    "08": [{
+        "id": "EU-PLANT-HEALTH",
+        "name": "EU Plant Health Rules",
+        "ref": "Regulation (EU) 2016/2031",
+        "scope": "Buah & sayuran segar",
+        "requirement": "Phytosanitary certificate (PC) untuk buah berisiko; cek daftar pestisida MRL EU.",
+        "deadline": "Berlaku (berjalan).",
+        "destinations": ["EU"],
+        "risk_note": "Manggis & produk tropis: pastikan cold treatment & MRL compliance.",
+        "sources": [{"name": "EU Plant Health", "url": "https://food.ec.europa.eu/plants/plant-health_en"}],
+    }],
+}
+
+# Regulasi lintas-produk (berlaku untuk semua ekspor ke EU)
+CROSS_PRODUCT_REGULATIONS: list[dict[str, Any]] = [
+    {
+        "id": "EU-PPWR",
+        "name": "EU Packaging & Packaging Waste Regulation",
+        "ref": "Regulation (EU) 2025/40",
+        "scope": "Semua kemasan produk",
+        "requirement": "Kemasan harus recyclable; larangan PFAS pada food-contact packaging; "
+                       "label keterbukaan informasi daur ulang.",
+        "deadline": "Berlaku 12 Agustus 2026 (penerapan bertahap).",
+        "destinations": ["EU"],
+        "risk_note": "Kemasan plastik/kertas bergrafik PFAS tinggi berisiko ditolak.",
+        "sources": [{"name": "EU PPWR", "url": "https://environment.ec.europa.eu/topics/waste-and-recycling/packaging-waste_en"}],
+    },
+]
+
+
+def product_regulations_for(hs_code: str, destination: str = "") -> list[dict[str, Any]]:
+    """Kembalikan regulasi produk yang relevan untuk HS code (+destination opsional).
+
+    Args:
+        hs_code: Kode HS (minimal 2 digit chapter dipakai).
+        destination: Kode negara tujuan (opsional — filter bila diisi;
+                     negara di-resolve ke blok kepabeanan, mis. NL → EU).
+
+    Returns:
+        List regulasi (EUDR, plant health, dll) yang berlaku.
+    """
+    chapter = str(hs_code or "").replace(".", "").strip()[:2]
+    regs: list[dict[str, Any]] = list(PRODUCT_REGULATIONS.get(chapter, []))
+    regs.extend(CROSS_PRODUCT_REGULATIONS)
+    if destination:
+        dest = destination.upper()
+        bloc = COUNTRY_CUSTOMS.get(dest, "")
+        def _applies(r: dict[str, Any]) -> bool:
+            targets = r.get("destinations") or []
+            return not targets or dest in targets or bloc in targets
+        regs = [r for r in regs if _applies(r)]
+    return regs
