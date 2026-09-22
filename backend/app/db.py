@@ -268,6 +268,15 @@ def insert(table: str, record: dict[str, Any]) -> dict[str, Any]:
     if "id" not in record:
         record["id"] = gen_id(table)
     _attach(table, record)
+    # Idempotent insert: if a record with this id already exists in memory,
+    # update it in place instead of appending a duplicate. (The DB primary key
+    # would reject the duplicate on persist, but the in-memory copy would keep
+    # serving duplicates until restart — e.g. seed re-run on a loaded store.)
+    existing = get(table, str(record["id"]))
+    if existing is not None:
+        existing.update(record)
+        _persist_record(table, existing)
+        return existing
     all(table).append(record)
     _persist_record(table, record)
     return record
