@@ -2,9 +2,11 @@
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
-	import { qualifyBuyer, logBuyerContact } from '$lib/api/buyers';
+	import { qualifyBuyer, logBuyerContact, updateBuyer, deleteBuyer } from '$lib/api/buyers';
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 	import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 
@@ -12,7 +14,23 @@
 	let qualified = $state(false);
 	let logged = $state(false);
 	let error = $state('');
-	let displayStatus = $derived(qualified && data.buyer.status === 'Lead' ? 'Qualified' : data.buyer.status);
+	let message = $state('');
+	let editing = $state(false);
+	let saving = $state(false);
+	let deleting = $state(false);
+	let editName = $state('');
+	let editCountry = $state('');
+	let editSegment = $state('');
+	let editStatus = $state('');
+	let savedName = $state('');
+	let savedCountry = $state('');
+	let savedSegment = $state('');
+	let savedStatus = $state('');
+	let localName = $derived(savedName || data.buyer.name);
+	let localCountry = $derived(savedCountry || data.buyer.country);
+	let localSegment = $derived(savedSegment || data.buyer.segment);
+	let localBaseStatus = $derived(savedStatus || data.buyer.status);
+	let displayStatus = $derived(qualified && localBaseStatus === 'Lead' ? 'Qualified' : localBaseStatus);
 	let displayScore = $derived(qualified ? Math.min(data.buyer.fitScore + 9, 100) : data.buyer.fitScore);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -41,6 +59,56 @@
 			error = t('Gagal mencatat kontak.');
 		}
 	}
+
+	function openEdit() {
+		editName = localName;
+		editCountry = localCountry;
+		editSegment = localSegment;
+		editStatus = localBaseStatus;
+		error = '';
+		editing = true;
+	}
+
+	async function handleSave() {
+		error = '';
+		if (!editName.trim()) {
+			error = t('Nama buyer wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const res = await updateBuyer(data.buyer.id, {
+				name: editName.trim(),
+				country: editCountry.trim(),
+				segment: editSegment.trim(),
+				status: editStatus.trim() as typeof data.buyer.status
+			});
+			savedName = res.data.name;
+			savedCountry = res.data.country;
+			savedSegment = res.data.segment;
+			savedStatus = res.data.status;
+			message = t('Buyer diperbarui.');
+			editing = false;
+		} catch {
+			error = t('Gagal menyimpan buyer.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus buyer ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteBuyer(data.buyer.id);
+			goto('/buyers');
+		} catch {
+			error = t('Gagal menghapus buyer.');
+		} finally {
+			deleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -53,15 +121,45 @@
 			<div class="min-w-0">
 				<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
-					{data.buyer.segment}
+					{localSegment}
 				</CardTitle>
-				<CardDescription class="mt-2">{data.buyer.country} · {data.buyer.paymentProfile}</CardDescription>
+				<CardDescription class="mt-2">{localCountry} · {data.buyer.paymentProfile}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Buyer fit')}</span>
 				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{displayScore}%</strong>
 			</div>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+		</div>
+		{#if editing}
+			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nama')}
+						<Input bind:value={editName} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Negara')}
+						<Input bind:value={editCountry} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Segmen')}
+						<Input bind:value={editSegment} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Status')}
+						<Input bind:value={editStatus} />
+					</label>
+				</div>
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : t('Simpan perubahan')}</Button>
+			</div>
+		{/if}
+		{#if message}
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		{/if}
 	</Card>
 
 	<div class="grid gap-4 md:grid-cols-2">
@@ -74,8 +172,8 @@
 				<div class="flex flex-wrap gap-2.5">
 					<WhatsAppDialog
 						phone={data.buyer.contact?.phone ?? ''}
-						contactName={data.buyer.contact?.name ?? data.buyer.name}
-						company={data.buyer.name}
+						contactName={data.buyer.contact?.name ?? localName}
+						company={localName}
 					/>
 					<Button variant="outline" onclick={handleLogContact}>{logged ? t('Logged') : t('Log contact')}</Button>
 					<Button onclick={handleQualify}>{qualified ? t('Qualified') : t('Qualify buyer')}</Button>

@@ -2,17 +2,34 @@
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
-	import { markPaymentReceived, sendPaymentReminder } from '$lib/api/payments';
+	import { markPaymentReceived, sendPaymentReminder, updatePayment, deletePayment } from '$lib/api/payments';
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let received = $state(false);
 	let reminded = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let editing = $state(false);
+	let saving = $state(false);
+	let deleting = $state(false);
+	let editBuyer = $state('');
+	let editAmount = $state('');
+	let editStatus = $state('');
+	let editMethod = $state('');
+	let savedBuyer = $state('');
+	let savedAmount = $state(0);
+	let savedStatus = $state('');
+	let savedMethod = $state('');
+	let localBuyer = $derived(savedBuyer || data.payment.buyer);
+	let localAmount = $derived(savedAmount || data.payment.amount);
+	let localMethod = $derived(savedMethod || data.payment.method);
 	let paidAmount = $derived(received ? data.payment.amount : data.payment.paid);
-	let displayStatus = $derived(received ? 'Settled' : data.payment.status);
+	let displayStatus = $derived(received ? 'Settled' : savedStatus || data.payment.status);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -40,6 +57,61 @@
 			error = 'Gagal mengirim pengingat.';
 		}
 	}
+
+	function openEdit() {
+		editBuyer = localBuyer;
+		editAmount = String(localAmount);
+		editStatus = savedStatus || data.payment.status;
+		editMethod = localMethod;
+		error = '';
+		editing = true;
+	}
+
+	async function handleSave() {
+		error = '';
+		if (!editBuyer.trim()) {
+			error = t('Buyer wajib diisi.');
+			return;
+		}
+		const amount = Number(editAmount);
+		if (!editAmount.trim() || Number.isNaN(amount)) {
+			error = t('Jumlah pembayaran tidak valid.');
+			return;
+		}
+		saving = true;
+		try {
+			const res = await updatePayment(data.payment.id, {
+				buyer: editBuyer.trim(),
+				amount,
+				status: editStatus.trim() as (typeof data.payment.status),
+				method: editMethod.trim() as (typeof data.payment.method)
+			});
+			savedBuyer = res.data.buyer;
+			savedAmount = res.data.amount;
+			savedStatus = res.data.status;
+			savedMethod = res.data.method;
+			message = t('Pembayaran diperbarui.');
+			editing = false;
+		} catch {
+			error = t('Gagal menyimpan pembayaran.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus pembayaran ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deletePayment(data.payment.id);
+			goto('/payments');
+		} catch {
+			error = t('Gagal menghapus pembayaran.');
+		} finally {
+			deleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -52,15 +124,45 @@
 			<div class="min-w-0">
 				<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
-					{data.payment.buyer}
+					{localBuyer}
 				</CardTitle>
-				<CardDescription class="mt-2">{data.payment.method} · Due {data.payment.dueDate}</CardDescription>
+				<CardDescription class="mt-2">{localMethod} · Due {data.payment.dueDate}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Collected')}</span>
-				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{Math.round((paidAmount / data.payment.amount) * 100)}%</strong>
+				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{Math.round((paidAmount / localAmount) * 100)}%</strong>
 			</div>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+		</div>
+		{#if editing}
+			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Buyer')}
+						<Input bind:value={editBuyer} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Jumlah')}
+						<Input type="number" bind:value={editAmount} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Status')}
+						<Input bind:value={editStatus} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Metode')}
+						<Input bind:value={editMethod} />
+					</label>
+				</div>
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : t('Simpan perubahan')}</Button>
+			</div>
+		{/if}
+		{#if message}
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		{/if}
 	</Card>
 
 	<div class="grid gap-4 md:grid-cols-2">
@@ -83,13 +185,13 @@
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Total')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.payment.amount)}</strong>
+					{t('Total')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(localAmount)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Paid')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(paidAmount)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Outstanding')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.payment.amount - paidAmount)}</strong>
+					{t('Outstanding')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(localAmount - paidAmount)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Risk')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.risk}</strong>
@@ -98,7 +200,7 @@
 					{t('Order')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.orderId}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Buyer')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.buyer}</strong>
+					{t('Buyer')} <strong class="mt-1 block text-sm font-bold text-foreground">{localBuyer}</strong>
 				</div>
 			</CardContent>
 		</Card>

@@ -2,15 +2,28 @@
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { verifySupplier, requestSupplierEvidence } from '$lib/api/suppliers';
+	import { verifySupplier, requestSupplierEvidence, updateSupplier, deleteSupplier } from '$lib/api/suppliers';
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let verified = $state(false);
 	let evidenceRequested = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let editing = $state(false);
+	let saving = $state(false);
+	let deleting = $state(false);
+	let editName = $state('');
+	let editLocation = $state('');
+	let editContact = $state('');
+	let savedName = $state('');
+	let savedLocation = $state('');
+	let localName = $derived(savedName || data.supplier.name);
+	let localLocation = $derived(savedLocation || data.supplier.location);
 	let displayStatus = $derived(verified ? 'Verified' : data.supplier.status);
 	let displayScore = $derived(verified ? Math.max(data.supplier.capabilityScore, 95) : data.supplier.capabilityScore);
 
@@ -40,13 +53,59 @@
 			error = t('Gagal meminta evidence.');
 		}
 	}
+
+	function openEdit() {
+		editName = localName;
+		editLocation = localLocation;
+		editContact = data.supplier.contact ?? '';
+		error = '';
+		editing = true;
+	}
+
+	async function handleSave() {
+		error = '';
+		if (!editName.trim()) {
+			error = t('Nama supplier wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const res = await updateSupplier(data.supplier.id, {
+				name: editName.trim(),
+				location: editLocation.trim(),
+				contact: editContact.trim()
+			});
+			savedName = res.data.name;
+			savedLocation = res.data.location ?? '';
+			message = t('Supplier diperbarui.');
+			editing = false;
+		} catch {
+			error = t('Gagal menyimpan supplier.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus supplier ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteSupplier(data.supplier.id);
+			goto('/suppliers');
+		} catch {
+			error = t('Gagal menghapus supplier.');
+		} finally {
+			deleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>{data.supplier.name} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.supplier.name} eyebrow={t('Supplier detail')}>
+<AppShell title={localName} eyebrow={t('Supplier detail')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -54,13 +113,39 @@
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.supplier.category}
 				</CardTitle>
-				<CardDescription class="mt-2">{data.supplier.location} · {data.supplier.contact}</CardDescription>
+				<CardDescription class="mt-2">{localLocation} · {data.supplier.contact}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Kapabilitas')}</span>
 				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{displayScore}%</strong>
 			</div>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit supplier')}</Button>
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus supplier')}</Button>
+		</div>
+		{#if editing}
+			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-3">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nama')}
+						<Input bind:value={editName} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Lokasi')}
+						<Input bind:value={editLocation} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kontak')}
+						<Input bind:value={editContact} />
+					</label>
+				</div>
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : t('Simpan perubahan')}</Button>
+			</div>
+		{/if}
+		{#if message}
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		{/if}
 	</Card>
 
 	<div class="grid gap-4 md:grid-cols-2">

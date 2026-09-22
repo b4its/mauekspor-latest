@@ -3,10 +3,12 @@
 	import { t } from '$lib/i18n.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { createQuotation } from '$lib/api/quotations';
-	import { shortlistRFQMatch } from '$lib/api/rfq';
+	import { shortlistRFQMatch, updateRFQ, deleteRFQ } from '$lib/api/rfq';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 	let shortlisted = $state('');
@@ -14,6 +16,22 @@
 	let quoteCreated = $state(false);
 	let creatingQuote = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let editing = $state(false);
+	let saving = $state(false);
+	let deleting = $state(false);
+	let editIncoterm = $state('');
+	let editQuantity = $state('');
+	let editDeadline = $state('');
+	let editStatus = $state('');
+	let savedIncoterm = $state('');
+	let savedQuantity = $state('');
+	let savedDeadline = $state('');
+	let savedStatus = $state('');
+	let localIncoterm = $derived(savedIncoterm || data.rfq.incoterm);
+	let localQuantity = $derived(savedQuantity || data.rfq.quantity);
+	let localDeadline = $derived(savedDeadline || data.rfq.deadline);
+	let localStatus = $derived(savedStatus || data.rfq.status);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -54,6 +72,56 @@
 			creatingQuote = false;
 		}
 	}
+
+	function openEdit() {
+		editIncoterm = localIncoterm;
+		editQuantity = localQuantity;
+		editDeadline = localDeadline;
+		editStatus = localStatus;
+		error = '';
+		editing = true;
+	}
+
+	async function handleSave() {
+		error = '';
+		if (!editQuantity.trim()) {
+			error = t('Jumlah wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const res = await updateRFQ(data.rfq.id, {
+				incoterm: editIncoterm.trim(),
+				quantity: editQuantity.trim(),
+				deadline: editDeadline.trim(),
+				status: editStatus.trim() as typeof data.rfq.status
+			});
+			savedIncoterm = res.data.incoterm;
+			savedQuantity = res.data.quantity;
+			savedDeadline = res.data.deadline;
+			savedStatus = res.data.status;
+			message = t('RFQ diperbarui.');
+			editing = false;
+		} catch {
+			error = t('Gagal menyimpan RFQ.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handleDelete() {
+		error = '';
+		if (!confirm(t('Hapus RFQ ini secara permanen?'))) return;
+		deleting = true;
+		try {
+			await deleteRFQ(data.rfq.id);
+			goto('/rfq');
+		} catch {
+			error = t('Gagal menghapus RFQ.');
+		} finally {
+			deleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -64,7 +132,7 @@
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(data.rfq.status))}>{data.rfq.status}</Badge>
+				<Badge variant={toneVariant(statusTone(localStatus))}>{localStatus}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.rfq.product}
 				</CardTitle>
@@ -75,6 +143,36 @@
 				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{data.rfq.matchScore}%</strong>
 			</div>
 		</div>
+		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
+			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+		</div>
+		{#if editing}
+			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Incoterm')}
+						<Input bind:value={editIncoterm} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Quantity')}
+						<Input bind:value={editQuantity} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Deadline')}
+						<Input bind:value={editDeadline} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Status')}
+						<Input bind:value={editStatus} />
+					</label>
+				</div>
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : t('Simpan perubahan')}</Button>
+			</div>
+		{/if}
+		{#if message}
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		{/if}
 	</Card>
 
 	<div class="grid gap-4 md:grid-cols-2">
@@ -86,13 +184,13 @@
 						{t('Proyek')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.project?.name ?? data.rfq.projectId}</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						{t('Quantity')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.quantity}</strong>
+						{t('Quantity')} <strong class="mt-1 block text-sm font-bold text-foreground">{localQuantity}</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.incoterm}</strong>
+						{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{localIncoterm}</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.deadline}</strong>
+						{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{localDeadline}</strong>
 					</div>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
