@@ -265,7 +265,7 @@
 		<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 			<Button href="/products/new" class="h-auto flex-col gap-3 py-5 text-left">
 				<span class="text-lg font-bold">{t('+ Produk Baru')}</span>
-				<small class="font-normal text-muted-foreground">{t('Tambah produk untuk analisis')}</small>
+				<small class="font-normal text-muted-foreground text-white">{t('Tambah produk untuk analisis')}</small>
 			</Button>
 			<Button href="/catalogs/create" variant="secondary" class="h-auto flex-col gap-3 py-5 text-left">
 				<span class="text-lg font-bold">{t('Buat Katalog')}</span>

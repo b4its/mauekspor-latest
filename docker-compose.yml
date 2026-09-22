@@ -31,7 +31,7 @@ services:
       MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
       MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@localhost:5447/${POSTGRES_DB:-mauekspor}
       MAUEKSPOR_UPLOAD_DIR: /app/uploads
-      MAUEKSPOR_CORS_ORIGINS: '["http://localhost:5188","http://localhost:3015"]'
+      MAUEKSPOR_CORS_ORIGINS: '["http://localhost:5188","http://localhost:3016"]'
       MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-remote}
       MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:?Set MAUEKSPOR_AI_API_KEY in .env}
       MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://localhost:20128/v1}
@@ -57,9 +57,9 @@ services:
     depends_on:
       - backend
     ports:
-      - "3015:3000"
+      - "${DEV_FRONTEND_PORT:-3016}:3000"
     environment:
-      ORIGIN: http://localhost:3015
+      ORIGIN: http://localhost:${DEV_FRONTEND_PORT:-3016}
     restart: unless-stopped
 
   # ── Frontend DEV (hot reload) ──────────────────────────────────────

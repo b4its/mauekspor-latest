@@ -9,7 +9,7 @@
 .PHONY: help \
         ngrok-prod-build ngrok-prod-up ngrok-prod-down ngrok-prod-stop \
         ngrok-prod-logs ngrok-prod-reseed ngrok-prod-status \
-        ngrok-tunnel-start ngrok-tunnel-stop ngrok-show-urls ngrok-with-ai \
+        ngrok-tunnel-start ngrok-tunnel-stop ngrok-show-urls ngrok-with-ai port-doctor \
         dev-backend dev-frontend dev-up dev-down \
         stop stop-all build docker-up docker-down \
         test test-backend test-frontend
@@ -61,6 +61,7 @@ help:
 	@echo "    dev-frontend  - Frontend dev port $(DEV_FRONTEND_PORT)"
 	@echo "    backend-local - Backend + AI access (port 8016, real AI not mock)"
 	@echo "    ngrok-with-ai - Prod ngrok + AI via cloudflared (REAL AI, RECOMMENDED)"
+	@echo "    port-doctor   - Diagnosa pemegang port production"
 	@echo "    dev-down      - Stop semua proses dev"
 	@echo ""
 	@echo "  TESTING:"
@@ -86,6 +87,27 @@ ngrok-prod-build:
 # ─────────────────────────────────────────────────────────────────────────────
 ngrok-prod-up:
 	@bash scripts/prod-up.sh
+
+# Diagnosa pemegang port production — tampilkan siapa memegang apa + cara resolusi
+port-doctor:
+	@bash -c '\
+	. ./.env 2>/dev/null; \
+	BD=$${BACKEND_PORT:-8015}; NG=$${NGINX_PORT:-8080}; FE=$${FRONTEND_PORT:-3015}; DB=$${DB_PORT:-5448}; \
+	echo "  🔍 Port Doctor — production ports: $$BD $$NG $$FE $$DB"; \
+	echo ""; \
+	for port in $$BD $$NG $$FE $$DB; do \
+		holders=$$(docker ps --filter "publish=$$port" --format "{{.Names}} ({{.Label \"com.docker.compose.project\"}})"); \
+		hostpid=$$(ss -tlnpH 2>/dev/null | grep ":$$port " | grep -oP "pid=\K[0-9]+" | head -1); \
+		if [ -n "$$holders" ]; then \
+			echo "  ⚠️  $$port → container: $$holders"; \
+		elif [ -n "$$hostpid" ]; then \
+			echo "  ⚠️  $$port → proses host pid=$$hostpid ($$(ps -p $$hostpid -o comm= 2>/dev/null))"; \
+		else \
+			echo "  ✅ $$port bebas"; \
+		fi; \
+	done; \
+	echo ""; \
+	echo "  Resolusi cepat: FORCE_PORT_KILL=1 make ngrok-prod-up"'
 
 ngrok-prod-down:
 	@echo "🛑 Stopping production stack..."
