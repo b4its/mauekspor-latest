@@ -1,6 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
-	import { t } from '$lib/i18n.svelte';
+	import { t, i18n } from '$lib/i18n.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -102,6 +102,14 @@
 		return 'destructive';
 	}
 
+	// Kategori kesiapan sesuai proposal (hal.9): Siap / Perlu Perhatian / Kritis
+	const GRADE_LABELS: Record<string, { id: string; en: string }> = {
+		Ready: { id: 'Siap', en: 'Ready' },
+		Warning: { id: 'Perlu Perhatian', en: 'Needs Attention' },
+		Critical: { id: 'Kritis', en: 'Critical' }
+	};
+	let gradeLabel = $derived(GRADE_LABELS[grade]?.[i18n.locale === 'id' ? 'id' : 'en'] ?? grade);
+
 	function severityTone(s?: string) {
 		if (s === 'critical') return 'destructive';
 		if (s === 'major') return 'outline';
@@ -168,7 +176,7 @@
 			<div class="min-w-0">
 				<div class="flex flex-wrap gap-2">
 					<Badge variant={toneVariant(statusTone(data.analysis.status))}>{data.analysis.status}</Badge>
-					<Badge variant={gradeTone(grade)}>{grade}</Badge>
+					<Badge variant={gradeTone(grade)}>{gradeLabel}</Badge>
 				</div>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.analysis.productName} to {data.analysis.destination}
