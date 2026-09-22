@@ -31,7 +31,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		templates.items.filter(
 			(item) =>
 				(activeFilter === 'All' || item.category === activeFilter) &&
-				[item.title, item.category, item.status, item.description, item.usedBy, ...item.fields].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				[item.title, item.category, item.status, item.description, item.usedBy, ...(item.fields ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
 	let readyCount = $derived(templates.items.filter((item) => item.status === 'Ready').length);
@@ -202,7 +202,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							</div>
 						</div>
 						<div class="flex flex-wrap gap-2">
-							{#each template.fields as field}
+							{#each template.fields ?? [] as field}
 								<span class="rounded-full border bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{field}</span>
 							{/each}
 						</div>
