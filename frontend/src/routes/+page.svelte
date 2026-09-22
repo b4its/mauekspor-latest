@@ -247,24 +247,38 @@
 			</div>
 		</section>
 
-		<section class="grid grid-cols-2 gap-3 sm:grid-cols-4" data-aos="fade-up">
-			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<FaIcon icon="fa-solid fa-wheat-awn" class="text-2xl text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Komoditas Desa')}</span>
+		<section class="grid grid-cols-2 gap-3 lg:grid-cols-4" data-aos="fade-up">
+			<div class="flex flex-col gap-1 rounded-2xl border border-[#0b3d91]/10 bg-white p-5 text-center dark:border-white/10 dark:bg-[#0a1730]">
+				<span class="font-display text-3xl font-black tracking-tight text-[#0b3d91] dark:text-[#5ea1ff]">2.616</span>
+				<span class="text-xs font-bold text-[#0b1d3a]/70 dark:text-white/70">{t('Desa Berpotensi Ekspor')}</span>
+				<span class="text-[11px] font-medium text-[#0b1d3a]/45 dark:text-white/45">{t('Program Desa BISA Ekspor · Kemendag 2026')}</span>
 			</div>
-			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<FaIcon icon="fa-solid fa-shield-halved" class="text-2xl text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Kepatuhan Ekspor')}</span>
+			<div class="flex flex-col gap-1 rounded-2xl border border-[#0b3d91]/10 bg-white p-5 text-center dark:border-white/10 dark:bg-[#0a1730]">
+				<span class="font-display text-3xl font-black tracking-tight text-[#0b3d91] dark:text-[#5ea1ff]">65,5 jt</span>
+				<span class="text-xs font-bold text-[#0b1d3a]/70 dark:text-white/70">{t('UMKM Indonesia')}</span>
+				<span class="text-[11px] font-medium text-[#0b1d3a]/45 dark:text-white/45">{t('Menyerap 97% tenaga kerja · BPS')}</span>
 			</div>
-			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<FaIcon icon="fa-solid fa-handshake" class="text-2xl text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Koneksi Pembeli Global')}</span>
+			<div class="flex flex-col gap-1 rounded-2xl border border-[#0b3d91]/10 bg-white p-5 text-center dark:border-white/10 dark:bg-[#0a1730]">
+				<span class="font-display text-3xl font-black tracking-tight text-[#0b3d91] dark:text-[#5ea1ff]">USD 251 jt</span>
+				<span class="text-xs font-bold text-[#0b1d3a]/70 dark:text-white/70">{t('Transaksi UMKM Ekspor')}</span>
+				<span class="text-[11px] font-medium text-[#0b1d3a]/45 dark:text-white/45">{t('Semester I-2026 · Rp4,49 triliun')}</span>
 			</div>
-			<div class="flex flex-col items-center gap-2 rounded-2xl border border-[#0b3d91]/10 bg-white p-4 text-center dark:border-white/10 dark:bg-[#0a1730]">
-				<FaIcon icon="fa-solid fa-truck" class="text-2xl text-[#1e63d6]" />
-				<span class="text-xs font-bold text-[#0b1d3a]/60 dark:text-white/60">{t('Logistik & Pengiriman')}</span>
+			<div class="flex flex-col gap-1 rounded-2xl border border-[#0b3d91]/10 bg-white p-5 text-center dark:border-white/10 dark:bg-[#0a1730]">
+				<span class="font-display text-3xl font-black tracking-tight text-[#0b3d91] dark:text-[#5ea1ff]">-26%</span>
+				<span class="text-xs font-bold text-[#0b1d3a]/70 dark:text-white/70">{t('Biaya Transaksi Ekspor')}</span>
+				<span class="text-[11px] font-medium text-[#0b1d3a]/45 dark:text-white/45">{t('Potensi paperless trade · ESCAP')}</span>
 			</div>
 </section>
+
+	<!-- Regulatory urgency: EUDR deadline -->
+	<section class="flex flex-col items-start gap-4 rounded-3xl border border-amber-300/60 bg-gradient-to-r from-amber-50 to-orange-50 p-6 sm:flex-row sm:items-center dark:border-amber-500/20 dark:from-amber-950/20 dark:to-orange-950/10" data-aos="fade-up">
+		<FaIcon icon="fa-solid fa-triangle-exclamation" class="text-3xl text-amber-500 shrink-0" />
+		<div class="min-w-0 flex-1">
+			<h2 class="font-display text-lg font-black tracking-tight text-[#0b1d3a] dark:text-white">{t('EUDR berlaku 30 Desember 2026 — kopi, kakao & karet wajib bebas deforestasi.')}</h2>
+			<p class="mt-1 text-sm font-medium text-[#0b1d3a]/70 dark:text-white/70">{t('Regulation EU 2023/1115 mewajibkan traceability geolokasi lahan. MauEkspor membantu desa menyiapkan kepatuhan sejak sekarang — bersama PP 24/2026 tentang ekspor satu pintu.')}</p>
+		</div>
+		<a href="/compliance" class="shrink-0 rounded-full bg-[#0b3d91] px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#0b3d91]/85 dark:bg-[#3b82f6] dark:hover:bg-[#3b82f6]/85">{t('Cek Kepatuhan')}</a>
+	</section>
 
 	<!-- Pain Points & Solutions -->
 	<section class="grid gap-6 rounded-3xl border border-[#0b3d91]/10 bg-gradient-to-br from-white to-[#f0f5ff] p-8 dark:border-white/10 dark:from-[#0a1730] dark:to-[#0c1f3d]" data-aos="fade-up">
