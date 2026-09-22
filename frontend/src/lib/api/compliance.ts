@@ -15,6 +15,23 @@ export function getComplianceRequirement(id: string) {
 	return apiFetch<ComplianceRequirement>(`/compliance/requirements/${id}/`);
 }
 
+export type CreateCompliancePayload = {
+	title: string;
+	category?: string;
+	severity?: string;
+	owner?: string;
+	source?: string;
+	requiredEvidence?: string;
+	projectId?: string;
+};
+
+export function createComplianceRequirement(payload: CreateCompliancePayload) {
+	return apiFetch<ComplianceRequirement>('/compliance/requirements/', {
+		method: 'POST',
+		body: JSON.stringify(payload)
+	});
+}
+
 export function uploadComplianceEvidence(payload: EvidencePayload) {
 	return apiFetch<ComplianceRequirement>(`/compliance/requirements/${payload.requirementId}/evidence/`, {
 		method: 'POST',

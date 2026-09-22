@@ -9,6 +9,20 @@ export function getTask(id: string) {
 	return apiFetch<WorkTask>(`/tasks/${id}/`);
 }
 
+export type CreateTaskPayload = {
+	title: string;
+	module?: string;
+	owner?: string;
+	priority?: string;
+	dueDate?: string;
+	description?: string;
+	projectId?: string;
+};
+
+export function createTask(payload: CreateTaskPayload) {
+	return apiFetch<WorkTask>('/tasks/', { method: 'POST', body: JSON.stringify(payload) });
+}
+
 export function completeTask(id: string) {
 	return apiFetch<WorkTask>(`/tasks/${id}/complete/`, { method: 'POST' });
 }

@@ -14,6 +14,17 @@ export function getTradeDocument(id: string) {
 	return apiFetch<TradeDocument>(`/documents/${id}/`);
 }
 
+export type CreateDocumentPayload = {
+	type?: string;
+	projectId?: string;
+	status?: string;
+	owner?: string;
+};
+
+export function createTradeDocument(payload: CreateDocumentPayload) {
+	return apiFetch<TradeDocument>('/documents/', { method: 'POST', body: JSON.stringify(payload) });
+}
+
 export function generateTradeDocument(payload: GenerateDocumentPayload) {
 	return apiFetch<TradeDocument>('/documents/generate/', {
 		method: 'POST',

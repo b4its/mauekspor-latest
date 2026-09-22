@@ -15,6 +15,18 @@ export function getShipment(id: string) {
 	return apiFetch<Shipment>(`/shipments/${id}/`);
 }
 
+export type CreateShipmentPayload = {
+	forwarder: string;
+	route?: string;
+	mode?: string;
+	projectId?: string;
+	eta?: string;
+};
+
+export function createShipment(payload: CreateShipmentPayload) {
+	return apiFetch<Shipment>('/shipments/', { method: 'POST', body: JSON.stringify(payload) });
+}
+
 export function updateShipmentMilestone(id: string, milestone: string) {
 	return apiFetch<Shipment>(`/shipments/${id}/milestones/`, {
 		method: 'POST',

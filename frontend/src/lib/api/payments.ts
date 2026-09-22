@@ -9,6 +9,19 @@ export function getPayment(id: string) {
 	return apiFetch<Payment>(`/payments/${id}/`);
 }
 
+export type CreatePaymentPayload = {
+	buyer: string;
+	amount: number;
+	currency?: string;
+	orderId?: string;
+	dueDate?: string;
+	method?: string;
+};
+
+export function createPayment(payload: CreatePaymentPayload) {
+	return apiFetch<Payment>('/payments/', { method: 'POST', body: JSON.stringify(payload) });
+}
+
 export function markPaymentReceived(id: string) {
 	return apiFetch<Payment>(`/payments/${id}/mark-received/`, { method: 'POST' });
 }

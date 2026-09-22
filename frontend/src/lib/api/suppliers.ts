@@ -9,6 +9,20 @@ export function getSupplier(id: string) {
 	return apiFetch<Supplier>(`/suppliers/${id}/`);
 }
 
+export type CreateSupplierPayload = {
+	name: string;
+	location?: string;
+	category?: string;
+	capacity?: string;
+	leadTime?: string;
+	contact?: string;
+	productIds?: string[];
+};
+
+export function createSupplier(payload: CreateSupplierPayload) {
+	return apiFetch<Supplier>('/suppliers/', { method: 'POST', body: JSON.stringify(payload) });
+}
+
 export function verifySupplier(id: string) {
 	return apiFetch<Supplier>(`/suppliers/${id}/verify/`, { method: 'POST' });
 }
