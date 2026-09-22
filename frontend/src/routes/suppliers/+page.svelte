@@ -5,12 +5,11 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts, suppliers as seedSuppliers } from '$lib/data/trade';
-	import { listSuppliers } from '$lib/api/suppliers';
+	import { listSuppliers, requestSupplierEvidence, createSupplier } from '$lib/api/suppliers';
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { requestSupplierEvidence } from '$lib/api/suppliers';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -18,9 +17,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Verified', 'In Review', 'Needs Evidence'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let requested = $state(false);
-	let requesting = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let busyId = $state('');
+	let showForm = $state(false);
+	let saving = $state(false);
+	let formError = $state('');
+	let fName = $state('');
+	let fLocation = $state('');
+	let fCategory = $state('');
+	let fCapacity = $state('');
+	let fLeadTime = $state('');
+	let fContact = $state('');
 
 	let suppliers = createRemoteList(listSuppliers, seedSuppliers);
 	let products = createRemoteList(listProducts, seedProducts);
@@ -51,17 +59,56 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
-	async function handleEvidence() {
+	async function handleEvidence(supplierId: string, name: string) {
 		error = '';
-		requesting = true;
+		busyId = supplierId;
 		try {
-			const target = suppliers.items.find((supplier) => supplier.status === 'Needs Evidence') ?? suppliers.items[0];
-			if (target) await requestSupplierEvidence(target.id);
-			requested = true;
+			const res = await requestSupplierEvidence(supplierId);
+			const idx = suppliers.items.findIndex((s) => s.id === supplierId);
+			if (idx >= 0) suppliers.items[idx] = { ...suppliers.items[idx], status: 'Needs Evidence' };
+			message = `Permintaan bukti dikirim ke ${name}.`;
+			void res;
 		} catch {
 			error = t('Gagal meminta bukti kepatuhan.');
 		} finally {
-			requesting = false;
+			busyId = '';
+		}
+	}
+
+	function openCreate() {
+		fName = '';
+		fLocation = '';
+		fCategory = '';
+		fCapacity = '';
+		fLeadTime = '';
+		fContact = '';
+		formError = '';
+		showForm = true;
+	}
+
+	async function handleCreate() {
+		formError = '';
+		if (!fName.trim()) {
+			formError = t('Nama supplier wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			await createSupplier({
+				name: fName.trim(),
+				location: fLocation.trim(),
+				category: fCategory.trim() || 'Supplier',
+				capacity: fCapacity.trim(),
+				leadTime: fLeadTime.trim(),
+				contact: fContact.trim()
+			});
+			await suppliers.load();
+			message = `Supplier "${fName.trim()}" ditambahkan.`;
+			showForm = false;
+		} catch {
+			formError = t('Gagal menambah supplier.');
+		} finally {
+			saving = false;
 		}
 	}
 	let paginationPage = $state(1);
@@ -89,23 +136,54 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Track capacity, certificates, quality signals, compliance evidence, and operational risks across the export supplier network.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleEvidence} disabled={requesting}>{requested ? t('Evidence requested') : requesting ? t('Requesting...') : t('Request evidence')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Tambah supplier')}</Button>
 			<Badge variant="secondary">{t('Verified')} {verifiedCount}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nama')}
+						<Input bind:value={fName} placeholder="PT Kopi Gayo Nusantara" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Lokasi')}
+						<Input bind:value={fLocation} placeholder="Aceh, Indonesia" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kategori')}
+						<Input bind:value={fCategory} placeholder={t('Coffee processor')} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kapasitas')}
+						<Input bind:value={fCapacity} placeholder="12,000 bags / month" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Waktu tunggu')}
+						<Input bind:value={fLeadTime} placeholder="21 days" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Kontak')}
+						<Input bind:value={fContact} placeholder={t('Nama kontak')} />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={saving} onclick={handleCreate}>{saving ? t('Menyimpan...') : t('Simpan supplier')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+	{/if}
 
 	{#if suppliers.error}
 		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{suppliers.error}</p>
-	{/if}
-
-	{#if requested}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Permintaan bukti dikirim ke backend.')}</strong>
-		</div>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
@@ -145,7 +223,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as supplier}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class="grid gap-0 transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/suppliers/${supplier.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(supplier.status))}>{supplier.status}</Badge>
@@ -160,6 +238,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next audit')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.nextAudit}</strong></div>
 						</div>
 					</a>
+					<div class="flex flex-wrap gap-2 px-5 pb-5">
+						<Button variant="outline" size="sm" disabled={busyId === supplier.id} onclick={() => handleEvidence(supplier.id, supplier.name)}>{t('Minta bukti')}</Button>
+						<Button variant="outline" size="sm" href={`/suppliers/${supplier.id}`}>{t('Detail')}</Button>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No supplier matched your search.')}</div>

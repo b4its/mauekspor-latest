@@ -5,11 +5,10 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { payments as seedPayments } from '$lib/data/trade';
-	import { listPayments } from '$lib/api/payments';
+	import { listPayments, sendPaymentReminder, createPayment } from '$lib/api/payments';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
-	import { sendPaymentReminder } from '$lib/api/payments';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -17,8 +16,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Pending', 'Deposit Paid', 'Due Soon', 'Overdue', 'Settled'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let reminderSent = $state(false);
-	let reminding = $state(false);
+	let message = $state('');
+	let busyId = $state('');
+	let showForm = $state(false);
+	let saving = $state(false);
+	let formError = $state('');
+	let fBuyer = $state('');
+	let fAmount = $state('');
+	let fCurrency = $state('USD');
+	let fOrderId = $state('');
+	let fDueDate = $state('');
+	let fMethod = $state('Bank Transfer');
 	let error = $state('');
 
 	let payments = createRemoteList(listPayments, seedPayments);
@@ -47,18 +55,53 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
-	async function handleReminders() {
+	async function handleReminder(paymentId: string, buyer: string) {
 		error = '';
-		reminding = true;
+		busyId = paymentId;
 		try {
-			const duePayments = payments.items.filter((payment) => payment.status === 'Overdue' || payment.status === 'Due Soon');
-			const target = duePayments[0] ?? payments.items.filter((payment) => payment.status === 'Pending')[0] ?? payments.items[0];
-			if (target) await sendPaymentReminder(target.id);
-			reminderSent = true;
+			await sendPaymentReminder(paymentId);
+			message = t('Pengingat dikirim ke ') + buyer + '.';
 		} catch {
 			error = t('Gagal mengirim pengingat pembayaran.');
 		} finally {
-			reminding = false;
+			busyId = '';
+		}
+	}
+
+	function openCreate() {
+		fBuyer = '';
+		fAmount = '';
+		fCurrency = 'USD';
+		fOrderId = '';
+		fDueDate = '';
+		fMethod = 'Bank Transfer';
+		formError = '';
+		showForm = true;
+	}
+
+	async function handleCreate() {
+		formError = '';
+		if (!fBuyer.trim()) {
+			formError = t('Buyer wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			await createPayment({
+				buyer: fBuyer.trim(),
+				amount: Number(fAmount) || 0,
+				currency: fCurrency,
+				orderId: fOrderId.trim(),
+				dueDate: fDueDate.trim(),
+				method: fMethod.trim()
+			});
+			await payments.load();
+			message = `Pembayaran untuk "${fBuyer.trim()}" dibuat.`;
+			showForm = false;
+		} catch {
+			formError = t('Gagal membuat pembayaran.');
+		} finally {
+			saving = false;
 		}
 	}
 	let paginationPage = $state(1);
@@ -86,9 +129,47 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Keep payment terms connected to orders, document release, and buyer risk so operations never ships without commercial control.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleReminders} disabled={reminding}>{reminderSent ? t('Reminder sent') : reminding ? t('Sending...') : t('Send reminders')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Tambah pembayaran')}</Button>
 			<Badge variant="destructive">{t('Risk')} {highRisk}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Buyer')}
+						<Input bind:value={fBuyer} placeholder="Hikari Foods Co." />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nilai')}
+						<Input bind:value={fAmount} type="number" placeholder="0" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Mata uang')}
+						<select bind:value={fCurrency} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['USD', 'IDR', 'EUR'] as cur}
+								<option value={cur}>{cur}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Order ID')}
+						<Input bind:value={fOrderId} placeholder="ORD-001" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Due date')}
+						<Input bind:value={fDueDate} type="date" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Metode')}
+						<Input bind:value={fMethod} placeholder="Bank Transfer" />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={saving} onclick={handleCreate}>{saving ? t('Menyimpan...') : t('Simpan pembayaran')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -99,11 +180,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{payments.error}</p>
 	{/if}
 
-	{#if reminderSent}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Payment reminders sent.')}</strong>
-			<span class="block text-sm text-muted-foreground">{t('Pengingat dikirim melalui backend.')}</span>
-		</div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
@@ -143,7 +221,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as payment}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class="grid gap-0 transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/payments/${payment.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(payment.status))}>{payment.status}</Badge>
@@ -158,6 +236,9 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Method')}<strong class="mt-1 block text-sm font-bold text-foreground">{payment.method}</strong></div>
 						</div>
 					</a>
+					<div class="flex flex-wrap gap-2 px-5 pb-5">
+						<Button variant="outline" size="sm" disabled={busyId === payment.id} onclick={() => handleReminder(payment.id, payment.buyer)}>{t('Kirim pengingat')}</Button>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No payment matched your search.')}</div>

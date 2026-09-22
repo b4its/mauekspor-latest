@@ -5,12 +5,11 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, workTasks as seedTasks } from '$lib/data/trade';
-	import { listTasks } from '$lib/api/tasks';
+	import { listTasks, createTask } from '$lib/api/tasks';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { assignTask } from '$lib/api/tasks';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -18,8 +17,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Open', 'In Progress', 'Blocked', 'Done'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let created = $state(false);
+	let message = $state('');
+	let showForm = $state(false);
 	let creating = $state(false);
+	let formError = $state('');
+	let fTitle = $state('');
+	let fModule = $state('');
+	let fOwner = $state('');
+	let fPriority = $state('Medium');
+	let fDueDate = $state('');
 	let error = $state('');
 
 	let workTasks = createRemoteList(listTasks, seedTasks);
@@ -49,15 +55,36 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
+	function openCreate() {
+		fTitle = '';
+		fModule = '';
+		fOwner = '';
+		fPriority = 'Medium';
+		fDueDate = '';
+		formError = '';
+		showForm = true;
+	}
+
 	async function handleCreate() {
-		error = '';
+		formError = '';
+		if (!fTitle.trim()) {
+			formError = t('Judul wajib diisi.');
+			return;
+		}
 		creating = true;
 		try {
-			const target = workTasks.items.find((task) => task.status === 'Open') ?? workTasks.items[0];
-			if (target) await assignTask(target.id, target.owner ?? 'ops');
-			created = true;
+			await createTask({
+				title: fTitle.trim(),
+				module: fModule.trim(),
+				owner: fOwner.trim(),
+				priority: fPriority,
+				dueDate: fDueDate.trim()
+			});
+			await workTasks.load();
+			message = `Tugas "${fTitle.trim()}" dibuat.`;
+			showForm = false;
 		} catch {
-			error = t('Gagal membuat tugas.');
+			formError = t('Gagal membuat tugas.');
 		} finally {
 			creating = false;
 		}
@@ -87,9 +114,43 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Convert compliance gaps, supplier evidence, payments, documents, and shipment exceptions into accountable operational tasks.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? t('Task created') : creating ? t('Creating...') : t('Create task')}</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create task')}</Button>
 			<Badge variant="destructive">{t('Blocked')} {blocked}</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Judul')}
+						<Input bind:value={fTitle} placeholder={t('Siapkan dokumen ekspor')} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Modul')}
+						<Input bind:value={fModule} placeholder={t('Dokumen')} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Owner')}
+						<Input bind:value={fOwner} placeholder="ops" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Prioritas')}
+						<select bind:value={fPriority} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['Low', 'Medium', 'High', 'Critical'] as priority}
+								<option value={priority}>{priority}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Due date')}
+						<Input bind:value={fDueDate} type="date" />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Creating...') : t('Simpan tugas')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -100,8 +161,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{workTasks.error}</p>
 	{/if}
 
-	{#if created}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4"><strong class="block">{t('Task created.')}</strong><span class="block text-sm text-muted-foreground">{t('Tugas dibuat di backend.')}</span></div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">

@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { projects, shipments as seedShipments } from '$lib/data/trade';
-	import { listShipments, updateShipmentMilestone } from '$lib/api/shipments';
+	import { listShipments, createShipment } from '$lib/api/shipments';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
@@ -18,8 +18,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Booking Requested', 'Customs Submitted', 'Loaded', 'Exception'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let quoteRequested = $state(false);
-	let requesting = $state(false);
+	let message = $state('');
+	let showForm = $state(false);
+	let saving = $state(false);
+	let formError = $state('');
+	let fForwarder = $state('');
+	let fRoute = $state('');
+	let fMode = $state('Ocean FCL');
+	let fEta = $state('');
 	let error = $state('');
 
 	let shipments = createRemoteList(listShipments, seedShipments);
@@ -54,17 +60,36 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
-	async function handleQuote() {
-		error = '';
-		requesting = true;
+	function openCreate() {
+		fForwarder = '';
+		fRoute = '';
+		fMode = 'Ocean FCL';
+		fEta = '';
+		formError = '';
+		showForm = true;
+	}
+
+	async function handleCreate() {
+		formError = '';
+		if (!fForwarder.trim()) {
+			formError = t('Forwarder wajib diisi.');
+			return;
+		}
+		saving = true;
 		try {
-			const target = shipments.items[0];
-			if (target) await updateShipmentMilestone(target.id, 'Booking Requested');
-			quoteRequested = true;
+			await createShipment({
+				forwarder: fForwarder.trim(),
+				route: fRoute.trim(),
+				mode: fMode,
+				eta: fEta.trim()
+			});
+			await shipments.load();
+			message = `Pengiriman "${fForwarder.trim()}" dibuat.`;
+			showForm = false;
 		} catch {
-			error = t('Gagal meminta kuotasi pengiriman.');
+			formError = t('Gagal membuat pengiriman.');
 		} finally {
-			requesting = false;
+			saving = false;
 		}
 	}
 	let paginationPage = $state(1);
@@ -94,11 +119,39 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleQuote} disabled={requesting}>
-				{quoteRequested ? t('Freight RFQ drafted') : requesting ? t('Requesting quote...') : t('Request freight quote')}
-			</Button>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Tambah pengiriman')}</Button>
 			<Badge variant="secondary">{t('Avg progress')} {averageProgress}%</Badge>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Forwarder')}
+						<Input bind:value={fForwarder} placeholder="Samudera Logistics" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Route')}
+						<Input bind:value={fRoute} placeholder="Jakarta → Osaka" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Mode')}
+						<select bind:value={fMode} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each ['Ocean LCL', 'Ocean FCL', 'Air'] as mode}
+								<option value={mode}>{mode}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('ETA')}
+						<Input bind:value={fEta} placeholder="18 Sep 2026" />
+					</label>
+				</div>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={saving} onclick={handleCreate}>{saving ? t('Menyimpan...') : t('Simpan pengiriman')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -109,11 +162,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{shipments.error}</p>
 	{/if}
 
-	{#if quoteRequested}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Freight RFQ draft ready.')}</strong>
-			<span class="block text-sm text-muted-foreground">{t('Kuotasi diminta ke backend.')}</span>
-		</div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
