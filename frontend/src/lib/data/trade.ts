@@ -1780,7 +1780,7 @@ export const tradeReports: TradeReport[] = [
 ];
 
 export const auditEvents: AuditEvent[] = [
-	{ id: 'AUD-1001', time: '2026-08-06 10:42', actor: 'AI Copilot', action: 'Generated market insight', module: 'Markets', entity: 'MKT-SG-SNK', severity: 'Info', detail: 'Singapore snack route scored 91 with low compliance complexity.' },
+	{ id: 'AUD-1001', time: '2026-08-06 10:42', actor: 'Nuxim AI', action: 'Generated market insight', module: 'Markets', entity: 'MKT-SG-SNK', severity: 'Info', detail: 'Singapore snack route scored 91 with low compliance complexity.' },
 	{ id: 'AUD-1002', time: '2026-08-06 10:18', actor: 'Operations', action: 'Approved packing list', module: 'Documents', entity: 'DOC-JP-PL-001', severity: 'Info', detail: 'Carton count and gross weight checks passed.' },
 	{ id: 'AUD-1003', time: '2026-08-06 09:55', actor: 'Compliance Officer', action: 'Flagged certificate risk', module: 'Suppliers', entity: 'SUP-CIREBON-RATTAN', severity: 'Warning', detail: 'SVLK scope page does not yet prove product coverage.' },
 	{ id: 'AUD-1004', time: '2026-08-06 09:20', actor: 'Finance', action: 'Payment reminder prepared', module: 'Payments', entity: 'PAY-EU-021', severity: 'Critical', detail: 'LC issuance is due soon and tied to shipment booking approval.' }
@@ -1804,7 +1804,7 @@ export const integrations: Integration[] = [
 	{ id: 'INT-FORWARDER', name: 'Forwarder Rate Gateway', category: 'Logistics', status: 'Connected', description: 'Sync freight quotes, booking status, and route exceptions from logistics partners.', lastSync: '2026-08-06 10:30', scopes: ['Rates', 'Bookings', 'Milestones'] },
 	{ id: 'INT-BANK', name: 'Bank Payment Tracker', category: 'Finance', status: 'Needs Auth', description: 'Match incoming deposits and settlement events against export payment milestones.', lastSync: 'Not connected', scopes: ['Payments', 'Receivables', 'Reminders'] },
 	{ id: 'INT-CUSTOMS', name: 'Customs Reference Library', category: 'Compliance', status: 'Available', description: 'Lookup HS guidance, tariff references, and evidence source dates for target markets.', lastSync: 'Available on demand', scopes: ['HS Codes', 'Tariffs', 'Regulatory Sources'] },
-	{ id: 'INT-AI', name: 'MauEkspor AI Copilot', category: 'AI', status: 'Connected', description: 'Generate market insights, catalog copy, task summaries, and report narratives.', lastSync: '2026-08-06 10:42', scopes: ['Market Insight', 'Catalog Copy', 'Reports'] }
+	{ id: 'INT-AI', name: 'Nuxim AI', category: 'AI', status: 'Connected', description: 'Generate market insights, catalog copy, task summaries, and report narratives.', lastSync: '2026-08-06 10:42', scopes: ['Market Insight', 'Catalog Copy', 'Reports'] }
 ];
 
 export const templates: Template[] = [

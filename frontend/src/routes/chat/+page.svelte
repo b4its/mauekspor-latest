@@ -335,7 +335,7 @@
 						<PanelRightOpenIcon class="size-4" />
 					</Button>
 					<div class="min-w-0">
-						<h3 class="truncate text-base font-bold">{active?.title ?? 'Copilot'}</h3>
+						<h3 class="truncate text-base font-bold">{active?.title ?? 'Nuxim AI'}</h3>
 						<small class="hidden text-xs text-muted-foreground sm:block">{t('Asisten AI ekspor-impor')}</small>
 					</div>
 				</div>
@@ -350,7 +350,7 @@
 				{#if !active}
 					<div class="mx-auto mt-12 grid max-w-md gap-3 text-center">
 						<BotIcon class="mx-auto size-12 text-muted-foreground/30" />
-						<h4 class="text-lg font-bold">{t('Mulai percakapan dengan Copilot')}</h4>
+						<h4 class="text-lg font-bold">{t('Mulai percakapan dengan Nuxim AI')}</h4>
 						<p class="text-sm text-muted-foreground">{t('Pilih sesi atau buat sesi baru untuk memulai.')}</p>
 						{#each suggestions as suggestion}
 							<button class="rounded-lg border bg-muted/30 p-3 text-left text-sm transition-colors hover:bg-muted/60"

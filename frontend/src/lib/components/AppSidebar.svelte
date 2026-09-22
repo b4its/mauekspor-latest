@@ -228,7 +228,7 @@
 		>
 			<Badge variant="outline" class="gap-1 border-[#0b3d91]/30 bg-[#0b3d91]/10 text-[#0b3d91] dark:border-white/30 dark:bg-white/10 dark:text-white">
 				<SparklesIcon class="size-3" />
-				<span>{t('AI copilot active')}</span>
+				<span>{t('Nuxim AI active')}</span>
 			</Badge>
 			<p class="mt-2 text-[13px] leading-snug text-sidebar-foreground/70">
 				{t('Resolve label evidence for Japan before quotation approval.')}
