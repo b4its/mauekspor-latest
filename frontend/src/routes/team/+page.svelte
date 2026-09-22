@@ -6,7 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { teamMembers as seedMembers } from '$lib/data/trade';
 	import type { TeamMember } from '$lib/data/trade';
-	import { listTeamMembers, inviteTeamMember, updateTeamMemberRole } from '$lib/api/team';
+	import { listTeamMembers, inviteTeamMember, updateTeamMemberRole, updateTeamMember, removeTeamMember } from '$lib/api/team';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -15,11 +15,17 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Admin', 'Operations', 'Compliance', 'Finance', 'Sales'];
+	const roles: TeamMember['role'][] = ['Admin', 'Operations', 'Compliance', 'Finance', 'Sales'];
 	let activeFilter = $state('All');
 	let query = $state('');
 	let invited = $state(false);
 	let error = $state('');
+	let message = $state('');
 	let inviting = $state(false);
+	let showInvite = $state(false);
+	let inviteEmail = $state('');
+	let inviteRole = $state<TeamMember['role']>('Operations');
+	let busyId = $state('');
 
 	let teamMembers = createRemoteList(listTeamMembers, seedMembers);
 	$effect(() => {
@@ -45,10 +51,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	async function handleInvite() {
 		error = '';
+		if (!inviteEmail.trim()) {
+			error = t('Email wajib diisi.');
+			return;
+		}
 		inviting = true;
 		try {
-			await inviteTeamMember(`team+${Date.now()}@mauekspor.example`, 'Operations');
+			await inviteTeamMember(inviteEmail.trim(), inviteRole);
 			invited = true;
+			message = `Undangan dikirim ke ${inviteEmail.trim()}.`;
+			await teamMembers.load();
+			showInvite = false;
+			inviteEmail = '';
 		} catch {
 			error = t('Gagal mengirim undangan.');
 		} finally {
@@ -57,16 +71,49 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	let updatingRole = $state('');
-	async function handleUpdateRole(member: TeamMember) {
+	async function handleUpdateRole(member: TeamMember, role: TeamMember['role']) {
 		error = '';
 		updatingRole = member.id;
 		try {
-			await updateTeamMemberRole(member.id, 'Compliance');
-			invited = true;
+			const res = await updateTeamMemberRole(member.id, role);
+			const idx = teamMembers.items.findIndex((m) => m.id === member.id);
+			if (idx >= 0) teamMembers.items[idx] = { ...teamMembers.items[idx], ...res.data };
+			message = `Peran ${member.name} diubah ke ${role}.`;
 		} catch {
 			error = t('Gagal memperbarui peran.');
 		} finally {
 			updatingRole = '';
+		}
+	}
+
+	async function handleToggleStatus(member: TeamMember) {
+		error = '';
+		busyId = member.id;
+		try {
+			const next = member.status === 'Active' ? 'Suspended' : 'Active';
+			const res = await updateTeamMember(member.id, { status: next });
+			const idx = teamMembers.items.findIndex((m) => m.id === member.id);
+			if (idx >= 0) teamMembers.items[idx] = { ...teamMembers.items[idx], ...res.data };
+			message = `${member.name} kini ${next}.`;
+		} catch {
+			error = t('Gagal memperbarui status.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleRemove(member: TeamMember) {
+		error = '';
+		busyId = member.id;
+		try {
+			await removeTeamMember(member.id);
+			const idx = teamMembers.items.findIndex((m) => m.id === member.id);
+			if (idx >= 0) teamMembers.items.splice(idx, 1);
+			message = `${member.name} dihapus dari tim.`;
+		} catch {
+			error = t('Gagal menghapus anggota.');
+		} finally {
+			busyId = '';
 		}
 	}
 	let paginationPage = $state(1);
@@ -92,13 +139,35 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleInvite} disabled={inviting}>{invited ? t('Invite sent') : inviting ? t('Inviting...') : t('Invite member')}</Button>
+			<Button onclick={() => (showInvite ? (showInvite = false) : (showInvite = true))}>{showInvite ? t('Batal') : t('Invite member')}</Button>
 			<Badge>{t('Active')} {activeCount}</Badge>
 		</CardContent>
+		{#if showInvite}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Email')}
+						<Input bind:value={inviteEmail} placeholder="nama@perusahaan.example" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Peran')}
+						<select bind:value={inviteRole} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each roles as role}
+								<option value={role}>{role}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<Button class="w-fit" disabled={inviting} onclick={handleInvite}>{inviting ? t('Inviting...') : t('Kirim undangan')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if teamMembers.error}
@@ -192,7 +261,22 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{permission}</span>
 							{/each}
 						</div>
-						<Button variant="outline" onclick={() => handleUpdateRole(member)} disabled={updatingRole === member.id}>{updatingRole === member.id ? t('Updating...') : t('Update role')}</Button>
+						<select
+							class="h-10 rounded-md border bg-background px-3 text-sm"
+							disabled={updatingRole === member.id}
+							value={member.role}
+							onchange={(e) => handleUpdateRole(member, (e.currentTarget as HTMLSelectElement).value as TeamMember['role'])}
+						>
+							{#each roles as role}
+								<option value={role}>{role}</option>
+							{/each}
+						</select>
+						<div class="grid grid-cols-2 gap-2">
+							<Button variant="outline" disabled={busyId === member.id} onclick={() => handleToggleStatus(member)}>
+								{member.status === 'Active' ? t('Suspend') : t('Aktifkan')}
+							</Button>
+							<Button variant="outline" class="text-destructive" disabled={busyId === member.id} onclick={() => handleRemove(member)}>{t('Hapus')}</Button>
+						</div>
 					</CardContent>
 				</Card>
 			{:else}
