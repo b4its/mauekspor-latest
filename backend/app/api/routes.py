@@ -1998,6 +1998,7 @@ def create_costing(payload: sc.CreateCostingPayload):
         "exwPrice": calc["exwPrice"],
         "fobPrice": calc["fobPrice"],
         "cifPrice": calc["cifPrice"],
+        "dapPrice": calc.get("dapPrice"),
         "landedCost": round(calc["cifPrice"] * 1.12, 2),
         "profit": round(calc["exwPrice"] - (cogs + packing) / (calc["exchangeRate"] or 1), 2),
         "confidence": 84,
@@ -2056,6 +2057,7 @@ def update_costing(costing_id: str, payload: sc.UpdateCostingPayload):
         "exwPrice": calc["exwPrice"],
         "fobPrice": calc["fobPrice"],
         "cifPrice": calc["cifPrice"],
+        "dapPrice": calc.get("dapPrice"),
         "landedCost": round(calc["cifPrice"] * 1.12, 2),
         "profit": round(calc["exwPrice"] - (cogs + packing) / (calc["exchangeRate"] or 1), 2),
         "lines": calc["lines"],
@@ -2116,6 +2118,7 @@ def recalculate_costing(costing_id: str):
     record["exwPrice"] = calc["exwPrice"]
     record["fobPrice"] = calc["fobPrice"]
     record["cifPrice"] = calc["cifPrice"]
+    record["dapPrice"] = calc.get("dapPrice")
     record["landedCost"] = round(calc["cifPrice"] * 1.12, 2)
     record["profit"] = round(calc["exwPrice"] - (cogs + packing) / (calc["exchangeRate"] or 1), 2)
     record["lines"] = calc["lines"]

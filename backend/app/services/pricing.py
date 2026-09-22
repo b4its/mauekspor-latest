@@ -149,6 +149,26 @@ def calculate_cif(fob: float, region: str) -> float:
     return round(fob + freight + insurance, 2)
 
 
+# Biaya lokal di negara tujuan utk DAP (handling, transport darat, dst) — % dari CIF
+_DAP_LOCAL_PERCENT = {
+    "Asia": 0.04,
+    "Oceania": 0.05,
+    "Europe": 0.06,
+    "North America": 0.06,
+    "South America": 0.07,
+    "Middle East": 0.05,
+    "Africa": 0.08,
+}
+
+
+def calculate_dap(cif: float, region: str) -> float:
+    """DAP (Delivered At Place): CIF + biaya lokal tujuan (handling & on-carriage).
+
+    DAP TIDAK termasuk bea masuk & pajak impor (itu DDP) — sesuai Incoterms 2020.
+    """
+    return round(cif * (1 + _DAP_LOCAL_PERCENT.get(region, 0.05)), 2)
+
+
 # ---------------------------------------------------------------------------
 # Optimasi kontainer
 # ---------------------------------------------------------------------------
@@ -290,6 +310,7 @@ def calculate_full_costing(
     fob = calculate_fob(exw, distance_km, rate)
     region = region_of(destination)
     cif = calculate_cif(fob, region)
+    dap = calculate_dap(cif, region)
     container = container_capacity(product_volume_m3, product_weight_kg)
     return {
         "exchangeRate": rate,
@@ -300,6 +321,7 @@ def calculate_full_costing(
         "exwPrice": exw,
         "fobPrice": fob,
         "cifPrice": cif,
+        "dapPrice": dap,
         "region": region,
         "container": container,
         "lines": [
@@ -310,6 +332,7 @@ def calculate_full_costing(
             {"category": "Documents", "label": "Documentation fee", "amount": _DOCUMENT_COST},
             {"category": "Freight", "label": f"Ocean freight ({region})", "amount": round(cif - fob - (fob + (cif - fob - fob * _INSURANCE_PERCENT) / (1 + _INSURANCE_PERCENT)) * _INSURANCE_PERCENT, 2)},
             {"category": "Insurance", "label": "Cargo insurance 0.5%", "amount": round((fob + (cif - fob) * 0.9) * _INSURANCE_PERCENT, 2)},
+            {"category": "Destination local", "label": f"DAP on-carriage ({region})", "amount": round(dap - cif, 2)},
         ],
     }
 
