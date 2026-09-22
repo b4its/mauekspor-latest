@@ -4,6 +4,10 @@ import pytest
 
 os.environ.setdefault("MAUEKSPOR_DISABLE_PERSISTENCE", "1")
 os.environ.setdefault("MAUEKSPOR_ADMIN_CODE", "admin-bootstrap-2026")
+# Turunkan iterasi PBKDF2 selama test: 100_000 iterasi ≈ 3.5s per hash, dan
+# hampir setiap test melakukan login → suite membengkak ~10 menit. Nilai 1
+# tetap menguji jalur kode yang sama (hash + verify + compare_digest).
+os.environ.setdefault("MAUEKSPOR_PBKDF2_ITERATIONS", "1")
 # Paksa AI mode mock selama test agar deterministik & tanpa network,
 # meski .env lokal mungkin menyetel mode remote.
 os.environ.setdefault("MAUEKSPOR_AI_MODE", "mock")

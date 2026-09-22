@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     # Set MAUEKSPOR_ALLOW_INSECURE_DEFAULTS=1 untuk menonaktifkan fail-fast
     # (mis. CI/demo yang sengaja memakai default).
     allow_insecure_defaults: bool = False
+    # Iterasi PBKDF2-HMAC-SHA256 untuk hashing password. Default 100_000 (kuat,
+    # sesuai OWASP). Test suite menurunkannya via MAUEKSPOR_PBKDF2_ITERATIONS=1
+    # agar login tidak memakan ~3.5s per hash (320 test × banyak login = ~10 menit).
+    # Nilai ini TIDAK boleh diturunkan di production.
+    pbkdf2_iterations: int = 100_000
 
     @model_validator(mode="after")
     def _guard_default_secret(self) -> "Settings":
@@ -54,12 +59,19 @@ class Settings(BaseSettings):
         is_prod = self.environment.strip().lower() in {"production", "prod"}
         weak_secret = self.secret_key in {"", "change-me-in-production"}
         weak_seed = self.seed_admin_password in {"", "admin123"}
-        if is_prod and (weak_secret or weak_seed) and not self.allow_insecure_defaults:
+        # Iterasi PBKDF2 terlalu rendah melemahkan hashing password (brute-force).
+        # Test/dev boleh rendah; production wajib kuat.
+        weak_pbkdf2 = self.pbkdf2_iterations < 50_000
+        if is_prod and (weak_secret or weak_seed or weak_pbkdf2) and not self.allow_insecure_defaults:
             problems = []
             if weak_secret:
                 problems.append("MAUEKSPOR_SECRET_KEY")
             if weak_seed:
                 problems.append("MAUEKSPOR_SEED_ADMIN_PASSWORD")
+            if weak_pbkdf2:
+                problems.append(
+                    f"MAUEKSPOR_PBKDF2_ITERATIONS ({self.pbkdf2_iterations} < 50000)"
+                )
             raise RuntimeError(
                 "Refusing to start in production with insecure defaults: "
                 + ", ".join(problems)

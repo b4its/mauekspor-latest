@@ -18,7 +18,10 @@ PEPPER = settings.secret_key
 
 def hash_password(password: str, salt: str | None = None) -> str:
     salt = salt or secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000)
+    # Iterasi diambil dari settings (default 100_000). Test menurunkannya agar
+    # cepat; produksi tetap memakai nilai kuat. Lihat Settings.pbkdf2_iterations.
+    iterations = max(1, int(getattr(settings, "pbkdf2_iterations", 100_000)))
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), iterations)
     return f"{salt}${b64encode(digest).decode()}"
 
 

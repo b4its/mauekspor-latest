@@ -77,6 +77,9 @@ def test_production_dengan_secret_kuat_ok():
         MAUEKSPOR_ENVIRONMENT="production",
         MAUEKSPOR_SECRET_KEY="a-strong-random-secret-value-123456",
         MAUEKSPOR_SEED_ADMIN_PASSWORD="S3cure-Adm1n-Pass",
+        # Iterasi PBKDF2 production harus kuat; conftest menurunkannya untuk
+        # kecepatan test, jadi set eksplisit di sini agar guard tidak menyala.
+        MAUEKSPOR_PBKDF2_ITERATIONS="100000",
     )
     assert s.environment == "production"
 
