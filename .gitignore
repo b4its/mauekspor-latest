@@ -40,3 +40,7 @@ backend/.coverage
 backend/**/,cover
 frontend/test-results/
 frontend/playwright-report/
+
+# Local development config
+.env.local
+

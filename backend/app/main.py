@@ -172,7 +172,7 @@ import time as _time
 _RL_WINDOW = 60
 _RL_DEFAULT = 120  # max requests per window per IP
 _RL_LOGIN = int(os.getenv("MAUEKSPOR_RL_LOGIN", "5"))  # login rate limit (5 by default)
-_RL_ENABLED = os.getenv("MAUEKSPOR_DISABLE_PERSISTENCE", "").lower() not in {"1", "true", "yes"}
+_RL_ENABLED = os.getenv("MAUEKSPOR_DISABLE_RATE_LIMIT", "").lower() not in {"1", "true", "yes"}
 
 
 def _rate_limit_key(request) -> str:

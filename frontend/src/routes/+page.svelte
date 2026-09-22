@@ -89,7 +89,7 @@
 		>
 			<a href="/" class="inline-flex items-center gap-1.5">
 				<Logo variant="logo" class="!h-9" />
-				<span class="font-display text-2xl font-black tracking-tight text-[#0b1d3a] dark:text-white">MauEkspor</span>
+				<span class="font-display text-2xl font-black tracking-tight text-[#0b1d3a] dark:text-white">auEkspor</span>
 			</a>
 
 			<nav class="hidden gap-6 text-sm font-bold text-[#0b1d3a]/70 md:flex dark:text-white/70" aria-label={t('Navigasi laman')}>
@@ -512,7 +512,7 @@
 		<footer class="flex flex-wrap items-center justify-between gap-4 px-2 py-6 text-sm text-[#0b1d3a]/60 dark:text-white/60">
 			<a href="/" class="inline-flex items-center gap-1.5">
 				<Logo variant="logo" class="!h-8" />
-				<span class="font-display text-xl font-black tracking-tight text-[#0b1d3a] dark:text-white">MauEkspor</span>
+				<span class="font-display text-xl font-black tracking-tight text-[#0b1d3a] dark:text-white">auEkspor</span>
 			</a>
 			<p class="max-w-xl">{t('Platform rantai pasok ekspor komoditas desa: membantu petani, pengrajin, dan UMKM desa Indonesia menembus pasar global dengan standar ekspor yang benar.')}</p>
 			<nav class="flex gap-4 text-sm font-bold text-[#0b1d3a]/60 dark:text-white/60" aria-label="Footer">

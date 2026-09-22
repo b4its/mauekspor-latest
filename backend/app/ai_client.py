@@ -10,17 +10,16 @@ Konfigurasi menggunakan endpoint lokal:
 import os
 from typing import Any, Dict, List, Optional, Union
 import httpx
-from dotenv import load_dotenv
 import json
 
-# Load environment variables
-load_dotenv('/home/vxm/programming/mauekspor/backend/.env')
-
-# Configuration from .env
+# DO NOT load dotenv here - use environment variables directly
+# Environment variables are set by Docker compose (docker-compose.production.yml)
+# Configuration from environment variables (set via .env and docker-compose)
 AI_CONFIG = {
     'mode': os.getenv('MAUEKSPOR_AI_MODE', 'remote'),  # 'mock' or 'remote'
     'api_key': os.getenv('MAUEKSPOR_AI_API_KEY', ''),
-    'base_url': os.getenv('MAUEKSPOR_AI_BASE_URL', 'http://localhost:20128/v1'),
+    # Priority order: MAUEKSPOR_AI_PUBLIC_URL > MAUEKSPOR_AI_BASE_URL > default localhost
+    'base_url': os.getenv('MAUEKSPOR_AI_PUBLIC_URL') or os.getenv('MAUEKSPOR_AI_BASE_URL', 'http://host.docker.internal:20128/v1'),
     'model': os.getenv('MAUEKSPOR_AI_MODEL', 'qd/dmodel'),
     'timeout': 60,
 }
