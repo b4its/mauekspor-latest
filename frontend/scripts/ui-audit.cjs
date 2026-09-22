@@ -42,10 +42,12 @@ function ratio(fg, bg) {
     page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 150)); });
     page.on('pageerror', e => consoleErrors.push('PAGEERROR: ' + String(e).slice(0, 150)));
 
-    // Force theme before load
+    // Force theme before load (guard: init script may run before documentElement exists)
     await page.addInitScript(t => {
-      try { localStorage.setItem('mauekspor-theme', t); } catch (e) {}
-      document.documentElement.classList.add(t);
+      try {
+        localStorage.setItem('mauekspor-theme', t);
+        if (document.documentElement) document.documentElement.classList.add(t);
+      } catch (e) { /* early context — skip */ }
     }, theme);
 
     console.log(`\n═══ THEME: ${theme} ═══`);
