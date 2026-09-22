@@ -11,7 +11,8 @@ const ADMIN_CREDENTIALS = {
   password: 'admin123'
 };
 
-// All pages to screenshot (protected routes)
+// All pages to screenshot (public first, then protected)
+const PUBLIC_PAGES = ['/', '/login', '/about'];
 const PAGES = [
   '/dashboard',
   '/products',
@@ -226,6 +227,25 @@ async function main() {
   ensureDir(SCREENSHOT_DIR);
 
   try {
+    // Step 0: Screenshot halaman publik (belum login)
+    const results = [];
+    for (const pub of PUBLIC_PAGES) {
+      const name = '00public-' + (pub === '/' ? 'landing' : pub.replace('/', ''));
+      const dirPath = path.join(SCREENSHOT_DIR, name);
+      ensureDir(dirPath);
+      console.log(`[public] ${pub}`);
+      try {
+        await loadPageFully(page, BASE_URL + pub);
+        await page.screenshot({ path: path.join(dirPath, '001-full-page.png'), fullPage: true });
+        await captureSections(page, dirPath);
+        results.push({ page: pub, ok: true });
+        console.log(`   ✓ ${name}`);
+      } catch (e) {
+        results.push({ page: pub, ok: false, err: String(e).slice(0, 80) });
+        console.log(`   ✗ ${e.message?.slice(0, 60)}`);
+      }
+    }
+
     // Step 1: Login first
     await login(page);
 
@@ -242,6 +262,7 @@ async function main() {
       try {
         // Ensure directory
         ensureDir(dirPath);
+        const pageStart = Date.now();
 
         // Load page fully
         await loadPageFully(page, BASE_URL + pagePath);
@@ -260,9 +281,11 @@ async function main() {
         // Section screenshots
         await captureSections(page, dirPath);
 
+        results.push({ page: pagePath, ok: true, ms: Date.now() - pageStart });
         console.log(`   ✓ Saved to ${dirPath}\n`);
 
       } catch (err) {
+        results.push({ page: pagePath, ok: false, err: err.message?.slice(0, 80) });
         console.error(`   ✗ Error processing ${pagePath}:`, err.message);
         
         // Try to capture error screenshot anyway
@@ -276,7 +299,16 @@ async function main() {
       }
     }
 
-    console.log('\n✅ Screenshot session completed!\n');
+    const ok = results.filter(r => r.ok).length;
+    const fail = results.filter(r => !r.ok);
+    console.log('\n════════════════════════════════════');
+    console.log(`  HASIL: ${ok}/${results.length} halaman sukses`);
+    if (fail.length) {
+      console.log('  Gagal:');
+      fail.forEach(f => console.log(`   ✗ ${f.page}: ${f.err}`));
+    }
+    console.log('════════════════════════════════════\n');
+    console.log('✅ Screenshot session completed!\n');
 
   } finally {
     await browser.close();
