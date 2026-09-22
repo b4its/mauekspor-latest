@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { automationRules as seedRules } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
-	import { listAutomations, runAutomation, activateAutomation } from '$lib/api/automations';
+	import { listAutomations, runAutomation, activateAutomation, pauseAutomation, createAutomation, updateAutomation, deleteAutomation } from '$lib/api/automations';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
@@ -14,6 +14,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	const filters = ['All', 'Compliance', 'Documents', 'Payments', 'Shipments', 'Reports'];
+	const modules = ['Compliance', 'Documents', 'Payments', 'Shipments', 'Reports'];
 	let activeFilter = $state('All');
 	let query = $state('');
 	let rules = createRemoteList(listAutomations, seedRules);
@@ -22,6 +23,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let busyId = $state('');
 	let justRan = $state('');
 	let justActivated = $state('');
+	let showForm = $state(false);
+	let saving = $state(false);
+	let formError = $state('');
+	let editingId = $state('');
+	let fName = $state('');
+	let fTrigger = $state('');
+	let fAction = $state('');
+	let fModule = $state('Compliance');
+	let fDescription = $state('');
+	let fStatus = $state('Paused');
 
 	$effect(() => {
 		rules.load();
@@ -45,6 +56,101 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		if (tone === 'red') return 'destructive';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
+	}
+
+	function resetForm() {
+		editingId = '';
+		fName = '';
+		fTrigger = '';
+		fAction = '';
+		fModule = 'Compliance';
+		fDescription = '';
+		fStatus = 'Paused';
+	}
+
+	function openCreate() {
+		resetForm();
+		formError = '';
+		showForm = true;
+	}
+
+	function openEdit(rule: { id: string; name: string; trigger: string; action: string; module: string; description?: string; status: string }) {
+		editingId = rule.id;
+		fName = rule.name;
+		fTrigger = rule.trigger;
+		fAction = rule.action;
+		fModule = rule.module;
+		fDescription = rule.description ?? '';
+		fStatus = rule.status;
+		formError = '';
+		showForm = true;
+	}
+
+	async function handleSave() {
+		formError = '';
+		if (!fName.trim()) {
+			formError = t('Nama aturan wajib diisi.');
+			return;
+		}
+		saving = true;
+		try {
+			const payload = {
+				name: fName.trim(),
+				trigger: fTrigger.trim(),
+				action: fAction.trim(),
+				module: fModule,
+				description: fDescription.trim(),
+				status: fStatus
+			};
+			if (editingId) {
+				await updateAutomation(editingId, payload);
+				message = `Rule "${payload.name}" diperbarui.`;
+			} else {
+				await createAutomation(payload);
+				message = `Rule "${payload.name}" dibuat.`;
+			}
+			await rules.load();
+			showForm = false;
+			resetForm();
+		} catch {
+			formError = t('Gagal menyimpan aturan.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	async function handlePause(ruleId: string) {
+		error = '';
+		message = '';
+		busyId = ruleId;
+		try {
+			const res = await pauseAutomation(ruleId);
+			justActivated = '';
+			justRan = '';
+			const idx = rules.items.findIndex((r) => r.id === ruleId);
+			if (idx >= 0) rules.items[idx] = { ...rules.items[idx], ...res.data, status: 'Paused' };
+			message = `Rule "${res.data.name}" dijeda.`;
+		} catch {
+			error = t('Gagal menjeda rule.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleDelete(rule: { id: string; name: string }) {
+		error = '';
+		message = '';
+		busyId = rule.id;
+		try {
+			await deleteAutomation(rule.id);
+			const idx = rules.items.findIndex((r) => r.id === rule.id);
+			if (idx >= 0) rules.items.splice(idx, 1);
+			message = `Rule "${rule.name}" dihapus.`;
+		} catch {
+			error = t('Gagal menghapus rule.');
+		} finally {
+			busyId = '';
+		}
 	}
 
 	async function handleRun(ruleId: string) {
@@ -103,7 +209,51 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Badge variant="secondary">Active {activeCount}</Badge>
+			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Buat aturan')}</Button>
 		</CardContent>
+		{#if showForm}
+			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Nama aturan')}
+						<Input bind:value={fName} placeholder={t('Contoh: Ingatkan dokumen telat')} />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Modul')}
+						<select bind:value={fModule} class="h-10 rounded-md border bg-background px-3 text-sm">
+							{#each modules as mod}
+								<option value={mod}>{mod}</option>
+							{/each}
+						</select>
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Ketika (trigger)')}
+						<Input bind:value={fTrigger} placeholder="Status Change" />
+					</label>
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Lalu (action)')}
+						<Input bind:value={fAction} placeholder="Send Notification" />
+					</label>
+				</div>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Deskripsi')}
+					<Input bind:value={fDescription} placeholder={t('Deskripsi singkat aturan...')} />
+				</label>
+				<label class="grid gap-1 text-sm font-semibold">
+					{t('Status')}
+					<select bind:value={fStatus} class="h-10 rounded-md border bg-background px-3 text-sm">
+						<option value="Paused">Paused</option>
+						<option value="Active">Active</option>
+					</select>
+				</label>
+				{#if formError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+				{/if}
+				<Button class="w-fit" disabled={saving} onclick={handleSave}>{saving ? t('Menyimpan...') : editingId ? t('Simpan perubahan') : t('Simpan aturan')}</Button>
+			</CardContent>
+		{/if}
 	</Card>
 
 	{#if error}
@@ -179,9 +329,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<Button variant="outline" disabled={busyId === rule.id} onclick={() => handleRun(rule.id)}>
 							{busyId === rule.id ? '...' : 'Run'}
 						</Button>
-						<Button variant={rule.status === 'Active' || justActivated === rule.id ? 'secondary' : 'outline'} disabled={busyId === rule.id} onclick={() => handleActivate(rule.id)}>
+						<Button variant={rule.status === 'Active' || justActivated === rule.id ? 'secondary' : 'outline'} disabled={busyId === rule.id} onclick={() => (rule.status === 'Active' || justActivated === rule.id ? handlePause(rule.id) : handleActivate(rule.id))}>
 							{rule.status === 'Active' || justActivated === rule.id ? 'Active' : 'Activate'}
 						</Button>
+					</div>
+					<div class="grid grid-cols-2 gap-2">
+						<Button variant="outline" disabled={busyId === rule.id} onclick={() => openEdit(rule)}>{t('Edit')}</Button>
+						<Button variant="outline" class="text-destructive" disabled={busyId === rule.id} onclick={() => handleDelete(rule)}>{t('Hapus')}</Button>
 					</div>
 				</Card>
 			{:else}
