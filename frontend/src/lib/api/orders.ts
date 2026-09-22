@@ -2,9 +2,15 @@ import { apiFetch } from '$lib/api/client';
 import type { SalesOrder } from '$lib/data/trade';
 
 export type CreateOrderPayload = {
-	quotationId: string;
-	paymentTerms: string;
-	deliveryWindow: string;
+	quotationId?: string;
+	buyer?: string;
+	supplier?: string;
+	value?: number;
+	incoterm?: string;
+	currency?: string;
+	paymentTerms?: string;
+	deliveryWindow?: string;
+	projectId?: string;
 };
 
 export function listOrders() {

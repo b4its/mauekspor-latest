@@ -2,9 +2,10 @@ import { apiFetch } from '$lib/api/client';
 import type { MarketInsight } from '$lib/data/trade';
 
 export type CreateMarketInsightPayload = {
-	productId: string;
 	country: string;
+	productId?: string;
 	projectId?: string;
+	entryStrategy?: string;
 };
 
 export function listMarketInsights() {

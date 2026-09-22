@@ -2,11 +2,15 @@ import { apiFetch } from '$lib/api/client';
 import type { Quotation } from '$lib/data/trade';
 
 export type CreateQuotationPayload = {
-	rfqId: string;
-	incoterm: string;
-	value: number;
-	currency: 'USD' | 'IDR';
-	validUntil: string;
+	rfqId?: string;
+	buyer?: string;
+	supplier?: string;
+	productId?: string;
+	value?: number;
+	currency?: string;
+	incoterm?: string;
+	validUntil?: string;
+	margin?: number;
 };
 
 export function listQuotations() {

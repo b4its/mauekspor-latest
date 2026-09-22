@@ -2,12 +2,14 @@ import { apiFetch } from '$lib/api/client';
 import type { RFQ } from '$lib/data/trade';
 
 export type CreateRFQPayload = {
-	buyer: string;
-	product: string;
-	destination: string;
-	quantity: string;
-	incoterm: string;
-	deadline: string;
+	destination?: string;
+	buyer?: string;
+	product?: string;
+	quantity?: string;
+	incoterm?: string;
+	deadline?: string;
+	productId?: string;
+	projectId?: string;
 };
 
 export function listRFQs() {
