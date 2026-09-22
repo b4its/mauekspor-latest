@@ -78,7 +78,7 @@ help:
 # ─────────────────────────────────────────────────────────────────────────────
 ngrok-prod-build:
 	@echo "🔨 Building Docker images..."
-	docker compose -f docker-compose.production.yml build db backend frontend-prod nginx
+	docker compose -p mauekspor-prod -f docker-compose.production.yml build db backend frontend-prod nginx
 	@echo "✅ Build selesai!"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ ngrok-prod-up:
 
 ngrok-prod-down:
 	@echo "🛑 Stopping production stack..."
-	@docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
+	@docker compose -p mauekspor-prod -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
 	@docker rm -f mauekspor-db-prod mauekspor-backend-prod mauekspor-frontend-prod mauekspor-nginx-prod mauekspor-ngrok-prod 2>/dev/null || true
 	@echo "✅ Production stack dihentikan"
 
@@ -111,7 +111,7 @@ ngrok-prod-status:
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 ngrok-prod-logs:
-	docker compose -f docker-compose.production.yml logs -f --tail=100
+	docker compose -p mauekspor-prod -f docker-compose.production.yml logs -f --tail=100
 
 ngrok-prod-reseed:
 	@echo "⚠️  WARNING: Ini akan MENGHAPUS semua data!"
@@ -202,10 +202,10 @@ build:
 	cd frontend && pnpm build && echo "✅ Frontend build selesai!"
 
 docker-up:
-	docker compose -f docker-compose.production.yml up -d && echo "✅ Up!"
+	docker compose -p mauekspor-prod -f docker-compose.production.yml up -d && echo "✅ Up!"
 
 docker-down:
-	docker compose -f docker-compose.production.yml down && echo "✅ Down!"
+	docker compose -p mauekspor-prod -f docker-compose.production.yml down && echo "✅ Down!"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TESTING

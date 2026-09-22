@@ -126,7 +126,7 @@ else
     echo "MAUEKSPOR_AI_PUBLIC_URL=${AI_BASE_URL}" >> .env
 fi
 
-docker compose -f docker-compose.production.yml up -d backend 2>&1 | grep -E "Recreated|Started" || true
+docker compose -p mauekspor-prod -f docker-compose.production.yml up -d backend 2>&1 | grep -E "Recreated|Started" || true
 echo "     Menunggu backend healthy..."
 for i in $(seq 1 12); do
     if docker inspect mauekspor-backend-prod 2>/dev/null | grep -q '"healthy"'; then

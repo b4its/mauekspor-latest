@@ -23,7 +23,7 @@ sleep 1
 # ── 2. Hentikan container lama ────────────────────────────────────────────────
 echo ""
 echo "🛑 Stopping existing production containers..."
-docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
+docker compose -p mauekspor-prod -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
 docker rm -f \
     mauekspor-db-prod \
     mauekspor-backend-prod \
@@ -36,7 +36,7 @@ sleep 2
 if [[ "$1" == "--rebuild" ]]; then
     echo ""
     echo "🔨 Rebuilding Docker images..."
-    docker compose -f docker-compose.production.yml build db backend frontend-prod nginx
+    docker compose -p mauekspor-prod -f docker-compose.production.yml build db backend frontend-prod nginx
 fi
 
 # ── 4. Cek port (info only, Docker yang pegang jadi skip exit) ────────────────
@@ -53,7 +53,7 @@ done
 # ── 5. Start stack ─────────────────────────────────────────────────────────────
 echo ""
 echo "🐳 Starting database..."
-docker compose -f docker-compose.production.yml up -d db
+docker compose -p mauekspor-prod -f docker-compose.production.yml up -d db
 echo "   Waiting for db healthy (max 40s)..."
 WAIT=0
 until docker inspect mauekspor-db-prod 2>/dev/null | grep -q '"healthy"' || [ $WAIT -ge 40 ]; do
@@ -63,7 +63,7 @@ echo ""
 
 echo ""
 echo "🐳 Starting backend, frontend, nginx..."
-docker compose -f docker-compose.production.yml up -d backend frontend-prod nginx
+docker compose -p mauekspor-prod -f docker-compose.production.yml up -d backend frontend-prod nginx
 
 echo "   Waiting for backend healthy (max 60s)..."
 WAIT=0

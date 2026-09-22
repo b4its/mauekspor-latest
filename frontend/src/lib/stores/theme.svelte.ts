@@ -15,6 +15,8 @@ function getInitial(): Theme {
 }
 
 function apply(theme: Theme) {
+	// Guard: document may be unavailable during SSR/prerender
+	if (typeof document === 'undefined' || !document.documentElement) return;
 	document.documentElement.classList.toggle('dark', theme === 'dark');
 }
 

@@ -5,7 +5,7 @@
 	let {
 		variant = 'landscape',
 		class: className = '',
-		href = '/'
+		href = ''
 	}: { variant?: 'landscape' | 'logo'; class?: string; href?: string } = $props();
 
 	let theme = $derived(getTheme());

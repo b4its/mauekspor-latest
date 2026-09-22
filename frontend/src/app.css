@@ -122,9 +122,9 @@
 	--secondary: #eaf2ff;
 	--secondary-foreground: #0b1d3a;
 
-	/* Muted: De-emphasized text (5.57:1 — passes AA) */
+	/* Muted: De-emphasized text — AAA on both bg & card (wayfinding must stay legible) */
 	--muted: #eaf2ff;
-	--muted-foreground: #4a5a7a;
+	--muted-foreground: #3f5075;
 
 	/* Accent: Interactive hover states */
 	--accent: #e6eefc;
@@ -183,9 +183,9 @@ html.dark {
 	--secondary: #0c1f3d;
 	--secondary-foreground: #eaf1ff;
 
-	/* Muted: Soft blue-gray (7.33:1 on card — passes AAA) */
+	/* Muted: Soft blue-gray — AAA on bg & card (breadcrumbs, labels, captions) */
 	--muted: #0c1f3d;
-	--muted-foreground: #8da3cf;
+	--muted-foreground: #a8b9dc;
 
 	/* Accent: Elevated surface for hover */
 	--accent: #122b4c;

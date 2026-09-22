@@ -4,6 +4,17 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<script>
+			// Theme anti-flash: apply saved/system theme BEFORE any CSS/JS loads.
+			// Lives in app.html (not Svelte head) so SSR never evaluates it.
+			(function () {
+				try {
+					var saved = localStorage.getItem('mauekspor-theme');
+					var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+					if (dark) document.documentElement.classList.add('dark');
+				} catch (e) { /* storage blocked — default light */ }
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

@@ -75,12 +75,14 @@ services:
     depends_on:
       - backend
     ports:
-      - "5188:5173"
+      - "5188:5188"
     environment:
       VITE_API_BASE_URL: /api/v1
-      # Target proxy dev server (vite.config.ts) menuju backend di host
-      # (backend memakai network_mode: host dan bind 0.0.0.0:8000)
-      BACKEND_ORIGIN: http://host.docker.internal:8000
+      # Proxy langsung ke container backend production (container-to-container,
+      # TIDAK lewat host — firewall host memblokir container→host traffic).
+      # Butuh external network dari docker-compose.production.yml:
+      #   docker network connect mauekspor_mauekspor-backend mauekspor-frontend-dev
+      BACKEND_ORIGIN: http://mauekspor-backend-prod:8000
       HOST: 0.0.0.0
       PORT: 5188
     extra_hosts:
@@ -90,6 +92,14 @@ services:
       - ./frontend:/app
       - frontend-node-modules:/app/node_modules
     restart: unless-stopped
+    networks:
+      - default
+      - mauekspor-prod-net
+
+networks:
+  mauekspor-prod-net:
+    external: true
+    name: mauekspor-prod_mauekspor-backend
 
 volumes:
   db-data:
