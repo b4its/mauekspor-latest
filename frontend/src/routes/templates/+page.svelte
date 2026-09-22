@@ -7,7 +7,7 @@
 	import { templates as seedTemplates } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { listTemplates, createTemplate, useTemplate } from '$lib/api/templates';
+	import { listTemplates, createTemplate, useTemplate, updateTemplate, deleteTemplate } from '$lib/api/templates';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
@@ -27,6 +27,9 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let newTitle = $state('');
 	let newCategory = $state<'Document' | 'Email' | 'Workflow' | 'Catalog'>('Document');
 	let newDescription = $state('');
+	let editingId = $state('');
+	let message = $state('');
+	let busyId = $state('');
 	let filteredTemplates = $derived(
 		templates.items.filter(
 			(item) =>
@@ -66,15 +69,55 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		createSaving = true;
 		try {
-			await createTemplate({ title: newTitle.trim(), category: newCategory, description: newDescription.trim() });
-			templates.load();
+			if (editingId) {
+				await updateTemplate(editingId, { title: newTitle.trim(), category: newCategory, description: newDescription.trim() });
+				message = `Template "${newTitle.trim()}" diperbarui.`;
+			} else {
+				await createTemplate({ title: newTitle.trim(), category: newCategory, description: newDescription.trim() });
+				message = `Template "${newTitle.trim()}" dibuat.`;
+			}
+			await templates.load();
 			showCreate = false;
+			editingId = '';
 			newTitle = '';
 			newDescription = '';
 		} catch {
 			createError = t('Gagal membuat template.');
 		} finally {
 			createSaving = false;
+		}
+	}
+
+	function openCreate() {
+		editingId = '';
+		newTitle = '';
+		newDescription = '';
+		newCategory = 'Document';
+		createError = '';
+		showCreate = true;
+	}
+
+	function openEdit(template: { id: string; title: string; category: string; description?: string }) {
+		editingId = template.id;
+		newTitle = template.title;
+		newDescription = template.description ?? '';
+		newCategory = template.category as 'Document' | 'Email' | 'Workflow' | 'Catalog';
+		createError = '';
+		showCreate = true;
+	}
+
+	async function handleDelete(template: { id: string; title: string }) {
+		error = '';
+		busyId = template.id;
+		try {
+			await deleteTemplate(template.id);
+			const idx = templates.items.findIndex((item) => item.id === template.id);
+			if (idx >= 0) templates.items.splice(idx, 1);
+			message = `Template "${template.title}" dihapus.`;
+		} catch {
+			error = t('Gagal menghapus template.');
+		} finally {
+			busyId = '';
 		}
 	}
 	let paginationPage = $state(1);
@@ -101,7 +144,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={() => handleUse(templates.items[0]?.id ?? 't-001')}>{used ? t('Template used') : t('Use template')}</Button>
-			<Button variant="outline" onclick={() => (showCreate = !showCreate)}>{showCreate ? t('Batal') : t('Buat template')}</Button>
+			<Button variant="outline" onclick={() => (showCreate ? (showCreate = false) : openCreate())}>{showCreate ? t('Batal') : t('Buat template')}</Button>
 			<Badge>{t('Ready')} {readyCount}</Badge>
 		</CardContent>
 		{#if showCreate}
@@ -127,13 +170,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				{#if createError}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{createError}</p>
 				{/if}
-				<Button class="w-fit" disabled={createSaving} onclick={handleCreate}>{createSaving ? t('Menyimpan...') : t('Simpan template')}</Button>
+				<Button class="w-fit" disabled={createSaving} onclick={handleCreate}>{createSaving ? t('Menyimpan...') : editingId ? t('Simpan perubahan') : t('Simpan template')}</Button>
 			</CardContent>
 		{/if}
 	</Card>
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if templates.error}
@@ -208,6 +254,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						</div>
 					</CardContent>
 					<Button variant="outline" onclick={() => handleUse(template.id)}>{usedId === template.id ? t('Applied') : t('Apply')}</Button>
+					<div class="grid grid-cols-2 gap-2">
+						<Button variant="outline" disabled={busyId === template.id} onclick={() => openEdit(template)}>{t('Edit')}</Button>
+						<Button variant="outline" class="text-destructive" disabled={busyId === template.id} onclick={() => handleDelete(template)}>{t('Hapus')}</Button>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No template matched your search.')}</div>
