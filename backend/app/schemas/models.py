@@ -264,7 +264,8 @@ class CreateExportAnalysisPayload(BaseModel):
 
 class CompareExportAnalysisPayload(BaseModel):
     product_id: str
-    country_codes: list[str]
+    # Proposal hal.17 wireframe: 'bandingkan 2-5 negara'
+    country_codes: list[str] = Field(min_length=2, max_length=5)
     jenis_komoditas: str | None = None
 
 
