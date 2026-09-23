@@ -6,7 +6,7 @@
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table/index.js';
 	import { products as seedProducts } from '$lib/data/trade';
 	import { listProducts } from '$lib/api/products';
-	import { listCountries, compareExportAnalyses } from '$lib/api/export-analysis';
+	import { listCountries, compareExportAnalyses, downloadComparePdf } from '$lib/api/export-analysis';
 	import type { CompareResult } from '$lib/api/export-analysis';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import type { Product } from '$lib/data/trade';
@@ -167,6 +167,11 @@
 					</TableRow>
 				</TableBody>
 			</Table>
+			<div class="flex justify-end gap-2 border-t p-4">
+				<Button variant="outline" size="sm" onclick={() => downloadComparePdf({ product_id: selectedProductId, country_codes: selectedCodes })}>
+					Unduh PDF perbandingan
+				</Button>
+			</div>
 		</Card>
 	{/if}
 </AppShell>

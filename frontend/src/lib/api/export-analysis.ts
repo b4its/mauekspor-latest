@@ -1,4 +1,4 @@
-import { apiFetch } from '$lib/api/client';
+import { apiFetch, ApiError } from '$lib/api/client';
 import type { ExportAnalysis } from '$lib/data/trade';
 
 export type CreateExportAnalysisPayload = {
@@ -77,6 +77,26 @@ export function compareExportAnalyses(payload: ComparePayload) {
 		method: 'POST',
 		body: JSON.stringify(payload)
 	});
+}
+
+export async function downloadComparePdf(payload: ComparePayload) {
+	const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
+	const response = await fetch(`${base}/export-analysis/compare/pdf/`, {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(payload)
+	});
+	if (!response.ok) throw new ApiError(response.status, null);
+	const blob = await response.blob();
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = `analysis-compare-${payload.product_id}.pdf`;
+	document.body.appendChild(link);
+	link.click();
+	link.remove();
+	URL.revokeObjectURL(url);
 }
 
 export function runRegulationCheck(id: string) {

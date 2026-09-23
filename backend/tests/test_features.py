@@ -444,6 +444,21 @@ def test_costing_compare_and_xlsx_exports():
         # ids kosong -> 422
         assert c.post("/api/v1/costing/compare/", json={"ids": []}).status_code == 422
 
+        # Compare analysis -> JSON & PDF (data nyata dari compliance service)
+        products = c.get("/api/v1/products/").json()["data"]
+        prod = products[0]
+        r = c.post("/api/v1/export-analysis/compare/", json={"product_id": prod["id"], "country_codes": ["JP", "US", "DE"]})
+        assert r.status_code == 200, r.text
+        results = r.json()["data"]["results"]
+        assert len(results) == 3
+        scores = [x["score"] for x in results]
+        assert scores == sorted(scores, reverse=True)
+        r = c.post("/api/v1/export-analysis/compare/pdf/", json={"product_id": prod["id"], "country_codes": ["JP", "US", "DE"]})
+        assert r.status_code == 200, r.text[:80]
+        assert r.headers["content-type"] == "application/pdf"
+        assert r.content.startswith(b"%PDF")
+        assert b"BEST OPTION" in r.content
+
         # Export XLSX valid (zip XML) untuk semua modul
         for url in ("/api/v1/products/export.xlsx", "/api/v1/buyers/export.xlsx",
                     "/api/v1/export-analysis/export.xlsx", "/api/v1/costing/export.xlsx",

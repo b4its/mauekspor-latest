@@ -330,3 +330,30 @@ def build_analysis_pdf(analysis: dict[str, Any]) -> bytes:
         f"Generated: {datetime.now(timezone.utc).isoformat()}",
     ])
     return _wrap_pdf(text.encode("utf-8", errors="replace"))
+
+
+def build_compare_pdf(product: dict[str, Any], results: list[dict[str, Any]]) -> bytes:
+    """PDF perbandingan export analysis antar negara (urutan skor tertinggi dulu)."""
+    lines: list[str] = [
+        "MAUEKSPOR - EXPORT ANALYSIS COMPARISON",
+        "=" * 60,
+        f"Product : {product.get('name', '')}",
+        f"HS Code : {product.get('hs', 'TBD')}",
+        "",
+    ]
+    for idx, r in enumerate(results, start=1):
+        lines.append(f"{idx}. {r.get('country', '')} - Score {r.get('score', 0)} ({r.get('grade', '-')})")
+        lines.append("   Critical issues : %d" % r.get("critical_issues", 0))
+        rec = r.get("recommendation") or ""
+        lines.append("   Rekomendasi    : %s" % (rec[:180] + ("..." if len(rec) > 180 else "")))
+        lines.append("")
+    best = results[0] if results else None
+    if best:
+        lines += [
+            "=" * 60,
+            f"BEST OPTION : {best.get('country', '')}",
+            f"Score       : {best.get('score', 0)} / 100",
+            f"Grade       : {best.get('grade', '-')}",
+        ]
+    lines += ["", f"Generated: {datetime.now(timezone.utc).isoformat()}"]
+    return _wrap_pdf("\n".join(lines).encode("utf-8", errors="replace"))

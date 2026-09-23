@@ -3093,22 +3093,19 @@ def create_analysis(payload: sc.CreateExportAnalysisPayload):
     return _one(record)
 
 
-@router.post("/export-analysis/compare/")
-def compare_analyses(payload: sc.CompareExportAnalysisPayload):
+def _compare_analyses_results(product: dict, country_codes: list[str]) -> tuple[dict, list[dict]]:
+    """Jalankan/dapatkan analisis per negara & urutkan berdasarkan skor (dipakai compare JSON + PDF)."""
     from app.services import compliance as compliance_svc
 
-    product = db.get("products", payload.product_id)
-    if not product:
-        raise HTTPException(404, "Product not found")
-    codes = [c.upper()[:2] for c in payload.country_codes][:5]
+    codes = [c.upper()[:2] for c in country_codes][:5]
     results = []
     for code in codes:
-        analysis = db.get_by("export_analyses", productId=payload.product_id, countryCode=code)
+        analysis = db.get_by("export_analyses", productId=product.get("id"), countryCode=code)
         if not analysis:
             result = compliance_svc.analyze_product_compliance(product, code)
             analysis = db.insert("export_analyses", {
                 "id": db.gen_id("export_analyses", "ANL"),
-                "productId": payload.product_id,
+                "productId": product.get("id"),
                 "productName": product["name"],
                 "destination": code,
                 "status": "Ready",
@@ -3139,6 +3136,33 @@ def compare_analyses(payload: sc.CompareExportAnalysisPayload):
     results.sort(key=lambda r: r["score"], reverse=True)
     return {"data": {"product": {"id": product.get("id"), "name": product.get("name")}, "results": results}, "meta": {}}
 
+
+@router.post("/export-analysis/compare/")
+def compare_analyses(payload: sc.CompareExportAnalysisPayload):
+    product = db.get("products", payload.product_id)
+    if not product:
+        raise HTTPException(404, "Product not found")
+    return _compare_analyses_results(product, payload.country_codes)
+
+
+@router.post("/export-analysis/compare/pdf/")
+def compare_analyses_pdf(payload: sc.CompareExportAnalysisPayload):
+    """PDF perbandingan analisis antar negara (dipakai laporan & revisi).
+
+    Didefinisikan sebelum rute parameterized {analysis_id} agar tidak tertutup.
+    """
+    from app.services.pricing import build_compare_pdf
+
+    product = db.get("products", payload.product_id)
+    if not product:
+        raise HTTPException(404, "Product not found")
+    response = _compare_analyses_results(product, payload.country_codes)
+    pdf_bytes = build_compare_pdf(product, response["data"]["results"])
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="analysis-compare-{payload.product_id}.pdf"'},
+    )
 
 @router.post("/export-analysis/{analysis_id}/reanalyze/")
 def reanalyze_analysis(analysis_id: str):
