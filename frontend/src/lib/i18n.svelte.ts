@@ -277,7 +277,57 @@ const dictionary: Record<string, Entry> = {
 	'Key tersimpan di backend; simpan nilai rahasia di tempat aman.': {
 		id: 'Key tersimpan di backend; simpan nilai rahasia di tempat aman.',
 		en: 'Key saved in backend; keep the secret value in a safe place.'
-	}
+	},
+
+	// --- Buyers ---
+	'Export buyer CRM': { id: 'CRM pembeli ekspor', en: 'Export buyer CRM' },
+	'Buyer pipeline': { id: 'Pipeline pembeli', en: 'Buyer pipeline' },
+	'Manage importer relationships from market signal to repeat order.': {
+		id: 'Kelola hubungan importir dari sinyal pasar hingga pesanan berulang.',
+		en: 'Manage importer relationships from market signal to repeat order.'
+	},
+	'Qualify buyers, track contact context, connect accounts to projects, and prioritize the next action that moves export deals forward.': {
+		id: 'Kualifikasi pembeli, pantau konteks kontak, hubungkan akun ke proyek, dan prioritaskan aksi berikutnya yang mendorong deal ekspor.',
+		en: 'Qualify buyers, track contact context, connect accounts to projects, and prioritize the next action that moves export deals forward.'
+	},
+	'Add buyer lead': { id: 'Tambah lead pembeli', en: 'Add buyer lead' },
+	'Adding...': { id: 'Menambahkan...', en: 'Adding...' },
+	'Lead captured': { id: 'Lead ditangkap', en: 'Lead captured' },
+	'Buyer lead captured.': { id: 'Lead pembeli ditangkap.', en: 'Buyer lead captured.' },
+	'Lead tersimpan di backend.': { id: 'Lead tersimpan di backend.', en: 'Lead saved in backend.' },
+	'Search buyer, country, segment...': { id: 'Cari pembeli, negara, segmen...', en: 'Search buyer, country, segment...' },
+	'Buyer accounts': { id: 'Akun pembeli', en: 'Buyer accounts' },
+	'Annual pipeline': { id: 'Pipeline tahunan', en: 'Annual pipeline' },
+	'Average fit': { id: 'Rata-rata kecocokan', en: 'Average fit' },
+	'Pipeline': { id: 'Pipeline', en: 'Pipeline' },
+	'Payment': { id: 'Pembayaran', en: 'Payment' },
+	'Next step': { id: 'Langkah berikut', en: 'Next step' },
+	'No buyer matched your search.': { id: 'Tidak ada pembeli yang cocok.', en: 'No buyer matched your search.' },
+	'Gagal menambahkan buyer.': { id: 'Gagal menambahkan buyer.', en: 'Failed to add buyer.' },
+
+	// --- Suppliers ---
+	'Exporter and supplier network': { id: 'Jaringan eksportir dan pemasok', en: 'Exporter and supplier network' },
+	'Supplier readiness': { id: 'Kesiapan pemasok', en: 'Supplier readiness' },
+	'Verify supplier capability before RFQ matching and order execution.': {
+		id: 'Verifikasi kapabilitas pemasok sebelum pencocokan RFQ dan eksekusi pesanan.',
+		en: 'Verify supplier capability before RFQ matching and order execution.'
+	},
+	'Track capacity, certificates, quality signals, compliance evidence, and operational risks across the export supplier network.': {
+		id: 'Pantau kapasitas, sertifikat, sinyal kualitas, bukti kepatuhan, dan risiko operasional di seluruh jaringan pemasok ekspor.',
+		en: 'Track capacity, certificates, quality signals, compliance evidence, and operational risks across the export supplier network.'
+	},
+	'Request evidence': { id: 'Minta bukti', en: 'Request evidence' },
+	'Requesting...': { id: 'Meminta...', en: 'Requesting...' },
+	'Evidence requested': { id: 'Bukti diminta', en: 'Evidence requested' },
+	'Permintaan bukti dikirim ke backend.': { id: 'Permintaan bukti dikirim ke backend.', en: 'Evidence request sent to backend.' },
+	'Search supplier, product, location...': { id: 'Cari pemasok, produk, lokasi...', en: 'Search supplier, product, location...' },
+	'Verified': { id: 'Terverifikasi', en: 'Verified' },
+	'Avg capability': { id: 'Rata-rata kapabilitas', en: 'Avg capability' },
+	'Capacity': { id: 'Kapasitas', en: 'Capacity' },
+	'Lead time': { id: 'Waktu produksi', en: 'Lead time' },
+	'Next audit': { id: 'Audit berikutnya', en: 'Next audit' },
+	'No supplier matched your search.': { id: 'Tidak ada pemasok yang cocok.', en: 'No supplier matched your search.' },
+	'Gagal meminta bukti kepatuhan.': { id: 'Gagal meminta bukti kepatuhan.', en: 'Failed to request compliance evidence.' }
 };
 
 let initial: Locale = 'id';

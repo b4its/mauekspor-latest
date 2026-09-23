@@ -9,6 +9,7 @@ import { listBuyers, createBuyer } from '$lib/api/buyers';
 import { csvExportUrl } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Lead', 'Qualified', 'Negotiating', 'Active', 'At Risk'];
 	let activeFilter = $state('All');
@@ -50,7 +51,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 			});
 			created = true;
 		} catch {
-			error = 'Gagal menambahkan buyer.';
+			error = t('Gagal menambahkan buyer.');
 		} finally {
 			creating = false;
 		}
@@ -68,18 +69,18 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 	<title>Buyers | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Buyers" eyebrow="Export buyer CRM">
+<AppShell title="Buyers" eyebrow={t('Export buyer CRM')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Buyer pipeline</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Manage importer relationships from market signal to repeat order.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Qualify buyers, track contact context, connect accounts to projects, and prioritize the next action that moves export deals forward.</CardDescription>
+			<Badge variant="secondary">{t('Buyer pipeline')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Manage importer relationships from market signal to repeat order.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Qualify buyers, track contact context, connect accounts to projects, and prioritize the next action that moves export deals forward.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating} class="w-full">{created ? 'Lead captured' : creating ? 'Adding...' : 'Add buyer lead'}</Button>
+			<Button onclick={handleCreate} disabled={creating} class="w-full">{created ? t('Lead captured') : creating ? t('Adding...') : t('Add buyer lead')}</Button>
 			<Button href={csvExportUrl('/buyers/export.csv')} variant="outline">CSV</Button>
 			<Button href={csvExportUrl('/buyers/export.xlsx')} variant="outline">Excel (.xlsx)</Button>
-			<Badge variant="secondary">Active {activeCount}</Badge>
+			<Badge variant="secondary">{t('Active')} {activeCount}</Badge>
 		</CardContent>
 	</Card>
 
@@ -89,8 +90,8 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Buyer lead captured.</strong>
-			<span class="block text-sm text-muted-foreground">Lead tersimpan di backend.</span>
+			<strong class="block">{t('Buyer lead captured.')}</strong>
+			<span class="block text-sm text-muted-foreground">{t('Lead tersimpan di backend.')}</span>
 		</div>
 	{/if}
 
@@ -107,13 +108,13 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search buyer, country, segment..." class="max-w-xs" />
+		<Input bind:value={query} type="search" placeholder={t('Search buyer, country, segment...')} class="max-w-xs" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Buyer accounts</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{buyers.items.length}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Annual pipeline</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(pipelineValue)}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Average fit</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{avgFit}%</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Buyer accounts')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{buyers.items.length}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Annual pipeline')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(pipelineValue)}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Average fit')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{avgFit}%</strong></CardContent></Card>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -127,15 +128,15 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 					<h3 class="text-2xl font-bold tracking-tight">{buyer.name}</h3>
 					<p class="text-sm text-muted-foreground">{buyer.segment} · {buyer.country}</p>
 					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Pipeline<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(buyer.estimatedAnnualValue)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Payment<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.paymentProfile}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Products<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.interestedProducts.join(', ')}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Next step<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.nextStep}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pipeline')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(buyer.estimatedAnnualValue)}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Payment')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.paymentProfile}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Products')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.interestedProducts.join(', ')}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next step')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer.nextStep}</strong></div>
 					</div>
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No buyer matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No buyer matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>
