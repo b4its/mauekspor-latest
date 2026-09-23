@@ -10,12 +10,21 @@
 	import { listEducationalArticles } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	import GraduationCapIcon from '@lucide/svelte/icons/graduation-cap';
 	import BookOpenIcon from '@lucide/svelte/icons/book-open';
 	import PlayCircleIcon from '@lucide/svelte/icons/play-circle';
 
 	const levelFilters = ['All', 'Beginner', 'Intermediate', 'Advanced'];
+
+	function trLevel(x: string) {
+		return t(x === 'All' ? 'Semua' : x === 'Beginner' ? 'Pemula' : x === 'Intermediate' ? 'Menengah' : 'Lanjutan');
+	}
+
+	function trStatus(s: string) {
+		return t(s === 'Published' ? 'Diterbitkan' : s === 'In Progress' ? 'Sedang berjalan' : 'Draf');
+	}
 	let levelFilter = $state('All');
 	let query = $state('');
 
@@ -53,22 +62,22 @@
 	<title>Educational | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Educational" eyebrow="Export learning platform">
+<AppShell title="Educational" eyebrow={t('Platform belajar ekspor')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<Badge variant="secondary">
 					<GraduationCapIcon class="size-3.5" />
-					Learning path
+					{t('Jalur belajar')}
 				</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-					Belajar proses ekspor sambil Anda mengirim.
+					{t('Belajar proses ekspor sambil Anda mengirim.')}
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl">
-					Kursus singkat dan artikel yang memetakan langsung ke alur kerja di workspace ini.
+					{t('Kursus singkat dan artikel yang memetakan langsung ke alur kerja di workspace ini.')}
 				</CardDescription>
 			</div>
-			<Button href="/educational/admin">Kelola modul</Button>
+			<Button href="/educational/admin">{t('Kelola modul')}</Button>
 		</div>
 	</Card>
 
@@ -80,11 +89,11 @@
 					size="sm"
 					onclick={() => (levelFilter = filter)}
 				>
-					{filter}
+					{trLevel(filter)}
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Cari modul atau artikel..." class="max-w-xs" />
+		<Input bind:value={query} type="search" placeholder={t('Cari modul atau artikel...')} class="max-w-xs" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -92,29 +101,29 @@
 			<a href={`/educational/modules/${module.id}`} class="block no-underline">
 				<Card class="grid h-full gap-3 p-5 shadow-sm transition-transform hover:-translate-y-1">
 					<div class="flex items-center justify-between gap-2">
-						<Badge variant={toneVariant(statusTone(module.status))}>{module.status}</Badge>
+						<Badge variant={toneVariant(statusTone(module.status))}>{trStatus(module.status)}</Badge>
 						<strong class="text-2xl font-bold tracking-tight">{module.completion}%</strong>
 					</div>
 					<h3 class="text-xl font-bold tracking-tight">{module.title}</h3>
 					<p class="text-sm leading-relaxed text-muted-foreground">{module.summary}</p>
 					<div class="grid gap-2.5 sm:grid-cols-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Level <strong class="mt-1 block text-sm font-bold text-foreground">{module.level}</strong>
+							{t('Level')} <strong class="mt-1 block text-sm font-bold text-foreground">{module.level}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Pelajaran <strong class="mt-1 block text-sm font-bold text-foreground">{lessonCount(module.id)}</strong>
+							{t('Pelajaran')} <strong class="mt-1 block text-sm font-bold text-foreground">{lessonCount(module.id)}</strong>
 						</div>
 					</div>
 					<Progress value={module.completion} />
 					<span class="inline-flex items-center gap-1.5 text-sm font-bold text-primary">
 						<PlayCircleIcon class="size-4" />
-						{module.completion > 0 ? 'Lanjutkan belajar' : 'Mulai belajar'}
+						{module.completion > 0 ? t('Lanjutkan belajar') : t('Mulai belajar')}
 					</span>
 				</Card>
 			</a>
 		{:else}
 			<div class="grid place-items-center rounded-xl border border-dashed bg-muted/20 p-10 text-sm font-semibold text-muted-foreground md:col-span-2 xl:col-span-3">
-				No module matched your filter.
+				{t('Tidak ada modul yang cocok dengan filter.')}
 			</div>
 		{/each}
 	</div>
@@ -123,9 +132,9 @@
 		<CardHeader class="flex-row items-center justify-between gap-3">
 			<CardTitle class="flex items-center gap-2">
 				<BookOpenIcon class="size-4 text-muted-foreground" />
-				Artikel
+				{t('Artikel')}
 			</CardTitle>
-			<Badge variant="secondary">{articles.items.length} published</Badge>
+			<Badge variant="secondary">{articles.items.length} {t('diterbitkan')}</Badge>
 		</CardHeader>
 		<CardContent class="grid gap-2">
 			{#each articles.items as article}
@@ -135,8 +144,8 @@
 						<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.summary}</span>
 					</div>
 					<div class="grid justify-items-end gap-1.5">
-						<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>
-						<small class="text-xs font-semibold text-muted-foreground">{article.readMinutes} min read</small>
+						<Badge variant={toneVariant(statusTone(article.status))}>{trStatus(article.status)}</Badge>
+						<small class="text-xs font-semibold text-muted-foreground">{article.readMinutes} {t('menit baca')}</small>
 					</div>
 				</a>
 			{/each}
