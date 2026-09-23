@@ -1064,6 +1064,148 @@ def list_buyers(search: str = "", status: str = "", limit: int = 0, offset: int 
     return _filtered_query("buyers", search=search, search_fields=("name", "country", "segment"), status=status, limit=limit, offset=offset)
 
 
+@router.get("/buyers/portal/")
+def buyer_portal(
+    country: str = "",
+    search: str = "",
+    buyer_id: str = "",
+    request: Request = None,
+):
+    """Portal ekspor untuk pembeli: katalog Published disesuaikan negara asal pembeli.
+
+    Sumber negara (urut prioritas):
+    1. query `country` (ISO alpha-2 atau nama negara) — untuk Admin memilih negara.
+    2. `GET /buyers/profile/me/` milik user login (Buyer) via sourceCountries.
+    3. `buyer_id` → field `country` pada record buyers.
+
+    Selalu mengembalikan daftar negara asal yang terdeteksi (`meta.countries`)
+    agar UI bisa menampilkan & mengizinkan ganti negara tanpa request kedua.
+    """
+    from app.data.world_countries import WORLD_COUNTRIES
+    from app.core.security import decode_token
+
+    # Identifikasi user opsional (endpoint read-only; anonim → tanpa personalisasi).
+    user = None
+    try:
+        token = _request_token(request)
+        payload = decode_token(token) if token else None
+        if payload and payload.get("type") == "access":
+            user = db.get("users", payload["sub"])
+    except Exception:
+        user = None
+
+    name_by_code = {c["country_code"]: c["country_name"] for c in WORLD_COUNTRIES}
+    code_by_name = {c["country_name"].lower(): c["country_code"] for c in WORLD_COUNTRIES}
+
+    def normalize(value: str) -> tuple[str, str]:
+        """Kembalikan (kode, nama) dari input bebas; ('', '') bila kosong."""
+        value = (value or "").strip()
+        if not value:
+            return "", ""
+        upper = value.upper()
+        if upper in name_by_code:
+            return upper, name_by_code[upper]
+        if value.lower() in code_by_name:
+            code = code_by_name[value.lower()]
+            return code, name_by_code.get(code, value)
+        return upper, value
+
+    countries: list[str] = []
+    # 1. parameter eksplisit menang
+    if country:
+        _, name = normalize(country)
+        if name:
+            countries.append(name)
+    # 2. profil buyer milik user login
+    if not countries and user:
+        profile = db.get_by("buyer_profiles", userId=user["id"])
+        raw = (profile or {}).get("sourceCountries") or (profile or {}).get("source_countries") or []
+        for item in raw:
+            _, name = normalize(str(item))
+            if name:
+                countries.append(name)
+    # 3. data buyers
+    if not countries and (buyer_id or country):
+        target = buyer_id or country
+        record = db.get("buyers", target)
+        if not record:
+            record = db.get_by("buyers", country=country) if country else None
+        if record and record.get("country"):
+            _, name = normalize(str(record["country"]))
+            if name:
+                countries.append(name)
+
+    # Wilayah/negara untuk pencocokan target market katalog
+    regions: set[str] = set()
+    codes: set[str] = set()
+    for name in countries:
+        code, _ = normalize(name)
+        codes.add(code)
+        for c in WORLD_COUNTRIES:
+            if c["country_name"].lower() == name.lower():
+                regions.add(str(c.get("region", "")).lower())
+                break
+
+    def matches(text: str) -> bool:
+        if not text:
+            return False
+        lowered = text.lower()
+        for name in countries:
+            if name and name.lower() in lowered:
+                return True
+        for code in codes:
+            if code and code.lower() in lowered:
+                return True
+        for region in regions:
+            if region and region in lowered:
+                return True
+        return False
+
+    published = [c for c in db.all("catalogs") if str(c.get("status", "")).lower() == "published"]
+    items = [dict(c) for c in published]
+    for item in items:
+        product = db.get("products", str(item.get("productId", ""))) if item.get("productId") else None
+        item["productName"] = (product or {}).get("name", "")
+        item["productOrigin"] = (product or {}).get("origin", "")
+        # Skor relevansi: makin spesifik (negara > wilayah) makin tinggi.
+        market = str(item.get("targetMarket", ""))
+        score = 0
+        if any(n and n.lower() in market.lower() for n in countries):
+            score = 100
+        elif any(c and c.lower() == market.strip().lower() for c in codes):
+            score = 90
+        elif any(r and r in market.lower() for r in regions):
+            score = 60
+        item["relevanceScore"] = score
+        item["matchedCountry"] = countries[0] if countries else ""
+
+    if countries:
+        # Hanya katalog relevan untuk negara pembeli; UI menampilkan empty-state
+        # terpisah dan Admin tetap bisa mengganti/pengosongkan negara.
+        items = [i for i in items if i["relevanceScore"] > 0]
+    items.sort(key=lambda i: (-int(i.get("relevanceScore", 0)), str(i.get("title", ""))))
+
+    if search:
+        q = search.lower()
+        items = [
+            i for i in items
+            if q in str(i.get("title", "")).lower()
+            or q in str(i.get("description", "")).lower()
+            or q in str(i.get("targetMarket", "")).lower()
+            or q in str(i.get("productName", "")).lower()
+        ]
+
+    return {
+        "data": items,
+        "meta": {
+            "countries": countries,
+            "detectedCountry": countries[0] if countries else "",
+            "total": len(items),
+            "publishedTotal": len(published),
+        },
+    }
+
+
 @router.get("/buyers/{buyer_id}/")
 def get_buyer(buyer_id: str):
     record = db.get("buyers", buyer_id)
