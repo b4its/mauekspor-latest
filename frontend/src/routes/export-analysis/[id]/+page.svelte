@@ -2,9 +2,12 @@
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { reanalyzeExportAnalysis, deleteExportAnalysis, getRegulationRecommendations } from '$lib/api/export-analysis';
+	import { updateProduct, getProduct } from '$lib/api/products';
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
 
 	let { data } = $props();
@@ -28,6 +31,61 @@
 	let error = $state('');
 	let regs = $state<RegulationRecommendations | null>(null);
 	let showRegs = $state(false);
+
+	// ---------- Inline Compliance Editor ----------
+	let editMode = $state(false);
+	let savingEdit = $state(false);
+	let editError = $state('');
+	let editSaved = $state(false);
+	let packaging = $state('');
+	let material = $state('');
+	let description = $state('');
+	let qualitySpecs = $state<Record<string, string>>({});
+
+	function openEditor() {
+		const product = data.product as Record<string, unknown> | undefined;
+		packaging = String((product?.packaging as string) ?? '');
+		material = String((product?.material_composition as string) ?? '');
+		description = String((product?.description as string) ?? '');
+		const specs = (product?.quality_specs ?? {}) as Record<string, unknown>;
+		qualitySpecs = Object.fromEntries(Object.entries(specs).map(([k, v]) => [k, String(v)]));
+		editMode = true;
+		editSaved = false;
+	}
+
+	function addSpecRow() {
+		qualitySpecs = { ...qualitySpecs, '': '' };
+	}
+
+	function removeSpecRow(key: string) {
+		const next = { ...qualitySpecs };
+		delete next[key];
+		qualitySpecs = next;
+	}
+
+	async function saveComplianceFix() {
+		editError = '';
+		savingEdit = true;
+		try {
+			const cleaned: Record<string, string> = {};
+			for (const [k, v] of Object.entries(qualitySpecs)) {
+				if (k.trim() && v.trim()) cleaned[k.trim()] = v.trim();
+			}
+			await updateProduct(data.analysis.productId, {
+				packaging,
+				material_composition: material,
+				description,
+				quality_specs: cleaned
+			});
+			data.product = (await getProduct(data.analysis.productId)).data;
+			editSaved = true;
+			editMode = false;
+		} catch {
+			editError = 'Gagal menyimpan perbaikan produk.';
+		} finally {
+			savingEdit = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -151,9 +209,12 @@
 		</Card>
 
 		<Card class="md:col-span-2">
-			<CardHeader>
-				<CardTitle>Compliance issues ({issues.length})</CardTitle>
-				<CardDescription>Ditemukan oleh compliance checker (bahan, spesifikasi, kemasan).</CardDescription>
+			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
+				<div>
+					<CardTitle>Compliance issues ({issues.length})</CardTitle>
+					<CardDescription>Ditemukan oleh compliance checker (bahan, spesifikasi, kemasan).</CardDescription>
+				</div>
+				<Button variant="outline" size="sm" onclick={openEditor} disabled={!data.product}>Perbaiki kepatuhan</Button>
 			</CardHeader>
 			<CardContent class="grid gap-2.5">
 				{#if issues.length === 0}
@@ -178,6 +239,73 @@
 						{/if}
 					</div>
 				{/each}
+
+				{#if editMode}
+					<div class="mt-2 rounded-xl border bg-background p-4">
+						<h4 class="text-sm font-bold">Editor produk (perbaikan kepatuhan)</h4>
+						<p class="mt-1 text-xs text-muted-foreground">
+							Perbaiki data produk lalu klik "Simpan & Re-Analyze" agar snapshot dan skor diperbarui.
+						</p>
+						{#if editError}
+							<p class="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{editError}</p>
+						{/if}
+						{#if editSaved}
+							<p class="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Produk diperbarui. Jalankan Re-analyze untuk skor terbaru.</p>
+						{/if}
+						<div class="mt-3 grid gap-3 sm:grid-cols-2">
+							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+								Kemasan
+								<Input bind:value={packaging} placeholder="contoh: ISPM-15 pallet" />
+							</label>
+							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+								Komposisi bahan
+								<Input bind:value={material} placeholder="contoh: 100% natural fiber" />
+							</label>
+						</div>
+						<label class="mt-3 grid gap-1.5 text-xs font-bold text-muted-foreground">
+							Deskripsi
+							<Textarea bind:value={description} rows={2} />
+						</label>
+						<div class="mt-3">
+							<div class="flex items-center justify-between">
+								<span class="text-xs font-bold text-muted-foreground">Quality specs</span>
+								<Button type="button" size="sm" variant="outline" onclick={addSpecRow}>+ Tambah</Button>
+							</div>
+							<div class="mt-2 grid gap-2">
+								{#each Object.entries(qualitySpecs) as [key, value]}
+									<div class="flex gap-2">
+										<Input
+											placeholder="Label (mis. Allergen)"
+											value={key}
+											oninput={(e) => {
+												const newKey = (e.currentTarget as HTMLInputElement).value;
+												const next: Record<string, string> = {};
+												for (const [k, v] of Object.entries(qualitySpecs)) {
+													next[k === key ? newKey : k] = v;
+												}
+												qualitySpecs = next;
+											}}
+										/>
+										<Input
+											placeholder="Nilai"
+											value={value}
+											oninput={(e) => {
+												qualitySpecs = { ...qualitySpecs, [key]: (e.currentTarget as HTMLInputElement).value };
+											}}
+										/>
+										<Button type="button" size="icon" variant="ghost" onclick={() => removeSpecRow(key)}>✕</Button>
+									</div>
+								{/each}
+							</div>
+						</div>
+						<div class="mt-4 flex flex-wrap gap-2">
+							<Button type="button" variant="outline" onclick={() => (editMode = false)}>Batal</Button>
+							<Button type="button" onclick={saveComplianceFix} disabled={savingEdit}>
+								{savingEdit ? 'Menyimpan...' : 'Simpan perubahan produk'}
+							</Button>
+						</div>
+					</div>
+				{/if}
 			</CardContent>
 		</Card>
 

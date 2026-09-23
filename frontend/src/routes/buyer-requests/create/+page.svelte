@@ -17,6 +17,10 @@
 	let quantity = $state('');
 	let deadline = $state('');
 	let requirements = $state('');
+	let productCategory = $state('');
+	let hsCodeTarget = $state('');
+	let specRequirements = $state('');
+	let keywordTags = $state('');
 	let created = $state(false);
 	let creating = $state(false);
 	let error = $state('');
@@ -38,7 +42,11 @@
 				destination,
 				quantity,
 				deadline,
-				requirements: requirements.split('\n').filter(Boolean)
+				requirements: requirements.split('\n').filter(Boolean),
+				product_category: productCategory,
+				hs_code_target: hsCodeTarget,
+				spec_requirements: specRequirements,
+				keyword_tags: keywordTags.split(',').map((t) => t.trim()).filter(Boolean)
 			});
 			created = true;
 		} catch {
@@ -82,13 +90,13 @@
 		<Card>
 			<form class="grid gap-4 p-1" onsubmit={(event) => { event.preventDefault(); create(); }}>
 				<div class="grid gap-2">
-					<Label>Subject</Label>
-					<Input bind:value={subject} placeholder="Trial shipment for Gayo Arabica coffee" />
+					<Label for="br-subject">Subject</Label>
+					<Input id="br-subject" bind:value={subject} placeholder="Trial shipment for Gayo Arabica coffee" />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label>Buyer</Label>
-						<NativeSelect bind:value={buyerId}>
+						<Label for="br-buyer">Buyer</Label>
+						<NativeSelect id="br-buyer" bind:value={buyerId}>
 							<option value="">Select buyer...</option>
 							{#each buyers as buyer}
 								<option value={buyer.id}>{buyer.name}</option>
@@ -96,8 +104,8 @@
 						</NativeSelect>
 					</div>
 					<div class="grid gap-2">
-						<Label>Product</Label>
-						<NativeSelect bind:value={productId}>
+						<Label for="br-product">Product</Label>
+						<NativeSelect id="br-product" bind:value={productId}>
 							<option value="">Select product...</option>
 							{#each products as product}
 								<option value={product.id}>{product.name}</option>
@@ -106,22 +114,45 @@
 					</div>
 				</div>
 				<div class="grid gap-2">
-					<Label>Destination</Label>
-					<Input bind:value={destination} placeholder="Japan" />
+					<Label for="br-dest">Destination</Label>
+					<Input id="br-dest" bind:value={destination} placeholder="Japan" />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label>Quantity</Label>
-						<Input bind:value={quantity} placeholder="2,000 bags" />
+						<Label for="br-qty">Quantity</Label>
+						<Input id="br-qty" bind:value={quantity} placeholder="2,000 bags" />
 					</div>
 					<div class="grid gap-2">
-						<Label>Deadline</Label>
-						<Input bind:value={deadline} type="date" />
+						<Label for="br-deadline">Deadline</Label>
+						<Input id="br-deadline" bind:value={deadline} type="date" />
 					</div>
 				</div>
 				<div class="grid gap-2">
-					<Label>Requirements (one per line)</Label>
-					<Textarea bind:value={requirements} rows={3} placeholder="Japanese label&#10;Lab report&#10;FOB quote" />
+					<Label for="br-req">Requirements (one per line)</Label>
+					<Textarea id="br-req" bind:value={requirements} rows={3} placeholder="Japanese label&#10;Lab report&#10;FOB quote" />
+				</div>
+
+				<div class="rounded-xl border bg-muted/30 p-4">
+					<h4 class="text-sm font-bold">Detail matching (opsional)</h4>
+					<p class="mt-1 text-xs text-muted-foreground">Semakin detail, semakin akurat skor kecocokan dengan katalog.</p>
+					<div class="mt-3 grid gap-4 sm:grid-cols-2">
+						<div class="grid gap-2">
+							<Label for="br-cat">Kategori produk</Label>
+							<Input id="br-cat" bind:value={productCategory} placeholder="Makanan Olahan / Coffee" />
+						</div>
+						<div class="grid gap-2">
+							<Label for="br-hs">HS code target</Label>
+							<Input id="br-hs" bind:value={hsCodeTarget} placeholder="0901.21" />
+						</div>
+					</div>
+					<div class="grid gap-2">
+						<Label for="br-spec">Persyaratan spesifikasi</Label>
+						<Textarea id="br-spec" bind:value={specRequirements} rows={2} placeholder="contoh: single origin, fully washed" />
+					</div>
+					<div class="grid gap-2">
+						<Label for="br-tags">Keyword tags (comma separated)</Label>
+						<Input id="br-tags" bind:value={keywordTags} placeholder="arabica, specialty, single-origin" />
+					</div>
 				</div>
 
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}

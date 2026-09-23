@@ -31,9 +31,54 @@ def _list_query(table: str) -> dict:
     return {"data": [_serialize(r) for r in db.all(table)], "meta": {}}
 
 
+def _filtered_query(
+    table: str,
+    search: str = "",
+    search_fields: tuple[str, ...] = (),
+    status: str = "",
+    status_field: str = "status",
+    limit: int = 0,
+    offset: int = 0,
+) -> dict:
+    """List dengan filter opsional: search (LIKE pada field), status, dan pagination.
+
+    Bila `limit` <= 0, kembalikan semua (perilaku default lama agar kontrak frontend tetap).
+    """
+    items = db.all(table)
+    if search:
+        q = search.lower()
+        items = [
+            r for r in items
+            if any(q in str(r.get(f, "")).lower() for f in search_fields)
+        ]
+    if status:
+        items = [r for r in items if str(r.get(status_field, "")).lower() == status.lower()]
+    total = len(items)
+    if limit > 0:
+        items = items[offset:offset + limit]
+    return {
+        "data": [_serialize(r) for r in items],
+        "meta": {"total": total, "limit": limit, "offset": offset, "count": len(items)},
+    }
+
+
 def _one(record) -> dict:
     db.save(record)
     return {"data": _serialize(record), "meta": {}}
+
+
+def _notify(title: str, description: str, module: str, severity: str = "Info", href: str = "") -> None:
+    """Buat notifikasi internal (dipanggil pada aksi penting)."""
+    db.insert("notifications", {
+        "id": db.gen_id("notifications", "NTF"),
+        "title": title,
+        "description": description,
+        "module": module,
+        "severity": severity,
+        "status": "Unread",
+        "time": "now",
+        "href": href,
+    })
 
 
 # ----------------------------------------------------------------------------
@@ -195,8 +240,19 @@ def delete_user(user_id: str):
 # PRODUCTS
 # ----------------------------------------------------------------------------
 @router.get("/products/")
-def list_products():
-    return _list_query("products")
+def list_products(search: str = "", status: str = "", category: str = "", limit: int = 0, offset: int = 0):
+    items = db.all("products")
+    if search:
+        q = search.lower()
+        items = [r for r in items if q in str(r.get("name", "")).lower() or q in str(r.get("hs", "")).lower() or q in str(r.get("origin", "")).lower()]
+    if status:
+        items = [r for r in items if str(r.get("status", "")).lower() == status.lower()]
+    if category:
+        items = [r for r in items if str(r.get("category", "")).lower() == category.lower()]
+    total = len(items)
+    if limit > 0:
+        items = items[offset:offset + limit]
+    return {"data": [_serialize(r) for r in items], "meta": {"total": total, "limit": limit, "offset": offset, "count": len(items)}}
 
 
 @router.get("/products/{product_id}/")
@@ -590,8 +646,8 @@ def update_buyer_profile(profile_id: str, payload: sc.UpdateBuyerProfilePayload)
 
 
 @router.get("/buyers/")
-def list_buyers():
-    return _list_query("buyers")
+def list_buyers(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
+    return _filtered_query("buyers", search=search, search_fields=("name", "country", "segment"), status=status, limit=limit, offset=offset)
 
 
 @router.get("/buyers/{buyer_id}/")
@@ -647,8 +703,8 @@ def log_buyer_contact(buyer_id: str, payload: dict):
 # BUYER REQUESTS
 # ----------------------------------------------------------------------------
 @router.get("/buyer-requests/")
-def list_buyer_requests():
-    return _list_query("buyer_requests")
+def list_buyer_requests(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
+    return _filtered_query("buyer_requests", search=search, search_fields=("subject", "destination", "buyerId"), status=status, limit=limit, offset=offset)
 
 
 @router.get("/buyer-requests/{request_id}/")
@@ -721,6 +777,11 @@ def match_buyer_request(request_id: str):
     record["matches"] = run_match(record)
     if record["matches"]:
         record["status"] = "Matched"
+        _notify(
+            f"Buyer request {record.get('subject', '')} matched",
+            f"{len(record['matches'])} katalog cocok ditemukan.",
+            "Buyer Requests", "Info", f"/buyer-requests/{request_id}",
+        )
     record["updatedAt"] = "now"
     return _one(record)
 
@@ -809,8 +870,19 @@ def forwarder_recommendations(destination_country: str):
 
 
 @router.get("/forwarders/")
-def list_forwarders():
-    return _list_query("forwarders")
+def list_forwarders(search: str = "", status: str = "", min_rating: float = 0, limit: int = 0, offset: int = 0):
+    items = db.all("forwarders")
+    if search:
+        q = search.lower()
+        items = [r for r in items if q in str(r.get("name", "")).lower() or q in str(r.get("coverage", "")).lower()]
+    if status:
+        items = [r for r in items if str(r.get("status", "")).lower() == status.lower()]
+    if min_rating:
+        items = [r for r in items if float(r.get("averageRating", 0) or 0) >= min_rating]
+    total = len(items)
+    if limit > 0:
+        items = items[offset:offset + limit]
+    return {"data": [_serialize(r) for r in items], "meta": {"total": total, "limit": limit, "offset": offset, "count": len(items)}}
 
 
 @router.get("/forwarders/{forwarder_id}/")
@@ -913,8 +985,8 @@ def forwarder_statistics(forwarder_id: str):
 # CATALOGS
 # ----------------------------------------------------------------------------
 @router.get("/catalogs/")
-def list_catalogs():
-    return _list_query("catalogs")
+def list_catalogs(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
+    return _filtered_query("catalogs", search=search, search_fields=("title", "targetMarket", "productId"), status=status, limit=limit, offset=offset)
 
 
 @router.get("/catalogs/forwarder/")
@@ -1649,6 +1721,11 @@ def upload_compliance_evidence(req_id: str, payload: dict):
     record["currentEvidence"] = payload.get("description") or payload.get("note") or record.get("currentEvidence")
     record["status"] = "Evidence Uploaded"
     record["updatedAt"] = "now"
+    _notify(
+        f"Bukti diunggah untuk {record.get('title', 'requirement')}",
+        record["currentEvidence"],
+        "Compliance", "Info", f"/compliance/{req_id}",
+    )
     return _one(record)
 
 
@@ -1720,6 +1797,11 @@ def update_shipment_milestone(shipment_id: str, payload: dict):
     record["milestones"].append({"label": payload.get("milestone", "Updated"), "status": "Done"})
     record["progress"] = min(record.get("progress", 0) + 15, 100)
     record["updatedAt"] = "now"
+    _notify(
+        f"Milestone shipment: {payload.get('milestone', 'Updated')}",
+        f"Progres {record.get('progress', 0)}%.",
+        "Shipments", "Info", f"/shipments/{shipment_id}",
+    )
     return _one(record)
 
 
@@ -1731,6 +1813,7 @@ def resolve_shipment_exception(shipment_id: str):
     record["status"] = "In Transit"
     record.pop("exception", None)
     record["updatedAt"] = "now"
+    _notify("Exception shipment diselesaikan", "Shipment kembali In Transit.", "Shipments", "Info", f"/shipments/{shipment_id}")
     return _one(record)
 
 
@@ -1759,6 +1842,11 @@ def mark_payment_received(payment_id: str, payload: dict):
     record["paid"] = amount
     record["status"] = "Settled" if amount >= record.get("amount", amount) else "Deposit Paid"
     record["updatedAt"] = "now"
+    _notify(
+        f"Pembayaran {record.get('status', '')}",
+        f"Tercatat {amount} untuk {record.get('buyer', '')}.",
+        "Payments", "Info", f"/payments/{payment_id}",
+    )
     return _one(record)
 
 
@@ -1794,6 +1882,7 @@ def complete_task(task_id: str):
         raise HTTPException(404, "Task not found")
     record["status"] = "Done"
     record["updatedAt"] = "now"
+    _notify(f"Task selesai: {record.get('title', '')}", "Task ditandai selesai.", "Tasks", "Info", f"/tasks/{task_id}")
     return _one(record)
 
 
@@ -2556,8 +2645,8 @@ def chat_suggestions():
 # EXPORT ANALYSIS
 # ----------------------------------------------------------------------------
 @router.get("/export-analysis/")
-def list_analyses():
-    return _list_query("export_analyses")
+def list_analyses(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
+    return _filtered_query("export_analyses", search=search, search_fields=("productName", "destination", "hsCode"), status=status, limit=limit, offset=offset)
 
 
 @router.get("/export-analysis/{analysis_id}/")

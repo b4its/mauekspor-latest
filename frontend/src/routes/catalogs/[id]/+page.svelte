@@ -10,8 +10,11 @@
 		unpublishCatalog,
 		listCatalogImages,
 		listVariantTypes,
-		generateCatalogAiDescription
+		generateCatalogAiDescription,
+		addCatalogImage,
+		deleteCatalogImage
 	} from '$lib/api/catalogs';
+	import { uploadFileBinary, fileDownloadUrl } from '$lib/api/files';
 	import type { CatalogImage, VariantType, CatalogAIDescription } from '$lib/api/catalogs';
 
 	let { data } = $props();
@@ -22,6 +25,8 @@
 	let variantTypes = $state<VariantType[]>([]);
 	let aiDesc = $state<CatalogAIDescription | null>(null);
 	let loadingAi = $state(false);
+	let newImageUrl = $state('');
+	let uploading = $state(false);
 
 	$effect(() => {
 		published = data.catalog.status === 'Published';
@@ -35,6 +40,48 @@
 			.then((res) => (variantTypes = res.data.data))
 			.catch(() => {});
 	});
+
+	async function handleUploadImage(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+		error = '';
+		uploading = true;
+		try {
+			const res = await uploadFileBinary(file, 'Catalog Image', data.catalog.projectId ?? '', []);
+			const url = fileDownloadUrl(res.data.id);
+			await addCatalogImage(data.catalog.id, { image_url: url, alt_text: file.name });
+			const imgs = (await listCatalogImages(data.catalog.id)).data;
+			images = imgs;
+		} catch {
+			error = 'Gagal mengunggah gambar.';
+		} finally {
+			uploading = false;
+			input.value = '';
+		}
+	}
+
+	async function handleAddImageUrl() {
+		error = '';
+		if (!newImageUrl.trim()) return;
+		try {
+			await addCatalogImage(data.catalog.id, { image_url: newImageUrl.trim(), alt_text: '' });
+			newImageUrl = '';
+			images = (await listCatalogImages(data.catalog.id)).data;
+		} catch {
+			error = 'Gagal menambahkan gambar dari URL.';
+		}
+	}
+
+	async function handleRemoveImage(imageId: string) {
+		error = '';
+		try {
+			await deleteCatalogImage(data.catalog.id, imageId);
+			images = images.filter((img) => img.id !== imageId);
+		} catch {
+			error = 'Gagal menghapus gambar.';
+		}
+	}
 
 	async function handleGenerate() {
 		error = '';
@@ -152,23 +199,61 @@
 
 		{#if images.length > 0}
 			<Card>
-				<CardHeader><CardTitle>Catalog Images</CardTitle></CardHeader>
-				<CardContent class="grid grid-cols-3 gap-2.5">
-					{#each images as image}
-						<div class="overflow-hidden rounded-lg border bg-muted/40">
-							{#if image.imageUrl}
-								<img src={image.imageUrl} alt={image.altText || data.catalog.title} class="h-24 w-full object-cover" />
-							{:else}
-								<div class="flex h-24 items-center justify-center text-xs font-bold text-muted-foreground">No image</div>
-							{/if}
-							{#if image.isPrimary}
-								<div class="bg-primary/10 px-2 py-1 text-center text-[10px] font-bold text-primary">Primary</div>
-							{/if}
-						</div>
-					{/each}
+				<CardHeader class="flex-row items-center justify-between gap-3">
+					<CardTitle>Catalog Images</CardTitle>
+					<Badge variant="secondary">{images.length}</Badge>
+				</CardHeader>
+				<CardContent class="grid gap-3">
+					<div class="grid grid-cols-3 gap-2.5">
+						{#each images as image}
+							<div class="overflow-hidden rounded-lg border bg-muted/40">
+								{#if image.imageUrl}
+									<img src={image.imageUrl} alt={image.altText || data.catalog.title} class="h-24 w-full object-cover" />
+								{:else}
+									<div class="flex h-24 items-center justify-center text-xs font-bold text-muted-foreground">No image</div>
+								{/if}
+								<div class="flex items-center justify-between px-2 py-1">
+									{#if image.isPrimary}
+										<span class="text-[10px] font-bold text-primary">Primary</span>
+									{:else}
+										<span class="text-[10px] text-muted-foreground">{image.altText || '—'}</span>
+									{/if}
+									<button class="text-[10px] font-bold text-destructive hover:underline" onclick={() => handleRemoveImage(image.id)}>Hapus</button>
+								</div>
+							</div>
+						{/each}
+					</div>
 				</CardContent>
 			</Card>
 		{/if}
+
+		<Card>
+			<CardHeader>
+				<CardTitle>Add Image</CardTitle>
+				<CardDescription>Unggah file (max 25MB) atau tambahkan lewat URL.</CardDescription>
+			</CardHeader>
+			<CardContent class="grid gap-3">
+				{#if error}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+				{/if}
+				<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+					Upload file
+					<input type="file" accept="image/*,application/pdf" class="rounded-lg border bg-muted/30 px-3 py-2 text-sm" onchange={handleUploadImage} disabled={uploading} />
+				</label>
+				<div class="flex gap-2">
+					<input
+						type="text"
+						placeholder="Atau URL gambar..."
+						class="h-10 flex-1 rounded-md border bg-background px-3 text-sm"
+						bind:value={newImageUrl}
+					/>
+					<Button variant="outline" size="sm" onclick={handleAddImageUrl} disabled={!newImageUrl.trim()}>Tambah URL</Button>
+				</div>
+				{#if uploading}
+					<p class="text-xs font-semibold text-muted-foreground">Mengunggah...</p>
+				{/if}
+			</CardContent>
+		</Card>
 
 		{#if variantTypes.length > 0}
 			<Card>
