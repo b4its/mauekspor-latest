@@ -6,6 +6,22 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Intelijen kesiapan pasar': { id: 'Intelijen kesiapan pasar', en: 'Market readiness intelligence' },
+	'Intelijen pasar AI': { id: 'Intelijen pasar AI', en: 'AI market intelligence' },
+	'Kenali tujuan sebelum Anda menawar.': { id: 'Kenali tujuan sebelum Anda menawar.', en: 'Know the destination before you quote.' },
+	'Klasifikasi HS, bea masuk, pembatasan, dan rekomendasi regulasi untuk setiap pasangan produk-pasar.': { id: 'Klasifikasi HS, bea masuk, pembatasan, dan rekomendasi regulasi untuk setiap pasangan produk-pasar.', en: 'HS classification, duties, restrictions, and regulation recommendations for each product-market pair.' },
+	'Analisis baru': { id: 'Analisis baru', en: 'New analysis' },
+	'Bandingkan pasar': { id: 'Bandingkan pasar', en: 'Compare markets' },
+	'Ekspor CSV': { id: 'Ekspor CSV', en: 'Export CSV' },
+	'Cari produk, tujuan, HS...': { id: 'Cari produk, tujuan, HS...', en: 'Search product, destination, HS...' },
+	'Keyakinan': { id: 'Keyakinan', en: 'Confidence' },
+	'Permintaan': { id: 'Permintaan', en: 'Demand' },
+	'Bea masuk': { id: 'Bea masuk', en: 'Duties' },
+	'Pembatasan': { id: 'Pembatasan', en: 'Restrictions' },
+	'Buka analisis': { id: 'Buka analisis', en: 'Open analysis' },
+	'Tidak ada analisis yang cocok dengan filter.': { id: 'Tidak ada analisis yang cocok dengan filter.', en: 'No analysis matched your filter.' },
+	'Sedang berjalan': { id: 'Sedang berjalan', en: 'In Progress' },
+	'Perlu tinjauan': { id: 'Perlu tinjauan', en: 'Needs Review' },
 	'Pelaporan intelijen ekspor': { id: 'Pelaporan intelijen ekspor', en: 'Export intelligence reporting' },
 	'Pembuat laporan': { id: 'Pembuat laporan', en: 'Report builder' },
 	'Buat laporan dagang dari sinyal ruang kerja ekspor secara langsung.': { id: 'Buat laporan dagang dari sinyal ruang kerja ekspor secara langsung.', en: 'Generate trade reports from live export workspace signals.' },
