@@ -2,6 +2,7 @@
 
 import hmac
 import json
+import logging
 import os
 import pathlib
 import time
@@ -9,6 +10,16 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, File, Form
 from fastapi.responses import FileResponse
+
+logger = logging.getLogger("mauekspor.api")
+
+
+def _as_float(value, field: str = "value") -> float:
+    """Parse angka dari input user; non-numerik → 422 (bukan 500)."""
+    try:
+        return float(str(value).replace(",", ""))
+    except (TypeError, ValueError):
+        raise HTTPException(422, f"{field} must be a number")
 
 from app import ai, db
 from app.core.config import settings
@@ -877,7 +888,7 @@ def create_product_pricing(product_id: str, payload: dict):
     if margin is None:
         margin = payload.get("targetMarginPercent", 30)
     country = payload.get("target_country_code") or payload.get("targetCountryCode") or "JP"
-    result = generate_product_pricing(product, float(cogs), float(margin), str(country))
+    result = generate_product_pricing(product, _as_float(cogs, "cogs_per_unit_idr"), _as_float(margin, "target_margin_percent"), str(country))
     existing = db.get_by("pricing_results", productId=product_id)
     if existing:
         existing.update(result)
@@ -1520,10 +1531,18 @@ def create_forwarder_review(forwarder_id: str, payload: sc.CreateForwarderReview
 
 
 @router.put("/forwarders/{forwarder_id}/reviews/{review_id}/")
-def update_forwarder_review(forwarder_id: str, review_id: str, payload: sc.UpdateForwarderReviewPayload):
+def update_forwarder_review(
+    forwarder_id: str,
+    review_id: str,
+    payload: sc.UpdateForwarderReviewPayload,
+    current_user: dict = Depends(get_current_user),
+):
     review = db.get("forwarder_reviews", review_id)
     if not review:
         raise HTTPException(404, "Review not found")
+    # Ownership: hanya pemilik review (umkmId) atau Admin yang boleh mengubah.
+    if current_user.get("role") != "Admin" and review.get("umkmId") != current_user["id"]:
+        raise HTTPException(403, "You can only update your own review")
     if payload.rating < 1 or payload.rating > 5:
         raise HTTPException(422, "Rating must be 1-5")
     review["rating"] = payload.rating
@@ -1537,10 +1556,16 @@ def update_forwarder_review(forwarder_id: str, review_id: str, payload: sc.Updat
 
 
 @router.delete("/forwarders/{forwarder_id}/reviews/{review_id}/delete/")
-def delete_forwarder_review(forwarder_id: str, review_id: str):
+def delete_forwarder_review(
+    forwarder_id: str,
+    review_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     review = db.get("forwarder_reviews", review_id)
     if not review:
         raise HTTPException(404, "Review not found")
+    if current_user.get("role") != "Admin" and review.get("umkmId") != current_user["id"]:
+        raise HTTPException(403, "You can only delete your own review")
     db.delete("forwarder_reviews", review_id)
     record = db.get("forwarders", forwarder_id)
     if record:
@@ -1955,7 +1980,7 @@ def create_catalog_pricing(catalog_id: str, payload: dict):
     if margin is None:
         margin = payload.get("targetMarginPercent", 30)
     country = payload.get("target_country_code") or payload.get("targetCountryCode") or "JP"
-    result = generate_product_pricing(product or record, float(cogs), float(margin), str(country))
+    result = generate_product_pricing(product or record, _as_float(cogs, "cogs_per_unit_idr"), _as_float(margin, "target_margin_percent"), str(country))
     existing = db.get_by("pricing_results", productId=str(record.get("productId", "")))
     if existing:
         existing.update(result)
@@ -2625,8 +2650,18 @@ def mark_payment_received(payment_id: str, payload: dict):
     record = db.get("payments", payment_id)
     if not record:
         raise HTTPException(404, "Payment not found")
-    amount = float(payload.get("amount") or record.get("paid") or record.get("amount", 0))
-    owed = float(record.get("amount", 0))
+
+    def _to_float(value) -> float:
+        try:
+            # Terima format "42,800" (pemisah ribuan) maupun angka murni.
+            return float(str(value).replace(",", ""))
+        except (TypeError, ValueError):
+            raise HTTPException(422, "amount must be a number")
+
+    amount = _to_float(payload.get("amount") or record.get("paid") or record.get("amount", 0))
+    owed = _to_float(record.get("amount", 0) or 0)
+    if amount < 0:
+        raise HTTPException(422, "amount must not be negative")
     record["paid"] = amount
     record["status"] = "Settled" if amount >= owed else "Deposit Paid"
     record["updatedAt"] = "now"
@@ -3120,7 +3155,6 @@ def delete_educational_module(module_id: str):
     return {"data": {"status": "deleted"}, "meta": {}}
 
 
-@router.post("/educational/{module_id}/publish/")
 @router.post("/educational/modules/{module_id}/publish/")
 def publish_educational_module(module_id: str):
     record = db.get("educational_modules", module_id)
@@ -3493,21 +3527,33 @@ def revoke_api_key(key_id: str):
 # ----------------------------------------------------------------------------
 # CHAT SESSIONS & SUGGESTIONS (AI Copilot)
 # ----------------------------------------------------------------------------
+def _chat_session_owned(record: dict, user: dict) -> bool:
+    """Sesi boleh diakses pemiliknya atau Admin; sesi tanpa owner = demo bersama."""
+    owner = record.get("userId")
+    if owner is None:
+        return True
+    return user.get("role") == "Admin" or owner == user["id"]
+
+
 @router.get("/chat/sessions/")
-def list_chat_sessions():
-    sessions = db.all("chat_sessions")
+def list_chat_sessions(current_user: dict = Depends(get_current_user)):
+    sessions = [s for s in db.all("chat_sessions") if _chat_session_owned(s, current_user)]
+    out = []
     for s in sessions:
-        s["messageCount"] = len(s.get("messages", []) or [])
-    return {"data": sessions, "meta": {}}
+        item = _serialize(s)
+        item["messageCount"] = len(s.get("messages", []) or [])
+        out.append(item)
+    return {"data": out, "meta": {}}
 
 
 @router.post("/chat/sessions/")
-def create_chat_session(payload: sc.CreateChatSessionPayload):
+def create_chat_session(payload: sc.CreateChatSessionPayload, current_user: dict = Depends(get_current_user)):
     record = db.insert("chat_sessions", {
         "id": db.gen_id("chat_sessions", "CHS"),
         "title": payload.title or "Percakapan baru",
         "messages": [],
         "messageCount": 0,
+        "userId": current_user["id"],
         "createdAt": "now",
         "updatedAt": "now",
     })
@@ -3515,27 +3561,28 @@ def create_chat_session(payload: sc.CreateChatSessionPayload):
 
 
 @router.get("/chat/sessions/{session_id}/")
-def get_chat_session(session_id: str):
+def get_chat_session(session_id: str, current_user: dict = Depends(get_current_user)):
     record = db.get("chat_sessions", session_id)
-    if not record:
+    if not record or not _chat_session_owned(record, current_user):
         raise HTTPException(404, "Chat session not found")
-    record["messageCount"] = len(record.get("messages", []) or [])
-    return _one(record)
+    out = _serialize(record)
+    out["messageCount"] = len(record.get("messages", []) or [])
+    return {"data": out, "meta": {}}
 
 
 @router.delete("/chat/sessions/{session_id}/")
-def delete_chat_session(session_id: str):
+def delete_chat_session(session_id: str, current_user: dict = Depends(get_current_user)):
     record = db.get("chat_sessions", session_id)
-    if not record:
+    if not record or not _chat_session_owned(record, current_user):
         raise HTTPException(404, "Chat session not found")
     db.delete("chat_sessions", session_id)
     return {"data": {"status": "deleted"}, "meta": {}}
 
 
 @router.put("/chat/sessions/{session_id}/")
-def rename_chat_session(session_id: str, payload: sc.RenameChatSessionPayload):
+def rename_chat_session(session_id: str, payload: sc.RenameChatSessionPayload, current_user: dict = Depends(get_current_user)):
     record = db.get("chat_sessions", session_id)
-    if not record:
+    if not record or not _chat_session_owned(record, current_user):
         raise HTTPException(404, "Chat session not found")
     record["title"] = payload.title
     record["updatedAt"] = "now"

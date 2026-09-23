@@ -88,16 +88,22 @@ def test_portal_negara_dari_record_buyer_id():
 def test_portal_negara_dari_profil_buyer_login():
     with TestClient(app) as c:
         buyer_token = _login(c, BUYER)
-        # trigger seeding lalu pasang profil buyer (U-003) langsung di store
-        # (POST /buyers/profile/ dgn role Buyer dibatasi modul gate -> pakai seed langsung)
+        # trigger seeding lalu pastikan profil buyer (U-003) berbunyi Jepang.
+        # Seed dasar mungkin sudah punya profil utk U-003 dengan negara lain,
+        # jadi update IN-PLACE agar deterministik (hindari profil bayangan).
         assert db.get("users", "U-003"), "seed user Buyer harus ada"
-        db.insert("buyer_profiles", {
-            "id": "BYP-TEST-U003",
-            "userId": "U-003",
-            "company_name": "Hikari Foods Co.",
-            "source_countries": ["Japan"],
-            "sourceCountries": ["Japan"],
-        })
+        existing = db.get_by("buyer_profiles", userId="U-003")
+        if existing:
+            existing["sourceCountries"] = ["Japan"]
+            existing["source_countries"] = ["Japan"]
+        else:
+            db.insert("buyer_profiles", {
+                "id": "BYP-TEST-U003",
+                "userId": "U-003",
+                "company_name": "Hikari Foods Co.",
+                "source_countries": ["Japan"],
+                "sourceCountries": ["Japan"],
+            })
 
         res = c.get("/api/v1/buyers/portal/", headers=_auth(buyer_token))
         assert res.status_code == 200, res.text

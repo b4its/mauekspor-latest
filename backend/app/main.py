@@ -326,7 +326,12 @@ def _active_csrf_tokens() -> dict[str, float]:
 
 
 def issue_csrf_token(request) -> str:
-    """Buat / kembalikan token CSRF untuk request yang memakai cookie."""
+    """Buat token CSRF untuk request yang memakai cookie.
+
+    Pangkas token kedaluwarsa di sini juga, karena endpoint GET /auth/csrf/
+    publik → tanpa pruning dict tumbuh tanpa batas.
+    """
+    _active_csrf_tokens()
     token = _secrets.token_urlsafe(32)
     _csrf_tokens[token] = _time.time()
     return token
