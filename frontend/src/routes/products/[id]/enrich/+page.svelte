@@ -8,24 +8,39 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Alert } from '$lib/components/ui/alert/index.js';
+	import { updateProduct } from '$lib/api/products';
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.product));
 	let hsCode = $state(initial.hs);
-	let sku = $state(`MEK-${initial.id.split('-').pop()}`);
-	let descriptionEn = $state(`${initial.name} - premium export grade, suitable for B2B distribution.`);
+	let sku = $state(initial.sku ?? `MEK-${initial.id.split('-').pop()}`);
+	let descriptionEn = $state(initial.description_english_b2b ?? `${initial.name} - premium export grade, suitable for B2B distribution.`);
 	let saved = $state(false);
+	let saving = $state(false);
 	let error = $state('');
 
 	let valid = $derived(/^\d{4}(\.\d{2})?$/.test(hsCode.trim()));
 
-	function save() {
+	async function save() {
 		error = '';
 		if (!valid) {
 			error = 'HS Code harus 4 digit atau 6 digit (misal 0901 atau 0901.21).';
 			return;
 		}
-		saved = true;
+		saving = true;
+		try {
+			await updateProduct(data.product.id, {
+				hs: hsCode.trim(),
+				hs_code: hsCode.trim(),
+				sku,
+				description_english_b2b: descriptionEn
+			});
+			saved = true;
+		} catch {
+			error = 'Gagal menyimpan override enrichment ke backend.';
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -85,7 +100,7 @@
 
 			<div class="flex flex-wrap gap-2">
 				<Button variant="outline" href={`/products/${data.product.id}`}>Cancel</Button>
-				<Button type="submit">Save override</Button>
+				<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save override'}</Button>
 			</div>
 		</form>
 	{/if}

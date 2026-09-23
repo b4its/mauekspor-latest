@@ -53,6 +53,7 @@ export type Product = {
 	hsConfidence?: number;
 	sku?: string;
 	description?: string;
+	description_english_b2b?: string;
 	material_composition?: string;
 	quality_specs?: Record<string, unknown>;
 	updatedAt?: string;
@@ -560,6 +561,13 @@ export type EducationalModule = {
 	lessons: number;
 	completion: number;
 	summary: string;
+	// Field backend
+	description?: string;
+	orderIndex?: number;
+	articleCount?: number;
+	articles?: EducationalArticle[];
+	createdAt?: string;
+	updatedAt?: string;
 };
 
 export type EducationalLesson = {
