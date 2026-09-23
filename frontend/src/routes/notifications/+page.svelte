@@ -8,8 +8,17 @@
 	import { listNotifications, markNotificationRead, archiveNotification } from '$lib/api/notifications';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Unread', 'Read', 'Archived'];
+
+	function trStatus(s: string) {
+		return t(s === 'All' ? 'Semua' : s === 'Unread' ? 'Belum dibaca' : s === 'Read' ? 'Dibaca' : 'Diarsipkan');
+	}
+
+	function trFilter(f: string) {
+		return t(f === 'All' ? 'Semua' : f === 'Unread' ? 'Belum dibaca' : f === 'Read' ? 'Dibaca' : 'Diarsipkan');
+	}
 	let activeFilter = $state('All');
 	let query = $state('');
 	let marked = $state(false);
@@ -47,7 +56,7 @@
 			}
 			marked = true;
 		} catch {
-			error = 'Gagal menandai notifikasi.';
+			error = t('Gagal menandai notifikasi.');
 		} finally {
 			marking = false;
 		}
@@ -60,7 +69,7 @@
 			const item = notifications.items.find((n) => n.id === id);
 			if (item) item.status = 'Read';
 		} catch {
-			error = 'Gagal menandai notifikasi.';
+			error = t('Gagal menandai notifikasi.');
 		}
 	}
 
@@ -71,7 +80,7 @@
 			const item = notifications.items.find((n) => n.id === id);
 			if (item) item.status = 'Archived';
 		} catch {
-			error = 'Gagal mengarsipkan notifikasi.';
+			error = t('Gagal mengarsipkan notifikasi.');
 		}
 	}
 </script>
@@ -80,20 +89,20 @@
 	<title>Notifications | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Notifications" eyebrow="Operational alerts">
+<AppShell title="Notifications" eyebrow={t('Operational alerts')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Alert center</Badge>
+			<Badge variant="outline">{t('Pusat alert')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Catch the export signals that need action now.
+				{t('Tangkap sinyal ekspor yang butuh tindakan sekarang.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Monitor critical blockers, shipment exceptions, payment events, and AI-generated updates from one notification center.
+				{t('Pantau blocker kritis, pengecualian pengiriman, peristiwa pembayaran, dan pembaruan buatan AI dari satu pusat notifikasi.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleMarkAll} disabled={marking}>{marked ? 'Marked read' : marking ? 'Marking...' : 'Mark all read'}</Button>
-			<Badge variant="destructive">Unread {unread}</Badge>
+			<Button onclick={handleMarkAll} disabled={marking}>{marked ? t('Ditandai dibaca') : marking ? t('Menandai...') : t('Mark all read')}</Button>
+			<Badge variant="destructive">{t('Belum dibaca')} {unread}</Badge>
 		</CardContent>
 	</Card>
 
@@ -103,9 +112,9 @@
 
 	{#if marked}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Notifications marked as read.</strong>
+			<strong class="block">{t('Notifikasi ditandai dibaca.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				Notifikasi ditandai dibaca di backend.
+				{t('Notifikasi ditandai dibaca di backend.')}
 			</span>
 		</div>
 	{/if}
@@ -113,17 +122,17 @@
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">
 			{#each filters as filter}
-				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
+				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trFilter(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search notification, module, severity..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Cari notifikasi, modul, tingkat keparahan...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-3">
 		{#each filteredNotifications as item}
 			<Card class="flex flex-col items-start justify-between gap-4 p-5 md:flex-row md:items-center">
 				<div class="min-w-0">
-					<Badge variant={toneVariant(statusTone(marked && item.status === 'Unread' ? 'Read' : item.status))}>{marked && item.status === 'Unread' ? 'Read' : item.status}</Badge>
+					<Badge variant={toneVariant(statusTone(marked && item.status === 'Unread' ? 'Read' : item.status))}>{marked && item.status === 'Unread' ? t('Dibaca') : trStatus(item.status)}</Badge>
 					<strong class="mt-2.5 block text-xl font-bold tracking-tight">{item.title}</strong>
 					<p class="mt-2 leading-relaxed text-muted-foreground">{item.description}</p>
 				</div>
@@ -131,18 +140,18 @@
 					<Badge variant={toneVariant(statusTone(item.severity))}>{item.severity}</Badge>
 					<small class="text-sm text-muted-foreground">{item.module} · {item.time}</small>
 					<div class="flex flex-wrap gap-2">
-						<Button variant="outline" size="sm" href={item.href}>Open</Button>
+						<Button variant="outline" size="sm" href={item.href}>{t('Buka')}</Button>
 						{#if item.status === 'Unread'}
-							<Button variant="outline" size="sm" onclick={() => handleMarkRead(item.id)}>Tandai dibaca</Button>
+							<Button variant="outline" size="sm" onclick={() => handleMarkRead(item.id)}>{t('Tandai dibaca')}</Button>
 						{/if}
 						{#if item.status !== 'Archived'}
-							<Button variant="ghost" size="sm" onclick={() => handleArchive(item.id)}>Arsip</Button>
+							<Button variant="ghost" size="sm" onclick={() => handleArchive(item.id)}>{t('Arsip')}</Button>
 						{/if}
 					</div>
 				</aside>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No notification matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada notifikasi yang cocok dengan pencarian.')}</div>
 		{/each}
 	</div>
 </AppShell>
