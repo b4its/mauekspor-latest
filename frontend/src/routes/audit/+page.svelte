@@ -48,6 +48,8 @@
 			exporting = false;
 		}
 	}
+
+	const csvUrl = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'}/audit/export.csv`;
 </script>
 
 <svelte:head>
@@ -63,6 +65,7 @@
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={handleExport} disabled={exporting}>{exported ? 'Audit exported' : exporting ? 'Exporting...' : 'Export audit trail'}</Button>
+			<Button variant="outline" href={csvUrl}>Download CSV</Button>
 			<Badge variant="outline">Events {events.items.length}</Badge>
 		</CardContent>
 	</Card>

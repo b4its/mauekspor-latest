@@ -5,13 +5,15 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { userAccounts as seedUsers } from '$lib/data/trade';
-	import { listUsers } from '$lib/api/users';
+	import { listUsers, deleteUser } from '$lib/api/users';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 
 	const roleFilters = ['All', 'Admin', 'UMKM', 'Buyer', 'Forwarder'];
 	let roleFilter = $state('All');
 	let query = $state('');
+	let deleting = $state('');
+	let error = $state('');
 
 	let users = createRemoteList(listUsers, seedUsers);
 	$effect(() => {
@@ -28,6 +30,21 @@
 			return matchesRole && matchesQuery;
 		})
 	);
+
+	async function removeUser(id: string, name: string) {
+		if (!confirm(`Hapus akun "${name}" beserta data terkaitnya?`)) return;
+		error = '';
+		deleting = id;
+		try {
+			await deleteUser(id);
+			const idx = users.items.findIndex((u) => u.id === id);
+			if (idx >= 0) users.items.splice(idx, 1);
+		} catch {
+			error = 'Gagal menghapus akun.';
+		} finally {
+			deleting = '';
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -82,18 +99,26 @@
 			<span>User</span><span>Role</span><span>Status</span><span>Created</span><span class="hidden lg:block"></span>
 		</div>
 		{#each filteredUsers as user}
-			<a href={`/users/${user.id}`} class="grid grid-cols-2 items-center gap-3 rounded-lg border-b p-3 text-sm transition-colors last:border-b-0 hover:bg-muted/40 md:grid-cols-4 lg:grid-cols-5">
-				<div>
-					<strong class="block">{user.fullName}</strong>
-					<small class="block text-xs text-muted-foreground">{user.email}</small>
-				</div>
+			<div class="grid grid-cols-2 items-center gap-3 rounded-lg border-b p-3 text-sm transition-colors last:border-b-0 hover:bg-muted/40 md:grid-cols-4 lg:grid-cols-5">
+				<a href={`/users/${user.id}`} class="grid min-w-0 gap-1">
+					<strong class="block truncate">{user.fullName}</strong>
+					<small class="block truncate text-xs text-muted-foreground">{user.email}</small>
+				</a>
 				<span><Badge variant="secondary">{user.role}</Badge></span>
 				<span><Badge variant={toneVariant(statusTone(user.status))}>{user.status}</Badge></span>
 				<span class="hidden text-muted-foreground md:block">{user.createdAt}</span>
-				<span class="hidden font-bold text-primary lg:block">Open</span>
-			</a>
+				<span class="grid justify-end">
+					<Button size="sm" variant="ghost" href={`/users/${user.id}`}>Open</Button>
+					<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() => removeUser(user.id, user.fullName)}>
+						{deleting === user.id ? '...' : 'Hapus'}
+					</Button>
+				</span>
+			</div>
 		{:else}
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No user matched your filter.</div>
 		{/each}
+		{#if error}
+			<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		{/if}
 	</Card>
 </AppShell>

@@ -4,12 +4,18 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Alert } from '$lib/components/ui/alert/index.js';
-	import { products, projects } from '$lib/data/trade';
+	import { products as seedProducts, projects as seedProjects } from '$lib/data/trade';
 	import { createCatalog } from '$lib/api/catalogs';
+	import { listProducts, generateCatalogDescription } from '$lib/api/products';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import type { Product } from '$lib/data/trade';
 
+	let products = createRemoteList<Product>(listProducts, seedProducts);
+	products.load();
 	let productId = $state('');
 	let projectId = $state('');
 	let title = $state('');
@@ -17,7 +23,11 @@
 	let moq = $state('');
 	let leadTime = $state('');
 	let priceRange = $state('');
+	let description = $state('');
+	let tags = $state('');
 	let created = $state(false);
+	let creating = $state(false);
+	let generating = $state(false);
 	let error = $state('');
 
 	let valid = $derived(title.trim().length > 3 && productId && targetMarket.trim().length > 1 && moq.trim().length > 1);
@@ -28,18 +38,47 @@
 			error = 'Lengkapi kolom wajib: judul, produk, target market, dan MOQ.';
 			return;
 		}
+		creating = true;
 		try {
 			await createCatalog({
 				productId,
-				projectId: projectId || products[0]?.id,
+				projectId: projectId || '',
 				title,
 				targetMarket,
 				moq,
-				leadTime: leadTime || 'TBD'
+				leadTime: leadTime || 'TBD',
+				priceRange,
+				description,
+				tags: tags.split(',').map((t) => t.trim()).filter(Boolean)
 			});
 			created = true;
 		} catch {
 			error = 'Gagal membuat katalog. Coba lagi.';
+		} finally {
+			creating = false;
+		}
+	}
+
+	async function getAiRecommendations() {
+		error = '';
+		if (!productId) {
+			error = 'Pilih produk dulu untuk mengambil rekomendasi AI.';
+			return;
+		}
+		generating = true;
+		try {
+			const res = await generateCatalogDescription(productId);
+			const ai = res.data;
+			if (!title) title = products.items.find((p) => p.id === productId)?.name ?? 'Katalog Ekspor';
+			if (!description) description = ai.export_description;
+			if (ai.technical_specs.length > 0) {
+				const specText = ai.technical_specs.map((s) => `${s.label}: ${s.value}`).join('\n');
+				if (!tags) tags = ai.technical_specs.slice(0, 3).map((s) => s.value).join(', ');
+			}
+		} catch {
+			error = 'Gagal mengambil rekomendasi AI.';
+		} finally {
+			generating = false;
 		}
 	}
 </script>
@@ -57,7 +96,7 @@
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 				The catalog carries the buyer-facing copy, pricing, MOQ, and spec sheet that quotations
-				reuse.
+				reuse. Gunakan tombol AI untuk mengisi deskripsi secara otomatis.
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -83,46 +122,58 @@
 		>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div class="grid gap-2">
-					<Label>Product</Label>
-					<NativeSelect bind:value={productId}>
+					<Label for="cat-product">Product</Label>
+					<NativeSelect id="cat-product" bind:value={productId}>
 						<option value="">Select product...</option>
-						{#each products as product}
-							<option value={product.id}>{product.name}</option>
+						{#each products.items as product}
+							<option value={product.id}>{product.name} (HS {product.hs})</option>
 						{/each}
 					</NativeSelect>
 				</div>
 				<div class="grid gap-2">
-					<Label>Project</Label>
-					<NativeSelect bind:value={projectId}>
+					<Label for="cat-project">Project</Label>
+					<NativeSelect id="cat-project" bind:value={projectId}>
 						<option value="">Optional...</option>
-						{#each projects as project}
+						{#each seedProjects as project}
 							<option value={project.id}>{project.name}</option>
 						{/each}
 					</NativeSelect>
 				</div>
 			</div>
-			<div class="grid gap-2">
-				<Label>Catalog title</Label>
-				<Input bind:value={title} placeholder="Premium Gayo Arabica Coffee Beans 250g" />
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<Button type="button" variant="outline" onclick={getAiRecommendations} disabled={generating}>
+					{generating ? 'Menghasilkan...' : 'Get AI Recommendations'}
+				</Button>
+				{#if productId}
+					<span class="text-xs font-semibold text-muted-foreground">Deskripsi akan diisi otomatis dari produk.</span>
+				{/if}
 			</div>
 			<div class="grid gap-2">
-				<Label>Target market</Label>
-				<Input bind:value={targetMarket} placeholder="Japan specialty importers" />
+				<Label for="cat-title">Catalog title</Label>
+				<Input id="cat-title" bind:value={title} placeholder="Premium Gayo Arabica Coffee Beans 250g" />
+			</div>
+			<div class="grid gap-2">
+				<Label for="cat-market">Target market</Label>
+				<Input id="cat-market" bind:value={targetMarket} placeholder="Japan specialty importers" />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label>MOQ</Label><Input bind:value={moq} placeholder="2,000 bags" /></div>
-				<div class="grid gap-2"><Label>Lead time</Label><Input bind:value={leadTime} placeholder="21 days after deposit" /></div>
+				<div class="grid gap-2"><Label for="cat-moq">MOQ</Label><Input id="cat-moq" bind:value={moq} placeholder="2,000 bags" /></div>
+				<div class="grid gap-2"><Label for="cat-lead">Lead time</Label><Input id="cat-lead" bind:value={leadTime} placeholder="21 days after deposit" /></div>
+			</div>
+			<div class="grid gap-4 sm:grid-cols-2">
+				<div class="grid gap-2"><Label for="cat-price">Price range</Label><Input id="cat-price" bind:value={priceRange} placeholder="FOB USD 20.80-21.40 per bag" /></div>
+				<div class="grid gap-2"><Label for="cat-tags">Tags (comma separated)</Label><Input id="cat-tags" bind:value={tags} placeholder="coffee, single-origin" /></div>
 			</div>
 			<div class="grid gap-2">
-				<Label>Price range</Label>
-				<Input bind:value={priceRange} placeholder="FOB USD 20.80-21.40 per bag" />
+				<Label for="cat-desc">Buyer-facing description</Label>
+				<Textarea id="cat-desc" bind:value={description} rows={3} placeholder="Deskripsi untuk buyer internasional..." />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}
 
 			<div class="flex flex-wrap gap-2">
 				<Button variant="outline" href="/catalogs">Cancel</Button>
-				<Button type="submit">Create catalog draft</Button>
+				<Button type="submit" disabled={creating}>{creating ? 'Creating...' : 'Create catalog draft'}</Button>
 			</div>
 		</form>
 	{/if}

@@ -24,6 +24,7 @@ export type UpdateProductPayload = Partial<CreateProductPayload> & {
 	marketing_highlights?: string[];
 	production_technique?: string;
 	finishing_type?: string;
+	certificates?: string[];
 };
 
 export type MiForwarder = {

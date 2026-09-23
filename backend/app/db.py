@@ -24,6 +24,7 @@ _TABLES = [
     "catalog_images", "catalog_variant_types", "catalog_variant_options",
     "chat_sessions", "regulation_recommendations", "buyer_profiles",
     "forwarder_profiles", "educational_lessons", "regulations",
+    "settings",
 ]
 
 _STORE: dict[str, list[dict[str, Any]]] = {}

@@ -7,6 +7,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Alert } from '$lib/components/ui/alert/index.js';
+	import { updateProduct } from '$lib/api/products';
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.product));
@@ -21,17 +22,36 @@
 	let certificates = $state([...initial.certificates]);
 	let certificatesText = $state(certificates.join(', '));
 	let saved = $state(false);
+	let saving = $state(false);
 	let error = $state('');
 
 	let valid = $derived(name.trim().length > 2 && category.trim().length > 1 && origin.trim().length > 1);
 
-	function save() {
+	async function save() {
 		error = '';
 		if (!valid) {
 			error = 'Lengkapi kolom wajib sebelum menyimpan.';
 			return;
 		}
-		saved = true;
+		saving = true;
+		try {
+			await updateProduct(data.product.id, {
+				name,
+				category,
+				origin,
+				packaging,
+				netWeight,
+				grossWeight,
+				moq,
+				leadTime,
+				certificates: certificatesText.split(',').map((c) => c.trim()).filter(Boolean)
+			});
+			saved = true;
+		} catch {
+			error = 'Gagal menyimpan produk ke backend.';
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -56,7 +76,7 @@
 				<Badge>Product saved</Badge>
 				<h3 class="text-xl font-semibold tracking-tight">{name}</h3>
 				<p class="text-muted-foreground">
-					Perubahan produk tersimpan.
+					Perubahan produk tersimpan di backend.
 				</p>
 				<Button href={`/products/${data.product.id}`}>Back to product</Button>
 			</CardContent>
@@ -71,52 +91,52 @@
 		>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div class="grid gap-2">
-					<Label>Name</Label>
-					<Input bind:value={name} />
+					<Label for="p-name">Name</Label>
+					<Input id="p-name" bind:value={name} />
 				</div>
 				<div class="grid gap-2">
-					<Label>Category</Label>
-					<Input bind:value={category} />
+					<Label for="p-cat">Category</Label>
+					<Input id="p-cat" bind:value={category} />
 				</div>
 			</div>
 			<div class="grid gap-2">
-				<Label>Origin</Label>
-				<Input bind:value={origin} />
+				<Label for="p-origin">Origin</Label>
+				<Input id="p-origin" bind:value={origin} />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div class="grid gap-2">
-					<Label>Net weight</Label>
-					<Input bind:value={netWeight} />
+					<Label for="p-net">Net weight</Label>
+					<Input id="p-net" bind:value={netWeight} />
 				</div>
 				<div class="grid gap-2">
-					<Label>Gross weight</Label>
-					<Input bind:value={grossWeight} />
+					<Label for="p-gross">Gross weight</Label>
+					<Input id="p-gross" bind:value={grossWeight} />
 				</div>
 			</div>
 			<div class="grid gap-2">
-				<Label>Packaging</Label>
-				<Input bind:value={packaging} />
+				<Label for="p-pack">Packaging</Label>
+				<Input id="p-pack" bind:value={packaging} />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div class="grid gap-2">
-					<Label>MOQ</Label>
-					<Input bind:value={moq} />
+					<Label for="p-moq">MOQ</Label>
+					<Input id="p-moq" bind:value={moq} />
 				</div>
 				<div class="grid gap-2">
-					<Label>Lead time</Label>
-					<Input bind:value={leadTime} />
+					<Label for="p-lead">Lead time</Label>
+					<Input id="p-lead" bind:value={leadTime} />
 				</div>
 			</div>
 			<div class="grid gap-2">
-				<Label>Certificates (comma separated)</Label>
-				<Input bind:value={certificatesText} />
+				<Label for="p-certs">Certificates (comma separated)</Label>
+				<Input id="p-certs" bind:value={certificatesText} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}
 
 			<div class="flex flex-wrap gap-2">
 				<Button variant="outline" href={`/products/${data.product.id}`}>Cancel</Button>
-				<Button type="submit">Save product</Button>
+				<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save product'}</Button>
 			</div>
 		</form>
 	{/if}

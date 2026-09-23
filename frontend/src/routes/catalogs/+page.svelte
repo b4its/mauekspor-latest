@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { catalogs as seedCatalogs, products as seedProducts } from '$lib/data/trade';
-	import { listCatalogs } from '$lib/api/catalogs';
+	import { listCatalogs, deleteCatalog } from '$lib/api/catalogs';
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
@@ -13,6 +13,8 @@
 	const filters = ['All', 'Published', 'Draft', 'Needs Review'];
 	let activeFilter = $state('All');
 	let query = $state('');
+	let deleting = $state('');
+	let error = $state('');
 
 	let catalogs = createRemoteList(listCatalogs, seedCatalogs);
 	let products = createRemoteList(listProducts, seedProducts);
@@ -20,6 +22,21 @@
 		catalogs.load();
 		products.load();
 	});
+
+	async function removeCatalog(id: string, title: string) {
+		if (!confirm(`Hapus katalog "${title}"?`)) return;
+		error = '';
+		deleting = id;
+		try {
+			await deleteCatalog(id);
+			const idx = catalogs.items.findIndex((c) => c.id === id);
+			if (idx >= 0) catalogs.items.splice(idx, 1);
+		} catch {
+			error = 'Gagal menghapus katalog.';
+		} finally {
+			deleting = '';
+		}
+	}
 
 	let filteredCatalogs = $derived(
 		catalogs.items.filter((catalog) => {
@@ -129,6 +146,12 @@
 							Images <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.images}</strong>
 						</div>
 					</div>
+					<div class="mt-3 flex items-center justify-end gap-2">
+						<Button size="sm" variant="outline" href={`/catalogs/${catalog.id}/edit`}>Edit</Button>
+						<Button size="sm" variant="destructive" disabled={deleting === catalog.id} onclick={(e) => { e.preventDefault(); removeCatalog(catalog.id, catalog.title); }}>
+							{deleting === catalog.id ? '...' : 'Hapus'}
+						</Button>
+					</div>
 				</a>
 			</Card>
 		{:else}
@@ -137,4 +160,7 @@
 			</div>
 		{/each}
 	</div>
+	{#if error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
 </AppShell>

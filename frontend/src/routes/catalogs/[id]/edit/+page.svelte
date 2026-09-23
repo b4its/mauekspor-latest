@@ -8,6 +8,7 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Alert } from '$lib/components/ui/alert/index.js';
+	import { updateCatalog } from '$lib/api/catalogs';
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.catalog));
@@ -18,17 +19,33 @@
 	let priceRange = $state(initial.priceRange);
 	let description = $state(initial.description);
 	let saved = $state(false);
+	let saving = $state(false);
 	let error = $state('');
 
 	let valid = $derived(title.trim().length > 3 && targetMarket.trim().length > 1 && moq.trim().length > 1);
 
-	function save() {
+	async function save() {
 		error = '';
 		if (!valid) {
 			error = 'Lengkapi kolom wajib sebelum menyimpan.';
 			return;
 		}
-		saved = true;
+		saving = true;
+		try {
+			await updateCatalog(data.catalog.id, {
+				title,
+				targetMarket,
+				moq,
+				leadTime,
+				priceRange,
+				description
+			});
+			saved = true;
+		} catch {
+			error = 'Gagal menyimpan katalog ke backend.';
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -53,7 +70,7 @@
 				<Badge variant="secondary">Catalog saved</Badge>
 				<h3 class="text-xl font-semibold tracking-tight">{title}</h3>
 				<p class="text-muted-foreground">
-					Perubahan katalog tersimpan.
+					Perubahan katalog tersimpan di backend.
 				</p>
 				<Button href={`/catalogs/${data.catalog.id}`}>Back to catalog</Button>
 			</CardContent>
@@ -67,31 +84,31 @@
 			}}
 		>
 			<div class="grid gap-2">
-				<Label>Catalog title</Label>
-				<Input bind:value={title} />
+				<Label for="c-title">Catalog title</Label>
+				<Input id="c-title" bind:value={title} />
 			</div>
 			<div class="grid gap-2">
-				<Label>Target market</Label>
-				<Input bind:value={targetMarket} />
+				<Label for="c-market">Target market</Label>
+				<Input id="c-market" bind:value={targetMarket} />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label>MOQ</Label><Input bind:value={moq} /></div>
-				<div class="grid gap-2"><Label>Lead time</Label><Input bind:value={leadTime} /></div>
+				<div class="grid gap-2"><Label for="c-moq">MOQ</Label><Input id="c-moq" bind:value={moq} /></div>
+				<div class="grid gap-2"><Label for="c-lead">Lead time</Label><Input id="c-lead" bind:value={leadTime} /></div>
 			</div>
 			<div class="grid gap-2">
-				<Label>Price range</Label>
-				<Input bind:value={priceRange} />
+				<Label for="c-price">Price range</Label>
+				<Input id="c-price" bind:value={priceRange} />
 			</div>
 			<div class="grid gap-2">
-				<Label>Buyer-facing description</Label>
-				<Textarea bind:value={description} rows={3} />
+				<Label for="c-desc">Buyer-facing description</Label>
+				<Textarea id="c-desc" bind:value={description} rows={3} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}
 
 			<div class="flex flex-wrap gap-2">
 				<Button variant="outline" href={`/catalogs/${data.catalog.id}`}>Cancel</Button>
-				<Button type="submit">Save catalog</Button>
+				<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save catalog'}</Button>
 			</div>
 		</form>
 	{/if}

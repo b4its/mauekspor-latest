@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts } from '$lib/data/trade';
-	import { listProducts } from '$lib/api/products';
+	import { listProducts, deleteProduct } from '$lib/api/products';
 	import { statusTone } from '$lib/utils/format';
 	import type { Product } from '$lib/data/trade';
 
@@ -14,6 +14,8 @@
 	const filters = ['All', 'Ready', 'Enriched', 'Needs HS Review'];
 	let products = $state<Product[]>([]);
 	let loaded = $state(false);
+	let deleting = $state('');
+	let error = $state('');
 
 	$effect(() => {
 		listProducts()
@@ -25,6 +27,20 @@
 			})
 			.finally(() => (loaded = true));
 	});
+
+	async function removeProduct(id: string, name: string) {
+		if (!confirm(`Hapus produk "${name}"?`)) return;
+		error = '';
+		deleting = id;
+		try {
+			await deleteProduct(id);
+			products = products.filter((p) => p.id !== id);
+		} catch {
+			error = 'Gagal menghapus produk.';
+		} finally {
+			deleting = '';
+		}
+	}
 
 	let filteredProducts = $derived(
 		products.filter((product) => {
@@ -110,10 +126,19 @@
 							Packaging <strong class="mt-1 block text-sm font-bold text-foreground">{product.packaging}</strong>
 						</div>
 					</div>
+					<div class="mt-3 flex items-center justify-end gap-2">
+						<Button size="sm" variant="outline" href={`/products/${product.id}/edit`}>Edit</Button>
+						<Button size="sm" variant="destructive" disabled={deleting === product.id} onclick={(e) => { e.preventDefault(); removeProduct(product.id, product.name); }}>
+							{deleting === product.id ? '...' : 'Hapus'}
+						</Button>
+					</div>
 				</a>
 			</Card>
 		{:else}
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No product matched your filter.</div>
 		{/each}
 	</div>
+	{#if error}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
 </AppShell>

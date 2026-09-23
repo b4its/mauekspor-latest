@@ -7,6 +7,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
+	import { updateBuyerRequest } from '$lib/api/buyer-requests';
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.request));
@@ -14,19 +15,34 @@
 	let destination = $state(initial.destination);
 	let quantity = $state(initial.quantity);
 	let deadline = $state(initial.deadline);
-	let requirements = $state(initial.requirements.join('\n'));
+	let requirements = $state((initial.requirements ?? []).join('\n'));
 	let saved = $state(false);
+	let saving = $state(false);
 	let error = $state('');
 
 	let valid = $derived(subject.trim().length > 4 && destination.trim().length > 1 && quantity.trim().length > 1 && deadline);
 
-	function save() {
+	async function save() {
 		error = '';
 		if (!valid) {
 			error = 'Lengkapi kolom wajib sebelum menyimpan.';
 			return;
 		}
-		saved = true;
+		saving = true;
+		try {
+			await updateBuyerRequest(data.request.id, {
+				subject,
+				destination,
+				quantity,
+				deadline,
+				requirements: requirements.split('\n').map((r) => r.trim()).filter(Boolean)
+			});
+			saved = true;
+		} catch {
+			error = 'Gagal menyimpan request ke backend.';
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -51,7 +67,7 @@
 				<Badge variant="secondary">Request saved</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight">{subject}</CardTitle>
 				<CardDescription class="mt-2 leading-relaxed">
-					{quantity} to {destination}. Perubahan tersimpan.
+					{quantity} to {destination}. Perubahan tersimpan & matching diperbarui di backend.
 				</CardDescription>
 			</CardHeader>
 			<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
@@ -62,33 +78,33 @@
 		<Card>
 			<form class="grid gap-4 p-1" onsubmit={(event) => { event.preventDefault(); save(); }}>
 				<div class="grid gap-2">
-					<Label>Subject</Label>
-					<Input bind:value={subject} />
+					<Label for="br-subject">Subject</Label>
+					<Input id="br-subject" bind:value={subject} />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label>Destination</Label>
-						<Input bind:value={destination} />
+						<Label for="br-dest">Destination</Label>
+						<Input id="br-dest" bind:value={destination} />
 					</div>
 					<div class="grid gap-2">
-						<Label>Deadline</Label>
-						<Input bind:value={deadline} type="date" />
+						<Label for="br-deadline">Deadline</Label>
+						<Input id="br-deadline" bind:value={deadline} type="date" />
 					</div>
 				</div>
 				<div class="grid gap-2">
-					<Label>Quantity</Label>
-					<Input bind:value={quantity} />
+					<Label for="br-qty">Quantity</Label>
+					<Input id="br-qty" bind:value={quantity} />
 				</div>
 				<div class="grid gap-2">
-					<Label>Requirements (one per line)</Label>
-					<Textarea bind:value={requirements} rows={3} />
+					<Label for="br-req">Requirements (one per line)</Label>
+					<Textarea id="br-req" bind:value={requirements} rows={3} />
 				</div>
 
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-3">
 					<Button variant="outline" href={`/buyer-requests/${data.request.id}`}>Cancel</Button>
-					<Button type="submit">Save request</Button>
+					<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save request'}</Button>
 				</div>
 			</form>
 		</Card>

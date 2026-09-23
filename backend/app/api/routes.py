@@ -1849,16 +1849,29 @@ def request_supplier_evidence(supplier_id: str):
 @router.get("/analytics/overview/")
 def analytics_overview():
     projects = db.all("projects")
-    total = sum(p.get("value", 0) for p in projects)
+    products = db.all("products")
+    buyers = db.all("buyers")
+    analyses = db.all("export_analyses")
+    catalogs = db.all("catalogs")
+    forwarders = db.all("forwarders")
+    orders = db.all("orders")
+    total = sum(p.get("value", 0) or 0 for p in projects)
+    total_orders = sum(o.get("value", 0) or 0 for o in orders)
     return {"data": [
         {"label": "Active projects", "value": str(len(projects)), "change": "+1 this month", "tone": "green"},
         {"label": "Pipeline value", "value": f"${total:,}", "change": "+12%", "tone": "blue"},
+        {"label": "Products", "value": str(len(products)), "change": f"{sum(1 for p in products if p.get('status') == 'Enriched')} enriched", "tone": "green"},
+        {"label": "Market analyses", "value": str(len(analyses)), "change": f"{sum(1 for a in analyses if a.get('status') == 'Ready')} ready", "tone": "blue"},
+        {"label": "Published catalogs", "value": str(sum(1 for c in catalogs if c.get('status') == 'Published')), "change": f"{len(catalogs)} total", "tone": "green"},
+        {"label": "Active buyers", "value": str(len(buyers)), "change": "CRM", "tone": "orange"},
+        {"label": "Verified forwarders", "value": str(sum(1 for f in forwarders if f.get('status') == 'Verified')), "change": f"{len(forwarders)} total", "tone": "blue"},
+        {"label": "Order value", "value": f"${total_orders:,}", "change": "booked", "tone": "green"},
     ], "meta": {}}
 
 
 @router.post("/analytics/refresh/")
 def analytics_refresh():
-    return {"data": [{"label": "Refresh", "value": "Done", "change": "Now", "tone": "green"}], "meta": {}}
+    return {"data": analytics_overview()["data"], "meta": {}}
 
 
 # ----------------------------------------------------------------------------
@@ -1892,9 +1905,33 @@ def list_audit():
     return _list_query("audit_events")
 
 
+@router.get("/audit/export.csv")
+def export_audit_csv():
+    """Ekspor audit log sebagai CSV."""
+    import csv as _csv
+    import io as _io
+    buffer = _io.StringIO()
+    writer = _csv.writer(buffer)
+    writer.writerow(["time", "actor", "action", "module", "entity", "severity", "detail"])
+    for event in db.all("audit_events"):
+        writer.writerow([
+            event.get("time", ""), event.get("actor", ""), event.get("action", ""),
+            event.get("module", ""), event.get("entity", ""), event.get("severity", ""),
+            event.get("detail", ""),
+        ])
+    from fastapi.responses import Response
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="audit-events.csv"'},
+    )
+
+
 @router.post("/audit/export/")
 def export_audit():
-    return {"data": {"status": "queued"}, "meta": {}}
+    # Sinkron dengan endpoint CSV nyata; tetap pertahankan kontrak lama
+    events = db.all("audit_events")
+    return {"data": {"status": "queued", "count": len(events), "url": "/api/v1/audit/export.csv"}, "meta": {}}
 
 
 @router.get("/team/")
@@ -2965,3 +3002,43 @@ def admin_import_regulations(file: UploadFile = File(...)):
         })
         count += 1
     return {"data": {"imported": count}, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# SETTINGS (organisasi & akses)
+# ----------------------------------------------------------------------------
+DEFAULT_SETTINGS = {
+    "companyName": "PT Kopi Gayo Nusantara",
+    "country": "Indonesia",
+    "entityType": "Manufacturer exporter",
+    "nib": "",
+    "taxId": "",
+    "currency": "IDR",
+    "language": "id",
+    "notifications": True,
+    "security": {"sessionType": "cookie"},
+}
+
+
+@router.get("/settings/")
+def get_settings():
+    records = db.all("settings")
+    if records:
+        data = dict(records[0])
+        data.pop("id", None)
+        return {"data": data, "meta": {}}
+    return {"data": dict(DEFAULT_SETTINGS), "meta": {}}
+
+
+@router.put("/settings/")
+def update_settings(payload: dict):
+    records = db.all("settings")
+    if records:
+        record = records[0]
+    else:
+        record = db.insert("settings", {"id": "SET-ORG-001", **dict(DEFAULT_SETTINGS)})
+    for key, value in payload.items():
+        record[key] = value
+    record["updatedAt"] = "now"
+    db.save(record)
+    return _one(record)
