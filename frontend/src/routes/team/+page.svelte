@@ -9,6 +9,7 @@
 	import { listTeamMembers, inviteTeamMember, updateTeamMemberRole } from '$lib/api/team';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Admin', 'Operations', 'Compliance', 'Finance', 'Sales'];
 	let activeFilter = $state('All');
@@ -46,7 +47,7 @@
 			await inviteTeamMember(`team+${Date.now()}@mauekspor.example`, 'Operations');
 			invited = true;
 		} catch {
-			error = 'Gagal mengirim undangan.';
+			error = t('Gagal mengirim undangan.');
 		} finally {
 			inviting = false;
 		}
@@ -60,7 +61,7 @@
 			await updateTeamMemberRole(member.id, 'Compliance');
 			invited = true;
 		} catch {
-			error = 'Gagal memperbarui peran.';
+			error = t('Gagal memperbarui peran.');
 		} finally {
 			updatingRole = '';
 		}
@@ -71,20 +72,20 @@
 	<title>Team | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Team" eyebrow="Roles and workspace access">
+<AppShell title="Team" eyebrow={t('Roles and workspace access')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Access control</Badge>
+			<Badge variant="secondary">{t('Access control')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Coordinate export operations with clear roles, permissions, and workload.
+				{t('Coordinate export operations with clear roles, permissions, and workload.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Manage team members across operations, compliance, finance, and sales while keeping access scoped to each trade workflow.
+				{t('Manage team members across operations, compliance, finance, and sales while keeping access scoped to each trade workflow.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleInvite} disabled={inviting}>{invited ? 'Invite sent' : inviting ? 'Inviting...' : 'Invite member'}</Button>
-			<Badge>Active {activeCount}</Badge>
+			<Button onclick={handleInvite} disabled={inviting}>{invited ? t('Invite sent') : inviting ? t('Inviting...') : t('Invite member')}</Button>
+			<Badge>{t('Active')} {activeCount}</Badge>
 		</CardContent>
 	</Card>
 
@@ -94,10 +95,9 @@
 
 	{#if invited}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Team invitation sent.</strong>
+			<strong class="block">{t('Team invitation sent.')}</strong>
 			<span class="block text-sm text-muted-foreground">
-				Undangan terkirim melalui backend.
-			</span>
+				{t('Undangan terkirim melalui backend.')}</span>
 		</div>
 	{/if}
 
@@ -107,13 +107,13 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search member, role, permission..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search member, role, permission...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Members</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Members')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{teamMembers.items.length}</strong>
 			</CardContent>
 		</Card>
@@ -125,7 +125,7 @@
 		</Card>
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Avg workload</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Avg workload')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{avgWorkload}%</strong>
 			</CardContent>
 		</Card>
@@ -143,10 +143,10 @@
 					<p class="text-sm text-muted-foreground">{member.email}</p>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Last active <strong class="mt-1 block text-sm font-bold text-foreground">{member.lastActive}</strong>
+							{t('Last active')} <strong class="mt-1 block text-sm font-bold text-foreground">{member.lastActive}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Workload <strong class="mt-1 block text-sm font-bold text-foreground">{member.workload}%</strong>
+							{t('Workload')} <strong class="mt-1 block text-sm font-bold text-foreground">{member.workload}%</strong>
 						</div>
 					</div>
 					<div class="flex flex-wrap gap-2">
@@ -154,12 +154,12 @@
 							<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{permission}</span>
 						{/each}
 					</div>
-					<Button variant="outline" onclick={() => handleUpdateRole(member)} disabled={updatingRole === member.id}>{updatingRole === member.id ? 'Updating...' : 'Update role'}</Button>
+					<Button variant="outline" onclick={() => handleUpdateRole(member)} disabled={updatingRole === member.id}>{updatingRole === member.id ? t('Updating...') : t('Update role')}</Button>
 				</CardContent>
 			</Card>
 		{:else}
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
-				No team member matched your search.
+				{t('No team member matched your search.')}
 			</div>
 		{/each}
 	</div>

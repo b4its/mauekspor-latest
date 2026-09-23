@@ -597,7 +597,34 @@ const dictionary: Record<string, Entry> = {
 	'for': { id: 'untuk', en: 'for' },
 	'Product': { id: 'Produk', en: 'Product' },
 	'Destination': { id: 'Negara tujuan', en: 'Destination' },
-	'No buyer request matched your filter.': { id: 'Tidak ada permintaan pembeli yang cocok.', en: 'No buyer request matched your filter.' }
+	'No buyer request matched your filter.': { id: 'Tidak ada permintaan pembeli yang cocok.', en: 'No buyer request matched your filter.' },
+
+	// --- Team ---
+	'Roles and workspace access': { id: 'Peran dan akses ruang kerja', en: 'Roles and workspace access' },
+	'Access control': { id: 'Kontrol akses', en: 'Access control' },
+	'Coordinate export operations with clear roles, permissions, and workload.': {
+		id: 'Koordinasi operasi ekspor dengan peran, izin, dan beban kerja yang jelas.',
+		en: 'Coordinate export operations with clear roles, permissions, and workload.'
+	},
+	'Manage team members across operations, compliance, finance, and sales while keeping access scoped to each trade workflow.': {
+		id: 'Kelola anggota tim di operasi, kepatuhan, keuangan, dan penjualan dengan akses terbatas pada setiap alur kerja perdagangan.',
+		en: 'Manage team members across operations, compliance, finance, and sales while keeping access scoped to each trade workflow.'
+	},
+	'Invite member': { id: 'Undang anggota', en: 'Invite member' },
+	'Inviting...': { id: 'Mengundang...', en: 'Inviting...' },
+	'Invite sent': { id: 'Undangan terkirim', en: 'Invite sent' },
+	'Team invitation sent.': { id: 'Undangan tim terkirim.', en: 'Team invitation sent.' },
+	'Undangan terkirim melalui backend.': { id: 'Undangan terkirim melalui backend.', en: 'Invitation sent through backend.' },
+	'Search member, role, permission...': { id: 'Cari anggota, peran, izin...', en: 'Search member, role, permission...' },
+	'Members': { id: 'Anggota', en: 'Members' },
+	'Avg workload': { id: 'Rata-rata beban kerja', en: 'Avg workload' },
+	'Last active': { id: 'Aktif terakhir', en: 'Last active' },
+	'Workload': { id: 'Beban kerja', en: 'Workload' },
+	'Update role': { id: 'Perbarui peran', en: 'Update role' },
+	'Updating...': { id: 'Memperbarui...', en: 'Updating...' },
+	'No team member matched your search.': { id: 'Tidak ada anggota tim yang cocok.', en: 'No team member matched your search.' },
+	'Gagal mengirim undangan.': { id: 'Gagal mengirim undangan.', en: 'Failed to send invitation.' },
+	'Gagal memperbarui peran.': { id: 'Gagal memperbarui peran.', en: 'Failed to update role.' }
 };
 
 let initial: Locale = 'id';
