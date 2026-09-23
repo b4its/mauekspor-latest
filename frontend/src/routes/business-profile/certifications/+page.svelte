@@ -41,7 +41,7 @@
 </script>
 
 <svelte:head>
-	<title>Manage Certifications | MauEkspor</title>
+	<title>{t('Kelola Sertifikasi')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Certifications" eyebrow={t('Manage business certification claims')}>

@@ -65,7 +65,7 @@
 </script>
 
 <svelte:head>
-	<title>RFQ | MauEkspor</title>
+	<title>{t('RFQ')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="RFQ" eyebrow={t('Buyer demand workspace')}>

@@ -85,7 +85,7 @@
 </script>
 
 <svelte:head>
-	<title>Products | MauEkspor</title>
+	<title>{t('Produk')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Products" eyebrow="Export product master data">

@@ -73,7 +73,7 @@
 </script>
 
 <svelte:head>
-	<title>Messages | MauEkspor</title>
+	<title>{t('Pesan')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Messages" eyebrow={t('Komunikasi buyer, supplier, dan internal')}>

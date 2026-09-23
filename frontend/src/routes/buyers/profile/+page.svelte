@@ -71,7 +71,7 @@
 </script>
 
 <svelte:head>
-	<title>Edit Buyer Profile | MauEkspor</title>
+	<title>{t('Edit Profil Pembeli')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Buyer Profile" eyebrow={t('Edit importer identity')}>

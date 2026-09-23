@@ -70,7 +70,7 @@
 </script>
 
 <svelte:head>
-	<title>Documents | MauEkspor</title>
+	<title>{t('Dokumen')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Documents" eyebrow="Trade document center">

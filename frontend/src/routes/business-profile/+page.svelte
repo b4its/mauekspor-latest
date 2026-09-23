@@ -40,7 +40,7 @@
 </script>
 
 <svelte:head>
-	<title>Business Profile | MauEkspor</title>
+	<title>{t('Profil Bisnis')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Business Profile" eyebrow={t('Identitas UMKM dan sertifikasi')}>

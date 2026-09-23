@@ -39,7 +39,7 @@
 </script>
 
 <svelte:head>
-	<title>Regulation Recommendations | MauEkspor</title>
+	<title>{t('Rekomendasi Regulasi')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Regulation Recommendations" eyebrow={data.analysis.destination}>

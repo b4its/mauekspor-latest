@@ -93,7 +93,7 @@ products.load();
 </script>
 
 <svelte:head>
-	<title>Marketing | MauEkspor</title>
+	<title>{t('Pemasaran')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Marketing" eyebrow={t('Intelijen pasar AI & penetapan harga')}>

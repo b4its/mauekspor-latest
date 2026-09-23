@@ -58,7 +58,7 @@
 </script>
 
 <svelte:head>
-	<title>Reports | MauEkspor</title>
+	<title>{t('Laporan')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Reports" eyebrow={t('Pelaporan intelijen ekspor')}>

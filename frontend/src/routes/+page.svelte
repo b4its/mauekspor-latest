@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>MauEkspor | Export Import Workspace</title>
+	<title>MauEkspor | {t('Workspace Ekspor-Impor')}</title>
 	<meta
 		name="description"
 		content="One workspace from product readiness to shipment delivery. Indonesian exporters plan, analyze, quote, document, and ship with confidence."

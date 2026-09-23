@@ -86,7 +86,7 @@
 </script>
 
 <svelte:head>
-	<title>Notifications | MauEkspor</title>
+	<title>{t('Notifikasi')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Notifications" eyebrow={t('Operational alerts')}>

@@ -54,7 +54,7 @@
 </script>
 
 <svelte:head>
-	<title>Audit Log | MauEkspor</title>
+	<title>{t('Log Audit')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Audit Log" eyebrow={t('Traceability and governance')}>

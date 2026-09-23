@@ -47,7 +47,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings | MauEkspor</title>
+	<title>{t('Pengaturan')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Settings" eyebrow={t('Organisasi dan kontrol akses')}>

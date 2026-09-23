@@ -44,7 +44,7 @@
 </script>
 
 <svelte:head>
-	<title>Edit Business Profile | MauEkspor</title>
+	<title>{t('Edit Profil Bisnis')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Business Profile" eyebrow={t('Edit identitas UMKM')}>

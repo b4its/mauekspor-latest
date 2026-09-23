@@ -145,7 +145,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard | MauEkspor</title>
+	<title>{t('Dasbor')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Dashboard" eyebrow={t('Export workspace home')}>

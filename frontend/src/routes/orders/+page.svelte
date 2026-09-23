@@ -64,7 +64,7 @@
 </script>
 
 <svelte:head>
-	<title>Orders | MauEkspor</title>
+	<title>{t('Pesanan')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Orders" eyebrow={t('Accepted quotation to execution')}>

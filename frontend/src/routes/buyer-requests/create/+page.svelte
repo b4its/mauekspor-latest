@@ -59,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>New Buyer Request | MauEkspor</title>
+	<title>{t('Permintaan Buyer Baru')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Buyer Requests" eyebrow={t('Log inbound demand')}>

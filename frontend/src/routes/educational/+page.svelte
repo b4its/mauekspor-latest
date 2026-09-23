@@ -59,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>Educational | MauEkspor</title>
+	<title>{t('Edukasi')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Educational" eyebrow={t('Platform belajar ekspor')}>

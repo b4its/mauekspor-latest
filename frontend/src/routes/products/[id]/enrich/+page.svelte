@@ -59,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>Override AI Enrichment | MauEkspor</title>
+	<title>{t('Timpa Enrichment AI')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Enrichment Override" eyebrow={`${data.product.name} - AI result edit`}>

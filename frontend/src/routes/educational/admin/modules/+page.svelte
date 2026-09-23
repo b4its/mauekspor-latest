@@ -97,7 +97,7 @@
 </script>
 
 <svelte:head>
-	<title>Admin Modules | MauEkspor</title>
+	<title>{t('Modul Admin')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Educational Admin" eyebrow={t('Manage modules')}>

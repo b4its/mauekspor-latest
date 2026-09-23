@@ -36,7 +36,7 @@
 </script>
 
 <svelte:head>
-	<title>Trade Projects | MauEkspor</title>
+	<title>{t('Proyek Dagang')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Trade Projects" eyebrow="Project-based trade operations">

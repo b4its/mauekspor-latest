@@ -68,7 +68,7 @@
 </script>
 
 <svelte:head>
-	<title>API Keys | MauEkspor</title>
+	<title>{t('Kunci API')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="API Keys" eyebrow={t('Developer access controls')}>

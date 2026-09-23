@@ -50,7 +50,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 </script>
 
 <svelte:head>
-	<title>Create Costing Scenario | MauEkspor</title>
+	<title>{t('Buat Skenario Costing')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Costing" eyebrow={t('Create costing scenario')}>

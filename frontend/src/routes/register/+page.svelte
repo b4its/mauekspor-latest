@@ -1,11 +1,12 @@
 <script lang="ts">
 	import SignupForm from '$lib/components/SignupForm.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import { t } from '$lib/i18n.svelte';
 	import ShipIcon from '@lucide/svelte/icons/ship';
 </script>
 
 <svelte:head>
-	<title>Register | MauEkspor</title>
+	<title>{t('Daftar')} | MauEkspor</title>
 </svelte:head>
 
 <div class="landing-font flex min-h-svh flex-col items-center justify-center gap-6 bg-[#eaf2ff] p-6 md:p-10 dark:bg-[#040d1f]">

@@ -51,7 +51,7 @@
 </script>
 
 <svelte:head>
-	<title>Templates | MauEkspor</title>
+	<title>{t('Templat')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Templates" eyebrow={t('Reusable export assets')}>

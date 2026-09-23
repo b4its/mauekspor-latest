@@ -49,7 +49,7 @@
 </script>
 
 <svelte:head>
-	<title>Compliance | MauEkspor</title>
+	<title>{t('Kepatuhan')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Compliance" eyebrow={t('Evidence-based export readiness')}>

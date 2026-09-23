@@ -67,7 +67,7 @@
 </script>
 
 <svelte:head>
-	<title>Shipments | MauEkspor</title>
+	<title>{t('Pengiriman')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Shipments" eyebrow={t('Logistics milestone tracking')}>

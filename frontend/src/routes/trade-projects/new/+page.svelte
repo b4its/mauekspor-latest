@@ -74,7 +74,7 @@
 </script>
 
 <svelte:head>
-	<title>New Trade Project | MauEkspor</title>
+	<title>{t('Proyek Dagang Baru')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="New Trade Project" eyebrow={t('Create export-import workspace')}>

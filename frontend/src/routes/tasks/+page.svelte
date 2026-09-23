@@ -62,7 +62,7 @@
 </script>
 
 <svelte:head>
-	<title>Tasks | MauEkspor</title>
+	<title>{t('Tugas')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Tasks" eyebrow={t('Operational work queue')}>

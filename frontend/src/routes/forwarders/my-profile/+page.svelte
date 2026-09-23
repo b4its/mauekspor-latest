@@ -24,7 +24,7 @@
 </script>
 
 <svelte:head>
-	<title>My Forwarder Profile | MauEkspor</title>
+	<title>{t('Profil Forwarder Saya')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Forwarder Profile" eyebrow={t('Identitas mitra freight saya')}>

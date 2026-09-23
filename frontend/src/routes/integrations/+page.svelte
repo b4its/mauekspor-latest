@@ -74,7 +74,7 @@
 </script>
 
 <svelte:head>
-	<title>Integrations | MauEkspor</title>
+	<title>{t('Integrasi')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Integrations" eyebrow={t('Sistem dagang yang terhubung')}>

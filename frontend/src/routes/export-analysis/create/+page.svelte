@@ -52,7 +52,7 @@
 </script>
 
 <svelte:head>
-	<title>New Export Analysis | MauEkspor</title>
+	<title>{t('Analisis Ekspor Baru')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Export Analysis" eyebrow={t('Start market analysis')}>

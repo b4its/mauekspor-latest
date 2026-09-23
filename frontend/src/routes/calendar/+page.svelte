@@ -76,7 +76,7 @@
 </script>
 
 <svelte:head>
-	<title>Calendar | MauEkspor</title>
+	<title>{t('Kalender')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Calendar" eyebrow={t('Trade milestone schedule')}>

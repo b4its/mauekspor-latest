@@ -83,7 +83,7 @@
 </script>
 
 <svelte:head>
-	<title>Automations | MauEkspor</title>
+	<title>{t('Otomasi')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title={t('Automations')} eyebrow={t('Workflow rules')}>

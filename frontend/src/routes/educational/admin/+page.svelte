@@ -58,7 +58,7 @@
 </script>
 
 <svelte:head>
-	<title>Educational Admin | MauEkspor</title>
+	<title>{t('Admin Edukasi')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Educational Admin" eyebrow={t('Content operations')}>

@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>Support | MauEkspor</title>
+	<title>{t('Dukungan')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Support" eyebrow={t('Help desk and product support')}>

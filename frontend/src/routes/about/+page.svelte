@@ -12,7 +12,7 @@
 </script>
 
 <svelte:head>
-	<title>About | MauEkspor</title>
+	<title>{t('Tentang')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="About" eyebrow={t('Sistem operasi dagang')}>

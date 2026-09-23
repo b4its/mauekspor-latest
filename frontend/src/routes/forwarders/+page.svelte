@@ -39,7 +39,7 @@
 </script>
 
 <svelte:head>
-	<title>Forwarders | MauEkspor</title>
+	<title>{t('Forwarder')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Forwarders" eyebrow={t('Freight partner network')}>

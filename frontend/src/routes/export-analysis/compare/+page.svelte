@@ -64,7 +64,7 @@
 </script>
 
 <svelte:head>
-	<title>Compare Markets | MauEkspor</title>
+	<title>{t('Bandingkan Pasar')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Compare Markets" eyebrow={t('Decision support')}>
