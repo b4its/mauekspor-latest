@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { t } from '$lib/i18n.svelte';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -52,7 +53,7 @@
 	<title>{data.module.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.module.title} eyebrow="Learning module">
+<AppShell title={data.module.title} eyebrow={t('Learning module')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 p-5 shadow-sm sm:p-6">
 		<div class="flex flex-wrap items-end justify-between gap-4">
 			<div class="min-w-0">
@@ -65,11 +66,11 @@
 			</div>
 			<div class="w-full max-w-xs shrink-0 sm:w-56">
 				<div class="flex items-center justify-between text-xs font-bold text-muted-foreground">
-					<span>Progres kursus</span>
+					<span>{t('Progres kursus')}</span>
 					<span>{progressPercent}%</span>
 				</div>
 				<Progress value={progressPercent} class="mt-2" />
-				<span class="mt-1.5 block text-xs font-semibold text-muted-foreground">{completedCount} dari {lessons.length} pelajaran selesai</span>
+				<span class="mt-1.5 block text-xs font-semibold text-muted-foreground">{completedCount} {t('dari')} {lessons.length} {t('pelajaran selesai')}</span>
 			</div>
 		</div>
 	</Card>
@@ -90,14 +91,14 @@
 				{#if activeLesson}
 					<div>
 						<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-							Pelajaran {activeIndex + 1} dari {lessons.length}
+							{t('Pelajaran')} {activeIndex + 1} {t('dari')} {lessons.length}
 						</span>
 						<h2 class="mt-1 text-xl font-bold tracking-tight sm:text-2xl">{activeLesson.title}</h2>
 						<p class="mt-3 leading-relaxed text-muted-foreground">{activeLesson.content}</p>
 					</div>
 
 					<div class="rounded-xl border bg-muted/30 p-4">
-						<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Poin penting</span>
+						<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Poin penting')}</span>
 						<ul class="mt-2 grid gap-2">
 							{#each activeLesson.keyPoints as point}
 								<li class="flex items-start gap-2 text-sm text-foreground">
@@ -115,14 +116,14 @@
 							onclick={() => (activeIndex = Math.max(0, activeIndex - 1))}
 						>
 							<ChevronLeftIcon class="size-4" />
-							Sebelumnya
+							{t('Sebelumnya')}
 						</Button>
 						<div class="flex flex-wrap items-center gap-2.5">
 							<Button variant="outline" onclick={() => toggleComplete(activeIndex)}>
-								{lessons[activeIndex].completed ? 'Tandai belum selesai' : 'Tandai selesai'}
+								{lessons[activeIndex].completed ? t('Tandai belum selesai') : t('Tandai selesai')}
 							</Button>
 							<Button onclick={markCompleteAndNext} disabled={activeIndex === lessons.length - 1 && lessons[activeIndex].completed}>
-								{activeIndex === lessons.length - 1 ? 'Selesaikan pelajaran' : 'Selesai & lanjut'}
+								{activeIndex === lessons.length - 1 ? t('Selesaikan pelajaran') : t('Selesai & lanjut')}
 								<ChevronRightIcon class="size-4" />
 							</Button>
 						</div>
@@ -133,7 +134,7 @@
 
 		<Card class="h-fit lg:sticky lg:top-4">
 			<CardHeader class="flex-row items-center justify-between gap-3">
-				<CardTitle class="text-base">Daftar Pelajaran</CardTitle>
+				<CardTitle class="text-base">{t('Daftar Pelajaran')}</CardTitle>
 				<GraduationCapIcon class="size-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent class="grid gap-1.5 p-3 pt-0">
@@ -157,7 +158,7 @@
 								toggleComplete(index);
 							}}
 							class="mt-0.5 shrink-0"
-							aria-label={lesson.completed ? 'Tandai belum selesai' : 'Tandai selesai'}
+							aria-label={lesson.completed ? t('Tandai belum selesai') : t('Tandai selesai')}
 						>
 							{#if lesson.completed}
 								<CheckCircle2Icon class="size-4 text-primary" />
@@ -181,6 +182,6 @@
 	</div>
 
 	<div>
-		<Button variant="outline" href="/educational">Kembali ke katalog kursus</Button>
+		<Button variant="outline" href="/educational">{t('Kembali ke katalog kursus')}</Button>
 	</div>
 </AppShell>

@@ -9,6 +9,7 @@
 	import { listEducationalArticles, publishEducationalArticle, createEducationalArticle, deleteEducationalArticle } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	let articles = createRemoteList(listEducationalArticles, seedArticles);
 	let publishing = $state('');
@@ -30,7 +31,7 @@
 			const article = articles.items.find((item) => item.id === id);
 			if (article) article.status = 'Published';
 		} catch {
-			error = 'Gagal mempublikasikan artikel.';
+			error = t('Gagal mempublikasikan artikel.');
 		} finally {
 			publishing = '';
 		}
@@ -39,7 +40,7 @@
 	async function createArticle() {
 		error = '';
 		if (newTitle.trim().length < 3) {
-			error = 'Judul artikel minimal 3 karakter.';
+			error = t('Judul artikel minimal 3 karakter.');
 			return;
 		}
 		creating = true;
@@ -49,14 +50,14 @@
 			newTitle = '';
 			newContent = '';
 		} catch {
-			error = 'Gagal membuat artikel.';
+			error = t('Gagal membuat artikel.');
 		} finally {
 			creating = false;
 		}
 	}
 
 	async function removeArticle(id: string) {
-		if (!confirm('Hapus artikel ini?')) return;
+		if (!confirm(t('Hapus artikel ini?'))) return;
 		error = '';
 		deleting = id;
 		try {
@@ -64,7 +65,7 @@
 			const idx = articles.items.findIndex((a) => a.id === id);
 			if (idx >= 0) articles.items.splice(idx, 1);
 		} catch {
-			error = 'Gagal menghapus artikel.';
+			error = t('Gagal menghapus artikel.');
 		} finally {
 			deleting = '';
 		}
@@ -82,32 +83,32 @@
 	<title>Educational Articles Admin | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Educational Admin" eyebrow="Manage articles">
+<AppShell title="Educational Admin" eyebrow={t('Manage articles')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant="outline">Admin</Badge>
+				<Badge variant="outline">{t('Admin')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-					Review and publish articles.
+					{t('Review and publish articles.')}
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl">
-					Articles support exporters with focused how-to guidance that pairs with each module.
+					{t('Artikel mendukung eksportir dengan panduan cara-melakukan yang fokus dan berpasangan dengan setiap modul.')}
 				</CardDescription>
 			</div>
-			<Button variant="outline" href="/educational/admin">Admin home</Button>
+			<Button variant="outline" href="/educational/admin">{t('Beranda admin')}</Button>
 		</div>
 	</Card>
 
 	<Card class="mt-4">
 		<CardHeader class="flex-row items-center justify-between gap-3">
-			<CardTitle>Articles</CardTitle>
-			<Badge variant="secondary">{articles.items.length} total</Badge>
+			<CardTitle>{t('Artikel')}</CardTitle>
+			<Badge variant="secondary">{articles.items.length} {t('total')}</Badge>
 		</CardHeader>
 		<CardContent class="grid gap-3">
 			<form class="grid gap-2" onsubmit={(event) => { event.preventDefault(); createArticle(); }}>
-				<Input placeholder="Judul artikel baru..." bind:value={newTitle} />
-				<Textarea placeholder="Konten (Markdown)..." bind:value={newContent} rows={3} />
-				<Button type="submit" disabled={creating} class="w-fit">{creating ? 'Membuat...' : 'Buat artikel'}</Button>
+				<Input placeholder={t('Judul artikel baru...')} bind:value={newTitle} />
+				<Textarea placeholder={t('Konten (Markdown)...')} bind:value={newContent} rows={3} />
+				<Button type="submit" disabled={creating} class="w-fit">{creating ? t('Membuat...') : t('Buat artikel')}</Button>
 			</form>
 			{#each articles.items as article}
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
@@ -118,9 +119,9 @@
 					<div class="grid justify-items-end gap-2">
 						<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>
 						<div class="flex items-center gap-2">
-							<Button variant="link" size="sm" href={`/educational/articles/${article.id}`}>View</Button>
-							<Button size="sm" variant={article.status === 'Published' ? 'outline' : 'default'} disabled={article.status === 'Published' || publishing === article.id} onclick={() => publishArticle(article.id)}>{publishing === article.id ? 'Publishing...' : 'Publish'}</Button>
-							<Button size="sm" variant="destructive" disabled={deleting === article.id} onclick={() => removeArticle(article.id)}>{deleting === article.id ? '...' : 'Hapus'}</Button>
+							<Button variant="link" size="sm" href={`/educational/articles/${article.id}`}>{t('Lihat')}</Button>
+							<Button size="sm" variant={article.status === 'Published' ? 'outline' : 'default'} disabled={article.status === 'Published' || publishing === article.id} onclick={() => publishArticle(article.id)}>{publishing === article.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
+							<Button size="sm" variant="destructive" disabled={deleting === article.id} onclick={() => removeArticle(article.id)}>{deleting === article.id ? '...' : t('Hapus')}</Button>
 						</div>
 					</div>
 				</div>

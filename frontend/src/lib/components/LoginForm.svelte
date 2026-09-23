@@ -6,6 +6,7 @@
 	import { login } from '$lib/stores/session.svelte';
 	import { cn } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
+	import { t } from '$lib/i18n.svelte';
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 
@@ -24,7 +25,7 @@
 		message = '';
 
 		if (!canSubmit) {
-			error = 'Lengkapi data dengan email valid dan password minimal 8 karakter.';
+			error = t('Lengkapi data dengan email valid dan password minimal 8 karakter.');
 			return;
 		}
 
@@ -33,7 +34,7 @@
 			await login({ email, password });
 			window.location.href = '/dashboard';
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Gagal masuk. Silakan coba lagi.';
+			error = err instanceof Error ? err.message : t('Gagal masuk. Silakan coba lagi.');
 		} finally {
 			loading = false;
 		}
@@ -43,8 +44,8 @@
 <div class={cn('flex flex-col gap-6', className)} {...restProps}>
 	<Card.Root class="border-[#0b3d91]/10 dark:border-white/10">
 		<Card.Header class="text-center">
-			<Card.Title class="text-xl">Selamat datang kembali</Card.Title>
-			<Card.Description>Masuk ke trade command center Anda</Card.Description>
+			<Card.Title class="text-xl">{t('Selamat datang kembali')}</Card.Title>
+			<Card.Description>{t('Masuk ke trade command center Anda')}</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			<form
@@ -55,17 +56,17 @@
 			>
 				<FieldGroup>
 					<Field>
-						<FieldLabel for="email-{id}">Email</FieldLabel>
+						<FieldLabel for="email-{id}">{t('Email')}</FieldLabel>
 						<Input id="email-{id}" type="email" placeholder="you@company.com" bind:value={email} required />
 					</Field>
 					<Field>
 						<div class="flex items-center">
-							<FieldLabel for="password-{id}">Password</FieldLabel>
+							<FieldLabel for="password-{id}">{t('Kata sandi')}</FieldLabel>
 							<a href="##" class="ms-auto text-sm text-[#0b3d91] underline-offset-4 hover:underline dark:text-[#5ea1ff]">
-								Lupa password?
+								{t('Lupa password?')}
 							</a>
 						</div>
-						<Input id="password-{id}" type="password" placeholder="Minimum 8 karakter" bind:value={password} required />
+						<Input id="password-{id}" type="password" placeholder={t('Minimum 8 karakter')} bind:value={password} required />
 					</Field>
 
 					{#if error}
@@ -77,10 +78,10 @@
 
 					<Field>
 						<Button type="submit" disabled={loading} class="bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85">
-							{loading ? 'Memproses...' : 'Masuk'}
+							{loading ? t('Memproses...') : t('Masuk')}
 						</Button>
 						<FieldDescription class="text-center">
-							Belum punya akun? <a href="/register" class="text-[#0b3d91] dark:text-[#5ea1ff]">Daftar</a>
+							{t('Belum punya akun?')} <a href="/register" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Daftar')}</a>
 						</FieldDescription>
 					</Field>
 				</FieldGroup>
@@ -88,7 +89,7 @@
 		</Card.Content>
 	</Card.Root>
 	<FieldDescription class="px-6 text-center">
-		Dengan melanjutkan, Anda menyetujui <a href="##" class="text-[#0b3d91] dark:text-[#5ea1ff]">Ketentuan Layanan</a>
-		dan <a href="##" class="text-[#0b3d91] dark:text-[#5ea1ff]">Kebijakan Privasi</a> kami.
+		{t('Dengan melanjutkan, Anda menyetujui')} <a href="##" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Ketentuan Layanan')}</a>
+		{t('dan')} <a href="##" class="text-[#0b3d91] dark:text-[#5ea1ff]">{t('Kebijakan Privasi')}</a> {t('kami.')}
 	</FieldDescription>
 </div>
