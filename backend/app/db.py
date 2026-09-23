@@ -329,11 +329,13 @@ def insert(table: str, record: dict[str, Any]) -> dict[str, Any]:
         existing = _get_locked(table, str(record["id"]))
         if existing is not None:
             existing.update(record)
-            _persist_record(table, existing)
-            return existing
-        all(table).append(record)
-        _persist_record(table, record)
-        return record
+            result = existing
+        else:
+            all(table).append(record)
+            result = record
+    # Persist DI LUAR lock: hindari menahan lock selama I/O network (PostgreSQL).
+    _persist_record(table, result)
+    return result
 
 
 def save(record: dict[str, Any]) -> dict[str, Any]:
@@ -349,8 +351,8 @@ def update(table: str, record_id: str, patch: dict[str, Any]) -> dict[str, Any] 
         if not record:
             return None
         record.update({k: v for k, v in patch.items() if v is not None})
-        _persist_record(table, record)
-        return record
+    _persist_record(table, record)
+    return record
 
 
 def replace(table: str, record_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
@@ -359,9 +361,12 @@ def replace(table: str, record_id: str, data: dict[str, Any]) -> dict[str, Any] 
             if record.get("id") == record_id:
                 data["id"] = record_id
                 all(table)[i] = data
-                _persist_record(table, data)
-                return data
-        return None
+                result = data
+                break
+        else:
+            return None
+    _persist_record(table, result)
+    return result
 
 
 def delete(table: str, record_id: str) -> bool:
@@ -370,11 +375,11 @@ def delete(table: str, record_id: str) -> bool:
         before = len(all(table))
         all(table)[:] = [r for r in all(table) if str(r.get("id")) != rid]
         deleted = len(all(table)) < before
-        if deleted:
-            # Gunakan str() agar konsisten dengan _persist_record (id int pada
-            # record admin-made sebelumnya tidak terhapus dari DB → muncul lagi).
-            _delete_record(table, rid)
-        return deleted
+    if deleted:
+        # Gunakan str() agar konsisten dengan _persist_record (id int pada
+        # record admin-made sebelumnya tidak terhapus dari DB → muncul lagi).
+        _delete_record(table, rid)
+    return deleted
 
 
 def _gen_id_locked(table: str, prefix: str | None = None) -> str:
