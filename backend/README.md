@@ -58,7 +58,7 @@ Lihat `app/core/config.py`. Contoh produksi: `.env.production.example`.
 .venv/bin/python -m pytest tests -q -p no:cacheprovider
 ```
 
-Meliputi auth flow, RBAC, refresh rotation, smoke semua koleksi, kontrak `path+method` frontend (`tests/test_frontend_contract.py`), kontrak payload runtime per-request persis seperti yang dikirim frontend (`tests/test_payload_contract.py`), dan **16 test fitur inti** (`tests/test_features.py`: enrichment, market intelligence, pricing, export analysis + snapshot + compare + regulasi, countries, HS codes, costing + PDF, katalog gambar/varian/AI/publik, buyer request matching, forwarder, buyer profile, educational, chat sessions, dashboard summary).
+Meliputi auth flow, RBAC, refresh rotation, smoke semua koleksi, kontrak `path+method` frontend (`tests/test_frontend_contract.py`), kontrak payload runtime per-request persis seperti yang dikirim frontend (`tests/test_payload_contract.py`), dan **20 test fitur inti** (`tests/test_features.py`: enrichment, market intelligence, pricing, export analysis + snapshot + compare + regulasi, countries, HS codes, costing + PDF, katalog gambar/varian/AI/publik, buyer request matching, forwarder, buyer profile, educational, chat sessions, dashboard summary, filtering/pagination, notifikasi otomatis, settings, audit CSV).
 
 ## Deployment
 

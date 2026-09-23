@@ -340,3 +340,62 @@ def test_dashboard_summary_and_admin_flow():
         admin_id = r.json()["data"]["id"]
         r = c.delete(f"/api/v1/users/{admin_id}/")
         assert r.status_code == 200, r.text
+
+
+# ---------------------------------------------------------------------------
+# Filtering / pagination pada list
+# ---------------------------------------------------------------------------
+def test_list_filtering_and_pagination():
+    with TestClient(app) as c:
+        _login(c)
+        r = c.get("/api/v1/products/?search=coffee")
+        assert r.status_code == 200
+        assert len(r.json()["data"]) >= 1
+        assert all("coffee" in p["name"].lower() for p in r.json()["data"])
+        r = c.get("/api/v1/products/?limit=2&offset=0")
+        assert r.status_code == 200
+        assert len(r.json()["data"]) <= 2
+        assert r.json()["meta"]["total"] >= 3
+        r = c.get("/api/v1/forwarders/?min_rating=4")
+        assert r.status_code == 200
+        r = c.get("/api/v1/buyer-requests/?status=Open")
+        assert r.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Notifikasi otomatis
+# ---------------------------------------------------------------------------
+def test_auto_notifications_on_actions():
+    with TestClient(app) as c:
+        _login(c)
+        before = len(c.get("/api/v1/notifications/").json()["data"])
+        c.post("/api/v1/tasks/TSK-COF-LABEL-01/complete/")
+        c.post("/api/v1/shipments/SHP-JP-017/milestones/", json={"milestone": "Booking Confirmed"})
+        after = len(c.get("/api/v1/notifications/").json()["data"])
+        assert after >= before + 1, "aksi penting harus membuat notifikasi"
+
+
+# ---------------------------------------------------------------------------
+# Settings
+# ---------------------------------------------------------------------------
+def test_settings_get_and_update():
+    with TestClient(app) as c:
+        _login(c)
+        r = c.get("/api/v1/settings/")
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["companyName"]
+        r = c.put("/api/v1/settings/", json={"nib": "1234567890123", "taxId": "01.234.567.8"})
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["nib"] == "1234567890123"
+
+
+# ---------------------------------------------------------------------------
+# Audit CSV export
+# ---------------------------------------------------------------------------
+def test_audit_csv_export():
+    with TestClient(app) as c:
+        _login(c)
+        r = c.get("/api/v1/audit/export.csv")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/csv")
+        assert b"time,actor,action" in r.content
