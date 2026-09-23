@@ -34,6 +34,10 @@ DEFAULT_BASE_URL = "http://localhost:20128/v1"
 DEFAULT_MODEL = "qd/dmodel"
 TIMEOUT_SECONDS = int(os.environ.get("MAUEKSPOR_AI_TIMEOUT", "60"))
 
+# Health probe hits /models, which can be slow on some gateways (e.g. 9router
+# answers /v1/models in 7–10s). Keep this comfortably above that.
+HEALTH_TIMEOUT_SECONDS = int(os.environ.get("MAUEKSPOR_AI_HEALTH_TIMEOUT", "30"))
+
 # ── Circuit Breaker ──────────────────────────────────────────────────────────
 _CB_FAILURE_COUNT: int = 0
 _CB_LAST_FAILURE_TIME: float = 0.0
@@ -124,7 +128,7 @@ def _probe_health(url: str) -> bool:
     try:
         r = httpx.get(
             f"{url}/models",
-            timeout=5,
+            timeout=HEALTH_TIMEOUT_SECONDS,
             follow_redirects=True,
             headers=headers,
         )
