@@ -378,6 +378,32 @@ def test_auto_notifications_on_actions():
 
 
 # ---------------------------------------------------------------------------
+# Analytics
+# ---------------------------------------------------------------------------
+def test_analytics_overview_and_lanes():
+    with TestClient(app) as c:
+        _login(c)
+        r = c.get("/api/v1/analytics/overview/")
+        assert r.status_code == 200, r.text
+        data = r.json()["data"]
+        assert len(data) >= 4
+        assert any(m["label"] == "Pipeline value" for m in data)
+        assert any(m["label"] == "Active projects" for m in data)
+        # lane terurut berdasarkan nilai (terbesar dulu), berisi data nyata
+        r = c.get("/api/v1/analytics/lanes/")
+        assert r.status_code == 200, r.text
+        lanes = r.json()["data"]
+        assert lanes, "harus ada minimal 1 lane"
+        values = [l["readiness"] for l in lanes]
+        assert all(0 <= v <= 100 for v in values)
+        assert all(l["href"].startswith("/trade-projects/") for l in lanes)
+        assert lanes[0]["label"], "lane pertama punya nama proyek"
+        r = c.post("/api/v1/analytics/refresh/")
+        assert r.status_code == 200, r.text
+        assert len(r.json()["data"]) >= 4
+
+
+# ---------------------------------------------------------------------------
 # Settings
 # ---------------------------------------------------------------------------
 def test_settings_get_and_update():
