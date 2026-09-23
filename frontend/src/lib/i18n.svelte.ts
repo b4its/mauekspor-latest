@@ -6,6 +6,22 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Sistem operasi dagang': { id: 'Sistem operasi dagang', en: 'Trade operating system' },
+	'Indonesia ke pasar global': { id: 'Indonesia ke pasar global', en: 'Indonesia to global markets' },
+	'Satu workspace dari kesiapan produk hingga pengiriman.': { id: 'Satu workspace dari kesiapan produk hingga pengiriman.', en: 'One workspace from product readiness to shipment delivery.' },
+	'MauEkspor menyatukan data produk, klasifikasi HS, bukti kepatuhan, RFQ, kutipan harga, validasi dokumen, tarif forwarder, dan tonggak pengiriman untuk eksportir Indonesia.': { id: 'MauEkspor menyatukan data produk, klasifikasi HS, bukti kepatuhan, RFQ, kutipan harga, validasi dokumen, tarif forwarder, dan tonggak pengiriman untuk eksportir Indonesia.', en: 'MauEkspor unifies product data, HS classification, compliance evidence, RFQ, quotation, document validation, forwarder rates, and shipment milestones for Indonesian exporters.' },
+	'MauEkspor Trade OS': { id: 'MauEkspor Trade OS', en: 'MauEkspor Trade OS' },
+	'Kesiapan': { id: 'Kesiapan', en: 'Readiness' },
+	'Data produk terstruktur, profil bisnis, dan sertifikasi sebagai fondasi setiap alur ekspor.': { id: 'Data produk terstruktur, profil bisnis, dan sertifikasi sebagai fondasi setiap alur ekspor.', en: 'Structured product data, business profile, and certifications as the foundation of every export flow.' },
+	'Analisis': { id: 'Analisis', en: 'Analysis' },
+	'Klasifikasi HS, bea masuk, pembatasan, dan rekomendasi regulasi sebelum komitmen komersial.': { id: 'Klasifikasi HS, bea masuk, pembatasan, dan rekomendasi regulasi sebelum komitmen komersial.', en: 'HS classification, duties, restrictions, and regulation recommendations before commercial commitment.' },
+	'Eksekusi': { id: 'Eksekusi', en: 'Execution' },
+	'RFQ, kutipan harga, costing, dokumen, pembayaran, dan tonggak pengiriman dalam satu workspace.': { id: 'RFQ, kutipan harga, costing, dokumen, pembayaran, dan tonggak pengiriman dalam satu workspace.', en: 'RFQ, quotation, costing, documents, payments, and shipment milestones in one workspace.' },
+	'Dibangun untuk alur kerja ekspor': { id: 'Dibangun untuk alur kerja ekspor', en: 'Built for the export workflow' },
+	'Mulai dari dashboard': { id: 'Mulai dari dashboard', en: 'Start at the dashboard' },
+	'Lengkapi profil bisnis': { id: 'Lengkapi profil bisnis', en: 'Complete the business profile' },
+	'Pelajari proses ekspor': { id: 'Pelajari proses ekspor', en: 'Learn the export process' },
+	'Analisis pasar tujuan': { id: 'Analisis pasar tujuan', en: 'Analyze a target market' },
 	'Intelijen pasar AI & penetapan harga': { id: 'Intelijen pasar AI & penetapan harga', en: 'AI market intelligence & pricing' },
 	'Pusat Pemasaran AI': { id: 'Pusat Pemasaran AI', en: 'AI Marketing Center' },
 	'Kalkulator Market Intelligence & Pricing.': { id: 'Kalkulator Market Intelligence & Pricing.', en: 'Market Intelligence & Pricing Calculator.' },
@@ -13,7 +29,6 @@ const dictionary: Record<string, Entry> = {
 	'Kalkulator Pricing': { id: 'Kalkulator Pricing', en: 'Pricing Calculator' },
 	'Cari produk...': { id: 'Cari produk...', en: 'Search product...' },
 	'produk': { id: 'produk', en: 'products' },
-	'Kesiapan': { id: 'Kesiapan', en: 'Readiness' },
 	'Diperkaya': { id: 'Diperkaya', en: 'Enriched' },
 	'Negara yang direkomendasikan, risiko, tren, dan rekomendasi forwarder.': { id: 'Negara yang direkomendasikan, risiko, tren, dan rekomendasi forwarder.', en: 'Recommended countries, risk, trends, and forwarder recommendations.' },
 	'Muat ulang': { id: 'Muat ulang', en: 'Refresh' },
@@ -289,7 +304,6 @@ const dictionary: Record<string, Entry> = {
 	// --- Dashboard ---
 	'Checklist kesiapan ekspor': { id: 'Checklist kesiapan ekspor', en: 'Export readiness checklist' },
 	'langkah selesai': { id: 'langkah selesai', en: 'steps done' },
-	'Lengkapi profil bisnis': { id: 'Lengkapi profil bisnis', en: 'Complete business profile' },
 	'Profil bisnis tersedia': { id: 'Profil bisnis tersedia', en: 'Business profile available' },
 	'Tambahkan produk': { id: 'Tambahkan produk', en: 'Add products' },
 	'produk terdaftar': { id: 'produk terdaftar', en: 'products registered' },
