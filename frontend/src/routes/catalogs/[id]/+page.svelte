@@ -4,24 +4,52 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { generateCatalogDescription, publishCatalog } from '$lib/api/catalogs';
+	import {
+		generateCatalogDescription,
+		publishCatalog,
+		unpublishCatalog,
+		listCatalogImages,
+		listVariantTypes,
+		generateCatalogAiDescription
+	} from '$lib/api/catalogs';
+	import type { CatalogImage, VariantType, CatalogAIDescription } from '$lib/api/catalogs';
 
 	let { data } = $props();
 	let published = $state(false);
-	let generated = $state(false);
 	let error = $state('');
+
+	let images = $state<CatalogImage[]>([]);
+	let variantTypes = $state<VariantType[]>([]);
+	let aiDesc = $state<CatalogAIDescription | null>(null);
+	let loadingAi = $state(false);
 
 	$effect(() => {
 		published = data.catalog.status === 'Published';
 	});
 
+	$effect(() => {
+		listCatalogImages(data.catalog.id)
+			.then((res) => (images = res.data))
+			.catch(() => {});
+		listVariantTypes(data.catalog.id)
+			.then((res) => (variantTypes = res.data.data))
+			.catch(() => {});
+	});
+
 	async function handleGenerate() {
 		error = '';
+		loadingAi = true;
 		try {
-			await generateCatalogDescription(data.catalog.id);
-			generated = true;
+			const res = await generateCatalogAiDescription(data.catalog.id, false);
+			aiDesc = res.data;
 		} catch {
-			error = 'Gagal generate AI copy.';
+			try {
+				await generateCatalogDescription(data.catalog.id);
+			} catch {
+				error = 'Gagal generate AI copy.';
+			}
+		} finally {
+			loadingAi = false;
 		}
 	}
 
@@ -35,13 +63,19 @@
 		}
 	}
 
-	let displayStatus = $derived(published ? 'Published' : generated ? 'Needs Review' : data.catalog.status);
-	let displayReadiness = $derived(published ? Math.max(data.catalog.readiness, 95) : generated ? Math.min(data.catalog.readiness + 8, 100) : data.catalog.readiness);
-	let displayDescription = $derived(
-		generated
-			? `${data.catalog.description} AI-enhanced buyer copy adds clearer commercial positioning, MOQ context, and export readiness cues for international sourcing teams.`
-			: data.catalog.description
-	);
+	async function handleUnpublish() {
+		error = '';
+		try {
+			await unpublishCatalog(data.catalog.id);
+			published = false;
+		} catch {
+			error = 'Gagal menarik publikasi katalog.';
+		}
+	}
+
+	let displayStatus = $derived(published ? 'Published' : data.catalog.status);
+	let displayReadiness = $derived(published ? Math.max(data.catalog.readiness, 95) : data.catalog.readiness);
+	let displayDescription = $derived(aiDesc?.export_description || data.catalog.description || '');
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -77,12 +111,18 @@
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
 					<CardTitle>Buyer-Facing Copy</CardTitle>
-					<CardDescription class="mt-1.5 max-w-2xl leading-relaxed">{displayDescription}</CardDescription>
+					<CardDescription class="mt-1.5 max-w-2xl leading-relaxed">{displayDescription || 'Belum ada deskripsi katalog.'}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/catalogs/${data.catalog.id}/edit`}>Edit catalog</Button>
-					<Button variant="outline" onclick={handleGenerate}>Generate AI copy</Button>
-					<Button disabled={published} onclick={handlePublish}>{published ? 'Published' : 'Publish catalog'}</Button>
+					<Button variant="outline" onclick={handleGenerate} disabled={loadingAi}>
+						{loadingAi ? 'Generating...' : aiDesc ? 'Regenerate AI copy' : 'Generate AI copy'}
+					</Button>
+					{#if published}
+						<Button variant="outline" onclick={handleUnpublish}>Unpublish</Button>
+					{:else}
+						<Button onclick={handlePublish}>Publish catalog</Button>
+					{/if}
 				</div>
 			</CardHeader>
 			{#if error}
@@ -105,15 +145,74 @@
 					Price range <strong class="mt-1 block text-sm font-bold text-foreground">{data.catalog.priceRange}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Images <strong class="mt-1 block text-sm font-bold text-foreground">{data.catalog.images}</strong>
+					Images <strong class="mt-1 block text-sm font-bold text-foreground">{images.length}</strong>
 				</div>
 			</CardContent>
 		</Card>
 
+		{#if images.length > 0}
+			<Card>
+				<CardHeader><CardTitle>Catalog Images</CardTitle></CardHeader>
+				<CardContent class="grid grid-cols-3 gap-2.5">
+					{#each images as image}
+						<div class="overflow-hidden rounded-lg border bg-muted/40">
+							{#if image.imageUrl}
+								<img src={image.imageUrl} alt={image.altText || data.catalog.title} class="h-24 w-full object-cover" />
+							{:else}
+								<div class="flex h-24 items-center justify-center text-xs font-bold text-muted-foreground">No image</div>
+							{/if}
+							{#if image.isPrimary}
+								<div class="bg-primary/10 px-2 py-1 text-center text-[10px] font-bold text-primary">Primary</div>
+							{/if}
+						</div>
+					{/each}
+				</CardContent>
+			</Card>
+		{/if}
+
+		{#if variantTypes.length > 0}
+			<Card>
+				<CardHeader><CardTitle>Variants</CardTitle></CardHeader>
+				<CardContent class="grid gap-2.5">
+					{#each variantTypes as vt}
+						<div class="rounded-lg border bg-muted/30 p-3.5">
+							<strong class="text-sm">{vt.typeName}</strong>
+							<div class="mt-1.5 flex flex-wrap gap-1.5">
+								{#each vt.options ?? [] as option}
+									<span class="rounded-full border bg-background/60 px-2.5 py-1 text-xs font-bold">{option.optionName}</span>
+								{/each}
+							</div>
+						</div>
+					{/each}
+				</CardContent>
+			</Card>
+		{/if}
+
+		{#if aiDesc}
+			<Card class="md:col-span-2">
+				<CardHeader>
+					<Badge variant="secondary">AI description</Badge>
+					<CardTitle>Export description (AI)</CardTitle>
+				</CardHeader>
+				<CardContent class="grid gap-3">
+					<p class="rounded-lg border bg-muted/30 p-3.5 text-sm leading-relaxed">{aiDesc.export_description}</p>
+					{#if aiDesc.technical_specs.length > 0}
+						<div class="grid gap-2 sm:grid-cols-2">
+							{#each aiDesc.technical_specs as spec}
+								<div class="rounded-lg border bg-muted/30 p-3 text-xs">
+									<span class="text-muted-foreground">{spec.label}</span><br /><b>{spec.value}</b>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</CardContent>
+			</Card>
+		{/if}
+
 		<Card>
 			<CardHeader><CardTitle>Marketing Highlights</CardTitle></CardHeader>
 			<CardContent class="flex flex-wrap gap-2.5">
-				{#each data.catalog.highlights as item}
+				{#each data.catalog.highlights ?? [] as item}
 					<span class="rounded-full border bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">{item}</span>
 				{/each}
 			</CardContent>
@@ -122,10 +221,10 @@
 		<Card>
 			<CardHeader><CardTitle>Variants and Incoterms</CardTitle></CardHeader>
 			<CardContent class="flex flex-wrap gap-2.5">
-				{#each data.catalog.variants as item}
+				{#each data.catalog.variants ?? [] as item}
 					<span class="rounded-full border bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">{item}</span>
 				{/each}
-				{#each data.catalog.incoterms as item}
+				{#each data.catalog.incoterms ?? [] as item}
 					<span class="rounded-full border bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">{item}</span>
 				{/each}
 			</CardContent>
@@ -138,18 +237,15 @@
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				<div class="grid gap-3 sm:grid-cols-2">
-					{#each data.catalog.specifications as spec}
+					{#each data.catalog.specifications ?? [] as spec}
 						<div class="rounded-lg border bg-muted/30 p-3.5">
 							<span class="block text-xs font-bold uppercase tracking-wide text-muted-foreground">{spec.label}</span>
 							<strong class="mt-1 block text-sm font-bold">{spec.value}</strong>
 						</div>
 					{/each}
 				</div>
-				{#if generated}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">AI copy dibuat di backend.</p>
-				{/if}
-				{#if published}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Katalog dipublikasikan di backend.</p>
+				{#if aiDesc}
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">AI description siap digunakan. Simpan via edit catalog.</p>
 				{/if}
 			</CardContent>
 		</Card>

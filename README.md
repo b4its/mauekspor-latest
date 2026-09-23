@@ -2,7 +2,7 @@
 
 **Workspace ekspor-impor berbasis AI untuk UMKM Indonesia** — satu platform dari kesiapan produk, analisis pasar & kepatuhan, penawaran/costing, katalog digital, hingga dokumen dan pelacakan pengiriman.
 
-> Status saat ini: **berfungsi penuh dengan backend.** Frontend adalah antarmuka kerja lengkap yang terhubung ke backend FastAPI (list, detail, form create, dan action/button di semua modul memakai `src/lib/api/*.ts`; mock di `src/lib/data/trade.ts` hanya fallback saat API tak tersedia). Backend punya auth JWT (refresh rotation), RBAC, audit log, dan persistensi SQLite. Modul AI (HS code, compliance, market intel, chat) masih placeholder dan menunggu integrasi model nyata.
+> Status saat ini: **berfungsi penuh dengan backend.** Frontend adalah antarmuka kerja lengkap yang terhubung ke backend FastAPI (list, detail, form create, dan action/button di semua modul memakai `src/lib/api/*.ts`; mock di `src/lib/data/trade.ts` hanya fallback saat API tak tersedia). Backend punya auth JWT (refresh rotation), RBAC, audit log, dan persistensi SQLite. Fitur inti ExportReadyAI telah diadaptasi lengkap: **enrichment produk (HS code + SKU)**, **Market Intelligence**, **Pricing Calculator (EXW/FOB/CIF)**, **Costing nyata + exchange rate + PDF**, **Export Analysis dengan compliance check, snapshot produk/regulasi, reanalyze, compare, dan rekomendasi regulasi 10 bagian (ID/EN)**, **master data negara + regulasi + HS codes (6.941 kode)**, **katalog dengan gambar + varian + AI description + listing publik**, **buyer request matching**, **forwarder profile + review + rekomendasi + statistik**, **buyer profile**, **educational CRUD + upload file**, dan **chat sessions + suggestions**. Modul AI berjalan dua mode: `mock` (default) dan `remote` (OpenAI-compatible via `MAUEKSPOR_AI_MODE=remote`).
 
 ## Daftar Isi
 - [Tentang Proyek](#tentang-proyek)
@@ -44,7 +44,7 @@ Ditujukan untuk empat peran: **Exporter/UMKM** (pengguna utama), **Buyer**, **Fo
 ```
 
 - **Frontend** memiliki dua sumber data secara sengaja: `src/lib/data/trade.ts` (mock statis, dipakai sebagai fallback saat API tidak tersedia) dan `src/lib/api/*.ts` (klien HTTP nyata ke backend, `apiFetch` di `src/lib/api/client.ts` menembak `VITE_API_BASE_URL` dengan `credentials: include` dan retry refresh saat 401). Semua halaman workspace — list, detail, form create/edit, dan tombol action — sudah terhubung ke endpoint backend (pola `createRemoteList`/`loadById` dengan fallback ke seed saat API tak tersedia).
-- **Backend** menyediakan ~135 endpoint yang kontraknya teruji penuh terhadap `src/lib/api/*.ts` (`tests/test_frontend_contract.py`) dan payload per-request persis seperti yang dikirim frontend (`tests/test_payload_contract.py`, 29 test total), plus auth JWT (refresh rotation), RBAC per-role, audit log, dan persistensi SQLite.
+- **Backend** menyediakan **230+ endpoint** yang kontraknya teruji penuh terhadap `src/lib/api/*.ts` (`tests/test_frontend_contract.py`) dan payload per-request persis seperti yang dikirim frontend (`tests/test_payload_contract.py`), plus auth JWT (refresh rotation), RBAC per-role, audit log, dan persistensi SQLite. Fitur inti diadaptasi dari repo referensi [ExportReadyAI](https://github.com/ExportReadyAI/ExportReadyAI): enrichment AI, market intelligence, pricing, costing EXW/FOB/CIF + PDF, export analysis + snapshots + compare, countries & regulations, HS codes (6941 kode dari CSV), katalog gambar/varian/publik, buyer-request matching, forwarder reviews/rekomendasi, educational CRUD + upload, chat sessions.
 
 ## Tech Stack
 
@@ -70,12 +70,14 @@ mauekspor/
 ```
 ├── backend/                   # FastAPI app — lihat backend/README.md
 │   ├── app/main.py            # entrypoint FastAPI + CORS + auth guard + audit middleware
-│   ├── app/api/routes.py      # semua endpoint /api/v1/*
+│   ├── app/api/routes.py      # semua endpoint /api/v1/* (230+)
 │   ├── app/core/              # config, security (JWT/PBKDF2), permissions (RBAC)
+│   ├── app/data/              # master data: HS codes (CSV 6941 baris) + countries & regulations
+│   ├── app/services/          # business logic: pricing, compliance, matching, forwarders, market intel
 │   ├── app/db.py              # store + persistensi SQLite
 │   ├── app/schemas/           # Pydantic request models
 │   ├── app/seed.py            # seed data demo
-│   └── tests/                 # pytest: auth, RBAC, refresh, smoke, kontrak frontend
+│   └── tests/                 # pytest: auth, RBAC, refresh, smoke, kontrak frontend, fitur inti
 └── guideline/obsidian/        # dokumentasi desain & arsitektur (vault Obsidian)
     ├── frontend/               # design system, sidebar, landing, auth, educational
     └── backend/                # arsitektur FastAPI, kontrak endpoint, roadmap produksi
@@ -159,15 +161,27 @@ Detail per-modul (data model, halaman, endpoint) ada di dokumentasi Obsidian: [`
 |---|---|
 | UI seluruh 50+ halaman workspace | ✅ Selesai (shadcn-svelte, dark/light, responsive) |
 | Landing page, Login, Register | ✅ Selesai — login & register kini terhubung ke backend API (session store + redirect) |
-| Educational sebagai learning platform | ✅ Selesai (course player + lesson tracking) |
-| Backend API (FastAPI, ~135 endpoint) | ✅ Selesai — kontrak `src/lib/api/*.ts` teruji 100% via `test_frontend_contract.py` |
-| Autentikasi (JWT + refresh rotation) | ✅ Selesai — PBKDF2, access/refresh token, logout revoke, guard middleware |
+| Educational sebagai learning platform | ✅ Selesai (course player + lesson tracking + admin CRUD modul/artikel + upload file) |
+| Backend API (FastAPI, 230+ endpoint) | ✅ Selesai — kontrak `src/lib/api/*.ts` teruji 100% via `test_frontend_contract.py` |
+| Autentikasi (JWT + refresh rotation) | ✅ Selesai — PBKDF2, access/refresh token, logout revoke, guard middleware, register-admin |
 | RBAC per-role | ✅ Selesai — Admin/Exporter/Buyer/Forwarder/CustomsBroker/Finance |
 | Persistensi database | ✅ Selesai — SQLite via `app/db.py`; bisa diganti `MAUEKSPOR_DATABASE_URL` |
 | Audit log | ✅ Selesai — semua mutasi tercatat ke `audit_events` |
-| Frontend → API (semua halaman) | ✅ Selesai — list, detail, form create/edit, dan action button di seluruh modul memakai backend; fallback ke mock tetap berfungsi. Terverifikasi end-to-end live: backend up → login → CRUD → RBAC (403 buyer di modul admin) → semua halaman SSR 200 (preview build) |
-| Integration AI (HS code, compliance, market, chat) | ✅ Selesai (mode mock) — `app/ai.py`: HS classification, catalog description, market insight, compliance recommendations, balasan chat Copilot. Mode `mock` deterministik tanpa API key; aktifkan `MAUEKSPOR_AI_MODE=remote` + `MAUEKSPOR_AI_API_KEY` (OpenAI-compatible) |
-| Upload file (dokumen, gambar, bukti) | ✅ Selesai — `POST /files/upload/` multipart (max 25MB) disimpan ke `MAUEKSPOR_UPLOAD_DIR` + metadata JSON di DB, `GET /files/{id}/download/`; halaman Files punya input file nyata + tombol Download |
+| Frontend → API (semua halaman) | ✅ Selesai — list, detail, form create/edit, dan action button di seluruh modul memakai backend; fallback ke mock tetap berfungsi |
+| Product enrichment (HS code + SKU) | ✅ Selesai — `POST /products/{id}/enrich/` dengan HS loader (6941 kode) + SKU deterministik + fallback pencarian |
+| Market Intelligence (AI) | ✅ Selesai — `GET/POST /products/{id}/ai/market-intelligence/` + per katalog; termasuk rekomendasi forwarder per negara |
+| Pricing Calculator (AI) | ✅ Selesai — `GET/POST /products/{id}/ai/pricing/` EXW/FOB/CIF + breakdown + kurs |
+| Costing nyata | ✅ Selesai — kalkulasi EXW/FOB/CIF (trucking, dokumen, freight per region, asuransi) + kapasitas kontainer + `GET /costing/{id}/pdf/` |
+| Exchange rate service | ✅ Selesai — auto-fetch 24 jam (exchangerate-api), manual/refresh, fallback 15800 |
+| Export Analysis | ✅ Selesai — create (compliance checker bahan/spesifikasi/kemasan), snapshot produk & regulasi, reanalyze, compare 2-5 negara, rekomendasi regulasi 10 bagian (ID/EN + cache) |
+| Master data | ✅ Selesai — `GET /countries/` + detail regulasi; `GET /hs-codes/` + autocomplete; admin CRUD negara/regulasi/HS + import CSV |
+| Katalog | ✅ Selesai — CRUD, publish/unpublish, gambar (list/add/update/delete), varian (type + option, 8 predefined), AI description, MI & pricing, listing publik & forwarder |
+| Buyer request matching | ✅ Selesai — skor berbobot (kategori 35%, HS 30%, spesifikasi 25%, kapabilitas 5%, volume 5%), status, matched-catalogs/umkm |
+| Forwarder | ✅ Selesai — profil (create/me/update), review (CRUD + auto-recalc rating), rekomendasi, statistik |
+| Buyer profile | ✅ Selesai — profil importer (create/me/update) |
+| Chat Copilot | ✅ Selesai — sessions CRUD, suggestions, balasan AI per konteks |
+| Integration AI (remote mode) | ✅ Selesai — `MAUEKSPOR_AI_MODE=remote` + `MAUEKSPOR_AI_API_KEY` (OpenAI-compatible); default `mock` deterministik |
+| Upload file (dokumen, gambar, bukti) | ✅ Selesai — `POST /files/upload/` multipart (max 25MB), `POST /educational/articles/{id}/upload-file/` (max 10MB), `GET /files/{id}/download/` |
 
 ## Dokumentasi Lanjutan
 

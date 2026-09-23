@@ -5,26 +5,67 @@
 	import { Card, CardContent } from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { buyers } from '$lib/data/trade';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import { createBuyerProfile, updateBuyerProfile, getMyBuyerProfile } from '$lib/api/buyers';
+	import type { BuyerProfile } from '$lib/api/buyers';
 
-	const initial = buyers[0];
-	let name = $state(initial.name);
-	let segment = $state(initial.segment);
-	let country = $state(initial.country);
-	let paymentProfile = $state(initial.paymentProfile);
-	let estimatedAnnualValue = $state(String(initial.estimatedAnnualValue));
+	let companyName = $state('');
+	let companyDescription = $state('');
+	let contactEmail = $state('');
+	let contactPhone = $state('');
+	let categories = $state('');
+	let sourceCountries = $state('');
+	let businessType = $state('');
+	let annualImportVolume = $state('');
 	let saved = $state(false);
+	let saving = $state(false);
 	let error = $state('');
+	let existingId = $state('');
 
-	let valid = $derived(name.trim().length > 2 && country.trim().length > 1 && segment.trim().length > 1);
+	$effect(() => {
+		getMyBuyerProfile()
+			.then((res) => {
+				const p = res.data;
+				existingId = p.id ?? '';
+				companyName = p.companyName ?? companyName;
+				companyDescription = p.companyDescription ?? '';
+				contactEmail = p.contactInfo?.email ?? '';
+				contactPhone = p.contactInfo?.phone ?? '';
+				categories = (p.preferredProductCategories ?? []).join(', ');
+				sourceCountries = (p.sourceCountries ?? []).join(', ');
+				businessType = p.businessType ?? '';
+				annualImportVolume = p.annualImportVolume ?? '';
+			})
+			.catch(() => {});
+	});
 
-	function save() {
+	let valid = $derived(companyName.trim().length > 2 && contactEmail.trim().length > 4);
+
+	async function save() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib: nama, segment, dan negara.';
+			error = 'Lengkapi kolom wajib: company name dan contact email.';
 			return;
 		}
-		saved = true;
+		saving = true;
+		const payload: Partial<BuyerProfile> = {
+			companyName,
+			companyDescription,
+			contactInfo: { email: contactEmail, phone: contactPhone },
+			preferredProductCategories: categories.split(',').map((s) => s.trim()).filter(Boolean),
+			sourceCountries: sourceCountries.split(',').map((s) => s.trim()).filter(Boolean),
+			businessType,
+			annualImportVolume
+		};
+		try {
+			if (existingId) await updateBuyerProfile(existingId, payload);
+			else await createBuyerProfile(payload);
+			saved = true;
+		} catch {
+			error = 'Gagal menyimpan profil buyer.';
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -38,7 +79,7 @@
 			<Badge variant="secondary">Profile</Badge>
 			<h2 class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Update how exporters see your company.</h2>
 			<p class="mt-2 max-w-2xl leading-relaxed text-muted-foreground">
-				Segment, payment profile, and estimated pipeline shape exporter targeting.
+				Kategori produk yang diminati, negara sumber, dan volume impor tahunan.
 			</p>
 		</div>
 
@@ -46,41 +87,55 @@
 			<Card>
 				<CardContent class="grid gap-3 p-5">
 					<Badge>Profile saved</Badge>
-					<h3 class="text-2xl font-bold tracking-tight">{name}</h3>
-					<p class="text-sm text-muted-foreground">Profil tersimpan.</p>
+					<h3 class="text-2xl font-bold tracking-tight">{companyName}</h3>
+					<p class="text-sm text-muted-foreground">Profil tersimpan di backend.</p>
 					<Button href="/buyers/my-profile" class="w-fit">Back to profile</Button>
 				</CardContent>
 			</Card>
 		{:else}
 			<form class="grid gap-4" onsubmit={(event) => { event.preventDefault(); save(); }}>
 				<div class="grid gap-2">
-					<Label>Company name</Label>
-					<Input bind:value={name} />
+					<Label for="b-name">Company name</Label>
+					<Input id="b-name" bind:value={companyName} />
+				</div>
+				<div class="grid gap-2">
+					<Label for="b-desc">Company description</Label>
+					<Textarea id="b-desc" bind:value={companyDescription} rows={2} />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label>Segment</Label>
-						<Input bind:value={segment} />
+						<Label for="b-email">Contact email</Label>
+						<Input id="b-email" bind:value={contactEmail} />
 					</div>
 					<div class="grid gap-2">
-						<Label>Country</Label>
-						<Input bind:value={country} />
+						<Label for="b-phone">Contact phone</Label>
+						<Input id="b-phone" bind:value={contactPhone} />
 					</div>
 				</div>
 				<div class="grid gap-2">
-					<Label>Payment profile</Label>
-					<Input bind:value={paymentProfile} />
+					<Label for="b-cat">Preferred product categories (pisahkan dengan koma)</Label>
+					<Input id="b-cat" bind:value={categories} placeholder="Makanan Olahan, Minuman" />
 				</div>
 				<div class="grid gap-2">
-					<Label>Estimated annual value USD</Label>
-					<Input bind:value={estimatedAnnualValue} inputmode="numeric" />
+					<Label for="b-country">Source countries (pisahkan dengan koma)</Label>
+					<Input id="b-country" bind:value={sourceCountries} placeholder="Indonesia, Vietnam" />
+				</div>
+				<div class="grid gap-4 sm:grid-cols-2">
+					<div class="grid gap-2">
+						<Label for="b-type">Business type</Label>
+						<Input id="b-type" bind:value={businessType} placeholder="Importer / Distributor" />
+					</div>
+					<div class="grid gap-2">
+						<Label for="b-volume">Annual import volume</Label>
+						<Input id="b-volume" bind:value={annualImportVolume} placeholder="US$1-5M" />
+					</div>
 				</div>
 
 				{#if error}<p class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-2">
 					<Button variant="outline" href="/buyers/my-profile">Cancel</Button>
-					<Button type="submit">Save profile</Button>
+					<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save profile'}</Button>
 				</div>
 			</form>
 		{/if}

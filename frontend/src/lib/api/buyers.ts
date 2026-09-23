@@ -33,3 +33,37 @@ export function logBuyerContact(id: string, note: string) {
 		body: JSON.stringify({ note })
 	});
 }
+
+// ---------- Buyer profiles (role Buyer) ----------
+export type BuyerProfile = {
+	id?: string;
+	companyName: string;
+	companyDescription?: string;
+	contactInfo?: Record<string, string>;
+	preferredProductCategories?: string[];
+	preferredProductCategoriesDescription?: string;
+	sourceCountries?: string[];
+	sourceCountriesDescription?: string;
+	businessType?: string;
+	businessTypeDescription?: string;
+	annualImportVolume?: string;
+	annualImportVolumeDescription?: string;
+};
+
+export function createBuyerProfile(payload: Partial<BuyerProfile>) {
+	return apiFetch<BuyerProfile>('/buyers/profile/', {
+		method: 'POST',
+		body: JSON.stringify(payload)
+	});
+}
+
+export function getMyBuyerProfile() {
+	return apiFetch<BuyerProfile>('/buyers/profile/me/');
+}
+
+export function updateBuyerProfile(id: string, payload: Partial<BuyerProfile>) {
+	return apiFetch<BuyerProfile>(`/buyers/profile/${id}/`, {
+		method: 'PUT',
+		body: JSON.stringify(payload)
+	});
+}

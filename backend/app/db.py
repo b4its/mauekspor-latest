@@ -18,6 +18,12 @@ _TABLES = [
     "automations", "knowledge_articles", "educational_modules", "educational_articles",
     "calendar_events", "messages", "billing_records", "support_tickets", "api_keys",
     "files", "reports", "audit_events", "chat_conversations", "refresh_tokens",
+    # --- Modul inti ExportReadyAI ---
+    "countries", "hs_codes", "exchange_rates", "product_enrichments",
+    "market_intelligence", "pricing_results", "forwarder_reviews",
+    "catalog_images", "catalog_variant_types", "catalog_variant_options",
+    "chat_sessions", "regulation_recommendations", "buyer_profiles",
+    "forwarder_profiles", "educational_lessons", "regulations",
 ]
 
 _STORE: dict[str, list[dict[str, Any]]] = {}

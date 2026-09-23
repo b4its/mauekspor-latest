@@ -3,14 +3,19 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { catalogs, forwarders } from '$lib/data/trade';
+	import { catalogs as seedCatalogs, forwarders as seedForwarders } from '$lib/data/trade';
+	import { listForwarderCatalogs } from '$lib/api/catalogs';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import type { Catalog } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
 
-	const forwarder = forwarders[0];
+	const forwarder = seedForwarders[0];
 	let query = $state('');
+	let catalogs = createRemoteList<Catalog>(listForwarderCatalogs, seedCatalogs);
+	catalogs.load();
 
 	let filteredCatalogs = $derived(
-		catalogs.filter((catalog) => {
+		catalogs.items.filter((catalog) => {
 			const matchesQuery = [catalog.title, catalog.targetMarket, catalog.status]
 				.join(' ')
 				.toLowerCase()

@@ -26,7 +26,12 @@ def test_costing_create_accepts_frontend_payload_with_title():
         data = res.json()["data"]
         assert data["title"] == payload["title"]
         assert data["margin"] == 22
-        assert data["status"] == "Draft"
+        # Kalkulasi nyata (EXW/FOB/CIF) langsung menghasilkan status Ready + harga
+        assert data["status"] == "Ready"
+        assert data["exwPrice"] > 0
+        assert data["fobPrice"] > 0
+        assert data["cifPrice"] > 0
+        assert data["exchangeRate"] > 0
 
 
 def test_compliance_evidence_accepts_note_key():

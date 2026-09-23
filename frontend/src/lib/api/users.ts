@@ -3,3 +3,4 @@ import type { UserAccount } from '$lib/data/trade';
 
 export function listUsers() { return apiFetch<UserAccount[]>('/users/'); }
 export function getUser(id: string) { return apiFetch<UserAccount>(`/users/${id}/`); }
+export function deleteUser(id: string) { return apiFetch<{ status: string; id: string }>(`/users/${id}/`, { method: 'DELETE' }); }

@@ -36,12 +36,13 @@ async function attemptRefresh(): Promise<boolean> {
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}, _retried = false): Promise<ApiResult<T>> {
+	const isFormData = init.body instanceof FormData;
 	const response = await fetch(`${API_BASE_URL}${path}`, {
 		...init,
 		credentials: 'include',
 		headers: {
 			Accept: 'application/json',
-			'Content-Type': 'application/json',
+			...(isFormData ? {} : { 'Content-Type': 'application/json' }),
 			...init.headers
 		}
 	});

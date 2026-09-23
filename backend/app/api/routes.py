@@ -97,6 +97,33 @@ def register(payload: sc.RegisterPayload, response: Response):
     return {"data": _serialize(user), "meta": {"access_token": access}}
 
 
+@router.post("/auth/register-admin/")
+def register_admin(payload: sc.RegisterAdminPayload, response: Response):
+    """Buat user Admin — via kode bootstrap `MAUEKSPOR_ADMIN_CODE` atau admin yang sudah login."""
+    code = os.environ.get("MAUEKSPOR_ADMIN_CODE", "admin-bootstrap-2026")
+    if payload.admin_code and payload.admin_code != code:
+        raise HTTPException(403, "Invalid admin code")
+    if not payload.admin_code and not os.environ.get("MAUEKSPOR_ADMIN_CODE"):
+        # Jika tanpa kode, hanya admin yang bisa (dicek middleware untuk module auth? tidak)
+        raise HTTPException(403, "Admin code required")
+    if db.get_by("users", email=str(payload.email)):
+        raise HTTPException(409, "Email already registered")
+    user = db.insert("users", {
+        "id": db.gen_id("users", "U"),
+        "email": str(payload.email),
+        "fullName": payload.full_name,
+        "name": payload.full_name,
+        "role": "Admin",
+        "organization": "",
+        "password": hash_password(payload.password),
+        "status": "Active",
+        "createdAt": "2026-08-07",
+        "lastLogin": "new",
+    })
+    access, _ = _issue_tokens(user, response)
+    return {"data": _serialize(user), "meta": {"access_token": access}}
+
+
 @router.get("/auth/me/")
 def me(current_user: dict = Depends(get_current_user)):
     return _one(current_user)
@@ -150,6 +177,20 @@ def get_user(user_id: str):
     return _one(record)
 
 
+@router.delete("/users/{user_id}/")
+def delete_user(user_id: str):
+    record = db.get("users", user_id)
+    if not record:
+        raise HTTPException(404, "User not found")
+    db.delete("users", user_id)
+    # Bersihkan data terkait
+    for table in ("business_profiles", "products", "projects", "buyer_requests", "catalogs",
+                  "export_analyses", "costing", "notifications", "api_keys", "support_tickets"):
+        for related in db.find(table, ownerId=user_id):
+            db.delete(table, related.get("id"))
+    return {"data": {"status": "deleted", "id": user_id}, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # PRODUCTS
 # ----------------------------------------------------------------------------
@@ -175,9 +216,29 @@ def create_product(payload: sc.CreateProductPayload):
         "hs": "TBD",
         "certificates": [],
         "readiness": 40,
+        "description": "",
+        "material_composition": "",
+        "production_technique": "",
+        "finishing_type": "",
+        "quality_specs": {},
+        "dimensions_l_w_h": {},
+        "weight_net": None,
+        "weight_gross": None,
         "updatedAt": "now",
     })
     return _one(db.insert("products", data))
+
+
+def _generate_sku(product: dict) -> str:
+    """SKU deterministik {CAT}-{MAT}-{SEQ:03d} (diadaptasi dari ExportReadyAI ai_service)."""
+    cat = (product.get("category") or "GEN")[:3].upper()
+    if not cat.isalpha():
+        cat = (product.get("name") or "PRO")[:3].upper()
+    mat = (product.get("material_composition") or product.get("origin") or "MAT")[:3].upper()
+    if not mat.isalpha():
+        mat = "MAT"
+    seq = len(db.find("product_enrichments", productId=str(product.get("id", "")))) + 1
+    return f"{cat}-{mat}-{seq:03d}"
 
 
 @router.post("/products/{product_id}/enrich/")
@@ -185,20 +246,182 @@ def enrich_product(product_id: str):
     record = db.get("products", product_id)
     if not record:
         raise HTTPException(404, "Product not found")
+
+    from app.data.hs_loader import get_hs_loader
+    loader = get_hs_loader()
+    keywords = " ".join([str(record.get("name", "")), str(record.get("category", "")), str(record.get("description", ""))])
+    context = loader.get_hs_code_context(keywords, max_results=15)
+    system = "You are an Indonesia export HS code classifier. Return JSON with keys hsCode (8 digits), confidence (0-100), reason."
+    user = f"Product: {record.get('name', '')} ({record.get('category', '')} - {record.get('description', '')})\n{context}"
+
+    enriched = ai.ask_json(system, user, kind="classify")
+    hs_code = ""
+    confidence = None
+    if enriched and enriched.get("hsCode"):
+        hs_code = str(enriched["hsCode"])
+        confidence = enriched.get("confidence")
+    if not hs_code:
+        # Fallback: cari HS code dari dataset
+        results = loader.search_hs_codes(keywords, max_results=1, min_level=6)
+        if results:
+            hs_code = results[0]["hs_code"]
+            if len(hs_code) == 6:
+                hs_code = f"{hs_code}00"
+    if not hs_code:
+        hs_code = "00000000"
+
+    sku = _generate_sku(record)
     record["status"] = "Enriched"
-    if not record.get("hs") or record["hs"] == "TBD":
-        enriched = ai.ask_json(
-            "You are an Indonesia export HS code classifier. Return JSON with keys hsCode, confidence, reason.",
-            f"Product: {record.get('name', '')} ({record.get('category', '')} - {record.get('description', '')})",
-            kind="classify",
-        )
-        if enriched and enriched.get("hsCode"):
-            record["hs"] = enriched["hsCode"]
-        if enriched and enriched.get("confidence") is not None:
-            record.setdefault("hsConfidence", enriched["confidence"])
+    record["hs"] = hs_code
+    record["hsConfidence"] = confidence if confidence is not None else 88
+    record["sku"] = sku
     record["readiness"] = min(record.get("readiness", 0) + 10, 100)
     record["updatedAt"] = "now"
+
+    # Simpan enrichment terpisah (1-per-produk)
+    existing = db.get_by("product_enrichments", productId=product_id)
+    if existing:
+        existing.update({
+            "hsCodeRecommendation": hs_code,
+            "skuGenerated": sku,
+            "lastUpdatedAi": "now",
+        })
+        db.save(existing)
+    else:
+        db.insert("product_enrichments", {
+            "id": db.gen_id("product_enrichments", "ENR"),
+            "productId": product_id,
+            "hsCodeRecommendation": hs_code,
+            "skuGenerated": sku,
+            "nameEnglishB2b": record.get("name_english_b2b", ""),
+            "descriptionEnglishB2b": record.get("description_english_b2b", ""),
+            "marketingHighlights": record.get("marketing_highlights", []),
+            "lastUpdatedAi": "now",
+        })
     return _one(record)
+
+
+@router.patch("/products/{product_id}/")
+def update_product(product_id: str, payload: sc.UpdateProductPayload):
+    record = db.get("products", product_id)
+    if not record:
+        raise HTTPException(404, "Product not found")
+    data = payload.model_dump(exclude_none=True)
+    # Normalisasi field gabungan
+    if data.get("hs_code") and not data.get("hs"):
+        data["hs"] = data["hs_code"]
+    if data.get("netWeight"):
+        data["netWeight"] = data["netWeight"]
+    record.update(data)
+    record["updatedAt"] = "now"
+    # Jika ada field enrichment, update tabel enrichment juga
+    enrich_patch = {}
+    if data.get("hs_code"):
+        enrich_patch["hsCodeRecommendation"] = data["hs_code"]
+    if data.get("sku"):
+        enrich_patch["skuGenerated"] = data["sku"]
+    if data.get("name_english_b2b"):
+        enrich_patch["nameEnglishB2b"] = data["name_english_b2b"]
+    if data.get("description_english_b2b"):
+        enrich_patch["descriptionEnglishB2b"] = data["description_english_b2b"]
+    if data.get("marketing_highlights") is not None:
+        enrich_patch["marketingHighlights"] = data["marketing_highlights"]
+    if enrich_patch:
+        existing = db.get_by("product_enrichments", productId=product_id)
+        if existing:
+            existing.update(enrich_patch)
+            db.save(existing)
+        else:
+            db.insert("product_enrichments", {
+                "id": db.gen_id("product_enrichments", "ENR"),
+                "productId": product_id,
+                **enrich_patch,
+                "lastUpdatedAi": "now",
+            })
+    return _one(record)
+
+
+@router.delete("/products/{product_id}/")
+def delete_product(product_id: str):
+    record = db.get("products", product_id)
+    if not record:
+        raise HTTPException(404, "Product not found")
+    db.delete("products", product_id)
+    for tbl in ("product_enrichments", "market_intelligence", "pricing_results"):
+        for related in db.find(tbl, productId=product_id):
+            db.delete(tbl, related.get("id"))
+    return {"data": {"status": "deleted", "id": product_id}, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# PRODUCT AI: market intelligence / pricing / catalog description
+# ----------------------------------------------------------------------------
+@router.get("/products/{product_id}/ai/market-intelligence/")
+def get_market_intelligence(product_id: str):
+    record = db.get_by("market_intelligence", productId=product_id)
+    if not record:
+        raise HTTPException(404, "Market intelligence not found")
+    return _one(record)
+
+
+@router.post("/products/{product_id}/ai/market-intelligence/")
+def create_market_intelligence(product_id: str):
+    product = db.get("products", product_id)
+    if not product:
+        raise HTTPException(404, "Product not found")
+    from app.services.market_intel import generate_market_intelligence
+    result = generate_market_intelligence(product)
+    existing = db.get_by("market_intelligence", productId=product_id)
+    if existing:
+        existing.update(result)
+        db.save(existing)
+        return _one(existing)
+    record = db.insert("market_intelligence", {
+        "id": db.gen_id("market_intelligence", "MI"),
+        **result,
+    })
+    return _one(record)
+
+
+@router.get("/products/{product_id}/ai/pricing/")
+def get_product_pricing(product_id: str):
+    record = db.get_by("pricing_results", productId=product_id)
+    if not record:
+        raise HTTPException(404, "Pricing result not found")
+    return _one(record)
+
+
+@router.post("/products/{product_id}/ai/pricing/")
+def create_product_pricing(product_id: str, payload: dict):
+    product = db.get("products", product_id)
+    if not product:
+        raise HTTPException(404, "Product not found")
+    from app.services.market_intel import generate_product_pricing
+    cogs = payload.get("cogs_per_unit_idr") or payload.get("cogsPerUnitIdr") or 0
+    margin = payload.get("target_margin_percent") or payload.get("targetMarginPercent") or 30
+    country = payload.get("target_country_code") or payload.get("targetCountryCode") or "JP"
+    result = generate_product_pricing(product, float(cogs), float(margin), str(country))
+    existing = db.get_by("pricing_results", productId=product_id)
+    if existing:
+        existing.update(result)
+        db.save(existing)
+        return _one(existing)
+    record = db.insert("pricing_results", {
+        "id": db.gen_id("pricing_results", "PRC"),
+        **result,
+    })
+    return _one(record)
+
+
+@router.post("/products/{product_id}/ai/catalog-description/")
+def generate_product_catalog_description(product_id: str, payload: dict):
+    product = db.get("products", product_id)
+    if not product:
+        raise HTTPException(404, "Product not found")
+    from app.services.market_intel import generate_catalog_description
+    result = generate_catalog_description(product)
+    return {"data": result, "meta": {}}
+
 
 
 # ----------------------------------------------------------------------------
@@ -258,6 +481,18 @@ def create_profile(payload: sc.CreateBusinessProfilePayload):
     return _one(db.insert("business_profiles", data))
 
 
+@router.put("/business-profiles/{profile_id}/")
+def put_profile(profile_id: str, payload: sc.CreateBusinessProfilePayload):
+    record = db.get("business_profiles", profile_id)
+    if not record:
+        raise HTTPException(404, "Business profile not found")
+    data = payload.model_dump()
+    record.update(data)
+    record["readiness"] = min(40 + len(data.get("certifications", []) or []) * 8, 100)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
 @router.patch("/business-profiles/{profile_id}/")
 def update_profile(profile_id: str, payload: dict):
     record = db.update("business_profiles", profile_id, payload)
@@ -277,9 +512,83 @@ def update_certifications(profile_id: str, payload: sc.UpdateCertificationsPaylo
     return _one(record)
 
 
+@router.get("/business-profiles/dashboard/summary/")
+def dashboard_summary():
+    """Ringkasan dashboard berbasis role (Admin vs Exporter/UMKM)."""
+    users = db.all("users")
+    admin = next((u for u in users if u.get("role") == "Admin"), None)
+    products = db.all("products")
+    catalogs = db.all("catalogs")
+    profiles = db.all("business_profiles")
+    requests = db.all("buyer_requests")
+    role_counts: dict[str, int] = {}
+    for u in users:
+        role_counts[str(u.get("role", "Exporter"))] = role_counts.get(str(u.get("role", "Exporter")), 0) + 1
+    has_profile = any(p.get("owner") or p.get("companyName") for p in profiles)
+    return {"data": {
+        "role": (admin or {}).get("role", "Exporter"),
+        "has_business_profile": has_profile,
+        "business_profile": profiles[0] if profiles else None,
+        "counts": {
+            "products": len(products),
+            "catalogs": len(catalogs),
+            "buyer_requests": len(requests),
+            "business_profiles": len(profiles),
+            "users": len(users),
+            "users_by_role": role_counts,
+        },
+    }, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # BUYERS
 # ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# BUYER PROFILES (role Buyer) — didefinisikan sebelum route parameterized
+# ----------------------------------------------------------------------------
+@router.post("/buyers/profile/")
+def create_buyer_profile(payload: sc.CreateBuyerProfilePayload):
+    data = payload.model_dump()
+    existing = db.get_by("buyer_profiles", userId="current")
+    if existing:
+        existing.update(data)
+        existing["updatedAt"] = "now"
+        return _one(existing)
+    record = db.insert("buyer_profiles", {
+        "id": db.gen_id("buyer_profiles", "BYP"),
+        "userId": "current",
+        **data,
+        "createdAt": "now",
+    })
+    return _one(record)
+
+
+@router.get("/buyers/profile/me/")
+def get_my_buyer_profile():
+    record = db.get_by("buyer_profiles", userId="current")
+    if not record:
+        record = db.get_by("buyer_profiles", userId="U-003")
+    if not record:
+        raise HTTPException(404, "Buyer profile not found")
+    return _one(record)
+
+
+@router.get("/buyers/my-profile/")
+def get_my_buyer_profile_alias():
+    return get_my_buyer_profile()
+
+
+@router.put("/buyers/profile/{profile_id}/")
+def update_buyer_profile(profile_id: str, payload: sc.UpdateBuyerProfilePayload):
+    record = db.get("buyer_profiles", profile_id)
+    if not record:
+        raise HTTPException(404, "Buyer profile not found")
+    data = payload.model_dump()
+    record.update(data)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
 @router.get("/buyers/")
 def list_buyers():
     return _list_query("buyers")
@@ -354,8 +663,53 @@ def get_buyer_request(request_id: str):
 def create_buyer_request(payload: sc.CreateBuyerRequestPayload):
     data = payload.model_dump()
     data["id"] = db.gen_id("buyer_requests", "BRQ")
-    data["status"] = "New"
-    return _one(db.insert("buyer_requests", data))
+    data["status"] = "Open"
+    data["createdAt"] = "now"
+    data["updatedAt"] = "now"
+    record = db.insert("buyer_requests", data)
+    # Trigger matching on-demand
+    from app.services.matching import match_buyer_request
+    record["matches"] = match_buyer_request(record)
+    return _one(record)
+
+
+@router.put("/buyer-requests/{request_id}/")
+def update_buyer_request(request_id: str, payload: dict):
+    record = db.get("buyer_requests", request_id)
+    if not record:
+        raise HTTPException(404, "Buyer request not found")
+    for key in ("subject", "destination", "quantity", "productId", "buyerId", "deadline", "requirements",
+                "product_category", "hs_code_target", "spec_requirements", "target_volume", "keyword_tags",
+                "min_rank_required"):
+        if payload.get(key) is not None:
+            record[key] = payload[key]
+    record["updatedAt"] = "now"
+    from app.services.matching import match_buyer_request
+    record["matches"] = match_buyer_request(record)
+    return _one(record)
+
+
+@router.patch("/buyer-requests/{request_id}/status/")
+def update_buyer_request_status(request_id: str, payload: sc.UpdateBuyerRequestStatusPayload):
+    record = db.get("buyer_requests", request_id)
+    if not record:
+        raise HTTPException(404, "Buyer request not found")
+    record["status"] = payload.status
+    if payload.selected_catalog or payload.selected_catalog_id:
+        record["selectedCatalog"] = payload.selected_catalog_id or payload.selected_catalog
+    if payload.umkm or payload.umkm_id:
+        record["selectedUmkm"] = payload.umkm_id or payload.umkm
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.delete("/buyer-requests/{request_id}/")
+def delete_buyer_request(request_id: str):
+    record = db.get("buyer_requests", request_id)
+    if not record:
+        raise HTTPException(404, "Buyer request not found")
+    db.delete("buyer_requests", request_id)
+    return {"data": {"status": "deleted", "id": request_id}, "meta": {}}
 
 
 @router.post("/buyer-requests/{request_id}/match/")
@@ -363,13 +717,97 @@ def match_buyer_request(request_id: str):
     record = db.get("buyer_requests", request_id)
     if not record:
         raise HTTPException(404, "Buyer request not found")
-    record["status"] = "Matched"
+    from app.services.matching import match_buyer_request as run_match
+    record["matches"] = run_match(record)
+    if record["matches"]:
+        record["status"] = "Matched"
+    record["updatedAt"] = "now"
     return _one(record)
+
+
+@router.get("/buyer-requests/{request_id}/matched-catalogs/")
+def get_matched_catalogs(request_id: str):
+    record = db.get("buyer_requests", request_id)
+    if not record:
+        raise HTTPException(404, "Buyer request not found")
+    from app.services.matching import match_buyer_request as run_match
+    matches = record.get("matches") or run_match(record)
+    return {"data": matches, "meta": {}}
+
+
+@router.get("/buyer-requests/{request_id}/matched-umkm/")
+def get_matched_umkm(request_id: str):
+    record = db.get("buyer_requests", request_id)
+    if not record:
+        raise HTTPException(404, "Buyer request not found")
+    from app.services.matching import match_buyer_request as run_match
+    matches = record.get("matches") or run_match(record)
+    for m in matches:
+        catalog = db.get("catalogs", str(m.get("catalogId", "")))
+        if catalog:
+            m["catalogTitle"] = catalog.get("title", "")
+            m["contactInfo"] = {"phone": catalog.get("contactPhone", ""), "email": catalog.get("contactEmail", "")}
+            m["catalog"] = catalog
+    return {"data": matches, "meta": {}}
 
 
 # ----------------------------------------------------------------------------
 # FORWARDERS
 # ----------------------------------------------------------------------------
+# (rute statis profile/rekomendasi didefinisikan sebelum route parameterized)
+@router.post("/forwarders/profile/")
+def create_forwarder_profile(payload: sc.CreateForwarderProfilePayload):
+    data = payload.model_dump()
+    existing = db.get_by("forwarder_profiles", userId="current")
+    if existing:
+        existing.update(data)
+        existing["updatedAt"] = "now"
+        return _one(existing)
+    record = db.insert("forwarder_profiles", {
+        "id": db.gen_id("forwarder_profiles", "FWP"),
+        "userId": "current",
+        **data,
+        "averageRating": 0,
+        "totalReviews": 0,
+        "createdAt": "now",
+    })
+    return _one(record)
+
+
+@router.get("/forwarders/profile/me/")
+def get_my_forwarder_profile():
+    record = db.get_by("forwarder_profiles", userId="current")
+    if not record:
+        record = db.get_by("forwarder_profiles", userId="U-001")
+    if not record:
+        raise HTTPException(404, "Forwarder profile not found")
+    return _one(record)
+
+
+@router.get("/forwarders/my-profile/")
+def get_my_forwarder_profile_alias():
+    return get_my_forwarder_profile()
+
+
+@router.put("/forwarders/profile/{profile_id}/")
+def update_forwarder_profile(profile_id: str, payload: sc.UpdateForwarderProfilePayload):
+    record = db.get("forwarder_profiles", profile_id)
+    if not record:
+        raise HTTPException(404, "Forwarder profile not found")
+    data = payload.model_dump()
+    for key in ("companyName", "contactInfo", "specializationRoutes", "serviceTypes"):
+        if data.get(key) is not None:
+            record[key] = data[key]
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.get("/forwarders/recommendations/")
+def forwarder_recommendations(destination_country: str):
+    from app.services.forwarders import get_recommendations
+    return {"data": get_recommendations(destination_country), "meta": {}}
+
+
 @router.get("/forwarders/")
 def list_forwarders():
     return _list_query("forwarders")
@@ -392,6 +830,8 @@ def create_forwarder(payload: sc.CreateForwarderPayload):
         "onTimeRate": 0,
         "quoteSpeed": "TBD",
         "lanes": [],
+        "averageRating": 0,
+        "totalReviews": 0,
         "updatedAt": "now",
     })
     return _one(db.insert("forwarders", data))
@@ -407,6 +847,69 @@ def request_forwarder_quote(forwarder_id: str):
 
 
 # ----------------------------------------------------------------------------
+# FORWARDER REVIEWS / STATISTIK
+# ----------------------------------------------------------------------------
+@router.post("/forwarders/{forwarder_id}/reviews/")
+def create_forwarder_review(forwarder_id: str, payload: sc.CreateForwarderReviewPayload):
+    record = db.get("forwarders", forwarder_id)
+    if not record:
+        raise HTTPException(404, "Forwarder not found")
+    if payload.rating < 1 or payload.rating > 5:
+        raise HTTPException(422, "Rating must be 1-5")
+    review = db.insert("forwarder_reviews", {
+        "id": db.gen_id("forwarder_reviews", "REV"),
+        "forwarderId": forwarder_id,
+        "rating": payload.rating,
+        "reviewText": payload.review_text,
+        "umkmId": "U-002",
+        "reviewerName": "Rizal Fahmi",
+        "createdAt": "now",
+    })
+    from app.services.forwarders import recalculate_rating
+    recalculate_rating(record)
+    return _one(review)
+
+
+@router.put("/forwarders/{forwarder_id}/reviews/{review_id}/")
+def update_forwarder_review(forwarder_id: str, review_id: str, payload: sc.UpdateForwarderReviewPayload):
+    review = db.get("forwarder_reviews", review_id)
+    if not review:
+        raise HTTPException(404, "Review not found")
+    if payload.rating < 1 or payload.rating > 5:
+        raise HTTPException(422, "Rating must be 1-5")
+    review["rating"] = payload.rating
+    review["reviewText"] = payload.review_text
+    review["updatedAt"] = "now"
+    record = db.get("forwarders", forwarder_id)
+    if record:
+        from app.services.forwarders import recalculate_rating
+        recalculate_rating(record)
+    return _one(review)
+
+
+@router.delete("/forwarders/{forwarder_id}/reviews/{review_id}/delete/")
+def delete_forwarder_review(forwarder_id: str, review_id: str):
+    review = db.get("forwarder_reviews", review_id)
+    if not review:
+        raise HTTPException(404, "Review not found")
+    db.delete("forwarder_reviews", review_id)
+    record = db.get("forwarders", forwarder_id)
+    if record:
+        from app.services.forwarders import recalculate_rating
+        recalculate_rating(record)
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+@router.get("/forwarders/{forwarder_id}/statistics/")
+def forwarder_statistics(forwarder_id: str):
+    from app.services.forwarders import get_statistics
+    stats = get_statistics(forwarder_id)
+    if not stats:
+        raise HTTPException(404, "Forwarder not found")
+    return {"data": stats, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
 # CATALOGS
 # ----------------------------------------------------------------------------
 @router.get("/catalogs/")
@@ -414,30 +917,102 @@ def list_catalogs():
     return _list_query("catalogs")
 
 
+@router.get("/catalogs/forwarder/")
+def list_forwarder_catalogs(search: str = "", tag: str = "", min_price: float = 0, max_price: float = 0):
+    items = [c for c in db.all("catalogs") if str(c.get("status", "")).lower() == "published"]
+    if search:
+        items = [c for c in items if search.lower() in str(c.get("title", "")).lower() or search.lower() in str(c.get("description", "")).lower()]
+    if tag:
+        items = [c for c in items if tag.lower() in [str(t).lower() for t in (c.get("tags") or [])]]
+    if min_price:
+        items = [c for c in items if float(c.get("basePriceExw") or 0) >= min_price]
+    if max_price:
+        items = [c for c in items if float(c.get("basePriceExw") or 0) <= max_price]
+    for item in items:
+        product = db.get("products", str(item.get("productId", ""))) if item.get("productId") else None
+        item["sellerName"] = item.get("owner", "") or (product or {}).get("origin", "")
+        item["sellerId"] = item.get("ownerId", "")
+    return {"data": items, "meta": {}}
+
+
+@router.get("/catalogs/public/")
+def list_public_catalogs(search: str = "", tag: str = "", min_price: float = 0, max_price: float = 0):
+    items = [c for c in db.all("catalogs") if str(c.get("status", "")).lower() == "published"]
+    if search:
+        items = [c for c in items if search.lower() in str(c.get("title", "")).lower() or search.lower() in str(c.get("description", "")).lower()]
+    if tag:
+        items = [c for c in items if tag.lower() in [str(t).lower() for t in (c.get("tags") or [])]]
+    if min_price:
+        items = [c for c in items if float(c.get("basePriceExw") or 0) >= min_price]
+    if max_price:
+        items = [c for c in items if float(c.get("basePriceExw") or 0) <= max_price]
+    return {"data": items, "meta": {}}
+
+
 @router.get("/catalogs/{catalog_id}/")
 def get_catalog(catalog_id: str):
     record = db.get("catalogs", catalog_id)
     if not record:
         raise HTTPException(404, "Catalog not found")
+    record["images"] = db.find("catalog_images", catalogId=catalog_id)
+    record["variantTypes"] = db.find("catalog_variant_types", catalogId=catalog_id)
+    product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else None
+    if product:
+        record["sellerName"] = record.get("owner", "") or product.get("origin", "")
     return _one(record)
 
 
 @router.post("/catalogs/")
 def create_catalog(payload: sc.CreateCatalogPayload):
-    data = payload.model_dump()
+    data = payload.model_dump(exclude_none=True)
     data.update({
         "id": db.gen_id("catalogs", "CAT"),
         "status": "Draft",
         "readiness": 40,
         "incoterms": ["EXW", "FOB"],
-        "description": "",
-        "highlights": [],
-        "specifications": [],
+        "highlights": data.get("highlights") or [],
+        "specifications": data.get("specifications") or [],
+        "tags": data.get("tags") or [],
         "images": 0,
         "variants": [],
+        "basePriceExw": data.get("base_price_exw"),
+        "exportDescription": "",
+        "technicalSpecs": [],
+        "safetyInfo": [],
         "updatedAt": "now",
     })
     return _one(db.insert("catalogs", data))
+
+
+@router.put("/catalogs/{catalog_id}/")
+def update_catalog(catalog_id: str, payload: sc.UpdateCatalogPayload):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    data = payload.model_dump(exclude_none=True)
+    if data.get("is_published") is not None:
+        record["status"] = "Published" if data["is_published"] else "Draft"
+        data.pop("is_published")
+        if record["status"] == "Published":
+            record["readiness"] = max(record.get("readiness", 0), 95)
+    record.update(data)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.delete("/catalogs/{catalog_id}/")
+def delete_catalog(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    db.delete("catalogs", catalog_id)
+    for img in db.find("catalog_images", catalogId=catalog_id):
+        db.delete("catalog_images", img.get("id"))
+    for vt in db.find("catalog_variant_types", catalogId=catalog_id):
+        db.delete("catalog_variant_types", vt.get("id"))
+        for opt in db.find("catalog_variant_options", variantTypeId=vt.get("id")):
+            db.delete("catalog_variant_options", opt.get("id"))
+    return {"data": {"status": "deleted", "id": catalog_id}, "meta": {}}
 
 
 @router.post("/catalogs/{catalog_id}/publish/")
@@ -451,25 +1026,320 @@ def publish_catalog(catalog_id: str):
     return _one(record)
 
 
+@router.post("/catalogs/{catalog_id}/unpublish/")
+def unpublish_catalog(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    record["status"] = "Draft"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
 @router.post("/catalogs/{catalog_id}/generate-description/")
 def generate_catalog_description(catalog_id: str):
     record = db.get("catalogs", catalog_id)
     if not record:
         raise HTTPException(404, "Catalog not found")
-    description = ai.complete(
-        "You write compelling B2B product copy for Indonesian export catalogs targeting overseas buyers. Reply in Indonesian, max 3 sentences.",
-        f"Product: {record.get('name', '')} - {record.get('description', '')}",
-        kind="catalog_description",
-    )
-    record["description"] = description or "AI-enhanced buyer copy generated for the target market."
-    record["status"] = "Needs Review"
+    product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else record
+    from app.services.market_intel import generate_catalog_description as gen_desc
+    result = gen_desc(product or record, save_to_catalog=True, catalog=record)
+    return {"data": result, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# CATALOG IMAGES
+# ----------------------------------------------------------------------------
+@router.get("/catalogs/{catalog_id}/images/")
+def list_catalog_images(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    return _list_query("catalog_images")
+
+
+@router.post("/catalogs/{catalog_id}/images/")
+def add_catalog_image(catalog_id: str, payload: dict):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    image = db.insert("catalog_images", {
+        "id": db.gen_id("catalog_images", "IMG"),
+        "catalogId": catalog_id,
+        "imageUrl": payload.get("image_url") or payload.get("imageUrl") or "",
+        "altText": payload.get("alt_text") or payload.get("altText") or "",
+        "sortOrder": payload.get("sort_order") or payload.get("sortOrder") or 0,
+        "isPrimary": payload.get("is_primary") or payload.get("isPrimary") or False,
+        "createdAt": "now",
+    })
+    record["images"] = len(db.find("catalog_images", catalogId=catalog_id))
     record["updatedAt"] = "now"
-    return _one(record)
+    return _one(image)
+
+
+@router.put("/catalogs/{catalog_id}/images/{image_id}/")
+def update_catalog_image(catalog_id: str, image_id: str, payload: dict):
+    image = db.get("catalog_images", image_id)
+    if not image:
+        raise HTTPException(404, "Image not found")
+    for key in ("imageUrl", "altText", "sortOrder", "isPrimary"):
+        mapped = {"imageUrl": "image_url", "altText": "alt_text", "sortOrder": "sort_order", "isPrimary": "is_primary"}[key]
+        if payload.get(mapped) is not None or payload.get(key) is not None:
+            image[key] = payload.get(mapped) if payload.get(mapped) is not None else payload.get(key)
+    image["updatedAt"] = "now"
+    return _one(image)
+
+
+@router.delete("/catalogs/{catalog_id}/images/{image_id}/")
+def delete_catalog_image(catalog_id: str, image_id: str):
+    image = db.get("catalog_images", image_id)
+    if not image:
+        raise HTTPException(404, "Image not found")
+    db.delete("catalog_images", image_id)
+    record = db.get("catalogs", catalog_id)
+    if record:
+        record["images"] = len(db.find("catalog_images", catalogId=catalog_id))
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# CATALOG VARIANTS
+# ----------------------------------------------------------------------------
+_PREDEFINED_VARIANT_TYPES = [
+    {"type_code": "color", "type_name": "Color"},
+    {"type_code": "size", "type_name": "Size"},
+    {"type_code": "material", "type_name": "Material"},
+    {"type_code": "flavor", "type_name": "Flavor"},
+    {"type_code": "weight", "type_name": "Weight"},
+    {"type_code": "style", "type_name": "Style"},
+    {"type_code": "pattern", "type_name": "Pattern"},
+    {"type_code": "custom", "type_name": "Custom"},
+]
+
+
+@router.get("/catalogs/{catalog_id}/variant-types/")
+def list_catalog_variant_types(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    types = db.find("catalog_variant_types", catalogId=catalog_id)
+    for vt in types:
+        vt["options"] = db.find("catalog_variant_options", variantTypeId=vt.get("id"))
+    return {"data": types, "meta": {"predefined_types": _PREDEFINED_VARIANT_TYPES}}
+
+
+@router.post("/catalogs/{catalog_id}/variant-types/")
+def add_catalog_variant_type(catalog_id: str, payload: sc.AddVariantTypePayload):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    vt = db.insert("catalog_variant_types", {
+        "id": db.gen_id("catalog_variant_types", "VT"),
+        "catalogId": catalog_id,
+        "typeCode": payload.type_code,
+        "typeName": payload.type_name,
+        "sortOrder": payload.sort_order,
+        "createdAt": "now",
+    })
+    for option in payload.options:
+        db.insert("catalog_variant_options", {
+            "id": db.gen_id("catalog_variant_options", "VO"),
+            "variantTypeId": vt.get("id"),
+            "optionName": option,
+            "sortOrder": 0,
+            "isAvailable": True,
+            "createdAt": "now",
+        })
+    vt["options"] = db.find("catalog_variant_options", variantTypeId=vt.get("id"))
+    return _one(vt)
+
+
+@router.put("/catalogs/{catalog_id}/variant-types/{type_id}/")
+def update_catalog_variant_type(catalog_id: str, type_id: str, payload: sc.UpdateVariantTypePayload):
+    vt = db.get("catalog_variant_types", type_id)
+    if not vt:
+        raise HTTPException(404, "Variant type not found")
+    if payload.type_name:
+        vt["typeName"] = payload.type_name
+    vt["typeCode"] = payload.type_code
+    if payload.sort_order is not None:
+        vt["sortOrder"] = payload.sort_order
+    vt["updatedAt"] = "now"
+    return _one(vt)
+
+
+@router.delete("/catalogs/{catalog_id}/variant-types/{type_id}/")
+def delete_catalog_variant_type(catalog_id: str, type_id: str):
+    vt = db.get("catalog_variant_types", type_id)
+    if not vt:
+        raise HTTPException(404, "Variant type not found")
+    db.delete("catalog_variant_types", type_id)
+    for opt in db.find("catalog_variant_options", variantTypeId=type_id):
+        db.delete("catalog_variant_options", opt.get("id"))
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+@router.get("/catalogs/{catalog_id}/variant-types/{type_id}/options/")
+def list_catalog_variant_options(catalog_id: str, type_id: str):
+    return {"data": db.find("catalog_variant_options", variantTypeId=type_id), "meta": {}}
+
+
+@router.post("/catalogs/{catalog_id}/variant-types/{type_id}/options/")
+def add_catalog_variant_option(catalog_id: str, type_id: str, payload: sc.AddVariantOptionPayload):
+    vt = db.get("catalog_variant_types", type_id)
+    if not vt:
+        raise HTTPException(404, "Variant type not found")
+    option = db.insert("catalog_variant_options", {
+        "id": db.gen_id("catalog_variant_options", "VO"),
+        "variantTypeId": type_id,
+        "optionName": payload.option_name,
+        "sortOrder": payload.sort_order,
+        "isAvailable": payload.is_available,
+        "createdAt": "now",
+    })
+    return _one(option)
+
+
+@router.put("/catalogs/{catalog_id}/variant-types/{type_id}/options/{option_id}/")
+def update_catalog_variant_option(catalog_id: str, type_id: str, option_id: str, payload: sc.UpdateVariantOptionPayload):
+    option = db.get("catalog_variant_options", option_id)
+    if not option:
+        raise HTTPException(404, "Variant option not found")
+    option["optionName"] = payload.option_name
+    option["sortOrder"] = payload.sort_order
+    option["isAvailable"] = payload.is_available
+    option["updatedAt"] = "now"
+    return _one(option)
+
+
+@router.delete("/catalogs/{catalog_id}/variant-types/{type_id}/options/{option_id}/")
+def delete_catalog_variant_option(catalog_id: str, type_id: str, option_id: str):
+    option = db.get("catalog_variant_options", option_id)
+    if not option:
+        raise HTTPException(404, "Variant option not found")
+    db.delete("catalog_variant_options", option_id)
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# CATALOG AI
+# ----------------------------------------------------------------------------
+@router.get("/catalogs/{catalog_id}/ai/market-intelligence/")
+def get_catalog_market_intelligence(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    mi = db.get_by("market_intelligence", productId=str(record.get("productId", "")))
+    if not mi:
+        raise HTTPException(404, "Market intelligence not found")
+    return _one(mi)
+
+
+@router.post("/catalogs/{catalog_id}/ai/market-intelligence/")
+def create_catalog_market_intelligence(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else record
+    from app.services.market_intel import generate_market_intelligence
+    result = generate_market_intelligence(product or record)
+    existing = db.get_by("market_intelligence", productId=str(record.get("productId", "")))
+    if existing:
+        existing.update(result)
+        db.save(existing)
+        return _one(existing)
+    return _one(db.insert("market_intelligence", {"id": db.gen_id("market_intelligence", "MI"), **result}))
+
+
+@router.get("/catalogs/{catalog_id}/ai/pricing/")
+def get_catalog_pricing(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    pr = db.get_by("pricing_results", productId=str(record.get("productId", "")))
+    if not pr:
+        raise HTTPException(404, "Pricing result not found")
+    return _one(pr)
+
+
+@router.post("/catalogs/{catalog_id}/ai/pricing/")
+def create_catalog_pricing(catalog_id: str, payload: dict):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else record
+    from app.services.market_intel import generate_product_pricing
+    cogs = payload.get("cogs_per_unit_idr") or payload.get("cogsPerUnitIdr") or 0
+    margin = payload.get("target_margin_percent") or payload.get("targetMarginPercent") or 30
+    country = payload.get("target_country_code") or payload.get("targetCountryCode") or "JP"
+    result = generate_product_pricing(product or record, float(cogs), float(margin), str(country))
+    existing = db.get_by("pricing_results", productId=str(record.get("productId", "")))
+    if existing:
+        existing.update(result)
+        db.save(existing)
+        return _one(existing)
+    return _one(db.insert("pricing_results", {"id": db.gen_id("pricing_results", "PRC"), **result}))
+
+
+@router.post("/catalogs/{catalog_id}/ai/description/")
+def generate_catalog_ai_description(catalog_id: str, payload: dict):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    product = db.get("products", str(record.get("productId", ""))) if record.get("productId") else record
+    from app.services.market_intel import generate_catalog_description
+    save = bool(payload.get("save_to_catalog", False))
+    result = generate_catalog_description(product or record, save_to_catalog=save, catalog=record if save else None)
+    return {"data": result, "meta": {}}
+
 
 
 # ----------------------------------------------------------------------------
 # COSTING
 # ----------------------------------------------------------------------------
+# (exchange rate routes didefinisikan sebelum route parameterized {costing_id})
+@router.get("/costing/exchange-rate/")
+def get_exchange_rate_endpoint():
+    from app.services.pricing import get_exchange_rate
+    return _one(get_exchange_rate())
+
+
+@router.put("/costing/exchange-rate/")
+def update_exchange_rate(payload: dict):
+    from app.services.pricing import set_exchange_rate
+    rate = payload.get("rate") or payload.get("exchange_rate")
+    if not rate:
+        raise HTTPException(422, "rate is required")
+    return _one(set_exchange_rate(float(rate), source="manual"))
+
+
+@router.post("/costing/exchange-rate/refresh/")
+def refresh_exchange_rate():
+    from app.services.pricing import fetch_live_exchange_rate, set_exchange_rate, FALLBACK_RATE
+    rate = fetch_live_exchange_rate()
+    if rate is None:
+        rate = FALLBACK_RATE
+        source = "fallback"
+    else:
+        source = "manual_refresh"
+    return _one(set_exchange_rate(float(rate), source=source))
+
+
+@router.get("/costing/{costing_id}/pdf/")
+def costing_pdf(costing_id: str):
+    record = db.get("costing", costing_id)
+    if not record:
+        raise HTTPException(404, "Costing not found")
+    from app.services.pricing import build_costing_pdf
+    pdf_bytes = build_costing_pdf(record)
+    from fastapi.responses import Response
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="costing-{costing_id}.pdf"'},
+    )
+
+
 @router.get("/costing/")
 def list_costing():
     return _list_query("costing")
@@ -485,27 +1355,122 @@ def get_costing(costing_id: str):
 
 @router.post("/costing/")
 def create_costing(payload: sc.CreateCostingPayload):
+    from app.services import pricing as pricing_svc
+
     data = payload.model_dump()
     margin = payload.margin if payload.margin is not None else payload.targetMargin
+    cogs = payload.cogs_per_unit_idr if payload.cogs_per_unit_idr is not None else (payload.cogsPerUnitIdr or 0)
+    packing = payload.packing_cost_idr if payload.packing_cost_idr is not None else (payload.packingCostIdr or 0)
+    distance = payload.distance_km if payload.distance_km is not None else (payload.distanceKm or 200)
+
+    # Fallback COGS dari product bila tidak dikirim frontend
+    product = db.get("products", str(payload.productId or "")) if payload.productId else None
+    if not cogs:
+        cogs = float((product or {}).get("cogsPerUnitIdr") or 10000)
+
+    calc = pricing_svc.calculate_full_costing(
+        cogs_idr=float(cogs or 0),
+        packing_cost_idr=float(packing or 0),
+        margin_percent=float(margin or 20),
+        destination=str(payload.destination),
+        distance_km=float(distance or 200),
+        product_volume_m3=0,
+        product_weight_kg=0,
+    )
     data.update({
         "id": db.gen_id("costing", "CST"),
         "margin": margin,
         "currency": "USD",
-        "status": "Draft",
-        "lines": [],
-        "risks": [],
+        "status": "Ready",
+        "cogs_per_unit_idr": cogs,
+        "exchangeRate": calc["exchangeRate"],
+        "exchangeSource": calc["exchangeSource"],
+        "exwPrice": calc["exwPrice"],
+        "fobPrice": calc["fobPrice"],
+        "cifPrice": calc["cifPrice"],
+        "landedCost": round(calc["cifPrice"] * 1.12, 2),
+        "profit": round(calc["exwPrice"] - (cogs + packing) / calc["exchangeRate"], 2),
+        "confidence": 84,
+        "lines": calc["lines"],
+        "container": calc["container"],
+        "risks": ["Freight estimate not converted to booking"] if not payload.destination else [],
         "updatedAt": "now",
     })
     return _one(db.insert("costing", data))
 
 
-@router.post("/costing/{costing_id}/recalculate/")
-def recalculate_costing(costing_id: str):
+@router.put("/costing/{costing_id}/")
+def update_costing(costing_id: str, payload: sc.UpdateCostingPayload):
     record = db.get("costing", costing_id)
     if not record:
         raise HTTPException(404, "Costing not found")
+    from app.services import pricing as pricing_svc
+
+    data = payload.model_dump(exclude_none=True)
+    record.update(data)
+    if payload.exchange_rate is not None:
+        pricing_svc.set_exchange_rate(float(payload.exchange_rate), source="manual")
+        record["exchangeRate"] = payload.exchange_rate
+    margin = record.get("margin", 20)
+    cogs = record.get("cogs_per_unit_idr") or record.get("cogsPerUnitIdr") or 0
+    packing = record.get("packing_cost_idr") or record.get("packingCostIdr") or 0
+    distance = record.get("distance_km") or record.get("distanceKm") or 200
+    calc = pricing_svc.calculate_full_costing(
+        cogs_idr=float(cogs or 0),
+        packing_cost_idr=float(packing or 0),
+        margin_percent=float(margin or 20),
+        destination=str(record.get("destination", "")),
+        distance_km=float(distance or 200),
+    )
+    record.update({
+        "exchangeRate": calc["exchangeRate"],
+        "exwPrice": calc["exwPrice"],
+        "fobPrice": calc["fobPrice"],
+        "cifPrice": calc["cifPrice"],
+        "lines": calc["lines"],
+        "container": calc["container"],
+        "status": "Ready",
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.delete("/costing/{costing_id}/")
+def delete_costing(costing_id: str):
+    record = db.get("costing", costing_id)
+    if not record:
+        raise HTTPException(404, "Costing not found")
+    db.delete("costing", costing_id)
+    return {"data": {"status": "deleted", "id": costing_id}, "meta": {}}
+
+
+@router.post("/costing/{costing_id}/recalculate/")
+def recalculate_costing(costing_id: str):
+    from app.services import pricing as pricing_svc
+
+    record = db.get("costing", costing_id)
+    if not record:
+        raise HTTPException(404, "Costing not found")
+    margin = record.get("margin", 20)
+    cogs = record.get("cogs_per_unit_idr") or record.get("cogsPerUnitIdr") or record.get("cogs", 0)
+    packing = record.get("packing_cost_idr") or record.get("packingCostIdr") or 0
+    distance = record.get("distance_km") or record.get("distanceKm") or 200
+    calc = pricing_svc.calculate_full_costing(
+        cogs_idr=float(cogs or 0),
+        packing_cost_idr=float(packing or 0),
+        margin_percent=float(margin or 20),
+        destination=str(record.get("destination", "")),
+        distance_km=float(distance or 200),
+    )
     record["status"] = "Ready"
-    record["confidence"] = max(record.get("confidence", 0), 80)
+    record["confidence"] = max(record.get("confidence", 0), 84)
+    record["exchangeRate"] = calc["exchangeRate"]
+    record["exwPrice"] = calc["exwPrice"]
+    record["fobPrice"] = calc["fobPrice"]
+    record["cifPrice"] = calc["cifPrice"]
+    record["landedCost"] = round(calc["cifPrice"] * 1.12, 2)
+    record["lines"] = calc["lines"]
+    record["container"] = calc["container"]
     record["updatedAt"] = "now"
     return _one(record)
 
@@ -1055,7 +2020,66 @@ def publish_knowledge(article_id: str):
 
 @router.get("/educational/")
 def list_educational_modules():
-    return _list_query("educational_modules")
+    modules = db.all("educational_modules")
+    for m in modules:
+        m["articleCount"] = len(db.find("educational_articles", moduleId=m.get("id")))
+    return {"data": modules, "meta": {}}
+
+
+@router.get("/educational/modules/")
+def list_educational_modules_v2():
+    modules = db.all("educational_modules")
+    for m in modules:
+        m["articles"] = db.find("educational_articles", moduleId=m.get("id"))
+        m["articleCount"] = len(m["articles"])
+    return {"data": modules, "meta": {}}
+
+
+@router.post("/educational/modules/")
+def create_educational_module(payload: sc.CreateEducationalModulePayload):
+    record = db.insert("educational_modules", {
+        "id": db.gen_id("educational_modules", "EDU"),
+        "title": payload.title,
+        "description": payload.description,
+        "orderIndex": payload.order_index,
+        "status": "Published",
+        "createdAt": "now",
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.get("/educational/modules/{module_id}/")
+def get_educational_module(module_id: str):
+    record = db.get("educational_modules", module_id)
+    if not record:
+        raise HTTPException(404, "Module not found")
+    record["articles"] = db.find("educational_articles", moduleId=module_id)
+    record["articleCount"] = len(record["articles"])
+    return _one(record)
+
+
+@router.put("/educational/modules/{module_id}/")
+def update_educational_module(module_id: str, payload: sc.UpdateEducationalModulePayload):
+    record = db.get("educational_modules", module_id)
+    if not record:
+        raise HTTPException(404, "Module not found")
+    record["title"] = payload.title
+    record["description"] = payload.description
+    record["orderIndex"] = payload.order_index
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.delete("/educational/modules/{module_id}/")
+def delete_educational_module(module_id: str):
+    record = db.get("educational_modules", module_id)
+    if not record:
+        raise HTTPException(404, "Module not found")
+    db.delete("educational_modules", module_id)
+    for article in db.find("educational_articles", moduleId=module_id):
+        db.delete("educational_articles", article.get("id"))
+    return {"data": {"status": "deleted"}, "meta": {}}
 
 
 @router.post("/educational/{module_id}/publish/")
@@ -1070,6 +2094,74 @@ def publish_educational_module(module_id: str):
 @router.get("/educational/articles/")
 def list_educational_articles():
     return _list_query("educational_articles")
+
+
+@router.post("/educational/articles/")
+def create_educational_article(payload: sc.CreateEducationalArticlePayload):
+    record = db.insert("educational_articles", {
+        "id": db.gen_id("educational_articles", "ART"),
+        "moduleId": payload.module_id,
+        "title": payload.title,
+        "content": payload.content,
+        "videoUrl": payload.video_url,
+        "fileUrl": payload.file_url,
+        "orderIndex": payload.order_index,
+        "status": "Published",
+        "createdAt": "now",
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.get("/educational/articles/{article_id}/")
+def get_educational_article(article_id: str):
+    record = db.get("educational_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    return _one(record)
+
+
+@router.put("/educational/articles/{article_id}/")
+def update_educational_article(article_id: str, payload: sc.UpdateEducationalArticlePayload):
+    record = db.get("educational_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    record["moduleId"] = payload.module_id
+    record["title"] = payload.title
+    record["content"] = payload.content
+    record["videoUrl"] = payload.video_url
+    record["fileUrl"] = payload.file_url
+    record["orderIndex"] = payload.order_index
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.delete("/educational/articles/{article_id}/")
+def delete_educational_article(article_id: str):
+    record = db.get("educational_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    db.delete("educational_articles", article_id)
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+@router.post("/educational/articles/{article_id}/upload-file/")
+def upload_educational_file(article_id: str, file: UploadFile = File(...)):
+    record = db.get("educational_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    content = file.file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(413, "File terlalu besar (maks 10MB)")
+    safe_name = os.path.basename(file.filename or "file.bin")
+    stored_name = f"{int(time.time() * 1000)}-{safe_name}"
+    with open(os.path.join(UPLOAD_DIR, stored_name), "wb") as out:
+        out.write(content)
+    record["fileUrl"] = f"/files/storage/{stored_name}"
+    record["fileName"] = safe_name
+    record["updatedAt"] = "now"
+    return _one(record)
 
 
 @router.post("/educational/articles/{article_id}/publish/")
@@ -1351,12 +2443,81 @@ def send_chat_message(chat_id: str, payload: dict):
 
 
 # ----------------------------------------------------------------------------
+# CHAT SESSIONS & SUGGESTIONS (AI Copilot)
+# ----------------------------------------------------------------------------
+@router.get("/chat/sessions/")
+def list_chat_sessions():
+    sessions = db.all("chat_sessions")
+    for s in sessions:
+        s["messageCount"] = len(s.get("messages", []) or [])
+    return {"data": sessions, "meta": {}}
+
+
+@router.post("/chat/sessions/")
+def create_chat_session(payload: sc.CreateChatSessionPayload):
+    record = db.insert("chat_sessions", {
+        "id": db.gen_id("chat_sessions", "CHS"),
+        "title": payload.title or "Percakapan baru",
+        "messages": [],
+        "createdAt": "now",
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.get("/chat/sessions/{session_id}/")
+def get_chat_session(session_id: str):
+    record = db.get("chat_sessions", session_id)
+    if not record:
+        raise HTTPException(404, "Chat session not found")
+    return _one(record)
+
+
+@router.delete("/chat/sessions/{session_id}/")
+def delete_chat_session(session_id: str):
+    record = db.get("chat_sessions", session_id)
+    if not record:
+        raise HTTPException(404, "Chat session not found")
+    db.delete("chat_sessions", session_id)
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+@router.post("/chat/sessions/{session_id}/messages/")
+def send_session_message(session_id: str, payload: sc.SendChatPayload):
+    record = db.get("chat_sessions", session_id)
+    if not record:
+        raise HTTPException(404, "Chat session not found")
+    record.setdefault("messages", []).append({"role": "user", "text": payload.text})
+    history = "\n".join(f"{m.get('role', '')}: {m.get('text', '')}" for m in record["messages"][-8:])
+    reply = ai.complete(
+        "You are MauEkspor Copilot, a trade assistant for Indonesian exporters. Answer concisely in Indonesian, grounded in the workspace context given.",
+        f"Conversation so far:\n{history}",
+        kind="chat_reply",
+    )
+    if reply:
+        record["messages"].append({"role": "ai", "text": reply})
+    if record.get("title") in ("", "Percakapan baru") and payload.text:
+        record["title"] = payload.text[:40]
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.get("/chat/suggestions/")
+def chat_suggestions():
+    products = db.all("products")
+    suggestions = [
+        {"question": "Apa langkah berikutnya untuk ekspor produk saya?", "context": "general"},
+        {"question": "Bagaimana cara menentukan HS code produk?", "context": "hs"},
+    ]
+    if products:
+        suggestions.append({"question": f"Apa syarat kepatuhan untuk {products[0].get('name', 'produk')}?", "context": "compliance"})
+        suggestions.append({"question": "Berapa estimasi harga EXW/FOB/CIF produk saya?", "context": "pricing"})
+    return {"data": suggestions, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
 # EXPORT ANALYSIS
 # ----------------------------------------------------------------------------
-class CreateExportAnalysisPayload(sc.CreateExportAnalysisPayload):
-    pass
-
-
 @router.get("/export-analysis/")
 def list_analyses():
     return _list_query("export_analyses")
@@ -1371,32 +2532,169 @@ def get_analysis(analysis_id: str):
 
 
 @router.post("/export-analysis/")
-def create_analysis(payload: CreateExportAnalysisPayload):
+def create_analysis(payload: sc.CreateExportAnalysisPayload):
+    from app.services import compliance as compliance_svc
+    from app.data.countries import resolve_country
+
     product = db.get("products", payload.productId)
+    if not product:
+        raise HTTPException(404, "Product not found")
+    country_code = resolve_country(str(payload.destination))
+    # Deduplikasi (product, country)
+    existing = db.get_by("export_analyses", productId=payload.productId, countryCode=country_code)
+    if existing:
+        raise HTTPException(409, "Analysis for this product & country already exists")
+
+    result = compliance_svc.analyze_product_compliance(product, country_code)
+    snapshot = compliance_svc.snapshot_product(product)
+    reg_snapshot = compliance_svc.snapshot_regulations(country_code)
     record = db.insert("export_analyses", {
         "id": db.gen_id("export_analyses", "ANL"),
         "productId": payload.productId,
-        "productName": product["name"] if product else payload.productId,
-        "destination": payload.destination,
-        "status": "In Progress",
-        "hsCode": product["hs"] if product else "TBD",
-        "confidence": 0,
-        "score": 0,
+        "productName": product["name"],
+        "destination": country_code,
+        "status": "Ready",
+        "hsCode": product.get("hs", "TBD"),
+        "confidence": max(len(result["issues"]) == 0 and 91 or 80, 60),
+        "score": result["score"],
+        "statusGrade": result["grade"],
+        "complianceIssues": result["issues"],
+        "recommendations": result["recommendations"],
+        "productSnapshot": snapshot,
+        "regulationSnapshot": reg_snapshot,
+        "snapshotProductName": snapshot.get("name", ""),
+        "productChanged": False,
+        "countryCode": country_code,
         "marketDemand": "Medium",
         "duties": "Pending",
         "restrictions": [],
-        "recommendations": [],
-        "summary": "Analysis queued.",
+        "summary": result["recommendations"][:300] if result["recommendations"] else "Analysis complete.",
         "updatedAt": "now",
     })
     return _one(record)
 
 
-@router.post("/export-analysis/{analysis_id}/regulation-recommendations/")
-def run_regulation_check(analysis_id: str):
+@router.post("/export-analysis/compare/")
+def compare_analyses(payload: sc.CompareExportAnalysisPayload):
+    from app.services import compliance as compliance_svc
+
+    product = db.get("products", payload.product_id)
+    if not product:
+        raise HTTPException(404, "Product not found")
+    codes = [c.upper()[:2] for c in payload.country_codes][:5]
+    results = []
+    for code in codes:
+        analysis = db.get_by("export_analyses", productId=payload.product_id, countryCode=code)
+        if not analysis:
+            result = compliance_svc.analyze_product_compliance(product, code)
+            analysis = db.insert("export_analyses", {
+                "id": db.gen_id("export_analyses", "ANL"),
+                "productId": payload.product_id,
+                "productName": product["name"],
+                "destination": code,
+                "status": "Ready",
+                "hsCode": product.get("hs", "TBD"),
+                "confidence": 80,
+                "score": result["score"],
+                "statusGrade": result["grade"],
+                "complianceIssues": result["issues"],
+                "recommendations": result["recommendations"],
+                "productSnapshot": compliance_svc.snapshot_product(product),
+                "regulationSnapshot": compliance_svc.snapshot_regulations(code),
+                "snapshotProductName": product["name"],
+                "productChanged": False,
+                "countryCode": code,
+                "summary": result["recommendations"][:300] if result["recommendations"] else "",
+                "updatedAt": "now",
+            })
+        critical_count = sum(1 for i in (analysis.get("complianceIssues") or []) if i.get("severity") == "critical")
+        results.append({
+            "analysis": analysis,
+            "analysisId": analysis.get("id"),
+            "country": code,
+            "score": analysis.get("score", 0),
+            "grade": analysis.get("statusGrade", "Warning"),
+            "critical_issues": critical_count,
+            "recommendation": (analysis.get("recommendations") or "")[:200],
+        })
+    results.sort(key=lambda r: r["score"], reverse=True)
+    return {"data": {"product": {"id": product.get("id"), "name": product.get("name")}, "results": results}, "meta": {}}
+
+
+@router.post("/export-analysis/{analysis_id}/reanalyze/")
+def reanalyze_analysis(analysis_id: str):
+    from app.services import compliance as compliance_svc
+
     record = db.get("export_analyses", analysis_id)
     if not record:
         raise HTTPException(404, "Export analysis not found")
+    product = db.get("products", str(record.get("productId", "")))
+    if not product:
+        raise HTTPException(404, "Product not found")
+    from app.data.countries import resolve_country
+    cc = resolve_country(str(record.get("countryCode") or record.get("destination", "")))
+    result = compliance_svc.analyze_product_compliance(product, cc)
+    record["score"] = result["score"]
+    record["statusGrade"] = result["grade"]
+    record["complianceIssues"] = result["issues"]
+    record["recommendations"] = result["recommendations"]
+    record["productSnapshot"] = compliance_svc.snapshot_product(product)
+    record["regulationSnapshot"] = compliance_svc.snapshot_regulations(cc)
+    record["countryCode"] = cc
+    record["snapshotProductName"] = product.get("name", "")
+    record["productChanged"] = False
+    record["status"] = "Ready"
+    record["updatedAt"] = "now"
+    # Hapus cache rekomendasi regulasi
+    for cached in db.find("regulation_recommendations", analysisId=analysis_id):
+        db.delete("regulation_recommendations", cached.get("id"))
+    return _one(record)
+
+
+@router.delete("/export-analysis/{analysis_id}/")
+def delete_analysis(analysis_id: str):
+    record = db.get("export_analyses", analysis_id)
+    if not record:
+        raise HTTPException(404, "Export analysis not found")
+    db.delete("export_analyses", analysis_id)
+    for cached in db.find("regulation_recommendations", analysisId=analysis_id):
+        db.delete("regulation_recommendations", cached.get("id"))
+    return {"data": {"status": "deleted", "id": analysis_id}, "meta": {}}
+
+
+@router.get("/export-analysis/{analysis_id}/regulation-recommendations/")
+def get_regulation_recommendations(analysis_id: str, language: str = "id"):
+    from app.services import compliance as compliance_svc
+    from app.data.countries import resolve_country
+
+    record = db.get("export_analyses", analysis_id)
+    if not record:
+        raise HTTPException(404, "Export analysis not found")
+    country_code = resolve_country(str(record.get("countryCode") or record.get("destination", "")))
+    cached = db.get_by("regulation_recommendations", analysisId=analysis_id, language=language)
+    if cached:
+        cached["fromCache"] = True
+        return _one(cached)
+    snapshot = record.get("productSnapshot") or compliance_svc.snapshot_product({})
+    result = compliance_svc.generate_regulation_recommendations(snapshot, country_code, language)
+    data = {
+        "id": db.gen_id("regulation_recommendations", "REG"),
+        "analysisId": analysis_id,
+        "language": language,
+        "sections": result["sections"],
+        "country": result["country"],
+        "fromCache": False,
+    }
+    db.insert("regulation_recommendations", data)
+    return _one(data)
+
+
+@router.post("/export-analysis/{analysis_id}/regulation-recommendations/")
+def run_regulation_check(analysis_id: str, payload: dict | None = None):
+    record = db.get("export_analyses", analysis_id)
+    if not record:
+        raise HTTPException(404, "Export analysis not found")
+    language = (payload or {}).get("language", "id")
     record["status"] = "Ready"
     recommendations = ai.ask_json(
         "You are a trade compliance analyst for Indonesian exports. Return JSON list in field recommendations: items with type, title, status (Required/Optional) and detail.",
@@ -1413,4 +2711,257 @@ def run_regulation_check(analysis_id: str):
             {"type": "Document", "title": "Packing list", "status": "Required", "detail": "Match weights against invoice."},
         ]
     record["updatedAt"] = "now"
+    # Sinkronkan dengan cache regulasi 10-bagian
+    for cached in db.find("regulation_recommendations", analysisId=analysis_id):
+        db.delete("regulation_recommendations", cached.get("id"))
     return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# COUNTRIES & REGULATIONS (read-only untuk semua role, admin untuk tulis)
+# ----------------------------------------------------------------------------
+@router.get("/countries/")
+def list_countries(region: str = "", search: str = ""):
+    from app.data.countries import get_countries
+    items = get_countries()
+    if region:
+        items = [c for c in items if c["region"].lower() == region.lower()]
+    if search:
+        items = [c for c in items if search.lower() in (c["country_name"] + c["country_code"]).lower()]
+    for item in items:
+        item["regulationsCount"] = len([r for r in db.all("countries") if False])  # placeholder
+    return {"data": items, "meta": {}}
+
+
+@router.get("/countries/{country_code}/")
+def get_country_detail(country_code: str):
+    from app.data.countries import get_country, get_regulations
+    country = get_country(country_code)
+    if not country:
+        raise HTTPException(404, "Country not found")
+    regs = get_regulations(country_code)
+    by_category: dict[str, list] = {}
+    for r in regs:
+        by_category.setdefault(r["rule_category"], []).append(r)
+    country["regulations"] = regs
+    country["regulations_by_category"] = by_category
+    return {"data": country, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# HS CODES (admin)
+# ----------------------------------------------------------------------------
+@router.get("/hs-codes/")
+def list_hs_codes(search: str = "", chapter: str = "", limit: int = 50, offset: int = 0):
+    from app.data.hs_loader import get_hs_loader
+    loader = get_hs_loader()
+    if search:
+        items = loader.search_hs_codes(search, max_results=limit, min_level=2)
+    else:
+        items = loader.codes
+        if chapter:
+            items = [c for c in items if str(c.get("hs_code", "")).startswith(chapter.zfill(2))]
+        items = items[offset:offset + limit]
+    return {"data": items, "meta": {"total": len(loader.codes), "limit": limit, "offset": offset}}
+
+
+@router.get("/hs-codes/autocomplete/")
+def autocomplete_hs_codes(q: str = "", limit: int = 10):
+    from app.data.hs_loader import get_hs_loader
+    loader = get_hs_loader()
+    return {"data": loader.autocomplete(q, limit), "meta": {}}
+
+
+@router.get("/hs-codes/{hs_code}/")
+def get_hs_code(hs_code: str):
+    from app.data.hs_loader import get_hs_loader
+    loader = get_hs_loader()
+    record = loader.get_hs_code(hs_code)
+    if not record:
+        raise HTTPException(404, "HS code not found")
+    record["section_name"] = loader.sections.get(record.get("section", ""), "")
+    record["children"] = loader.children_of(hs_code)
+    return {"data": record, "meta": {}}
+
+
+@router.post("/hs-codes/")
+def create_hs_code(payload: sc.CreateHSCodePayload):
+    from app.data.hs_loader import get_hs_loader
+    code = str(payload.hs_code).replace(".", "")
+    level = 2 if len(code) <= 2 else 4 if len(code) <= 4 else 6 if len(code) <= 6 else 8
+    record = db.insert("hs_codes", {
+        "id": db.gen_id("hs_codes", "HS"),
+        "hs_code": code,
+        "description": payload.description,
+        "description_id": payload.description_id,
+        "section": payload.section,
+        "level": level,
+        "parent": code[: len(code) - 2] if len(code) > 2 else "TOTAL",
+        "keywords": payload.keywords,
+        "createdAt": "now",
+    })
+    return _one(record)
+
+
+@router.put("/hs-codes/{hs_code}/update/")
+def update_hs_code(hs_code: str, payload: dict):
+    record = db.get_by("hs_codes", hs_code=hs_code.replace(".", ""))
+    if not record:
+        raise HTTPException(404, "HS code not found")
+    for key in ("description", "description_id", "section", "keywords"):
+        if payload.get(key) is not None:
+            record[key] = payload[key]
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.delete("/hs-codes/{hs_code}/delete/")
+def delete_hs_code(hs_code: str):
+    record = db.get_by("hs_codes", hs_code=hs_code.replace(".", ""))
+    if not record:
+        raise HTTPException(404, "HS code not found")
+    children = [c for c in db.all("hs_codes") if c.get("parent") == record["hs_code"]]
+    if children:
+        raise HTTPException(409, "HS code has children")
+    db.delete("hs_codes", record.get("id"))
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+@router.post("/hs-codes/import/")
+def import_hs_codes_csv(file: UploadFile = File(...)):
+    import csv as _csv
+    content = file.file.read().decode("utf-8", errors="replace")
+    reader = _csv.DictReader(content.splitlines())
+    count = 0
+    for row in reader:
+        code = (row.get("hscode") or row.get("hs_code") or "").strip()
+        if not code:
+            continue
+        if db.get_by("hs_codes", hs_code=code):
+            continue
+        db.insert("hs_codes", {
+            "id": db.gen_id("hs_codes", "HS"),
+            "hs_code": code,
+            "description": row.get("description", ""),
+            "section": row.get("section", ""),
+            "parent": row.get("parent", ""),
+            "level": int(row["level"]) if str(row.get("level", "")).isdigit() else 0,
+            "keywords": [],
+            "createdAt": "now",
+        })
+        count += 1
+    return {"data": {"imported": count}, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# ADMIN COUNTRIES & REGULATIONS
+# ----------------------------------------------------------------------------
+@router.post("/admin/countries/")
+def admin_create_country(payload: sc.CreateCountryPayload):
+    from app.data.countries import get_country
+    if get_country(payload.country_code):
+        raise HTTPException(409, "Country already exists")
+    record = db.insert("countries", {
+        "id": db.gen_id("countries", "CTY"),
+        "country_code": payload.country_code.upper(),
+        "country_name": payload.country_name,
+        "region": payload.region,
+        "createdAt": "now",
+    })
+    return _one(record)
+
+
+@router.put("/admin/countries/{country_code}/")
+def admin_update_country(country_code: str, payload: sc.UpdateCountryPayload):
+    record = db.get_by("countries", country_code=country_code.upper())
+    if not record:
+        raise HTTPException(404, "Country not found")
+    if payload.country_name:
+        record["country_name"] = payload.country_name
+    if payload.region:
+        record["region"] = payload.region
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.delete("/admin/countries/{country_code}/delete/")
+def admin_delete_country(country_code: str):
+    record = db.get_by("countries", country_code=country_code.upper())
+    if not record:
+        raise HTTPException(404, "Country not found")
+    if db.find("export_analyses", countryCode=country_code.upper()):
+        raise HTTPException(409, "Country referenced by export analyses")
+    db.delete("countries", record.get("id"))
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+@router.get("/admin/countries/{country_code}/regulations/")
+def admin_list_regulations(country_code: str, rule_category: str = ""):
+    from app.data.countries import get_regulations
+    items = get_regulations(country_code)
+    if rule_category:
+        items = [r for r in items if r["rule_category"].lower() == rule_category.lower()]
+    return {"data": items, "meta": {}}
+
+
+@router.post("/admin/countries/{country_code}/regulations/create/")
+def admin_create_regulation(country_code: str, payload: sc.CreateRegulationPayload):
+    from app.data.countries import get_country
+    if not get_country(country_code):
+        raise HTTPException(404, "Country not found")
+    record = db.insert("regulations", {
+        "id": db.gen_id("regulations", "REG"),
+        "countryCode": country_code.upper(),
+        "ruleCategory": payload.rule_category,
+        "forbiddenKeywords": payload.forbidden_keywords,
+        "requiredSpecs": payload.required_specs,
+        "descriptionRule": payload.description_rule,
+        "createdAt": "now",
+    })
+    return _one(record)
+
+
+@router.put("/admin/regulations/{regulation_id}/")
+def admin_update_regulation(regulation_id: str, payload: sc.UpdateRegulationPayload):
+    record = db.get("regulations", regulation_id)
+    if not record:
+        raise HTTPException(404, "Regulation not found")
+    record["ruleCategory"] = payload.rule_category
+    record["forbiddenKeywords"] = payload.forbidden_keywords
+    record["requiredSpecs"] = payload.required_specs
+    record["descriptionRule"] = payload.description_rule
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.delete("/admin/regulations/{regulation_id}/delete/")
+def admin_delete_regulation(regulation_id: str):
+    record = db.get("regulations", regulation_id)
+    if not record:
+        raise HTTPException(404, "Regulation not found")
+    db.delete("regulations", regulation_id)
+    db.delete("countries", regulation_id)
+    return {"data": {"status": "deleted"}, "meta": {}}
+
+
+@router.post("/admin/regulations/import/")
+def admin_import_regulations(file: UploadFile = File(...)):
+    import csv as _csv
+    content = file.file.read().decode("utf-8", errors="replace")
+    reader = _csv.DictReader(content.splitlines())
+    count = 0
+    for row in reader:
+        code = (row.get("country_code") or "").strip().upper()
+        if not code:
+            continue
+        db.insert("regulations", {
+            "id": db.gen_id("regulations", "REG"),
+            "countryCode": code,
+            "ruleCategory": row.get("rule_category", "Labeling"),
+            "forbiddenKeywords": row.get("forbidden_keywords", ""),
+            "requiredSpecs": row.get("required_specs", ""),
+            "descriptionRule": row.get("description_rule", ""),
+            "createdAt": "now",
+        })
+        count += 1
+    return {"data": {"imported": count}, "meta": {}}

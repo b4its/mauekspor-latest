@@ -8,6 +8,8 @@ def _normalize(path: str) -> str:
     path = path.replace("/api/v1", "")
     path = re.sub(r"\$\{[^}]+\}", "{}", path)
     path = re.sub(r"\{[^}]+\}", "{}", path)
+    # Abaikan query string (e.g. `?language=${language}`) — tidak memengaruhi path route.
+    path = path.split("?", 1)[0]
     return path
 
 

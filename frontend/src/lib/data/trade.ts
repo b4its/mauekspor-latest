@@ -50,6 +50,12 @@ export type Product = {
 	leadTime: string;
 	certificates: string[];
 	readiness: number;
+	hsConfidence?: number;
+	sku?: string;
+	description?: string;
+	material_composition?: string;
+	quality_specs?: Record<string, unknown>;
+	updatedAt?: string;
 };
 
 export type ActivityItem = {
@@ -188,6 +194,7 @@ export type CostingScenario = {
 	status: 'Draft' | 'Ready' | 'Needs Review';
 	margin: number;
 	exchangeRate: number;
+	exchangeSource?: string;
 	exwPrice: number;
 	fobPrice: number;
 	cifPrice: number;
@@ -195,11 +202,18 @@ export type CostingScenario = {
 	profit: number;
 	confidence: number;
 	lines: Array<{
-		category: 'Production' | 'Origin' | 'Freight' | 'Insurance' | 'Destination' | 'Tax' | 'Margin';
+		category: 'Production' | 'Origin' | 'Freight' | 'Insurance' | 'Destination' | 'Tax' | 'Margin' | 'Local logistics' | 'Documents' | string;
 		label: string;
 		amount: number;
 	}>;
 	risks: string[];
+	container?: {
+		capacity_20ft?: number;
+		capacity_40ft?: number;
+		utilization_note?: string;
+		tips?: string[];
+	};
+	cogs_per_unit_idr?: number;
 };
 
 export type MarketInsight = {
@@ -534,6 +548,8 @@ export type Forwarder = {
 	quoteSpeed: string;
 	lanes: string[];
 	contact: string;
+	averageRating?: number;
+	totalReviews?: number;
 };
 
 export type EducationalModule = {
@@ -584,6 +600,20 @@ export type ExportAnalysis = {
 		detail: string;
 	}>;
 	summary: string;
+	countryCode?: string;
+	statusGrade?: 'Ready' | 'Warning' | 'Critical';
+	complianceIssues?: Array<{
+		type: string;
+		rule_key?: string;
+		your_value?: string;
+		required_value?: string;
+		description?: string;
+		severity?: 'critical' | 'major' | 'minor';
+	}>;
+	productSnapshot?: Record<string, unknown>;
+	regulationSnapshot?: unknown[];
+	snapshotProductName?: string;
+	productChanged?: boolean;
 };
 
 export type EducationalArticle = {
@@ -595,6 +625,15 @@ export type EducationalArticle = {
 	tags: string[];
 	summary: string;
 	body: string;
+	// Field backend (educational CRUD)
+	moduleId?: string;
+	content?: string;
+	videoUrl?: string;
+	fileUrl?: string;
+	fileName?: string;
+	orderIndex?: number;
+	createdAt?: string;
+	updatedAt?: string;
 };
 
 export const navItems = [

@@ -4,17 +4,28 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
-	import { recalculateCostingScenario } from '$lib/api/costing';
+	import { recalculateCostingScenario, costingPdfUrl, getExchangeRate } from '$lib/api/costing';
+	import type { ExchangeRate } from '$lib/api/costing';
 
 	let { data } = $props();
 	let recalculated = $state(false);
 	let fxShock = $state(false);
 	let error = $state('');
-	let displayLanded = $derived(fxShock ? Math.round(data.scenario.landedCost * 1.035) : data.scenario.landedCost);
-	let displayMargin = $derived(fxShock ? Math.max(data.scenario.margin - 3, 0) : recalculated ? data.scenario.margin + 1 : data.scenario.margin);
+	let fx = $state<ExchangeRate | null>(null);
+
+	type Line = { category: string; label: string; amount: number };
+	type Container = { capacity_20ft?: number; capacity_40ft?: number; utilization_note?: string; tips?: string[] };
+
+	let lines = $derived((data.scenario.lines ?? []) as Line[]);
+	let container = $derived((data.scenario.container ?? null) as Container | null);
+
+	let displayLanded = $derived(fxShock ? Math.round((data.scenario.landedCost ?? 0) * 1.035) : (data.scenario.landedCost ?? 0));
+	let displayMargin = $derived(
+		fxShock ? Math.max((data.scenario.margin ?? 0) - 3, 0) : recalculated ? (data.scenario.margin ?? 0) + 1 : (data.scenario.margin ?? 0)
+	);
 	let groupedLines = $derived(
 		Object.entries(
-			data.scenario.lines.reduce<Record<string, number>>((acc, line) => {
+			lines.reduce<Record<string, number>>((acc, line) => {
 				acc[line.category] = (acc[line.category] ?? 0) + line.amount;
 				return acc;
 			}, {})
@@ -31,10 +42,18 @@
 	async function handleRecalculate() {
 		error = '';
 		try {
-			await recalculateCostingScenario(data.scenario.id);
+			data.scenario = (await recalculateCostingScenario(data.scenario.id)).data;
 			recalculated = true;
 		} catch {
 			error = 'Gagal menghitung ulang costing.';
+		}
+	}
+
+	async function handleFx() {
+		try {
+			fx = (await getExchangeRate()).data;
+		} catch {
+			fx = null;
 		}
 	}
 </script>
@@ -65,18 +84,20 @@
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
 					<CardTitle>Scenario Summary</CardTitle>
-					<CardDescription class="mt-1.5 max-w-2xl">Use this view to separate seller quotation price from buyer landed cost assumptions.</CardDescription>
+					<CardDescription class="mt-1.5 max-w-2xl">Kalkulasi nyata EXW → FOB → CIF dengan kurs {data.scenario.exchangeRate ?? '—'} IDR/USD ({data.scenario.exchangeSource ?? ''}).</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/costing/${data.scenario.id}/edit`}>Edit scenario</Button>
+					<Button variant="outline" onclick={handleFx}>{fx ? `FX ${fx.rate} (${fx.source})` : 'Show FX rate'}</Button>
 					<Button variant="outline" onclick={() => (fxShock = !fxShock)}>{fxShock ? 'Remove FX shock' : 'Apply +3.5% FX shock'}</Button>
 					<Button onclick={handleRecalculate}>{recalculated ? 'Recalculated' : 'Recalculate'}</Button>
+					<Button variant="outline" href={costingPdfUrl(data.scenario.id)}>Download PDF</Button>
 				</div>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 				{/if}
 			</CardHeader>
-			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					Incoterm <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.incoterm}</strong>
 				</div>
@@ -95,19 +116,28 @@
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					Margin <strong class="mt-1 block text-sm font-bold text-foreground">{displayMargin}%</strong>
 				</div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+					Exchange rate <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.exchangeRate ?? '—'}</strong>
+				</div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+					Confidence <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.confidence ?? '—'}%</strong>
+				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader><CardTitle>Cost Breakdown</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5">
-				{#each data.scenario.lines as line}
+				{#each lines as line}
 					<div class="rounded-lg border bg-muted/30 p-3.5">
 						<span class="block text-xs font-bold uppercase tracking-wide text-muted-foreground">{line.category}</span>
 						<strong class="mt-1 block text-sm font-bold">{line.label}</strong>
 						<small class="text-sm text-muted-foreground">{currency.format(line.amount)}</small>
 					</div>
 				{/each}
+				{#if lines.length === 0}
+					<p class="text-sm font-semibold text-muted-foreground">Belum ada rincian biaya. Tambahkan COGS pada form edit.</p>
+				{/if}
 			</CardContent>
 		</Card>
 
@@ -123,6 +153,30 @@
 			</CardContent>
 		</Card>
 
+		{#if container}
+			<Card>
+				<CardHeader><CardTitle>Container Capacity</CardTitle></CardHeader>
+				<CardContent class="grid gap-2.5 text-sm">
+					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+						<span class="text-muted-foreground">20ft capacity</span>
+						<strong>{container.capacity_20ft ?? '—'} unit</strong>
+					</div>
+					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+						<span class="text-muted-foreground">40ft capacity</span>
+						<strong>{container.capacity_40ft ?? '—'} unit</strong>
+					</div>
+					{#if container.utilization_note}
+						<p class="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">{container.utilization_note}</p>
+					{/if}
+					{#if container.tips}
+						{#each container.tips as tip}
+							<p class="rounded-lg border bg-primary/10 p-3 text-xs">• {tip}</p>
+						{/each}
+					{/if}
+				</CardContent>
+			</Card>
+		{/if}
+
 		<Card class="md:col-span-2 bg-gradient-to-br from-primary/10 to-background">
 			<CardHeader>
 				<Badge variant="secondary">Pricing guardrail</Badge>
@@ -130,9 +184,12 @@
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				<div class="flex flex-wrap gap-2.5">
-					{#each data.scenario.risks as risk}
+					{#each (data.scenario.risks ?? []) as risk}
 						<span class="rounded-full border bg-orange-500/10 px-3 py-1.5 text-xs font-bold text-orange-700">{risk}</span>
 					{/each}
+					{#if !(data.scenario.risks ?? []).length}
+						<span class="text-sm font-semibold text-muted-foreground">Tidak ada risiko tercatat.</span>
+					{/if}
 				</div>
 				{#if recalculated}
 					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Skenario dihitung ulang di backend.</p>

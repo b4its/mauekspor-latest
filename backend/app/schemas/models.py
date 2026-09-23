@@ -98,17 +98,6 @@ class CreateCatalogPayload(BaseModel):
     priceRange: str = ""
 
 
-# ---------- Costing ----------
-class CreateCostingPayload(BaseModel):
-    title: str
-    destination: str
-    projectId: str = ""
-    productId: str = ""
-    incoterm: str = "FOB"
-    targetMargin: float = 20
-    margin: Optional[float] = None
-
-
 # ---------- Markets ----------
 class CreateMarketPayload(BaseModel):
     country: str
@@ -253,3 +242,304 @@ class AuditExportPayload(BaseModel):
 class CreateExportAnalysisPayload(BaseModel):
     productId: str
     destination: str
+
+
+class CompareExportAnalysisPayload(BaseModel):
+    product_id: str
+    country_codes: list[str]
+
+
+class ReanalyzePayload(BaseModel):
+    pass
+
+
+class RegulationRecommendationsPayload(BaseModel):
+    language: str = "id"
+
+
+# ---------- AI marketing ----------
+class GenerateMarketIntelligencePayload(BaseModel):
+    productId: str = ""
+    product_id: str = ""
+
+
+class GenerateProductPricingPayload(BaseModel):
+    productId: str = ""
+    product_id: str = ""
+    cogs_per_unit_idr: float
+    cogsPerUnitIdr: Optional[float] = None
+    target_margin_percent: float = 30
+    targetMarginPercent: Optional[float] = None
+    target_country_code: str = "JP"
+    targetCountryCode: Optional[str] = None
+
+
+class GenerateCatalogDescriptionPayload(BaseModel):
+    is_food_product: Optional[bool] = None
+    save_to_catalog: Optional[bool] = False
+
+
+# ---------- Countries / Regulations / HS codes ----------
+class CreateCountryPayload(BaseModel):
+    country_code: str
+    country_name: str
+    region: str = ""
+
+
+class UpdateCountryPayload(BaseModel):
+    country_name: str = ""
+    region: str = ""
+
+
+class CreateRegulationPayload(BaseModel):
+    rule_category: str = "Labeling"
+    forbidden_keywords: str = ""
+    required_specs: str = ""
+    description_rule: str = ""
+
+
+class UpdateRegulationPayload(CreateRegulationPayload):
+    pass
+
+
+class CreateHSCodePayload(BaseModel):
+    hs_code: str
+    description: str = ""
+    description_id: str = ""
+    section: str = ""
+    keywords: list[str] = Field(default_factory=list)
+
+
+# ---------- Buyer profiles ----------
+class CreateBuyerProfilePayload(BaseModel):
+    company_name: str
+    company_description: str = ""
+    contact_info: dict = Field(default_factory=dict)
+    preferred_product_categories: list[str] = Field(default_factory=list)
+    preferred_product_categories_description: str = ""
+    source_countries: list[str] = Field(default_factory=list)
+    source_countries_description: str = ""
+    business_type: str = ""
+    business_type_description: str = ""
+    annual_import_volume: str = ""
+    annual_import_volume_description: str = ""
+
+
+class UpdateBuyerProfilePayload(CreateBuyerProfilePayload):
+    pass
+
+
+# ---------- Buyer request status ----------
+class UpdateBuyerRequestStatusPayload(BaseModel):
+    status: str = "Open"
+    selected_catalog: str = ""
+    selected_catalog_id: str = ""
+    umkm: str = ""
+    umkm_id: str = ""
+
+
+# ---------- Forwarder profiles & reviews ----------
+class CreateForwarderProfilePayload(BaseModel):
+    company_name: str
+    contact_info: dict = Field(default_factory=dict)
+    specialization_routes: list[str] = Field(default_factory=list)
+    service_types: list[str] = Field(default_factory=list)
+
+
+class UpdateForwarderProfilePayload(CreateForwarderProfilePayload):
+    pass
+
+
+class CreateForwarderReviewPayload(BaseModel):
+    rating: int = 5
+    review_text: str = ""
+
+
+class UpdateForwarderReviewPayload(CreateForwarderReviewPayload):
+    pass
+
+
+# ---------- Educational ----------
+class CreateEducationalModulePayload(BaseModel):
+    title: str
+    description: str = ""
+    order_index: int = 0
+
+
+class UpdateEducationalModulePayload(CreateEducationalModulePayload):
+    pass
+
+
+class CreateEducationalArticlePayload(BaseModel):
+    module_id: str = ""
+    title: str
+    content: str = ""
+    video_url: str = ""
+    file_url: str = ""
+    order_index: int = 0
+
+
+class UpdateEducationalArticlePayload(CreateEducationalArticlePayload):
+    pass
+
+
+# ---------- Chat sessions ----------
+class CreateChatSessionPayload(BaseModel):
+    title: str = ""
+
+
+class SendChatPayload(BaseModel):
+    text: str
+
+
+# ---------- Catalog images / variants ----------
+class AddCatalogImagePayload(BaseModel):
+    image_url: str = ""
+    alt_text: str = ""
+    sort_order: int = 0
+    is_primary: bool = False
+
+
+class UpdateCatalogImagePayload(AddCatalogImagePayload):
+    pass
+
+
+class AddVariantTypePayload(BaseModel):
+    type_code: str = "custom"
+    type_name: str
+    sort_order: int = 0
+    options: list[str] = Field(default_factory=list)
+
+
+class UpdateVariantTypePayload(BaseModel):
+    type_code: str = "custom"
+    type_name: str = ""
+    sort_order: Optional[int] = None
+
+
+class AddVariantOptionPayload(BaseModel):
+    option_name: str
+    sort_order: int = 0
+    is_available: bool = True
+
+
+class UpdateVariantOptionPayload(AddVariantOptionPayload):
+    pass
+
+
+# ---------- Dashboard ----------
+class RegisterAdminPayload(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: str = "Admin"
+    admin_code: str = ""
+
+
+# ---------- Product update / override ----------
+class UpdateProductPayload(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    origin: Optional[str] = None
+    description: Optional[str] = None
+    material_composition: Optional[str] = None
+    production_technique: Optional[str] = None
+    finishing_type: Optional[str] = None
+    quality_specs: Optional[dict] = None
+    packaging: Optional[str] = None
+    dimensions_l_w_h: Optional[dict] = None
+    weight_net: Optional[float] = None
+    weight_gross: Optional[float] = None
+    netWeight: Optional[str] = None
+    grossWeight: Optional[str] = None
+    moq: Optional[str] = None
+    leadTime: Optional[str] = None
+    hs: Optional[str] = None
+    hs_code: Optional[str] = None
+    sku: Optional[str] = None
+    name_english_b2b: Optional[str] = None
+    description_english_b2b: Optional[str] = None
+    marketing_highlights: Optional[list] = None
+
+
+# ---------- Costing update / create detail ----------
+class CreateCostingPayload(BaseModel):
+    title: str
+    destination: str
+    projectId: str = ""
+    productId: str = ""
+    incoterm: str = "FOB"
+    targetMargin: float = 20
+    margin: Optional[float] = None
+    # Fields untuk kalkulasi nyata
+    cogs_per_unit_idr: Optional[float] = None
+    cogsPerUnitIdr: Optional[float] = None
+    packing_cost_idr: Optional[float] = None
+    packingCostIdr: Optional[float] = None
+    distance_km: Optional[float] = 200
+    distanceKm: Optional[float] = None
+    product_volume_m3: Optional[float] = 0
+    productWeightKg: Optional[float] = 0
+
+
+class UpdateCostingPayload(BaseModel):
+    title: Optional[str] = None
+    destination: Optional[str] = None
+    incoterm: Optional[str] = None
+    margin: Optional[float] = None
+    cogs_per_unit_idr: Optional[float] = None
+    cogsPerUnitIdr: Optional[float] = None
+    packing_cost_idr: Optional[float] = None
+    packingCostIdr: Optional[float] = None
+    distance_km: Optional[float] = None
+    distanceKm: Optional[float] = None
+    product_volume_m3: Optional[float] = None
+    productWeightKg: Optional[float] = None
+    exchange_rate: Optional[float] = None
+
+
+# ---------- Catalog create/update ----------
+class CreateCatalogPayload(BaseModel):
+    title: str
+    targetMarket: str
+    moq: str
+    productId: str = ""
+    projectId: str = ""
+    leadTime: str = ""
+    priceRange: str = ""
+    description: Optional[str] = ""
+    highlights: Optional[list] = None
+    specifications: Optional[list] = None
+    tags: Optional[list] = None
+    display_name: Optional[str] = None
+    marketing_description: Optional[str] = None
+    min_order_quantity: Optional[float] = None
+    unit_type: Optional[str] = "pcs"
+    base_price_exw: Optional[float] = None
+    lead_time_days: Optional[int] = 14
+    available_stock: Optional[int] = 0
+
+
+class UpdateCatalogPayload(BaseModel):
+    title: Optional[str] = None
+    targetMarket: Optional[str] = None
+    moq: Optional[str] = None
+    leadTime: Optional[str] = None
+    priceRange: Optional[str] = None
+    description: Optional[str] = None
+    highlights: Optional[list] = None
+    specifications: Optional[list] = None
+    tags: Optional[list] = None
+    is_published: Optional[bool] = None
+    export_description: Optional[str] = None
+    technical_specs: Optional[list] = None
+    safety_info: Optional[list] = None
+    lead_time_days: Optional[int] = None
+    available_stock: Optional[int] = None
+    min_order_quantity: Optional[float] = None
+    unit_type: Optional[str] = None
+    base_price_exw: Optional[float] = None
+
+
+# ---------- Users delete ----------
+class DeleteUserPayload(BaseModel):
+    pass

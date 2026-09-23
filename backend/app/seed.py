@@ -2,11 +2,27 @@
 from app import db
 from app.core.security import hash_password
 from app.core.config import settings
+from app.data import countries as country_data
 
 
 def seed_if_empty():
     if db.loaded_records("users") or db.loaded_records("products"):
         return  # sudah ter-seed
+
+    # ---------- MASTER DATA: negara & regulasi ----------
+    for c in country_data.get_countries():
+        db.insert("countries", {
+            "id": db.gen_id("countries", "CTY"),
+            "country_code": c["country_code"],
+            "country_name": c["country_name"],
+            "region": c["region"],
+            "createdAt": "2026-07-01",
+        })
+
+    db.insert("exchange_rates", {
+        "id": db.gen_id("exchange_rates", "FX"),
+        "rate": 15800, "source": "seed", "updatedAt": "2026-08-06 10:00",
+    })
 
     # ---------- AUTH / user ----------
     db.insert("users", {
@@ -316,4 +332,104 @@ def seed_if_empty():
         "category": "Furniture manufacturer", "status": "Needs Evidence", "capabilityScore": 74, "productIds": ["PRD-FUR-014"],
         "capacity": "180 sets / month", "leadTime": "45 days", "qualityScore": 78, "complianceScore": 61, "contact": "Maya Kartika",
         "certificates": ["SVLK scope pending"], "risks": [], "nextAudit": "2026-08-20",
+    })
+
+    # ---------- ENRICHMENT (produk) ----------
+    db.insert("product_enrichments", {
+        "id": "ENR-COF-001", "productId": "PRD-COF-001",
+        "hsCodeRecommendation": "0901.21", "skuGenerated": "COF-ACE-001",
+        "nameEnglishB2b": "Gayo Arabica Coffee Beans - Single Origin",
+        "descriptionEnglishB2b": "Specialty single-origin arabica from the Gayo highlands, fully washed and sun dried.",
+        "marketingHighlights": ["Single-origin Aceh", "Specialty grade", "Export valve bag"],
+        "lastUpdatedAi": "2026-08-06 10:30",
+    })
+    db.insert("product_enrichments", {
+        "id": "ENR-FUR-014", "productId": "PRD-FUR-014",
+        "hsCodeRecommendation": "9401.52", "skuGenerated": "FUR-CIR-001",
+        "nameEnglishB2b": "Handwoven Rattan Chair Set",
+        "descriptionEnglishB2b": "Artisan handwoven rattan chair set from Central Java.",
+        "marketingHighlights": ["Handcrafted", "SVLK compliant wood", "Durable weave"],
+        "lastUpdatedAi": "2026-08-04 09:00",
+    })
+    db.insert("product_enrichments", {
+        "id": "ENR-SNK-006", "productId": "PRD-SNK-006",
+        "hsCodeRecommendation": "1905.90", "skuGenerated": "SNK-LAM-001",
+        "nameEnglishB2b": "Cassava Chips Original",
+        "descriptionEnglishB2b": "Crunchy cassava chips, sea salt flavor, ready for retail.",
+        "marketingHighlights": ["Halal certified", "Retail pouch", "Long shelf life"],
+        "lastUpdatedAi": "2026-08-03 11:00",
+    })
+
+    # ---------- MARKET INTELLIGENCE & PRICING (produk kopi) ----------
+    db.insert("market_intelligence", {
+        "id": "MI-COF-001", "productId": "PRD-COF-001",
+        "recommendedCountries": [
+            {"country": "Japan", "code": "JP", "score": 88, "reason": "Specialty coffee demand tinggi; EPA zero duty.",
+             "market_size": "US$1.6B", "competition_level": "Sedang", "price_range": "Premium",
+             "entry_strategy": "Trial shipment via specialty importer.",
+             "forwarders": [
+                 {"id": "FWD-NGL", "name": "Nusantara Global Logistics", "averageRating": 4.5,
+                  "serviceTypes": ["Ocean LCL", "Customs"], "contactInfo": {"phone": "+62 21 555 0100", "email": "ops@ngl.example"}},
+             ]},
+            {"country": "Singapore", "code": "SG", "score": 82, "reason": "Hub re-export; regulasi labeling ringan.",
+             "market_size": "US$0.4B", "competition_level": "Tinggi", "price_range": "Kompetitif",
+             "entry_strategy": "Gunakan Singapore sebagai hub distribusi.",
+             "forwarders": []},
+        ],
+        "countriesToAvoid": [{"country": "North Korea", "code": "KP", "reason": "Sanksi internasional."}],
+        "marketTrends": ["Kenaikan permintaan kopi specialty", "Preferensi single-origin"],
+        "competitiveLandscape": "Banyak eksportir Vietnam & Brasil; diferensiasi lewat cerita asal-usul Gayo.",
+        "growthOpportunities": ["Roaster specialty Jepang", "Kemasan retail premium"],
+        "risksAndChallenges": ["Kepatuhan label Bahasa Jepang", "Fluktuasi freight"],
+        "overallRecommendation": "Fokus pada Jepang & Singapura sebagai pasar awal.",
+        "generatedAt": "2026-08-06 10:35",
+    })
+    db.insert("pricing_results", {
+        "id": "PRC-COF-001", "productId": "PRD-COF-001",
+        "cogsPerUnitIdr": 28500, "targetMarginPercent": 22, "targetCountryCode": "JP",
+        "exchangeRateUsed": 15800, "exwPriceUsd": 2.20, "fobPriceUsd": 2.44, "cifPriceUsd": 2.66,
+        "pricingInsight": "Harga kompetitif untuk segmen specialty; pastikan margin menutup biaya label.",
+        "pricingBreakdown": {"HPP (IDR)": 28500, "Margin": "22%", "EXW (USD)": 2.20, "FOB (USD)": 2.44, "CIF (USD)": 2.66},
+        "generatedAt": "2026-08-06 10:40",
+    })
+
+    # ---------- CHAT SESSION ----------
+    db.insert("chat_sessions", {
+        "id": "CHS-001", "title": "Japan coffee compliance guidance",
+        "messages": [
+            {"role": "user", "text": "Apa yang menghalangi pengiriman kopi ke Jepang?"},
+            {"role": "ai", "text": "Bukti label Bahasa Jepang dan laporan lab diperlukan sebelum quotation disetujui."},
+        ],
+        "createdAt": "2026-08-06 11:20", "updatedAt": "2026-08-06 11:22",
+    })
+
+    # ---------- BUYER PROFILE & FORWARDER PROFILE (demo) ----------
+    db.insert("buyer_profiles", {
+        "id": "BYP-001", "userId": "U-003",
+        "companyName": "Hikari Foods Co.", "companyDescription": "Specialty food importer based in Yokohama.",
+        "contactInfo": {"name": "Aya Nakamura", "email": "aya.nakamura@hikari-foods.example", "phone": "+81 45 0000 1901"},
+        "preferredProductCategories": ["Makanan Olahan", "Minuman"],
+        "preferredProductCategoriesDescription": "Kopi specialty dan makanan ringan premium.",
+        "sourceCountries": ["Indonesia", "Vietnam"],
+        "sourceCountriesDescription": "Utama dari Indonesia.",
+        "businessType": "Importer / Distributor",
+        "businessTypeDescription": "Importir dan distributor ritel.",
+        "annualImportVolume": "US$1-5M",
+        "annualImportVolumeDescription": "Volume impor tahunan 1-5 juta USD.",
+        "createdAt": "2026-08-03",
+    })
+    db.insert("forwarder_profiles", {
+        "id": "FWP-001", "userId": "current",
+        "companyName": "Nusantara Global Logistics", "contactInfo": {"email": "ops@ngl.example", "phone": "+62 21 555 0100"},
+        "specializationRoutes": ["ID-JP", "ID-SG"], "serviceTypes": ["Ocean Freight", "Customs Brokerage"],
+        "averageRating": 4.5, "totalReviews": 2,
+        "createdAt": "2026-07-15",
+    })
+    db.insert("forwarder_reviews", {
+        "id": "REV-001", "forwarderId": "FWD-NGL", "rating": 5, "reviewText": "Proses booking cepat dan komunikatif.",
+        "umkmId": "U-002", "reviewerName": "Rizal Fahmi", "createdAt": "2026-08-01",
+    })
+    db.insert("forwarder_reviews", {
+        "id": "REV-002", "forwarderId": "FWD-NGL", "rating": 4, "reviewText": "Rate kompetitif, update tracking rutin.",
+        "umkmId": "U-002", "reviewerName": "Sinta Lestari", "createdAt": "2026-08-04",
     })

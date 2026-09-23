@@ -2,15 +2,19 @@
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { educationalModules as seedModules } from '$lib/data/trade';
-	import { listEducationalModules, publishEducationalModule } from '$lib/api/educational';
+	import { listEducationalModules, publishEducationalModule, createEducationalModule, deleteEducationalModule } from '$lib/api/educational';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 
 	let modules = createRemoteList(listEducationalModules, seedModules);
 	let publishing = $state('');
+	let deleting = $state('');
 	let error = $state('');
+	let newTitle = $state('');
+	let creating = $state(false);
 
 	$effect(() => {
 		modules.load();
@@ -27,6 +31,39 @@
 			error = 'Gagal mempublikasikan modul.';
 		} finally {
 			publishing = '';
+		}
+	}
+
+	async function createModule() {
+		error = '';
+		if (newTitle.trim().length < 3) {
+			error = 'Judul modul minimal 3 karakter.';
+			return;
+		}
+		creating = true;
+		try {
+			const created = (await createEducationalModule({ title: newTitle, description: '', order_index: modules.items.length + 1 })).data;
+			modules.items.unshift(created);
+			newTitle = '';
+		} catch {
+			error = 'Gagal membuat modul.';
+		} finally {
+			creating = false;
+		}
+	}
+
+	async function removeModule(id: string) {
+		if (!confirm('Hapus modul ini beserta artikelnya?')) return;
+		error = '';
+		deleting = id;
+		try {
+			await deleteEducationalModule(id);
+			const idx = modules.items.findIndex((m) => m.id === id);
+			if (idx >= 0) modules.items.splice(idx, 1);
+		} catch {
+			error = 'Gagal menghapus modul.';
+		} finally {
+			deleting = '';
 		}
 	}
 
@@ -63,7 +100,11 @@
 			<CardTitle>Modules</CardTitle>
 			<Badge variant="secondary">{modules.items.length} total</Badge>
 		</CardHeader>
-		<CardContent class="grid gap-2">
+		<CardContent class="grid gap-3">
+			<form class="flex gap-2" onsubmit={(event) => { event.preventDefault(); createModule(); }}>
+				<Input placeholder="Judul modul baru..." bind:value={newTitle} class="flex-1" />
+				<Button type="submit" disabled={creating}>{creating ? 'Membuat...' : 'Buat modul'}</Button>
+			</form>
 			{#each modules.items as module}
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
 					<div>
@@ -72,7 +113,11 @@
 					</div>
 					<div class="grid justify-items-end gap-2">
 						<Badge variant={toneVariant(statusTone(module.status))}>{module.status}</Badge>
-						<Button size="sm" variant={module.status === 'Published' ? 'outline' : 'default'} disabled={module.status === 'Published' || publishing === module.id} onclick={() => publishModule(module.id)}>{publishing === module.id ? 'Publishing...' : 'Publish'}</Button>
+						<div class="flex gap-2">
+							<Button size="sm" variant="outline" href={`/educational/modules/${module.id}`}>Detail</Button>
+							<Button size="sm" variant={module.status === 'Published' ? 'outline' : 'default'} disabled={module.status === 'Published' || publishing === module.id} onclick={() => publishModule(module.id)}>{publishing === module.id ? 'Publishing...' : 'Publish'}</Button>
+							<Button size="sm" variant="destructive" disabled={deleting === module.id} onclick={() => removeModule(module.id)}>{deleting === module.id ? '...' : 'Hapus'}</Button>
+						</div>
 					</div>
 				</div>
 			{/each}

@@ -2,119 +2,326 @@
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { buyers, exportAnalyses, forwarders, products } from '$lib/data/trade';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { products as seedProducts } from '$lib/data/trade';
+	import { listProducts } from '$lib/api/products';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { getOrCreateMarketIntelligence, getOrCreateProductPricing } from '$lib/api/marketing';
+	import type { MarketIntelligence, ProductPricing } from '$lib/api/marketing';
+	import type { Product } from '$lib/data/trade';
 
-	function demandTone(demand: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (demand === 'High') return 'default';
-		if (demand === 'Medium') return 'outline';
+	let products = createRemoteList<Product>(listProducts, seedProducts);
+products.load();
+
+	let tab = $state<'mi' | 'pricing'>('mi');
+	let search = $state('');
+	let category = $state('All');
+	let selectedProduct = $state<Product | null>(null);
+
+	// Market Intelligence state
+	let mi = $state<MarketIntelligence | null>(null);
+	let miLoading = $state(false);
+	let miError = $state('');
+
+	// Pricing state
+	let cogs = $state(10000);
+	let margin = $state(30);
+	let country = $state('JP');
+	let pricing = $state<ProductPricing | null>(null);
+	let pricingLoading = $state(false);
+	let pricingError = $state('');
+
+	const categories = $derived(['All', ...Array.from(new Set(products.items.map((p) => p.category)))]);
+	const filtered = $derived(
+		products.items.filter(
+			(p) =>
+				(category === 'All' || p.category === category) &&
+				(search === '' || p.name.toLowerCase().includes(search.toLowerCase()))
+		)
+	);
+
+	function openProduct(p: Product) {
+		selectedProduct = p;
+		if (tab === 'mi') openMarketIntelligence(p);
+		else openPricing(p);
+	}
+
+	async function openMarketIntelligence(p: Product) {
+		selectedProduct = p;
+		mi = null;
+		miError = '';
+		miLoading = true;
+		try {
+			mi = await getOrCreateMarketIntelligence(p.id);
+		} catch {
+			miError = 'Gagal memuat Market Intelligence untuk produk ini.';
+		} finally {
+			miLoading = false;
+		}
+	}
+
+	async function openPricing(p: Product) {
+		selectedProduct = p;
+		pricing = null;
+		pricingError = '';
+		pricingLoading = true;
+		try {
+			pricing = await getOrCreateProductPricing(p.id, {
+				cogs_per_unit_idr: cogs,
+				target_margin_percent: margin,
+				target_country_code: country
+			});
+		} catch {
+			pricingError = 'Gagal menghitung pricing untuk produk ini.';
+		} finally {
+			pricingLoading = false;
+		}
+	}
+
+	function scoreTone(score: number) {
+		if (score >= 80) return 'default';
+		if (score >= 60) return 'outline';
 		return 'secondary';
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
+	function fmtUsd(n: number | undefined) {
+		if (n == null) return '—';
+		return `$${n.toFixed(2)}`;
 	}
-
-	let exportedValue = $derived(products.length * 12500);
-	let leadCount = $derived(buyers.filter((buyer) => ['Lead', 'Qualified'].includes(buyer.status)).length);
-	let readyCount = $derived(products.filter((product) => product.status !== 'Needs HS Review').length);
-	let analysisReady = $derived(exportAnalyses.filter((item) => item.status === 'Ready').length);
-	let verifiedForwarders = $derived(forwarders.filter((item) => item.status === 'Verified').length);
 </script>
 
 <svelte:head>
 	<title>Marketing | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Marketing" eyebrow="Export demand generation">
+<AppShell title="Marketing" eyebrow="AI market intelligence & pricing">
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant="secondary">Demand funnel</Badge>
+				<Badge variant="secondary">AI Marketing Center</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-					Turn product readiness into buyer pipeline.
+					Market Intelligence & Pricing Calculator.
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl">
-					Track catalog exposure, lead quality, and market analysis coverage for each export target.
+					Generate rekomendasi negara tujuan (dengan forwarder) dan hitung harga EXW/FOB/CIF per produk.
 				</CardDescription>
 			</div>
-			<Button href="/catalogs">Manage catalogs</Button>
 		</div>
 	</Card>
 
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-		<div class="rounded-xl border bg-card p-4">
-			<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Catalog-ready products</span>
-			<strong class="mt-1 block text-3xl font-bold tracking-tight">{readyCount}</strong>
-			<small class="text-xs font-semibold text-muted-foreground">of {products.length} products</small>
-		</div>
-		<div class="rounded-xl border bg-card p-4">
-			<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Active leads</span>
-			<strong class="mt-1 block text-3xl font-bold tracking-tight">{leadCount}</strong>
-			<small class="text-xs font-semibold text-muted-foreground">across buyers</small>
-		</div>
-		<div class="rounded-xl border bg-card p-4">
-			<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Market analyses</span>
-			<strong class="mt-1 block text-3xl font-bold tracking-tight">{analysisReady}</strong>
-			<small class="text-xs font-semibold text-muted-foreground">ready for buyer outreach</small>
-		</div>
-		<div class="rounded-xl border bg-card p-4">
-			<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Estimated pipeline</span>
-			<strong class="mt-1 block text-3xl font-bold tracking-tight">{currency.format(exportedValue)}</strong>
-			<small class="text-xs font-semibold text-muted-foreground">demo estimate</small>
-		</div>
-		<div class="rounded-xl border bg-card p-4">
-			<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Verified forwarders</span>
-			<strong class="mt-1 block text-3xl font-bold tracking-tight">{verifiedForwarders}</strong>
-			<small class="text-xs font-semibold text-muted-foreground">ready to quote</small>
-		</div>
+	<div class="flex flex-wrap gap-2">
+		<Button variant={tab === 'mi' ? 'default' : 'outline'} onclick={() => (tab = 'mi')}>Market Intelligence</Button>
+		<Button variant={tab === 'pricing' ? 'default' : 'outline'} onclick={() => (tab = 'pricing')}>Pricing Calculator</Button>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2">
-		<Card>
-			<CardHeader class="flex-row items-center justify-between gap-3">
-				<CardTitle>Buyer funnel</CardTitle>
-				<Button variant="outline" size="sm" href="/buyers">Open CRM</Button>
+		<Card class="md:col-span-2">
+			<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
+				<div class="flex flex-wrap gap-2">
+					<Input placeholder="Cari produk..." bind:value={search} class="w-56" />
+					<select
+						class="h-10 rounded-md border bg-background px-3 text-sm"
+						bind:value={category}
+					>
+						{#each categories as c}
+							<option value={c}>{c}</option>
+						{/each}
+					</select>
+				</div>
+				<CardDescription>{filtered.length} produk</CardDescription>
 			</CardHeader>
-			<CardContent class="grid gap-2">
-				{#each buyers as buyer}
-					<a class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5 no-underline transition-colors hover:bg-muted/60" href={`/buyers/${buyer.id}`}>
-						<div>
-							<strong class="block text-sm font-bold">{buyer.name}</strong>
-							<span class="mt-1 block text-xs font-semibold text-muted-foreground">{buyer.segment} - {buyer.country}</span>
+			<CardContent class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+				{#each filtered as product}
+					<button
+						class="rounded-xl border bg-muted/30 p-4 text-left transition-colors hover:bg-muted/60"
+						onclick={() => openProduct(product)}
+					>
+						<div class="flex items-center justify-between gap-2">
+							<strong class="text-sm">{product.name}</strong>
+							<Badge variant={product.status === 'Enriched' ? 'default' : 'secondary'}>{product.status}</Badge>
 						</div>
-						<div class="grid justify-items-end gap-1.5">
-							<Badge variant={toneVariant(statusTone(buyer.status))}>{buyer.status}</Badge>
-							<b class="text-lg font-bold tracking-tight">{currency.format(buyer.estimatedAnnualValue)}</b>
-						</div>
-					</a>
+						<span class="mt-1 block text-xs text-muted-foreground">{product.category} · HS {product.hs}</span>
+						<span class="mt-1 block text-xs font-bold text-muted-foreground">Readiness {product.readiness}%</span>
+					</button>
 				{/each}
 			</CardContent>
 		</Card>
 
-		<Card>
-			<CardHeader class="flex-row items-center justify-between gap-3">
-				<CardTitle>Target market exposure</CardTitle>
-				<Button variant="outline" size="sm" href="/export-analysis">Analyze market</Button>
-			</CardHeader>
-			<CardContent class="grid gap-2">
-				{#each exportAnalyses as analysis}
-					<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5">
-						<div>
-							<strong class="block text-sm font-bold">{analysis.destination}</strong>
-							<span class="mt-1 block text-xs font-semibold text-muted-foreground">{analysis.productName}</span>
-						</div>
-						<div class="grid justify-items-end gap-1.5">
-							<Badge variant={demandTone(analysis.marketDemand)}>{analysis.marketDemand} demand</Badge>
-							<b class="text-lg font-bold tracking-tight">{analysis.score}</b>
-						</div>
+		{#if tab === 'mi'}
+			<Card class="md:col-span-2">
+				<CardHeader class="flex-row items-center justify-between gap-3">
+					<div>
+						<CardTitle>Market Intelligence {selectedProduct ? `— ${selectedProduct.name}` : ''}</CardTitle>
+						<CardDescription>Negara yang direkomendasikan, risiko, tren, dan rekomendasi forwarder.</CardDescription>
 					</div>
-				{/each}
-			</CardContent>
-		</Card>
+					{#if selectedProduct}
+						<Button variant="outline" size="sm" onclick={() => openMarketIntelligence(selectedProduct!)} disabled={miLoading}>
+							{miLoading ? 'Loading...' : 'Refresh'}
+						</Button>
+					{/if}
+				</CardHeader>
+				<CardContent>
+					{#if !selectedProduct}
+						<p class="text-sm font-semibold text-muted-foreground">Pilih produk di atas untuk melihat Market Intelligence.</p>
+					{:else if miLoading && !mi}
+						<p class="text-sm font-semibold text-muted-foreground">Menganalisis pasar dengan AI...</p>
+					{:else if miError}
+						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{miError}</p>
+					{:else if mi}
+						<div class="grid gap-4">
+							<div>
+								<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">Negara direkomendasikan</h4>
+								<div class="grid gap-2.5 md:grid-cols-2">
+									{#each mi.recommendedCountries ?? [] as rec}
+										<div class="rounded-lg border bg-muted/30 p-4">
+											<div class="flex items-center justify-between gap-2">
+												<strong class="text-sm">{rec.country} ({rec.code})</strong>
+												<Badge variant={scoreTone(rec.score)}>{rec.score}</Badge>
+											</div>
+											<p class="mt-1.5 text-xs leading-relaxed text-muted-foreground">{rec.reason}</p>
+											{#if rec.market_size || rec.competition_level || rec.price_range}
+												<p class="mt-1.5 text-xs text-muted-foreground">
+													<b>Pasar:</b> {rec.market_size ?? '—'} · <b>Kompetisi:</b> {rec.competition_level ?? '—'} · <b>Harga:</b> {rec.price_range ?? '—'}
+												</p>
+											{/if}
+											{#if rec.entry_strategy}
+												<p class="mt-1 text-xs text-muted-foreground"><b>Strategi:</b> {rec.entry_strategy}</p>
+											{/if}
+											{#if rec.forwarders && rec.forwarders.length > 0}
+												<div class="mt-2 grid gap-1.5">
+													{#each rec.forwarders as fwd (fwd.id)}
+														<div class="rounded-md border bg-background/60 px-2.5 py-1.5 text-xs">
+															<b>{fwd.name}</b> {fwd.averageRating ? `· ⭐ ${fwd.averageRating}` : ''}
+															{#if fwd.contactInfo?.phone}
+																<span class="text-muted-foreground"> · {fwd.contactInfo.phone}</span>
+															{/if}
+														</div>
+													{/each}
+												</div>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							</div>
+
+							<div class="grid gap-4 md:grid-cols-2">
+								{#if (mi.countriesToAvoid ?? []).length > 0}
+									<div>
+										<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">Negara dihindari</h4>
+										<div class="grid gap-2">
+											{#each mi.countriesToAvoid ?? [] as avoid}
+												<div class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs">
+													<b>{avoid.country} ({avoid.code})</b> — {avoid.reason}
+												</div>
+											{/each}
+										</div>
+									</div>
+								{/if}
+								<div>
+									<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">Tren pasar</h4>
+									<ul class="grid gap-1.5">
+										{#each mi.marketTrends ?? [] as trend}
+											<li class="rounded-lg border bg-muted/30 px-3 py-2 text-xs">• {trend}</li>
+										{/each}
+									</ul>
+								</div>
+							</div>
+
+							{#if mi.overallRecommendation}
+								<div class="rounded-xl border bg-primary/10 p-4 text-sm leading-relaxed">
+									<b>Rekomendasi keseluruhan:</b> {mi.overallRecommendation}
+								</div>
+							{/if}
+						</div>
+					{/if}
+				</CardContent>
+			</Card>
+		{:else}
+			<Card class="md:col-span-2">
+				<CardHeader class="flex-row items-center justify-between gap-3">
+					<div>
+						<CardTitle>Pricing Calculator {selectedProduct ? `— ${selectedProduct.name}` : ''}</CardTitle>
+						<CardDescription>Hitung EXW/FOB/CIF dengan margin target dan kurs terbaru.</CardDescription>
+					</div>
+				</CardHeader>
+				<CardContent class="grid gap-4">
+					{#if !selectedProduct}
+						<p class="text-sm font-semibold text-muted-foreground">Pilih produk di atas untuk menghitung pricing.</p>
+					{:else}
+						<div class="grid gap-3 sm:grid-cols-3">
+							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+								HPP (IDR / unit)
+								<Input type="number" bind:value={cogs} />
+							</label>
+							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+								Target margin (%)
+								<Input type="number" bind:value={margin} />
+							</label>
+							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+								Negara tujuan
+								<select class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={country}>
+									<option value="JP">Japan</option>
+									<option value="US">United States</option>
+									<option value="DE">Germany</option>
+									<option value="SG">Singapore</option>
+									<option value="AU">Australia</option>
+									<option value="CN">China</option>
+									<option value="KR">South Korea</option>
+									<option value="GB">United Kingdom</option>
+									<option value="NL">Netherlands</option>
+									<option value="AE">UAE</option>
+								</select>
+							</label>
+						</div>
+						<Button onclick={() => openPricing(selectedProduct!)} disabled={pricingLoading}>
+							{pricingLoading ? 'Menghitung...' : 'Hitung pricing'}
+						</Button>
+
+						{#if pricingError}
+							<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{pricingError}</p>
+						{/if}
+
+						{#if pricing}
+							<div class="grid gap-3 sm:grid-cols-3">
+								<div class="rounded-xl border bg-muted/40 p-4 text-center">
+									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">EXW</span>
+									<strong class="mt-1 block text-2xl font-bold">{fmtUsd(pricing.exwPriceUsd)}</strong>
+								</div>
+								<div class="rounded-xl border bg-muted/40 p-4 text-center">
+									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">FOB</span>
+									<strong class="mt-1 block text-2xl font-bold">{fmtUsd(pricing.fobPriceUsd)}</strong>
+								</div>
+								<div class="rounded-xl border bg-muted/40 p-4 text-center">
+									<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">CIF</span>
+									<strong class="mt-1 block text-2xl font-bold">{fmtUsd(pricing.cifPriceUsd)}</strong>
+								</div>
+							</div>
+
+							<div class="grid gap-4 md:grid-cols-2">
+								<div class="rounded-lg border bg-muted/30 p-4 text-xs">
+									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">Breakdown</h4>
+									{#if pricing.pricingBreakdown}
+										{#each Object.entries(pricing.pricingBreakdown) as [key, value]}
+											<div class="flex justify-between gap-3 border-b border-muted/40 py-1.5 last:border-0">
+												<span class="text-muted-foreground">{key}</span>
+												<b>{String(value)}</b>
+											</div>
+										{/each}
+									{/if}
+								</div>
+								<div class="rounded-lg border bg-primary/10 p-4 text-sm leading-relaxed">
+									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">AI Insight</h4>
+									<p>{pricing.pricingInsight ?? 'Harga kompetitif untuk pasar tujuan.'}</p>
+									<p class="mt-2 text-xs text-muted-foreground">
+										Kurs dipakai: {pricing.exchangeRateUsed} IDR/USD · Margin {pricing.targetMarginPercent}%
+									</p>
+								</div>
+							</div>
+						{/if}
+					{/if}
+				</CardContent>
+			</Card>
+		{/if}
 	</div>
 </AppShell>

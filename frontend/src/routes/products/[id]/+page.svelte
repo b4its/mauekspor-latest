@@ -4,21 +4,33 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { enrichProduct } from '$lib/api/products';
+	import { enrichProduct, deleteProduct } from '$lib/api/products';
 
 	let { data } = $props();
 	let enriching = $state(false);
 	let enriched = $state(false);
+	let deleting = $state(false);
 
 	async function runEnrichment() {
 		enriching = true;
 		try {
-			await enrichProduct(data.product.id);
+			data.product = (await enrichProduct(data.product.id)).data;
 		} catch {
 			await new Promise((resolve) => setTimeout(resolve, 300));
 		} finally {
 			enriching = false;
 			enriched = true;
+		}
+	}
+
+	async function handleDelete() {
+		if (!confirm('Hapus produk ini?')) return;
+		deleting = true;
+		try {
+			await deleteProduct(data.product.id);
+			window.location.href = '/products';
+		} catch {
+			deleting = false;
 		}
 	}
 
@@ -46,7 +58,7 @@
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Product readiness</span>
-				<strong class="mt-1 block text-4xl font-bold tracking-tight">{enriched ? Math.min(data.product.readiness + 6, 100) : data.product.readiness}%</strong>
+				<strong class="mt-1 block text-4xl font-bold tracking-tight">{data.product.readiness}%</strong>
 			</div>
 		</div>
 	</Card>
@@ -64,11 +76,15 @@
 					<Button disabled={enriching} onclick={runEnrichment}>
 						{enriching ? 'Generating...' : enriched ? 'AI enrichment updated' : 'Run AI enrichment'}
 					</Button>
+					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>Delete</Button>
 				</div>
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					HS Code <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.hs}</strong>
+					HS Code <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.hs}{data.product.hsConfidence ? ` (${data.product.hsConfidence}% conf)` : ''}</strong>
+				</div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
+					SKU <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.sku ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					Packaging <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.packaging}</strong>
@@ -91,9 +107,21 @@
 		<Card>
 			<CardHeader class="p-0"><CardTitle>Certificates</CardTitle></CardHeader>
 			<CardContent class="flex flex-wrap gap-2.5 p-0 pt-4">
-				{#each data.product.certificates as certificate}
+				{#each data.product.certificates ?? [] as certificate}
 					<Badge variant="outline">{certificate}</Badge>
 				{/each}
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader class="p-0"><CardTitle>AI Marketing</CardTitle></CardHeader>
+			<CardContent class="grid gap-2 p-0 pt-4">
+				<Button variant="outline" href="/marketing" class="w-fit">Market Intelligence & Pricing</Button>
+				{#if data.product.status === 'Enriched'}
+					<span class="text-xs font-semibold text-muted-foreground">Produk siap dianalisis pasar (HS & SKU tersedia).</span>
+				{:else}
+					<span class="text-xs font-semibold text-muted-foreground">Jalankan enrichment dulu sebelum analisis pasar.</span>
+				{/if}
 			</CardContent>
 		</Card>
 

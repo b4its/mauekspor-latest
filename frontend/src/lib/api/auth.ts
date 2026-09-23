@@ -42,3 +42,10 @@ export function getSession() {
 export function logout() {
 	return apiFetch('/auth/logout/', { method: 'POST' });
 }
+
+export function registerAdmin(payload: RegisterPayload & { admin_code?: string }) {
+	return apiFetch<SessionUser>('/auth/register-admin/', {
+		method: 'POST',
+		body: JSON.stringify(payload)
+	});
+}

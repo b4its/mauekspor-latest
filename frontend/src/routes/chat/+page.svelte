@@ -4,38 +4,96 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card } from '$lib/components/ui/card/index.js';
-	import { chatConversations as seedConversations } from '$lib/data/trade';
-	import type { ChatConversation } from '$lib/data/trade';
-	import { listChatConversations, sendChatMessage } from '$lib/api/chat';
-	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import {
+		listChatSessions,
+		createChatSession,
+		deleteChatSession,
+		sendSessionMessage,
+		getChatSuggestions
+	} from '$lib/api/chat';
+	import type { ChatSession } from '$lib/api/chat';
 
-	let activeId = $state(seedConversations[0].id);
+	let sessions = $state<ChatSession[]>([]);
+	let activeId = $state('');
 	let input = $state('');
-	let conversations = createRemoteList(listChatConversations, seedConversations);
 	let sending = $state(false);
+	let loading = $state(true);
 	let error = $state('');
+	let suggestions = $state<{ question: string; context?: string }[]>([]);
+
+	async function loadSessions() {
+		try {
+			sessions = (await listChatSessions()).data;
+			if (!activeId && sessions.length > 0) activeId = sessions[0].id;
+		} catch {
+			error = 'Tidak dapat memuat sesi chat dari server.';
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function loadSuggestions() {
+		try {
+			suggestions = (await getChatSuggestions()).data;
+		} catch {
+			suggestions = [];
+		}
+	}
 
 	$effect(() => {
-		conversations.load();
+		loadSessions();
+		loadSuggestions();
 	});
 
-	let active = $derived(conversations.items.find((c) => c.id === activeId) ?? conversations.items[0]);
+	let active = $derived(sessions.find((s) => s.id === activeId) ?? null);
 
-	async function send() {
-		const text = input.trim();
-		if (!text || sending) return;
+	function roleLabel(role: string) {
+		const r = role.toLowerCase();
+		return r === 'user' ? 'You' : 'Assistant';
+	}
+
+	function isUser(role: string) {
+		return role.toLowerCase() === 'user';
+	}
+
+	async function newSession() {
+		error = '';
+		try {
+			const session = (await createChatSession('')).data;
+			sessions = [session, ...sessions];
+			activeId = session.id;
+		} catch {
+			error = 'Gagal membuat sesi baru.';
+		}
+	}
+
+	async function removeSession(id: string) {
+		if (!confirm('Hapus sesi ini?')) return;
+		try {
+			await deleteChatSession(id);
+			sessions = sessions.filter((s) => s.id !== id);
+			if (activeId === id) activeId = sessions[0]?.id ?? '';
+		} catch {
+			error = 'Gagal menghapus sesi.';
+		}
+	}
+
+	async function send(textOverride?: string) {
+		const text = (textOverride ?? input).trim();
+		if (!text || sending || !active) return;
 		error = '';
 		sending = true;
 		try {
-			const thread = await sendChatMessage(active.id, text);
-			active.messages = [...(thread.data.messages ?? active.messages)];
-			if (thread.data.updatedAt) active.updatedAt = thread.data.updatedAt;
+			const updated = (await sendSessionMessage(active.id, text)).data;
+			const idx = sessions.findIndex((s) => s.id === active.id);
+			if (idx >= 0) sessions[idx] = updated;
+			activeId = updated.id;
 		} catch {
 			error = 'Gagal mengirim pesan.';
 		} finally {
 			sending = false;
+			input = '';
 		}
-		input = '';
 	}
 </script>
 
@@ -43,36 +101,63 @@
 	<title>Chat | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Chat" eyebrow="Trade assistant">
+<AppShell title="Chat" eyebrow="AI trade assistant">
 	<Card class="grid overflow-hidden md:grid-cols-[300px_1fr]">
 		<aside class="grid content-start gap-2 border-b bg-muted/30 p-5 md:border-b-0 md:border-r">
-			<h3 class="text-lg font-bold tracking-tight">Conversations</h3>
-			{#each conversations.items as conversation}
-				<button
-					class={`grid gap-1 rounded-lg border p-3 text-left transition-colors ${conversation.id === activeId ? 'border-ring bg-primary/10' : ''}`}
-					onclick={() => (activeId = conversation.id)}
-				>
-					<strong class="text-sm font-bold">{conversation.title}</strong>
-					<small class="text-xs text-muted-foreground">{conversation.updatedAt}</small>
-				</button>
+			<div class="flex items-center justify-between gap-2">
+				<h3 class="text-lg font-bold tracking-tight">Sessions</h3>
+				<Button variant="outline" size="sm" onclick={newSession}>+ Baru</Button>
+			</div>
+			{#if loading}
+				<p class="text-xs font-semibold text-muted-foreground">Memuat sesi...</p>
+			{/if}
+			{#each sessions as session}
+				<div class={`grid gap-1 rounded-lg border p-3 transition-colors ${session.id === activeId ? 'border-ring bg-primary/10' : ''}`}>
+					<button class="text-left" onclick={() => (activeId = session.id)}>
+						<strong class="block text-sm font-bold">{session.title}</strong>
+						<small class="text-xs text-muted-foreground">{session.messageCount ?? session.messages.length} pesan</small>
+					</button>
+					<button class="w-fit text-xs font-bold text-muted-foreground hover:text-destructive" onclick={() => removeSession(session.id)}>
+						Hapus
+					</button>
+				</div>
 			{/each}
+			{#if !loading && sessions.length === 0}
+				<p class="text-xs font-semibold text-muted-foreground">Belum ada sesi. Buat sesi baru untuk mulai.</p>
+			{/if}
 		</aside>
 
 		<div class="grid min-h-[600px] grid-rows-[auto_1fr_auto]">
 			<div class="flex items-start justify-between gap-3 border-b p-5">
 				<div>
-					<h3 class="text-lg font-bold tracking-tight">{active.title}</h3>
-					<small class="block text-sm text-muted-foreground">{active.status} conversation</small>
+					<h3 class="text-lg font-bold tracking-tight">{active?.title ?? 'Copilot'}</h3>
+					<small class="block text-sm text-muted-foreground">Asisten AI ekspor-impor</small>
 				</div>
 				<Badge variant="secondary">AI assistant</Badge>
 			</div>
 
 			<div class="grid content-start gap-3 overflow-y-auto p-5">
-				{#each active.messages as message}
-					<div class="grid max-w-[75%] gap-1" class:ml-auto={message.role === 'User'}>
-						<span class="text-xs font-bold text-muted-foreground">{message.role === 'User' ? 'You' : 'Assistant'}</span>
+				{#if !active}
+					<div class="mx-auto grid max-w-md gap-3 text-center">
+						<h4 class="text-lg font-bold">Mulai percakapan dengan Copilot</h4>
+						{#each suggestions as suggestion}
+							<button
+								class="rounded-lg border bg-muted/30 p-3 text-left text-sm transition-colors hover:bg-muted/60"
+								onclick={() => {
+									newSession().then(() => setTimeout(() => send(suggestion.question), 100));
+								}}
+							>
+								{suggestion.question}
+							</button>
+						{/each}
+					</div>
+				{/if}
+
+				{#each active?.messages ?? [] as message}
+					<div class="grid max-w-[75%] gap-1" class:ml-auto={isUser(message.role)}>
+						<span class="text-xs font-bold text-muted-foreground">{roleLabel(message.role)}</span>
 						<p
-							class={`rounded-xl border p-3 text-sm leading-relaxed ${message.role === 'User' ? 'bg-primary text-primary-foreground' : 'bg-muted/40'}`}
+							class={`rounded-xl border p-3 text-sm leading-relaxed ${isUser(message.role) ? 'bg-primary text-primary-foreground' : 'bg-muted/40'}`}
 						>
 							{message.text}
 						</p>
@@ -84,8 +169,8 @@
 				<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 			{/if}
 			<form class="flex gap-2 border-t p-5" onsubmit={(event) => { event.preventDefault(); send(); }}>
-				<Input bind:value={input} placeholder="Ask about compliance, freight, pricing..." class="flex-1" />
-				<Button type="submit" disabled={sending}>{sending ? 'Sending...' : 'Send'}</Button>
+				<Input bind:value={input} placeholder="Tanya tentang kepatuhan, freight, pricing..." class="flex-1" disabled={!active} />
+				<Button type="submit" disabled={sending || !active}>{sending ? 'Sending...' : 'Send'}</Button>
 			</form>
 		</div>
 	</Card>
