@@ -387,6 +387,70 @@ def compute_product_readiness(product: dict) -> int:
     return max(0, min(100, score))
 
 
+@router.post("/products/batch/enrich/")
+def batch_enrich_products(payload: sc.BatchActionPayload):
+    """Enrich beberapa produk sekaligus (default: semua yang masih 'Needs HS Review').
+
+    Jika payload.ids kosong, ambil semua produk berstatus 'Needs HS Review'.
+    Endpoint ini didasarkan pada ProductSync service Adaptasi ExportReadyAI (sync & review loop).
+    """
+    from app.data.hs_loader import get_hs_loader
+
+    loader = get_hs_loader()
+    if payload.ids:
+        targets = [db.get("products", pid) for pid in payload.ids if db.get("products", pid)]
+    else:
+        targets = [p for p in db.all("products") if p.get("status") != "Enriched"]
+
+    enriched, skipped = [], []
+    for record in targets:
+        keywords = " ".join([str(record.get("name", "")), str(record.get("category", "")), str(record.get("description", ""))])
+        context = loader.get_hs_code_context(keywords, max_results=10)
+        system = "You are an Indonesia export HS code classifier. Return JSON with keys hsCode (8 digits), confidence (0-100), reason."
+        user = f"Product: {record.get('name', '')} ({record.get('category', '')} - {record.get('description', '')})\n{context}"
+        enriched_data = ai.ask_json(system, user, kind="classify")
+        hs_code = ""
+        confidence = None
+        if enriched_data and enriched_data.get("hsCode"):
+            hs_code = str(enriched_data["hsCode"])
+            confidence = enriched_data.get("confidence")
+        if not hs_code:
+            results = loader.search_hs_codes(keywords, max_results=1, min_level=6)
+            if results:
+                hs_code = results[0]["hs_code"]
+                if len(hs_code) == 6:
+                    hs_code = f"{hs_code}00"
+        if not hs_code:
+            hs_code = "00000000"
+
+        sku = _generate_sku(record)
+        record["status"] = "Enriched"
+        record["hs"] = hs_code
+        record["hsConfidence"] = confidence if confidence is not None else 88
+        record["sku"] = sku
+        record["readiness"] = compute_product_readiness(record)
+        record["updatedAt"] = "now"
+        db.save(record)
+
+        existing = db.get_by("product_enrichments", productId=record["id"])
+        if existing:
+            existing.update({"hsCodeRecommendation": hs_code, "skuGenerated": sku, "lastUpdatedAi": "now"})
+            db.save(existing)
+        else:
+            db.insert("product_enrichments", {
+                "id": db.gen_id("product_enrichments", "ENR"),
+                "productId": record["id"],
+                "hsCodeRecommendation": hs_code,
+                "skuGenerated": sku,
+                "nameEnglishB2b": record.get("name_english_b2b", ""),
+                "descriptionEnglishB2b": record.get("description_english_b2b", ""),
+                "marketingHighlights": record.get("marketing_highlights", []),
+                "lastUpdatedAi": "now",
+            })
+        enriched.append(record["id"])
+    return {"data": {"enriched": enriched, "enrichedCount": len(enriched), "skippedCount": len(skipped), "targetCount": len(targets)}, "meta": {}}
+
+
 @router.post("/products/{product_id}/enrich/")
 def enrich_product(product_id: str):
     record = db.get("products", product_id)
@@ -446,6 +510,22 @@ def enrich_product(product_id: str):
             "lastUpdatedAi": "now",
         })
     return _one(record)
+
+
+@router.post("/products/batch/delete/")
+def batch_delete_products(payload: sc.BatchActionPayload):
+    """Hapus beberapa produk sekaligus berdasarkan daftar ids."""
+    if not payload.ids:
+        raise HTTPException(422, "ids wajib diisi")
+    deleted = []
+    for pid in payload.ids:
+        record = db.get("products", pid)
+        if record:
+            db.delete("products", pid)
+            for enrich in db.find("product_enrichments", productId=pid):
+                db.delete("product_enrichments", enrich.get("id"))
+            deleted.append(pid)
+    return {"data": {"deleted": deleted, "deletedCount": len(deleted)}, "meta": {}}
 
 
 @router.patch("/products/{product_id}/")

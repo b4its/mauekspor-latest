@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts } from '$lib/data/trade';
-	import { listProducts, deleteProduct } from '$lib/api/products';
+	import { listProducts, deleteProduct, batchEnrichProducts } from '$lib/api/products';
 	import { csvExportUrl } from '$lib/api/client';
 	import { statusTone } from '$lib/utils/format';
 	import type { Product } from '$lib/data/trade';
@@ -17,6 +17,27 @@
 	let loaded = $state(false);
 	let deleting = $state('');
 	let error = $state('');
+	let batching = $state('');
+	let batchMessage = $state('');
+
+	let pendingCount = $derived(products.filter((p) => p.status !== 'Enriched').length);
+
+	async function runBatchEnrich() {
+		if (!confirm(`Enrich ${pendingCount} produk yang belum lengkap? (AI HS code + SKU otomatis)`)) return;
+		error = '';
+		batchMessage = '';
+		batching = 'enrich';
+		try {
+			const res = await batchEnrichProducts();
+			batchMessage = `Enrich selesai: ${res.data.enrichedCount} produk di-enrich.`;
+			const reload = await listProducts();
+			products = reload.data;
+		} catch {
+			error = 'Gagal menjalankan batch enrich.';
+		} finally {
+			batching = '';
+		}
+	}
 
 	$effect(() => {
 		listProducts()
@@ -79,10 +100,23 @@
 					revisions before compliance analysis or quotation.
 				</CardDescription>
 			</div>
-			<Button href="/products/new">Add product</Button>
-			<Button variant="outline" href={csvExportUrl('/products/export.csv')}>Export CSV</Button>
+		<Button href="/products/new">Add product</Button>
+		<Button variant="outline" href={csvExportUrl('/products/export.csv')}>Export CSV</Button>
+	</div>
+	{#if pendingCount > 0}
+		<div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed p-4">
+			<div class="text-sm font-semibold text-muted-foreground">
+				{pendingCount} produk masih butuh AI enrichment (HS code + SKU).
+			</div>
+			<Button size="sm" variant="secondary" disabled={batching === 'enrich'} onclick={runBatchEnrich}>
+				{batching === 'enrich' ? 'Enriching...' : `Enrich semua (${pendingCount})`}
+			</Button>
 		</div>
-	</Card>
+	{/if}
+	{#if batchMessage}
+		<p class="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{batchMessage}</p>
+	{/if}
+</Card>
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">

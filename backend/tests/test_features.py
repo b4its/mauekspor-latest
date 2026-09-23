@@ -399,3 +399,33 @@ def test_audit_csv_export():
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("text/csv")
         assert b"time,actor,action" in r.content
+
+
+def test_batch_enrich_and_batch_delete():
+    with TestClient(app) as c:
+        _login(c)
+        # Siapkan 2 produk baru (belum enriched)
+        p1 = c.post("/api/v1/products/", json={"name": "Kopi Batch A", "category": "Food", "origin": "Aceh"}).json()["data"]
+        p2 = c.post("/api/v1/products/", json={"name": "Teh Batch B", "category": "Beverage", "origin": "Jawa"}).json()["data"]
+        assert p1["status"] != "Enriched" and p2["status"] != "Enriched"
+
+        # Batch enrich tanpa ids -> enrich semua produk non-Enriched
+        r = c.post("/api/v1/products/batch/enrich/", json={"ids": []})
+        assert r.status_code == 200, r.text
+        data = r.json()["data"]
+        assert data["enrichedCount"] >= 2
+        assert p1["id"] in data["enriched"] and p2["id"] in data["enriched"]
+
+        # Setelah batch: semua enriched
+        p1b = c.get(f"/api/v1/products/{p1['id']}/").json()["data"]
+        assert p1b["status"] == "Enriched" and p1b["hs"] not in ("", "TBD")
+
+        # Batch delete dengan ids
+        r = c.post("/api/v1/products/batch/delete/", json={"ids": [p1["id"], p2["id"], "TIDAK-ADA"]})
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["deletedCount"] == 2
+        assert c.get(f"/api/v1/products/{p1['id']}/").status_code == 404
+
+        # Batch delete tanpa ids -> 422
+        r = c.post("/api/v1/products/batch/delete/", json={"ids": []})
+        assert r.status_code == 422

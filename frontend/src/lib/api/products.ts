@@ -107,6 +107,27 @@ export function enrichProduct(id: string) {
 	return apiFetch<Product>(`/products/${id}/enrich/`, { method: 'POST' });
 }
 
+export type BatchEnrichResult = {
+	enriched: string[];
+	enrichedCount: number;
+	skippedCount: number;
+	targetCount: number;
+};
+
+export function batchEnrichProducts(ids: string[] = []) {
+	return apiFetch<BatchEnrichResult>('/products/batch/enrich/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}
+
+export function batchDeleteProducts(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/products/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}
+
 // ---------- AI: Market Intelligence ----------
 export function getMarketIntelligence(productId: string) {
 	return apiFetch<MarketIntelligence>(`/products/${productId}/ai/market-intelligence/`);

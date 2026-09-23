@@ -155,6 +155,11 @@ class GenerateDocumentPayload(BaseModel):
     data: dict = {}
 
 
+# ---------- Batch actions ----------
+class BatchActionPayload(BaseModel):
+    ids: list[str] = []
+
+
 # ---------- Payments ----------
 class MarkPaymentReceivedPayload(BaseModel):
     amount: Optional[float] = None
