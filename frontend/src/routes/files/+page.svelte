@@ -8,8 +8,17 @@
 	import { statusTone } from '$lib/utils/format';
 	import { uploadFileAsset, uploadFileBinary, verifyFileAsset, listFiles, fileDownloadUrl } from '$lib/api/files';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Document', 'Certificate', 'Image', 'Evidence', 'Report'];
+
+	function trType(x: string) {
+		return t(x === 'All' ? 'Semua' : x === 'Document' ? 'Dokumen' : x === 'Certificate' ? 'Sertifikat' : x === 'Image' ? 'Gambar' : x === 'Evidence' ? 'Bukti' : 'Laporan');
+	}
+
+	function trStatus(s: string) {
+		return t(s === 'Verified' ? 'Terverifikasi' : s === 'Archived' ? 'Diarsipkan' : s === 'Uploaded' ? 'Terunggah' : 'Menunggu');
+	}
 	let activeFilter = $state('All');
 	let query = $state('');
 	let uploaded = $state('');
@@ -53,7 +62,7 @@
 			uploaded = file.name;
 			await files.load();
 		} catch {
-			error = 'Gagal mengunggah file.';
+			error = t('Gagal mengunggah file.');
 		} finally {
 			uploading = false;
 			input.value = '';
@@ -66,7 +75,7 @@
 			await verifyFileAsset(fileId);
 			verifiedId = fileId;
 		} catch {
-			error = 'Gagal memverifikasi file.';
+			error = t('Gagal memverifikasi file.');
 		}
 	}
 </script>
@@ -75,23 +84,23 @@
 	<title>Files | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Files" eyebrow="Evidence and asset library">
+<AppShell title="Files" eyebrow={t('Pustaka bukti dan aset')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">File control</Badge>
+			<Badge variant="secondary">{t('Kontrol file')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Keep export documents, evidence, certificates, and assets organized.
+				{t('Jaga dokumen ekspor, bukti, sertifikat, dan aset tetap terorganisir.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Centralize files by project, owner, type, status, and operational tags so compliance and document workflows stay traceable.
+				{t('Pusatkan file berdasarkan proyek, pemilik, jenis, status, dan tag operasional agar alur kerja kepatuhan dan dokumen tetap dapat ditelusuri.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<label class="cursor-pointer">
 				<input type="file" class="hidden" onchange={handleUpload} disabled={uploading} />
-				<Button type="button" disabled={uploading} class="pointer-events-none">{uploading ? 'Uploading...' : 'Upload file'}</Button>
+				<Button type="button" disabled={uploading} class="pointer-events-none">{uploading ? t('Mengunggah...') : t('Unggah file')}</Button>
 			</label>
-			<Badge variant="outline">Review {needsReview}</Badge>
+			<Badge variant="outline">{t('Tinjauan')} {needsReview}</Badge>
 		</CardContent>
 	</Card>
 
@@ -101,9 +110,9 @@
 
 	{#if uploaded}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">File uploaded.</strong>
+			<strong class="block">{t('File berhasil diunggah.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				{uploaded} tersimpan di backend.
+				{uploaded} {t('tersimpan di backend.')}
 			</span>
 		</div>
 	{/if}
@@ -111,18 +120,18 @@
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">
 			{#each filters as filter}
-				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
+				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trType(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search file, tag, owner..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Cari file, tag, pemilik...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 		{#each filteredFiles as file}
 			<Card class="gap-4">
 				<div class="flex items-center justify-between gap-3">
-					<Badge variant={toneVariant(statusTone(verified || verifiedId === file.id ? 'Verified' : file.status))}>{verified || verifiedId === file.id ? 'Verified' : file.status}</Badge>
-					<strong class="text-sm font-bold text-muted-foreground">{file.type}</strong>
+					<Badge variant={toneVariant(statusTone(verified || verifiedId === file.id ? 'Verified' : file.status))}>{verified || verifiedId === file.id ? t('Terverifikasi') : trStatus(file.status)}</Badge>
+					<strong class="text-sm font-bold text-muted-foreground">{trType(file.type)}</strong>
 				</div>
 				<CardHeader class="p-0">
 					<CardTitle class="text-xl font-bold tracking-tight">{file.name}</CardTitle>
@@ -131,10 +140,10 @@
 				<CardContent class="grid gap-3 p-0">
 					<div class="grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Updated <strong class="mt-1 block text-sm font-bold text-foreground">{file.updatedAt}</strong>
+							{t('Diperbarui')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.updatedAt}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Size <strong class="mt-1 block text-sm font-bold text-foreground">{file.size}</strong>
+							{t('Ukuran')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.size}</strong>
 						</div>
 					</div>
 					<div class="flex flex-wrap gap-2">
@@ -145,13 +154,13 @@
 				</CardContent>
 				<div class="flex flex-wrap items-center gap-2">
 				{#if file.storageName}
-					<a href={fileDownloadUrl(file.id)} target="_blank" rel="noopener" class="text-sm font-bold text-primary no-underline hover:underline">Download</a>
+					<a href={fileDownloadUrl(file.id)} target="_blank" rel="noopener" class="text-sm font-bold text-primary no-underline hover:underline">{t('Unduh')}</a>
 				{/if}
-				<Button variant="outline" onclick={() => handleVerify(file.id)}>{verifiedId === file.id ? 'Verified' : 'Verify file'}</Button>
+				<Button variant="outline" onclick={() => handleVerify(file.id)}>{verifiedId === file.id ? t('Terverifikasi') : t('Verifikasi file')}</Button>
 			</div>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No file matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada file yang cocok dengan pencarian.')}</div>
 		{/each}
 	</div>
 </AppShell>
