@@ -6,6 +6,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { matchBuyerRequest, getMatchedCatalogs, updateBuyerRequestStatus } from '$lib/api/buyer-requests';
 	import type { MatchedItem } from '$lib/api/buyer-requests';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let matches = $state<MatchedItem[]>([]);
@@ -27,7 +28,7 @@
 			data.request.status = res.data.status;
 			matches = (await getMatchedCatalogs(data.request.id)).data;
 		} catch {
-			error = 'Gagal mencocokkan permintaan.';
+			error = t('Gagal mencocokkan permintaan.');
 		} finally {
 			matching = false;
 		}
@@ -39,7 +40,7 @@
 			await updateBuyerRequestStatus(data.request.id, { status: 'Closed' });
 			data.request.status = 'Closed';
 		} catch {
-			error = 'Gagal menutup permintaan.';
+			error = t('Gagal menutup permintaan.');
 		}
 	}
 
@@ -60,7 +61,7 @@
 	<title>{data.request.subject} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.request.id} eyebrow="Buyer request detail">
+<AppShell title={data.request.id} eyebrow={t('Buyer request detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -68,13 +69,13 @@
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 					{data.request.subject}
 				</CardTitle>
-				<CardDescription class="mt-2">{data.buyer?.name ?? 'Unknown buyer'} wants {data.request.quantity} for {data.request.destination}.</CardDescription>
+				<CardDescription class="mt-2">{data.buyer?.name ?? t('Pembeli tidak diketahui')} {t('menginginkan')} {data.request.quantity} {t('untuk')} {data.request.destination}.</CardDescription>
 			</div>
 			<div class="grid gap-2.5 md:min-w-[200px]">
-				<Button variant="outline" href={`/buyer-requests/${data.request.id}/edit`}>Edit request</Button>
-				<Button disabled={matching} onclick={handleMatch}>{matching ? 'Matching...' : 'Run matching'}</Button>
+				<Button variant="outline" href={`/buyer-requests/${data.request.id}/edit`}>{t('Edit permintaan')}</Button>
+				<Button disabled={matching} onclick={handleMatch}>{matching ? t('Mencocokkan...') : t('Jalankan pencocokan')}</Button>
 				{#if data.request.status !== 'Closed'}
-					<Button variant="outline" onclick={handleClose}>Close request</Button>
+					<Button variant="outline" onclick={handleClose}>{t('Tutup permintaan')}</Button>
 				{/if}
 			</div>
 		</div>
@@ -86,31 +87,31 @@
 
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card class="md:col-span-2">
-			<CardHeader><CardTitle>Request terms</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Ketentuan Permintaan')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Buyer <strong class="mt-1 block text-sm font-bold text-foreground">{data.buyer?.name ?? 'Unknown'}</strong>
+					{t('Pembeli')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.buyer?.name ?? t('Tidak diketahui')}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Product <strong class="mt-1 block text-sm font-bold text-foreground">{data.product?.name ?? '—'}</strong>
+					{t('Produk')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.product?.name ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Quantity <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.quantity}</strong>
+					{t('Jumlah')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.quantity}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Destination <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.destination}</strong>
+					{t('Tujuan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.destination}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Deadline <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.deadline}</strong>
+					{t('Batas waktu')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.deadline}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Status <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.status}</strong>
+					{t('Status')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.status}</strong>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader><CardTitle>Requirements</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Persyaratan')}</CardTitle></CardHeader>
 			<CardContent class="flex flex-wrap gap-2">
 				{#each data.request.requirements ?? [] as requirement}
 					<span class="rounded-full border bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">{requirement}</span>
@@ -120,13 +121,13 @@
 
 		<Card class="bg-gradient-to-br from-primary/10 to-background">
 			<CardHeader>
-				<Badge variant="secondary">Matching</Badge>
-				<CardTitle>Matched catalogs ({matches.length})</CardTitle>
-				<CardDescription>Skor akhir = kategori (35%) + HS code (30%) + spesifikasi (25%) + kapabilitas (5%) + volume (5%).</CardDescription>
+				<Badge variant="secondary">{t('Pencocokan')}</Badge>
+				<CardTitle>{t('Katalog yang cocok')} ({matches.length})</CardTitle>
+				<CardDescription>{t('Skor akhir = kategori (35%) + HS code (30%) + spesifikasi (25%) + kapabilitas (5%) + volume (5%).')}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-2.5">
 				{#if matches.length === 0}
-					<p class="text-sm font-semibold text-muted-foreground">Belum ada kecocokan. Jalankan matching.</p>
+					<p class="text-sm font-semibold text-muted-foreground">{t('Belum ada kecocokan. Jalankan matching.')}</p>
 				{/if}
 				{#each matches as match}
 					<div class="rounded-lg border bg-muted/30 p-3.5">
@@ -142,7 +143,7 @@
 							</div>
 						{/if}
 						{#if match.umkm_name}
-							<p class="mt-1.5 text-xs text-muted-foreground">UMKM: {match.umkm_name}</p>
+							<p class="mt-1.5 text-xs text-muted-foreground">{t('UMKM:')} {match.umkm_name}</p>
 						{/if}
 					</div>
 				{/each}
