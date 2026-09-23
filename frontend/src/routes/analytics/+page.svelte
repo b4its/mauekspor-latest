@@ -4,22 +4,68 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
-	import { analyticsMetrics, buyers, complianceRequirements, payments, projects, shipments, suppliers } from '$lib/data/trade';
+	import {
+		analyticsMetrics as seedMetrics,
+		buyers as seedBuyers,
+		complianceRequirements as seedCompliance,
+		payments as seedPayments,
+		projects as seedProjects,
+		shipments as seedShipments,
+		suppliers as seedSuppliers
+	} from '$lib/data/trade';
 	import { currency } from '$lib/utils/format';
-	import { refreshAnalytics } from '$lib/api/analytics';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { getAnalyticsOverview, getAnalyticsLanes, refreshAnalytics, type AnalyticsLane } from '$lib/api/analytics';
+	import { listBuyers } from '$lib/api/buyers';
+	import { listComplianceRequirements } from '$lib/api/compliance';
+	import { listPayments } from '$lib/api/payments';
+	import { listTradeProjects } from '$lib/api/trade-projects';
+	import { listShipments } from '$lib/api/shipments';
+	import { listSuppliers } from '$lib/api/suppliers';
 	let refreshed = $state(false);
 	let refreshing = $state(false);
 	let error = $state('');
-	let totalPipeline = $derived(projects.reduce((sum, project) => sum + project.value, 0));
-	let receivable = $derived(payments.reduce((sum, payment) => sum + payment.amount - payment.paid, 0));
-	let criticalCompliance = $derived(complianceRequirements.filter((item) => item.severity === 'Critical' && item.status !== 'Verified').length);
-	let shipmentRisk = $derived(shipments.filter((shipment) => shipment.status === 'Exception').length);
-	let qualifiedNetwork = $derived(buyers.filter((buyer) => ['Active', 'Negotiating'].includes(buyer.status)).length + suppliers.filter((supplier) => supplier.status === 'Verified').length);
-	const lanes = [
-		{ label: 'Japan coffee', readiness: 82, risk: 'Label proof blocked', href: '/trade-projects/EXP-2408-017' },
-		{ label: 'EU rattan', readiness: 74, risk: 'SVLK and freight validity', href: '/trade-projects/EXP-2408-021' },
-		{ label: 'Singapore snacks', readiness: 91, risk: 'Reorder timing', href: '/trade-projects/EXP-2408-026' }
+	let projects = createRemoteList(listTradeProjects, seedProjects);
+	let payments = createRemoteList(listPayments, seedPayments);
+	let complianceRequirements = createRemoteList(listComplianceRequirements, seedCompliance);
+	let shipments = createRemoteList(listShipments, seedShipments);
+	let buyers = createRemoteList(listBuyers, seedBuyers);
+	let suppliers = createRemoteList(listSuppliers, seedSuppliers);
+	let metrics = $state(seedMetrics);
+	const seedLanes: AnalyticsLane[] = [
+		{ label: 'Japan Coffee Trial Shipment', readiness: 82, risk: 'Medium', href: '/trade-projects/EXP-2408-017', stage: 'Compliance Review' },
+		{ label: 'EU Rattan Furniture Program', readiness: 74, risk: 'High', href: '/trade-projects/EXP-2408-021', stage: 'Quotation' },
+		{ label: 'Singapore Organic Snacks', readiness: 91, risk: 'Low', href: '/trade-projects/EXP-2408-026', stage: 'Documents' }
 	];
+	let lanes = $state<AnalyticsLane[]>(seedLanes);
+	let totalPipeline = $derived(projects.items.reduce((sum, project) => sum + project.value, 0));
+	let receivable = $derived(payments.items.reduce((sum, payment) => sum + payment.amount - payment.paid, 0));
+	let criticalCompliance = $derived(complianceRequirements.items.filter((item) => item.severity === 'Critical' && item.status !== 'Verified').length);
+	let shipmentRisk = $derived(shipments.items.filter((shipment) => shipment.status === 'Exception').length);
+	let qualifiedNetwork = $derived(
+		buyers.items.filter((buyer) => ['Active', 'Negotiating'].includes(buyer.status)).length +
+			suppliers.items.filter((supplier) => supplier.status === 'Verified').length
+	);
+
+
+	$effect(() => {
+		projects.load();
+		payments.load();
+		complianceRequirements.load();
+		shipments.load();
+		buyers.load();
+		suppliers.load();
+		getAnalyticsOverview()
+			.then((res) => {
+				metrics = seedMetrics.map((seed) => res.data.find((m) => m.label === seed.label) ?? seed);
+			})
+			.catch(() => {});
+		getAnalyticsLanes()
+			.then((res) => {
+				lanes = res.data.length ? res.data : seedLanes;
+			})
+			.catch(() => {});
+	});
 
 	async function handleRefresh() {
 		error = '';
@@ -64,7 +110,7 @@
 	{/if}
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		{#each analyticsMetrics as metric}
+		{#each metrics as metric}
 			<Card>
 				<CardContent class="p-5">
 					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{metric.label}</span>
@@ -83,8 +129,8 @@
 			<CardContent class="grid gap-2 p-5">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Project pipeline<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(totalPipeline)}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Open receivable<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(receivable)}</strong></div>
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Active buyers<strong class="mt-1 block text-sm font-bold text-foreground">{buyers.filter((buyer) => buyer.status === 'Active').length}</strong></div>
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Verified suppliers<strong class="mt-1 block text-sm font-bold text-foreground">{suppliers.filter((supplier) => supplier.status === 'Verified').length}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Active buyers<strong class="mt-1 block text-sm font-bold text-foreground">{buyers.items.filter((buyer) => buyer.status === 'Active').length}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Verified suppliers<strong class="mt-1 block text-sm font-bold text-foreground">{suppliers.items.filter((supplier) => supplier.status === 'Verified').length}</strong></div>
 			</CardContent>
 		</Card>
 
@@ -102,7 +148,7 @@
 					<span class="text-sm text-muted-foreground">shipment exception</span>
 				</div>
 				<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3">
-					<strong class="text-3xl font-bold tracking-tight">{payments.filter((payment) => payment.risk === 'High').length}</strong>
+					<strong class="text-3xl font-bold tracking-tight">{payments.items.filter((payment) => payment.risk === 'High').length}</strong>
 					<span class="text-sm text-muted-foreground">high-risk payment</span>
 				</div>
 			</CardContent>

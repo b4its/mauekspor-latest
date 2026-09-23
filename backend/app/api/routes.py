@@ -2332,6 +2332,21 @@ def analytics_refresh():
     return {"data": analytics_overview()["data"], "meta": {}}
 
 
+@router.get("/analytics/lanes/")
+def analytics_lanes():
+    projects = db.all("projects")
+    lanes = []
+    for p in sorted(projects, key=lambda x: x.get("value", 0) or 0, reverse=True)[:6]:
+        lanes.append({
+            "label": p.get("name", p.get("id", "Lane")),
+            "readiness": p.get("readiness", 0) or 0,
+            "risk": p.get("risk", "Low") if p.get("risk") not in (None, "") else "Low",
+            "href": f"/trade-projects/{p['id']}",
+            "stage": p.get("stage", ""),
+        })
+    return {"data": lanes, "meta": {}}
+
+
 # ----------------------------------------------------------------------------
 # NOTIFICATIONS / AUDIT / TEAM / TEMPLATES / AUTOMATIONS / INTEGRATIONS
 # ----------------------------------------------------------------------------
