@@ -1686,6 +1686,56 @@ def refresh_exchange_rate():
     return _one(set_exchange_rate(float(rate), source=source))
 
 
+@router.post("/costing/compare/")
+def compare_costings(payload: sc.BatchActionPayload):
+    """Bandingkan beberapa skenario costing berdampingan (diadaptasi dari costing comparison ExportReadyAI).
+
+    Kirim daftar costing ids -> tabel perbandingan + rekomendasi terbaik.
+    """
+    if not payload.ids:
+        raise HTTPException(422, "ids wajib diisi")
+    items = []
+    for cid in payload.ids:
+        record = db.get("costing", cid)
+        if record:
+            items.append(record)
+    if not items:
+        raise HTTPException(404, "Costing not found")
+    columns = ["id", "title", "destination", "incoterm", "margin", "exchangeRate", "exwPrice", "fobPrice", "cifPrice", "status"]
+    rows = [[c.get(k) for k in columns] for c in items]
+
+    def _num(c, key):
+        v = c.get(key)
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    best_margin = max(items, key=lambda c: _num(c, "margin") or -1, default=None)
+    best_fob = min(items, key=lambda c: _num(c, "fobPrice") or float("inf"), default=None)
+    recommendation = None
+    if best_margin:
+        recommendation = {
+            "costingId": best_margin["id"],
+            "title": best_margin.get("title"),
+            "reason": f"Margin tertinggi ({best_margin.get('margin')}%)",
+            "fobPrice": best_margin.get("fobPrice"),
+            "cifPrice": best_margin.get("cifPrice"),
+        }
+    return {
+        "data": {
+            "columns": columns,
+            "rows": rows,
+            "items": items,
+            "count": len(items),
+            "bestMargin": {"id": best_margin.get("id"), "title": best_margin.get("title"), "margin": best_margin.get("margin")} if best_margin else None,
+            "bestFobPrice": {"id": best_fob.get("id"), "title": best_fob.get("title"), "fobPrice": best_fob.get("fobPrice")} if best_fob else None,
+            "recommendation": recommendation,
+        },
+        "meta": {},
+    }
+
+
 @router.get("/costing/{costing_id}/pdf/")
 def costing_pdf(costing_id: str):
     record = db.get("costing", costing_id)

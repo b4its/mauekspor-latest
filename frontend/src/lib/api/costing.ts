@@ -54,6 +54,28 @@ export function recalculateCostingScenario(id: string) {
 	return apiFetch<CostingScenario>(`/costing/${id}/recalculate/`, { method: 'POST' });
 }
 
+export type CostingCompare = {
+	columns: string[];
+	rows: unknown[][];
+	count: number;
+	bestMargin: { id: string; title: string; margin: number } | null;
+	bestFobPrice: { id: string; title: string; fobPrice: number } | null;
+	recommendation: {
+		costingId: string;
+		title: string;
+		reason: string;
+		fobPrice: number;
+		cifPrice: number;
+	} | null;
+};
+
+export function compareCostingScenarios(ids: string[]) {
+	return apiFetch<CostingCompare>('/costing/compare/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}
+
 export function costingPdfUrl(id: string) {
 	const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
 	return `${base}/costing/${id}/pdf/`;

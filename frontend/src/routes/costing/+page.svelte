@@ -1,11 +1,12 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
-	import { Button } from '$lib/components/ui/button/index.js';
+import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { costingScenarios as seedScenarios, projects as seedProjects } from '$lib/data/trade';
-import { listCostingScenarios } from '$lib/api/costing';
+	import { listCostingScenarios, compareCostingScenarios, type CostingCompare } from '$lib/api/costing';
 import { listTradeProjects } from '$lib/api/trade-projects';
 import { csvExportUrl } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -40,6 +41,45 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		return projects.items.find((project) => project.id === projectId)?.name ?? projectId;
 	}
 
+	// ---------- Compare mode ----------
+	let selected = $state<string[]>([]);
+	let compareResult = $state<CostingCompare | null>(null);
+	let comparing = $state(false);
+	let compareError = $state('');
+
+	function toggleSelect(id: string) {
+		selected = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
+	}
+
+	async function runCompare() {
+		compareError = '';
+		comparing = true;
+		try {
+			const res = await compareCostingScenarios(selected);
+			compareResult = res.data;
+		} catch {
+			compareError = 'Gagal membandingkan skenario costing.';
+		} finally {
+			comparing = false;
+		}
+	}
+
+	function columnLabel(col: string) {
+		const labels: Record<string, string> = {
+			id: 'ID',
+			title: 'Skenario',
+			destination: 'Negara tujuan',
+			incoterm: 'Incoterm',
+			margin: 'Margin (%)',
+			exchangeRate: 'Kurs (IDR/USD)',
+			exwPrice: 'EXW (USD)',
+			fobPrice: 'FOB (USD)',
+			cifPrice: 'CIF (USD)',
+			status: 'Status'
+		};
+		return labels[col] ?? col;
+	}
+
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
 		if (tone === 'red') return 'destructive';
@@ -59,12 +99,65 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Separate seller price, freight estimate, and buyer landed cost.</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Model EXW, FOB, CIF, DAP, freight validity, currency exposure, destination charges, tax reserve, and margin before quotation acceptance.</CardDescription>
 		</CardHeader>
-		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
+<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button href="/costing/create">Create scenario</Button>
-<Button href={csvExportUrl('/costing/export.csv')} variant="outline">Export CSV</Button>
+			<Button href={csvExportUrl('/costing/export.csv')} variant="outline">Export CSV</Button>
+			<Button variant="secondary" disabled={selected.length < 2 || comparing} onclick={runCompare}>
+				{comparing ? 'Membandingkan...' : `Compare (${selected.length})`}
+			</Button>
 			<Badge variant="secondary">Avg margin {averageMargin}%</Badge>
 		</CardContent>
 	</Card>
+
+	{#if compareError}
+		<p class="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{compareError}</p>
+	{/if}
+
+	{#if compareResult && compareResult.rows.length > 0}
+		<Card>
+			<CardHeader>
+				<div class="flex flex-wrap items-center justify-between gap-3">
+					<div>
+						<CardTitle>Perbandingan {compareResult.count} skenario</CardTitle>
+						<CardDescription>
+							{#if compareResult.recommendation}
+								Rekomendasi: <strong>{compareResult.recommendation.title}</strong> — {compareResult.recommendation.reason}
+							{:else}
+								Pilih minimal 2 skenario untuk rekomendasi otomatis.
+							{/if}
+						</CardDescription>
+					</div>
+					<Button size="sm" variant="outline" onclick={() => (compareResult = null)}>Tutup</Button>
+				</div>
+			</CardHeader>
+			<CardContent class="overflow-x-auto p-0">
+				<table class="w-full text-sm">
+					<thead class="bg-muted/50">
+						<tr>
+							{#each compareResult.columns as col}
+								<th class="px-4 py-2 text-left font-bold">{columnLabel(col)}</th>
+							{/each}
+						</tr>
+					</thead>
+					<tbody>
+						{#each compareResult.rows as row, i}
+							<tr class="border-t hover:bg-muted/30">
+								{#each row as value, j}
+									<td class="px-4 py-2">
+										{#if j === 1}
+											<a href={`/costing/${String(compareResult!.rows[i][0])}`} class="font-bold underline-offset-2 hover:underline">{String(value)}</a>
+										{:else}
+											{value}
+										{/if}
+									</td>
+								{/each}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</CardContent>
+		</Card>
+	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">
@@ -84,20 +177,25 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 		{#each filteredScenarios as scenario}
 			<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-				<a href={`/costing/${scenario.id}`} class="block h-full p-5 no-underline">
+				<label class="block h-full p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(scenario.status))}>{scenario.status}</Badge>
+						<div class="flex items-center gap-2">
+							<Checkbox checked={selected.includes(scenario.id)} onCheckedChange={() => toggleSelect(scenario.id)} />
+							<Badge variant={toneVariant(statusTone(scenario.status))}>{scenario.status}</Badge>
+						</div>
 						<strong class="text-2xl font-bold tracking-tight">{scenario.confidence}%</strong>
 					</div>
-					<h3 class="mt-3 text-2xl font-bold tracking-tight">{scenario.title}</h3>
-					<p class="mt-1 text-sm text-muted-foreground">{projectName(scenario.projectId)}</p>
-					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Incoterm<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.incoterm}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Destination<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.destination}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">FOB<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.fobPrice)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Landed<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.landedCost)}</strong></div>
-					</div>
-				</a>
+					<a href={`/costing/${scenario.id}`} class="no-underline">
+						<h3 class="mt-3 text-2xl font-bold tracking-tight">{scenario.title}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{projectName(scenario.projectId)}</p>
+						<div class="mt-4 grid grid-cols-2 gap-2">
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Incoterm<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.incoterm}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Destination<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.destination}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">FOB<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.fobPrice)}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Landed<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.landedCost)}</strong></div>
+						</div>
+					</a>
+				</label>
 			</Card>
 		{:else}
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No costing scenario matched your search.</div>

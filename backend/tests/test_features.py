@@ -429,3 +429,30 @@ def test_batch_enrich_and_batch_delete():
         # Batch delete tanpa ids -> 422
         r = c.post("/api/v1/products/batch/delete/", json={"ids": []})
         assert r.status_code == 422
+
+
+def test_costing_compare_and_xlsx_exports():
+    with TestClient(app) as c:
+        _login(c)
+        costing_ids = [x["id"] for x in c.get("/api/v1/costing/").json()["data"]]
+        assert costing_ids, "seed costing kosong"
+        r = c.post("/api/v1/costing/compare/", json={"ids": costing_ids})
+        assert r.status_code == 200, r.text
+        data = r.json()["data"]
+        assert data["count"] == len(costing_ids)
+        assert data["recommendation"] and data["recommendation"]["costingId"]
+        # ids kosong -> 422
+        assert c.post("/api/v1/costing/compare/", json={"ids": []}).status_code == 422
+
+        # Export XLSX valid (zip XML) untuk semua modul
+        for url in ("/api/v1/products/export.xlsx", "/api/v1/buyers/export.xlsx",
+                    "/api/v1/export-analysis/export.xlsx", "/api/v1/costing/export.xlsx",
+                    "/api/v1/audit/export.xlsx"):
+            r = c.get(url)
+            assert r.status_code == 200, (url, r.text[:80])
+            assert "spreadsheetml.sheet" in r.headers["content-type"]
+            assert r.content[:2] == b"PK"  # magic zip
+            import io
+            import zipfile
+            names = zipfile.ZipFile(io.BytesIO(r.content)).namelist()
+            assert "xl/workbook.xml" in names and "xl/worksheets/sheet1.xml" in names
