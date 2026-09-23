@@ -62,17 +62,44 @@
 		...chatConversations.map((chat) => ({ label: chat.title, href: '/chat', group: 'Chat' })),
 		...exportAnalyses.map((analysis) => ({ label: `${analysis.productName} - ${analysis.destination}`, href: `/export-analysis/${analysis.id}`, group: 'Export Analysis' }))
 	]);
-	let filteredCommands = $derived(
-		commands.filter((item) => item.label.toLowerCase().includes(commandQuery.trim().toLowerCase())).slice(0, 8)
-	);
 	let activityCount = $derived(activities.length);
 	let unreadCount = $state(0);
+	let liveResults = $state<{ label: string; href: string; group: string; sub?: string }[]>([]);
+	const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
 
 	$effect(() => {
 		listNotifications()
 			.then((res) => (unreadCount = res.data.filter((n) => n.status === 'Unread').length))
 			.catch(() => (unreadCount = 0));
 	});
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const q = commandQuery.trim();
+		if (q.length < 2) {
+			liveResults = [];
+			return;
+		}
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(async () => {
+			try {
+				const res = await fetch(`${API_BASE}/search/?q=${encodeURIComponent(q)}`, { credentials: 'include' });
+				if (res.ok) {
+					const body = await res.json();
+					liveResults = (body.data ?? []) as typeof liveResults;
+				}
+			} catch {
+				liveResults = [];
+			}
+		}, 250);
+	});
+
+	let filteredCommands = $derived<{ label: string; href: string; group: string; sub?: string }[]>([
+		...liveResults,
+		...commands
+			.filter((item) => item.label.toLowerCase().includes(commandQuery.trim().toLowerCase()))
+			.slice(0, 8 - liveResults.length)
+	]);
 </script>
 
 <svelte:window
@@ -187,7 +214,10 @@
 						class="flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-accent"
 					>
 						<span class="font-medium">{command.label}</span>
-						<span class="text-xs text-muted-foreground">{command.group}</span>
+						<span class="flex items-center gap-2 text-xs text-muted-foreground">
+							{#if command.sub}<span>{command.sub}</span>{/if}
+							<span>{command.group}</span>
+						</span>
 					</a>
 				{:else}
 					<p class="px-2.5 py-4 text-center text-sm text-muted-foreground">No command found.</p>

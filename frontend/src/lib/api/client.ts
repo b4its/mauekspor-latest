@@ -10,6 +10,11 @@ export type ApiErrorBody = {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
 
+/** URL absolut ke endpoint CSV export backend (mis. '/products/export.csv'). */
+export function csvExportUrl(path: string): string {
+	return `${API_BASE_URL}${path}`;
+}
+
 export class ApiError extends Error {
 	status: number;
 	body: ApiErrorBody | null;

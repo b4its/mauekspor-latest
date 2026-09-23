@@ -246,6 +246,60 @@ def delete_user(user_id: str):
 
 
 # ----------------------------------------------------------------------------
+# CSV EXPORT (didefinisikan sebelum route parameterized agar tidak tertutup)
+# ----------------------------------------------------------------------------
+def _csv_response(rows: list[list], filename: str) -> Response:
+    import csv as _csv
+    import io as _io
+    buffer = _io.StringIO()
+    writer = _csv.writer(buffer)
+    for row in rows:
+        writer.writerow(["" if v is None else v for v in row])
+    from fastapi.responses import Response
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/products/export.csv")
+def export_products_csv():
+    rows = [["id", "name", "category", "status", "hs", "origin", "packaging", "netWeight", "grossWeight", "moq", "leadTime", "readiness"]]
+    for p in db.all("products"):
+        rows.append([p.get("id"), p.get("name"), p.get("category"), p.get("status"), p.get("hs"), p.get("origin"),
+                     p.get("packaging"), p.get("netWeight"), p.get("grossWeight"), p.get("moq"), p.get("leadTime"), p.get("readiness")])
+    return _csv_response(rows, "products.csv")
+
+
+@router.get("/buyers/export.csv")
+def export_buyers_csv():
+    rows = [["id", "name", "country", "segment", "status", "fitScore", "estimatedAnnualValue", "nextStep"]]
+    for b in db.all("buyers"):
+        rows.append([b.get("id"), b.get("name"), b.get("country"), b.get("segment"), b.get("status"),
+                     b.get("fitScore"), b.get("estimatedAnnualValue"), b.get("nextStep")])
+    return _csv_response(rows, "buyers.csv")
+
+
+@router.get("/export-analysis/export.csv")
+def export_analyses_csv():
+    rows = [["id", "productName", "destination", "status", "hsCode", "score", "grade", "confidence", "summary"]]
+    for a in db.all("export_analyses"):
+        rows.append([a.get("id"), a.get("productName"), a.get("destination"), a.get("status"), a.get("hsCode"),
+                     a.get("score"), a.get("statusGrade"), a.get("confidence"), a.get("summary")])
+    return _csv_response(rows, "export-analyses.csv")
+
+
+@router.get("/costing/export.csv")
+def export_costing_csv():
+    rows = [["id", "title", "destination", "incoterm", "margin", "exchangeRate", "exwPrice", "fobPrice", "cifPrice", "status"]]
+    for c in db.all("costing"):
+        rows.append([c.get("id"), c.get("title"), c.get("destination"), c.get("incoterm"), c.get("margin"),
+                     c.get("exchangeRate"), c.get("exwPrice"), c.get("fobPrice"), c.get("cifPrice"), c.get("status")])
+    return _csv_response(rows, "costing.csv")
+
+
+# ----------------------------------------------------------------------------
 # PRODUCTS
 # ----------------------------------------------------------------------------
 @router.get("/products/")
@@ -2456,6 +2510,31 @@ def generate_report(report_id: str):
     record = db.get("reports", report_id)
     if not record:
         raise HTTPException(404, "Report not found")
+    # Bangun konten laporan dari data workspace nyata
+    projects = db.all("projects")
+    products = db.all("products")
+    analyses = db.all("export_analyses")
+    buyers = db.all("buyers")
+    orders = db.all("orders")
+    pipeline_value = sum(p.get("value", 0) or 0 for p in projects)
+    order_value = sum(o.get("value", 0) or 0 for o in orders)
+    record["sections"] = [
+        {"title": "Pipeline value", "value": f"${pipeline_value:,}", "detail": f"{len(projects)} proyek aktif"},
+        {"title": "Order value", "value": f"${order_value:,}", "detail": f"{len(orders)} order"},
+        {"title": "Products", "value": str(len(products)), "detail": f"{sum(1 for p in products if p.get('status') == 'Enriched')} enriched"},
+        {"title": "Market analyses", "value": str(len(analyses)), "detail": f"{sum(1 for a in analyses if a.get('status') == 'Ready')} ready"},
+        {"title": "Active buyers", "value": str(len(buyers)), "detail": "CRM pipeline"},
+    ]
+    record["insights"] = []
+    if analyses:
+        best = max(analyses, key=lambda a: a.get("score", 0) or 0)
+        record["insights"].append(f"Pasar dengan skor tertinggi: {best.get('destination', '')} ({best.get('score', 0)}).")
+    if projects:
+        high = [p for p in projects if p.get("risk") == "High"]
+        if high:
+            record["insights"].append(f"{len(high)} proyek berisiko tinggi memerlukan perhatian.")
+    if not record["insights"]:
+        record["insights"].append("Tidak ada insight tambahan untuk periode ini.")
     record["status"] = "Ready"
     record["updatedAt"] = "now"
     return _one(record)
@@ -3155,3 +3234,34 @@ def update_settings(payload: dict):
     record["updatedAt"] = "now"
     db.save(record)
     return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# PENCARIAN GLOBAL (command palette)
+# ----------------------------------------------------------------------------
+@router.get("/search/")
+def global_search(q: str = ""):
+    """Cari di seluruh entitas workspace (produk, buyer, proyek, analisis, katalog, forwarder)."""
+    query = q.strip().lower()
+    if not query:
+        return {"data": [], "meta": {}}
+    results: list[dict] = []
+    for p in db.all("products"):
+        if query in str(p.get("name", "")).lower() or query in str(p.get("hs", "")).lower() or query in str(p.get("category", "")).lower():
+            results.append({"label": p.get("name"), "href": f"/products/{p.get('id')}", "group": "Product", "sub": p.get("hs", "")})
+    for b in db.all("buyers"):
+        if query in str(b.get("name", "")).lower() or query in str(b.get("country", "")).lower():
+            results.append({"label": b.get("name"), "href": f"/buyers/{b.get('id')}", "group": "Buyer", "sub": b.get("country", "")})
+    for pr in db.all("projects"):
+        if query in str(pr.get("name", "")).lower() or query in str(pr.get("product", "")).lower() or query in str(pr.get("buyer", "")).lower():
+            results.append({"label": pr.get("name"), "href": f"/trade-projects/{pr.get('id')}", "group": "Trade Project", "sub": pr.get("product", "")})
+    for a in db.all("export_analyses"):
+        if query in str(a.get("productName", "")).lower() or query in str(a.get("destination", "")).lower():
+            results.append({"label": f"{a.get('productName')} - {a.get('destination')}", "href": f"/export-analysis/{a.get('id')}", "group": "Export Analysis", "sub": a.get("hsCode", "")})
+    for cat in db.all("catalogs"):
+        if query in str(cat.get("title", "")).lower() or query in str(cat.get("targetMarket", "")).lower():
+            results.append({"label": cat.get("title"), "href": f"/catalogs/{cat.get('id')}", "group": "Catalog", "sub": cat.get("targetMarket", "")})
+    for f in db.all("forwarders"):
+        if query in str(f.get("name", "")).lower() or query in str(f.get("coverage", "")).lower():
+            results.append({"label": f.get("name"), "href": f"/forwarders/{f.get('id')}", "group": "Forwarder", "sub": f.get("coverage", "")})
+    return {"data": results[:20], "meta": {"count": len(results)}}

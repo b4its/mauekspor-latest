@@ -5,8 +5,9 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { exportAnalyses as seedAnalyses } from '$lib/data/trade';
-	import { listExportAnalyses } from '$lib/api/export-analysis';
-	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { listExportAnalyses } from '$lib/api/export-analysis';
+import { csvExportUrl } from '$lib/api/client';
+import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 
 	const filters = ['All', 'Ready', 'In Progress', 'Needs Review'];
@@ -51,6 +52,7 @@
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button href="/export-analysis/create">New analysis</Button>
 			<Button href="/export-analysis/compare" variant="outline">Compare markets</Button>
+			<Button href={csvExportUrl('/export-analysis/export.csv')} variant="outline">Export CSV</Button>
 		</CardContent>
 	</Card>
 

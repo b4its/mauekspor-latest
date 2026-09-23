@@ -353,7 +353,7 @@ export type TradeReport = {
 	period: string;
 	owner: string;
 	updatedAt: string;
-	sections: string[];
+	sections: (string | { title: string; value: string; detail: string })[];
 	insights: string[];
 };
 

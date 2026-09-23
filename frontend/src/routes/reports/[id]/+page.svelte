@@ -78,11 +78,31 @@
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 				{/if}
-				<div class="flex flex-wrap gap-2">
-					{#each data.report.sections as section}
-						<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{section}</span>
-					{/each}
-				</div>
+				{#if generated}
+					<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+						{#each data.report.sections as section}
+							{#if typeof section === 'object' && section !== null}
+								<div class="rounded-lg border bg-muted/40 p-3">
+									<span class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{section.title}</span>
+									<strong class="mt-1 block text-xl font-bold">{section.value}</strong>
+									<small class="text-xs text-muted-foreground">{section.detail}</small>
+								</div>
+							{:else}
+								<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{section}</span>
+							{/if}
+						{/each}
+					</div>
+				{:else}
+					<div class="flex flex-wrap gap-2">
+						{#each data.report.sections as section}
+							{#if typeof section === 'object' && section !== null}
+								<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{section.title}</span>
+							{:else}
+								<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{section}</span>
+							{/if}
+						{/each}
+					</div>
+				{/if}
 			</CardContent>
 		</Card>
 

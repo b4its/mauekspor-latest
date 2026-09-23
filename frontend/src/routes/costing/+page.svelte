@@ -5,9 +5,10 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { costingScenarios as seedScenarios, projects as seedProjects } from '$lib/data/trade';
-	import { listCostingScenarios } from '$lib/api/costing';
-	import { listTradeProjects } from '$lib/api/trade-projects';
-	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { listCostingScenarios } from '$lib/api/costing';
+import { listTradeProjects } from '$lib/api/trade-projects';
+import { csvExportUrl } from '$lib/api/client';
+import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
 
 	const filters = ['All', 'Ready', 'Needs Review', 'Draft'];
@@ -60,6 +61,7 @@
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button href="/costing/create">Create scenario</Button>
+<Button href={csvExportUrl('/costing/export.csv')} variant="outline">Export CSV</Button>
 			<Badge variant="secondary">Avg margin {averageMargin}%</Badge>
 		</CardContent>
 	</Card>

@@ -6,6 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts } from '$lib/data/trade';
 	import { listProducts, deleteProduct } from '$lib/api/products';
+	import { csvExportUrl } from '$lib/api/client';
 	import { statusTone } from '$lib/utils/format';
 	import type { Product } from '$lib/data/trade';
 
@@ -79,6 +80,7 @@
 				</CardDescription>
 			</div>
 			<Button href="/products/new">Add product</Button>
+			<Button variant="outline" href={csvExportUrl('/products/export.csv')}>Export CSV</Button>
 		</div>
 	</Card>
 

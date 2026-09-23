@@ -5,8 +5,9 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { buyers as seedBuyers } from '$lib/data/trade';
-	import { listBuyers, createBuyer } from '$lib/api/buyers';
-	import { createRemoteList } from '$lib/api/remote-list.svelte';
+import { listBuyers, createBuyer } from '$lib/api/buyers';
+import { csvExportUrl } from '$lib/api/client';
+import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
 
 	const filters = ['All', 'Lead', 'Qualified', 'Negotiating', 'Active', 'At Risk'];
@@ -76,6 +77,7 @@
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={handleCreate} disabled={creating} class="w-full">{created ? 'Lead captured' : creating ? 'Adding...' : 'Add buyer lead'}</Button>
+			<Button href={csvExportUrl('/buyers/export.csv')} variant="outline">Export CSV</Button>
 			<Badge variant="secondary">Active {activeCount}</Badge>
 		</CardContent>
 	</Card>
