@@ -4,7 +4,9 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { supportTickets } from '$lib/data/trade';
+	import { supportTickets as seedTickets } from '$lib/data/trade';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { listSupportTickets } from '$lib/api/support';
 	import { statusTone } from '$lib/utils/format';
 	import { createSupportTicket, resolveSupportTicket } from '$lib/api/support';
 
@@ -16,14 +18,15 @@
 	let error = $state('');
 	let resolvedId = $state('');
 	let creating = $state(false);
+	let tickets = createRemoteList(listSupportTickets, seedTickets);
 	let filteredTickets = $derived(
-		supportTickets.filter(
+		tickets.items.filter(
 			(ticket) =>
 				(activeFilter === 'All' || ticket.category === activeFilter) &&
 				[ticket.subject, ticket.category, ticket.status, ticket.priority, ticket.owner, ticket.description].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
-	let openCount = $derived(supportTickets.filter((ticket) => ticket.status !== 'Resolved').length);
+	let openCount = $derived(tickets.items.filter((ticket) => ticket.status !== 'Resolved').length);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -31,6 +34,10 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+
+	$effect(() => {
+		tickets.load();
+	});
 
 	async function handleCreate() {
 		error = '';

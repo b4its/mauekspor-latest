@@ -4,7 +4,9 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { apiKeys } from '$lib/data/trade';
+	import { apiKeys as seedApiKeys } from '$lib/data/trade';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { listApiKeys } from '$lib/api/api-keys';
 	import { statusTone } from '$lib/utils/format';
 	import { createApiKey, revokeApiKey } from '$lib/api/api-keys';
 
@@ -15,15 +17,16 @@
 	let creating = $state(false);
 	let revokingId = $state('');
 	let revoked = $state(false);
+	let keys = createRemoteList(listApiKeys, seedApiKeys);
 	let error = $state('');
 	let filteredKeys = $derived(
-		apiKeys.filter(
+		keys.items.filter(
 			(key) =>
 				(activeFilter === 'All' || key.status === activeFilter) &&
 				[key.name, key.prefix, key.status, key.owner, ...key.scopes].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
-	let activeCount = $derived(apiKeys.filter((key) => key.status === 'Active').length + (created ? 1 : 0));
+	let activeCount = $derived(keys.items.filter((key) => key.status === 'Active').length + (created ? 1 : 0));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -32,11 +35,15 @@
 		return 'secondary';
 	}
 
+	$effect(() => {
+		keys.load();
+	});
+
 	async function handleCreate() {
 		error = '';
 		creating = true;
 		try {
-			await createApiKey(`Export API Key ${apiKeys.length + 1}`, ['catalogs:read', 'quotations:read']);
+			await createApiKey(`Export API Key ${keys.items.length + 1}`, ['catalogs:read', 'quotations:read']);
 			created = true;
 		} catch {
 			error = 'Gagal membuat API key.';

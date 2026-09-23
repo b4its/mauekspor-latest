@@ -4,24 +4,27 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { templates } from '$lib/data/trade';
+	import { templates as seedTemplates } from '$lib/data/trade';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { listTemplates, useTemplate } from '$lib/api/templates';
 	import { statusTone } from '$lib/utils/format';
-	import { useTemplate } from '$lib/api/templates';
+	
 
 	const filters = ['All', 'Document', 'Email', 'Workflow', 'Catalog'];
 	let activeFilter = $state('All');
 	let query = $state('');
 	let used = $state(false);
+	let templates = createRemoteList(listTemplates, seedTemplates);
 	let error = $state('');
 	let usedId = $state('');
 	let filteredTemplates = $derived(
-		templates.filter(
+		templates.items.filter(
 			(item) =>
 				(activeFilter === 'All' || item.category === activeFilter) &&
 				[item.title, item.category, item.status, item.description, item.usedBy, ...item.fields].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
-	let readyCount = $derived(templates.filter((item) => item.status === 'Ready').length);
+	let readyCount = $derived(templates.items.filter((item) => item.status === 'Ready').length);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -29,6 +32,10 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+
+	$effect(() => {
+		templates.load();
+	});
 
 	async function handleUse(templateId: string) {
 		error = '';
@@ -58,7 +65,7 @@
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={() => handleUse(templates[0]?.id ?? 't-001')}>{used ? 'Template used' : 'Use template'}</Button>
+			<Button onclick={() => handleUse(templates.items[0]?.id ?? 't-001')}>{used ? 'Template used' : 'Use template'}</Button>
 			<Badge>Ready {readyCount}</Badge>
 		</CardContent>
 	</Card>

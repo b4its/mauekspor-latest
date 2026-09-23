@@ -4,14 +4,17 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
-	import { billingRecords } from '$lib/data/trade';
+	import { billingRecords as seedBillingRecords } from '$lib/data/trade';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { changePlan, downloadInvoice, getBilling } from '$lib/api/billing';
 	import { currency, statusTone } from '$lib/utils/format';
-	import { changePlan, downloadInvoice } from '$lib/api/billing';
+	
 	let changed = $state(false);
 	let downloaded = $state(false);
 	let busy = $state(false);
 	let error = $state('');
-	const billing = billingRecords[0];
+	let billings = createRemoteList(getBilling, seedBillingRecords);
+	let billing = $derived(billings.items[0] ?? seedBillingRecords[0]);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -19,6 +22,10 @@
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
+
+	$effect(() => {
+		billings.load();
+	});
 
 	async function handleChangePlan() {
 		error = '';

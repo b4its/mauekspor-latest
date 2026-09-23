@@ -4,7 +4,9 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { knowledgeArticles } from '$lib/data/trade';
+	import { knowledgeArticles as seedArticles } from '$lib/data/trade';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { listKnowledgeArticles } from '$lib/api/knowledge';
 	import { statusTone } from '$lib/utils/format';
 	import { publishKnowledgeArticle } from '$lib/api/knowledge';
 
@@ -12,16 +14,17 @@
 	let activeFilter = $state('All');
 	let query = $state('');
 	let published = $state(false);
+	let articles = createRemoteList(listKnowledgeArticles, seedArticles);
 	let error = $state('');
 	let publishedId = $state('');
 	let filteredArticles = $derived(
-		knowledgeArticles.filter(
+		articles.items.filter(
 			(article) =>
 				(activeFilter === 'All' || article.category === activeFilter) &&
 				[article.title, article.category, article.status, article.summary, ...article.steps].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
-	let publishedCount = $derived(knowledgeArticles.filter((article) => article.status === 'Published').length + (published ? 1 : 0));
+	let publishedCount = $derived(articles.items.filter((article) => article.status === 'Published').length + (published ? 1 : 0));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -30,9 +33,13 @@
 		return 'secondary';
 	}
 
+	$effect(() => {
+		articles.load();
+	});
+
 	async function handlePublish() {
 		error = '';
-		const draft = knowledgeArticles.find((article) => article.status === 'Draft') ?? knowledgeArticles[0];
+		const draft = articles.items.find((article) => article.status === 'Draft') ?? articles.items[0];
 		try {
 			await publishKnowledgeArticle(draft.id);
 			published = true;

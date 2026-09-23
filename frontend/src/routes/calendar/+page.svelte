@@ -4,28 +4,33 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { calendarEvents, projects } from '$lib/data/trade';
+	import { calendarEvents as seedCalendarEvents, projects as seedProjects } from '$lib/data/trade';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { listCalendarEvents } from '$lib/api/calendar';
+	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { statusTone } from '$lib/utils/format';
 	import { createCalendarEvent, markCalendarEventDone } from '$lib/api/calendar';
 
 	const filters = ['All', 'Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
 	let activeFilter = $state('All');
 	let query = $state('');
+	let events = createRemoteList(listCalendarEvents, seedCalendarEvents);
+	let projects = createRemoteList(listTradeProjects, seedProjects);
 	let created = $state(false);
 	let creating = $state(false);
 	let done = $state(false);
 	let error = $state('');
 	let doneEventId = $state('');
 	let filteredEvents = $derived(
-		calendarEvents.filter(
+		events.items.filter(
 			(event) =>
 				(activeFilter === 'All' || event.type === activeFilter) &&
 				[event.title, event.type, event.status, event.owner, event.description].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
-	let dueSoon = $derived(calendarEvents.filter((event) => event.status === 'Due Soon' || event.status === 'Blocked').length);
+	let dueSoon = $derived(events.items.filter((event) => event.status === 'Due Soon' || event.status === 'Blocked').length);
 	function projectName(id: string) {
-		return projects.find((project) => project.id === id)?.name ?? id;
+		return projects.items.find((project) => project.id === id)?.name ?? id;
 	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -35,6 +40,11 @@
 		return 'secondary';
 	}
 
+	$effect(() => {
+		events.load();
+		projects.load();
+	});
+
 	async function handleCreate() {
 		error = '';
 		creating = true;
@@ -43,7 +53,7 @@
 				title: 'Follow-up: buyer meeting',
 				date: new Date().toISOString().slice(0, 10),
 				type: 'Buyer',
-				projectId: projects[0]?.id ?? 'p-001'
+				projectId: projects.items[0]?.id ?? 'p-001'
 			});
 			created = true;
 		} catch {
