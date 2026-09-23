@@ -5,6 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { generateReport, scheduleReport } from '$lib/api/reports';
+	import { t } from '$lib/i18n.svelte';
 	let { data } = $props();
 	let generated = $state(false);
 	let scheduled = $state(false);
@@ -39,7 +40,7 @@
 			await scheduleReport(data.report.id);
 			scheduled = true;
 		} catch {
-			error = 'Gagal menjadwalkan laporan.';
+			error = t('Gagal menjadwalkan laporan.');
 		} finally {
 			busy = false;
 		}
@@ -50,7 +51,7 @@
 	<title>{data.report.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.report.id} eyebrow="Report detail">
+<AppShell title={data.report.id} eyebrow={t('Report detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(displayStatus))} class="w-fit">{displayStatus}</Badge>
@@ -58,7 +59,7 @@
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{data.report.type} · {data.report.period} · {data.report.owner}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Sections<strong class="mt-1 block text-sm font-bold text-foreground">{data.report.sections.length}</strong></div>
+			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.report.sections.length}</strong></div>
 		</CardContent>
 	</Card>
 
@@ -67,12 +68,12 @@
 			<CardContent class="grid gap-4 p-5">
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div>
-						<h3 class="text-xl font-bold tracking-tight">Report Builder</h3>
-						<p class="mt-1 text-sm text-muted-foreground">Updated {data.report.updatedAt}. Generate a fresh report or schedule recurring delivery.</p>
+						<h3 class="text-xl font-bold tracking-tight">{t('Pembuat laporan')}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{t('Diperbarui')} {data.report.updatedAt}. {t('Buat laporan baru atau jadwalkan pengiriman berulang.')}</p>
 					</div>
 					<div class="flex flex-wrap gap-2">
-						<Button variant="outline" onclick={handleSchedule} disabled={busy}>{scheduled ? 'Scheduled' : 'Schedule'}</Button>
-						<Button onclick={handleGenerate} disabled={busy}>{generated ? 'Report generated' : busy ? 'Working...' : 'Generate now'}</Button>
+						<Button variant="outline" onclick={handleSchedule} disabled={busy}>{scheduled ? t('Dijadwalkan') : t('Jadwalkan')}</Button>
+						<Button onclick={handleGenerate} disabled={busy}>{generated ? t('Laporan berhasil dibuat') : busy ? t('Bekerja...') : t('Buat sekarang')}</Button>
 					</div>
 				</div>
 				{#if error}
@@ -108,8 +109,8 @@
 
 		<Card>
 			<CardHeader class="p-5">
-				<Badge variant="secondary" class="w-fit">Insights</Badge>
-				<CardTitle>Executive Notes</CardTitle>
+				<Badge variant="secondary" class="w-fit">{t('Wawasan')}</Badge>
+				<CardTitle>{t('Catatan Eksekutif')}</CardTitle>
 			</CardHeader>
 			<CardContent class="grid gap-3 p-5">
 				<div class="grid gap-3 sm:grid-cols-3">
@@ -121,7 +122,7 @@
 					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Laporan dibuat di backend.</p>
 				{/if}
 				{#if scheduled}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Laporan dijadwalkan di backend.</p>
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Laporan dijadwalkan di backend.')}</p>
 				{/if}
 			</CardContent>
 		</Card>

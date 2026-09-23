@@ -5,6 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 import { requestForwarderQuote, getForwarderStatistics, createForwarderReview } from '$lib/api/forwarders';
 import type { ForwarderStatistics } from '$lib/api/forwarders';
 import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
@@ -39,7 +40,7 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 			await requestForwarderQuote(data.forwarder.id);
 			quoteRequested = true;
 		} catch {
-			error = 'Gagal meminta kuotasi forwarder.';
+			error = t('Gagal meminta kuotasi forwarder.');
 		} finally {
 			requesting = false;
 		}
@@ -53,7 +54,7 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 			submitted = true;
 			stats = (await getForwarderStatistics(data.forwarder.id)).data;
 		} catch {
-			error = 'Gagal mengirim review.';
+			error = t('Gagal mengirim review.');
 		} finally {
 			submitting = false;
 		}
@@ -64,7 +65,7 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 	<title>{data.forwarder.name} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.forwarder.id} eyebrow="Forwarder detail">
+<AppShell title={data.forwarder.id} eyebrow={t('Forwarder detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -81,10 +82,10 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 					company={data.forwarder.name}
 				/>
 				<Button disabled={quoteRequested || requesting} onclick={handleQuote}>
-					{quoteRequested ? 'Quote requested' : requesting ? 'Requesting...' : 'Request quote'}
+					{quoteRequested ? t('Kuotasi diminta') : requesting ? t('Meminta...') : t('Minta kuotasi')}
 				</Button>
-				<Button variant="outline" href="/forwarders/catalogs">View catalogs</Button>
-				<Button variant="outline" href="/shipments">Open shipments</Button>
+				<Button variant="outline" href="/forwarders/catalogs">{t('Lihat katalog')}</Button>
+				<Button variant="outline" href="/shipments">{t('Buka pengiriman')}</Button>
 			</div>
 		</div>
 	</Card>
@@ -95,35 +96,35 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 
 	{#if quoteRequested}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Quote requested.</strong>
+			<strong class="block">{t('Kuotasi diminta.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				Permintaan kuotasi dikirim ke {data.forwarder.contact} di backend.
+				{t('Permintaan kuotasi dikirim ke')} {data.forwarder.contact} {t('di backend.')}
 			</span>
 		</div>
 	{/if}
 
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card class="md:col-span-2">
-			<CardHeader><CardTitle>Freight profile</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Profil freight')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Coverage <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.coverage}</strong>
+					{t('Cakupan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.coverage}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Mode <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.mode}</strong>
+					{t('Mode')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.mode}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					On-time rate <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.onTimeRate}%</strong>
+					{t('Tingkat tepat waktu')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.onTimeRate}%</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Quote speed <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.quoteSpeed}</strong>
+					{t('Kecepatan kuotasi')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.quoteSpeed}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Contact <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.contact}</strong>
+					{t('Kontak')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.forwarder.contact}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Rating <strong class="mt-1 block text-sm font-bold text-foreground">
-						{data.forwarder.averageRating ?? 0} ⭐ ({data.forwarder.totalReviews ?? 0} review)
+					{t('Rating')} <strong class="mt-1 block text-sm font-bold text-foreground">
+						{data.forwarder.averageRating ?? 0} ⭐ ({data.forwarder.totalReviews ?? 0} {t('ulasan')})
 					</strong>
 				</div>
 			</CardContent>
@@ -131,7 +132,7 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 
 		{#if stats}
 			<Card>
-				<CardHeader><CardTitle>Rating statistics</CardTitle></CardHeader>
+				<CardHeader><CardTitle>{t('Statistik rating')}</CardTitle></CardHeader>
 				<CardContent class="grid gap-2.5">
 					<div class="grid gap-1.5">
 						{#each Object.entries(stats.ratingDistribution ?? {}) as [star, percent]}
@@ -145,7 +146,7 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 						{/each}
 					</div>
 					<p class="mt-2 text-xs text-muted-foreground">
-						{stats.uniquePartnerships} kemitraan unik · {stats.totalReviews} total review
+						{stats.uniquePartnerships} {t('kemitraan unik')} · {stats.totalReviews} {t('total review')}
 					</p>
 				</CardContent>
 			</Card>
@@ -153,29 +154,29 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 
 		<Card>
 			<CardHeader>
-				<CardTitle>Add review</CardTitle>
-				<CardDescription>Rating 1-5 + ulasan untuk forwarder ini.</CardDescription>
+				<CardTitle>{t('Tambah ulasan')}</CardTitle>
+				<CardDescription>{t('Rating 1-5 + ulasan untuk forwarder ini.')}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				{#if submitted}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Review terkirim. Rating diperbarui.</p>
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Review terkirim. Rating diperbarui.')}</p>
 				{/if}
 				<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
-					Rating
+					{t('Rating')}
 					<select class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={rating}>
 						{#each [5, 4, 3, 2, 1] as r}<option value={r}>{r} ★</option>{/each}
 					</select>
 				</label>
-				<Input placeholder="Tulis ulasan..." bind:value={reviewText} />
-				<Button onclick={handleReview} disabled={submitting}>{submitting ? 'Mengirim...' : 'Kirim review'}</Button>
+				<Input placeholder={t('Tulis ulasan...')} bind:value={reviewText} />
+				<Button onclick={handleReview} disabled={submitting}>{submitting ? t('Mengirim...') : t('Kirim review')}</Button>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader><CardTitle>Covered lanes</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Jalur yang dicakup')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5">
 				{#each data.forwarder.lanes ?? [] as lane}
-					<div class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3.5"><Badge variant="outline">Route</Badge><strong class="text-sm">{lane}</strong></div>
+					<div class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3.5"><Badge variant="outline">{t('Route')}</Badge><strong class="text-sm">{lane}</strong></div>
 				{/each}
 			</CardContent>
 		</Card>

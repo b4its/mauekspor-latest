@@ -5,11 +5,20 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { complianceTasks, documents, pipeline } from '$lib/data/trade';
+	import { t } from '$lib/i18n.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
 
 	let { data } = $props();
 	let selectedTab = $state('Compliance');
 	const tabs = ['Compliance', 'Quotation', 'Documents', 'Shipment'];
+
+	function trTab(x: string) {
+		return t(x === 'Compliance' ? 'Kepatuhan' : x === 'Quotation' ? 'Kutipan' : x === 'Documents' ? 'Dokumen' : 'Pengiriman');
+	}
+
+	function trMilestone(m: string) {
+		return t(m === 'Cargo Ready' ? 'Kargo Siap' : m === 'Picked Up' ? 'Diambil' : m === 'Customs Submitted' ? 'Bea Cukai Diajukan' : m === 'Loaded' ? 'Dimuat' : m === 'Departed' ? 'Berangkat' : 'Tiba');
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -27,14 +36,14 @@
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(data.project.risk))}>{data.project.risk} risk</Badge>
+				<Badge variant={toneVariant(statusTone(data.project.risk))}>{data.project.risk} {t('risiko')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 					{data.project.name}
 				</CardTitle>
 				<CardDescription class="mt-2">{data.project.product} for {data.project.buyer} in {data.project.country}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quotation value</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Nilai kutipan')}</span>
 				<strong class="mt-1 block text-3xl font-bold tracking-tight">{currency.format(data.project.value)}</strong>
 			</div>
 		</div>
@@ -43,8 +52,8 @@
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row items-center justify-between gap-3">
-				<CardTitle>Execution Pipeline</CardTitle>
-				<Badge variant="secondary">Current stage: {data.project.stage}</Badge>
+				<CardTitle>{t('Pipeline Eksekusi')}</CardTitle>
+				<Badge variant="secondary">{t('Tahap saat ini:')} {data.project.stage}</Badge>
 			</CardHeader>
 			<CardContent class="grid gap-4 sm:grid-cols-3">
 				{#each pipeline as item}
@@ -60,35 +69,35 @@
 		</Card>
 
 		<Card>
-			<CardHeader><CardTitle>Commercial Terms</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Ketentuan Komersial')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5">
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Incoterm</span>
+					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Incoterm')}</span>
 					<strong class="text-sm font-bold">{data.project.incoterm}</strong>
 				</div>
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Payment</span>
+					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Payment')}</span>
 					<strong class="text-sm font-bold">{data.project.payment}</strong>
 				</div>
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Port route</span>
+					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Rute pelabuhan')}</span>
 					<strong class="text-sm font-bold">{data.project.port}</strong>
 				</div>
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">ETA</span>
+					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('ETA')}</span>
 					<strong class="text-sm font-bold">{data.project.eta}</strong>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader><CardTitle>Classification</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Klasifikasi')}</CardTitle></CardHeader>
 			<CardContent>
 				<div class="rounded-xl border bg-primary/10 p-4">
-					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Recommended HS</span>
+					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('HS yang Direkomendasikan')}</span>
 					<strong class="mt-2 block text-4xl font-bold tracking-tight">{data.project.hsCode}</strong>
 					<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
-						AI confidence 84%. Requires human confirmation before document generation.
+						{t('Keyakinan AI 84%. Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.')}
 					</p>
 				</div>
 			</CardContent>
@@ -99,7 +108,7 @@
 		<CardContent class="pt-(--card-spacing)">
 			<div class="mb-4 flex flex-wrap gap-2.5">
 				{#each tabs as tab}
-					<Button variant={selectedTab === tab ? 'default' : 'outline'} onclick={() => (selectedTab = tab)}>{tab}</Button>
+					<Button variant={selectedTab === tab ? 'default' : 'outline'} onclick={() => (selectedTab = tab)}>{trTab(tab)}</Button>
 				{/each}
 			</div>
 
@@ -109,7 +118,7 @@
 						<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5">
 							<div>
 								<strong class="block text-sm font-bold">{task.name}</strong>
-								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{task.owner} - due {task.due}</span>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{task.owner} - {t('jatuh tempo')} {task.due}</span>
 							</div>
 							<Badge variant={toneVariant(statusTone(task.status))}>{task.status}</Badge>
 						</div>
@@ -131,9 +140,9 @@
 				<div class="rounded-xl border bg-muted/30 p-5">
 					<h3 class="text-2xl font-bold tracking-tight">{data.project.incoterm}</h3>
 					<p class="mt-2 leading-relaxed text-muted-foreground">
-						{currency.format(data.project.value)} valid until 12 Sep 2026. Includes export packing, origin handling, and base ocean freight assumptions.
+						{currency.format(data.project.value)} {t('berlaku hingga')} 12 Sep 2026. {t('Termasuk pengepakan ekspor, penanganan asal, dan asumsi freight laut dasar.')}
 					</p>
-					<Button class="mt-4">Prepare revision</Button>
+					<Button class="mt-4">{t('Siapkan revisi')}</Button>
 				</div>
 			{:else}
 				<div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-6">
@@ -143,7 +152,7 @@
 								? 'rounded-lg border border-primary/40 bg-primary/10 p-3.5 text-center text-sm font-bold text-primary'
 								: 'rounded-lg border bg-muted/30 p-3.5 text-center text-sm font-bold'}
 						>
-							{milestone}
+							{trMilestone(milestone)}
 						</div>
 					{/each}
 				</div>
