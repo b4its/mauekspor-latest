@@ -6,6 +6,23 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Identitas UMKM dan sertifikasi': { id: 'Identitas UMKM dan sertifikasi', en: 'UMKM identity and certifications' },
+	'Kesiapan ekspor': { id: 'Kesiapan ekspor', en: 'Export readiness' },
+	'Detail perusahaan': { id: 'Detail perusahaan', en: 'Company details' },
+	'Identitas inti yang digunakan di seluruh alur kerja produk, kepatuhan, dan kutipan harga.': { id: 'Identitas inti yang digunakan di seluruh alur kerja produk, kepatuhan, dan kutipan harga.', en: 'Core identity used across product, compliance, and quotation workflows.' },
+	'Edit profil': { id: 'Edit profil', en: 'Edit profile' },
+	'Kelola sertifikasi': { id: 'Kelola sertifikasi', en: 'Manage certifications' },
+	'Kapasitas produksi': { id: 'Kapasitas produksi', en: 'Production capacity' },
+	'Tahun berdiri': { id: 'Tahun berdiri', en: 'Year established' },
+	'Sertifikasi': { id: 'Sertifikasi', en: 'Certifications' },
+	'Kontak': { id: 'Kontak', en: 'Contact' },
+	'Centang kotak untuk menambah atau menghapus klaim sertifikasi pada profil bisnis.': { id: 'Centang kotak untuk menambah atau menghapus klaim sertifikasi pada profil bisnis.', en: 'Toggle checkboxes to add or remove certification claims on the business profile.' },
+	'Wawasan kesiapan': { id: 'Wawasan kesiapan', en: 'Readiness insight' },
+	'Tingkatkan sisa': { id: 'Tingkatkan sisa', en: 'Improve the remaining' },
+	'Sertifikasi berbasis bukti, data produk yang konsisten, dan berkas kepatuhan yang lengkap adalah jalur tercepat menuju skor kesiapan profil yang lebih tinggi.': { id: 'Sertifikasi berbasis bukti, data produk yang konsisten, dan berkas kepatuhan yang lengkap adalah jalur tercepat menuju skor kesiapan profil yang lebih tinggi.', en: 'Evidence-backed certifications, consistent product data, and a completed compliance file are the fastest path to a higher profile readiness score.' },
+	'Organik': { id: 'Organik', en: 'Organic' },
+	'Deklarasi asal': { id: 'Deklarasi asal', en: 'Origin declaration' },
+	'Informasi nilai gizi': { id: 'Informasi nilai gizi', en: 'Nutrition facts' },
 	'Organisasi dan kontrol akses': { id: 'Organisasi dan kontrol akses', en: 'Organization and access control' },
 	'Profil eksportir terverifikasi': { id: 'Profil eksportir terverifikasi', en: 'Verified exporter profile' },
 	'Perusahaan Anda': { id: 'Perusahaan Anda', en: 'Your company' },
