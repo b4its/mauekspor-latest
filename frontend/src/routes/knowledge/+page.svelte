@@ -58,7 +58,7 @@
 <AppShell title="Knowledge Base" eyebrow={t('Export operating playbooks')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Guided operations</Badge>
+			<Badge variant="outline">{t('Operasi terpandu')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Keep export know-how close to the workflow.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Publish practical playbooks for product readiness, HS review, Incoterms, shipment exceptions, finance, and platform usage.')}</CardDescription>
 		</CardHeader>

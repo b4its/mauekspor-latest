@@ -57,7 +57,7 @@
 			if (idx >= 0) rules.items[idx] = { ...rules.items[idx], ...res.data, lastRun: res.data.lastRun ?? 'now' };
 			message = `Rule "${res.data.name}" dijalankan — total ${res.data.runs} kali.`;
 		} catch {
-			error = 'Gagal menjalankan rule.';
+			error = t('Gagal menjalankan rule.');
 		} finally {
 			busyId = '';
 		}
@@ -75,7 +75,7 @@
 			if (idx >= 0) rules.items[idx] = { ...rules.items[idx], ...res.data, status: res.data.status ?? 'Active' };
 			message = `Rule "${res.data.name}" kini Active.`;
 		} catch {
-			error = 'Gagal mengaktifkan rule.';
+			error = t('Gagal mengaktifkan rule.');
 		} finally {
 			busyId = '';
 		}
@@ -86,12 +86,12 @@
 	<title>Automations | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={t('Automations')} eyebrow="Workflow rules">
+<AppShell title={t('Automations')} eyebrow={t('Workflow rules')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Rules engine</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Automate repetitive export operations without losing control.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Create rules for compliance blockers, document validation, payment reminders, shipment exceptions, and recurring reports.</CardDescription>
+			<Badge variant="outline">{t('Mesin aturan')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Otomatiskan operasi ekspor berulang tanpa kehilangan kendali.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Buat aturan untuk blocker kepatuhan, validasi dokumen, pengingat pembayaran, pengecualian pengiriman, dan laporan berulang.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Badge variant="secondary">Active {activeCount}</Badge>
@@ -111,13 +111,13 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search automation, trigger, action..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Cari aturan, pemicu, aksi...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Rules</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{rules.items.length}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Active</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{activeCount}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total runs</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{totalRuns}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Aturan')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{rules.items.length}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Active')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{activeCount}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Total run')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{totalRuns}</strong></CardContent></Card>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -130,12 +130,12 @@
 				<h3 class="text-2xl font-bold tracking-tight">{rule.name}</h3>
 				<p class="text-sm leading-relaxed text-muted-foreground">{rule.description}</p>
 				<div class="grid grid-cols-2 gap-2">
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">When<strong class="mt-1 block text-sm font-bold text-foreground">{rule.trigger}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Then<strong class="mt-1 block text-sm font-bold text-foreground">{rule.action}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Ketika')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.trigger}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lalu')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.action}</strong></div>
 				</div>
 				<div class="grid grid-cols-2 gap-2">
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Runs<strong class="mt-1 block text-sm font-bold text-foreground">{rule.runs}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Last run<strong class="mt-1 block text-sm font-bold text-foreground">{rule.lastRun}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Runs')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.runs}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Run terakhir')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.lastRun}</strong></div>
 				</div>
 				<div class="grid grid-cols-2 gap-2">
 					<Button variant="outline" disabled={busyId === rule.id} onclick={() => handleRun(rule.id)}>
@@ -147,7 +147,7 @@
 				</div>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No automation matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada aturan yang cocok dengan pencarian.')}</div>
 		{/each}
 	</div>
 </AppShell>

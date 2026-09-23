@@ -76,7 +76,7 @@
 <AppShell title="Documents" eyebrow="Trade document center">
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Document control</Badge>
+			<Badge variant="outline">{t('Kontrol dokumen')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 				Generate, validate, approve, and version trade documents.
 			</CardTitle>
@@ -99,7 +99,7 @@
 
 	{#if generated}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Generated draft ready.</strong>
+			<strong class="block">{t('Draf siap dibuat.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
 				Dokumen berhasil dibuat di backend.
 			</span>

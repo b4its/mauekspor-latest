@@ -55,7 +55,7 @@
 				<CardDescription class="mt-2">{data.rfq.buyer} - {data.rfq.destination}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Best match</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Best match')}</span>
 				<strong class="mt-1 block text-4xl font-bold tracking-tight">{data.rfq.matchScore}%</strong>
 			</div>
 		</div>
@@ -63,7 +63,7 @@
 
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card class="md:col-span-2">
-			<CardHeader class="p-0"><CardTitle>RFQ Requirements</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('RFQ Requirements')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3 pt-4">
 				<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
@@ -88,7 +88,7 @@
 		</Card>
 
 		<Card>
-			<CardHeader class="p-0"><CardTitle>Supplier Matches</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Supplier Matches')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5 pt-4">
 				{#each data.rfq.matches as match}
 					<div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
@@ -99,7 +99,7 @@
 						</div>
 						<div class="grid justify-items-end gap-2">
 							<b class="text-2xl font-bold tracking-tight">{match.score}%</b>
-							<Button variant="outline" size="sm" onclick={() => (shortlisted = match.supplier)}>Shortlist</Button>
+							<Button variant="outline" size="sm" onclick={() => (shortlisted = match.supplier)}>{t('Shortlist')}</Button>
 						</div>
 					</div>
 				{/each}
@@ -108,8 +108,8 @@
 
 		<Card class="bg-gradient-to-br from-primary/10 to-background">
 			<CardHeader class="p-0">
-				<Badge variant="secondary">Commercial action</Badge>
-				<CardTitle>Create quotation</CardTitle>
+				<Badge variant="secondary">{t('Commercial action')}</Badge>
+				<CardTitle>{t('Create quotation')}</CardTitle>
 			</CardHeader>
 			<CardContent class="grid gap-3 pt-4">
 				<p class="text-muted-foreground">{shortlisted ? t('{} is shortlisted for quotation.').replace('{}', shortlisted) : t('Shortlist a supplier match before creating quotation.')}</p>
@@ -117,7 +117,7 @@
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 				{/if}
 				{#if quoteCreated}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Quotation draft tersimpan di backend.</p>
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Quotation draft tersimpan di backend.')}</p>
 				{/if}
 				<Button class="w-fit" disabled={!shortlisted || quoteCreated} onclick={handleCreateQuote}>{quoteCreated ? 'Draft created' : creatingQuote ? 'Creating...' : 'Create quotation draft'}</Button>
 			</CardContent>

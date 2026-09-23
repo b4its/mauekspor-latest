@@ -93,20 +93,20 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 	<title>Costing | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Costing" eyebrow="Incoterm pricing and landed cost">
+<AppShell title="Costing" eyebrow={t('Incoterm pricing and landed cost')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Cost control</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Separate seller price, freight estimate, and buyer landed cost.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Model EXW, FOB, CIF, DAP, freight validity, currency exposure, destination charges, tax reserve, and margin before quotation acceptance.</CardDescription>
+			<Badge variant="outline">{t('Kontrol biaya')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Pisahkan harga penjual, estimasi freight, dan biaya landed pembeli.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Model EXW, FOB, CIF, DAP, validitas freight, eksposur kurs, biaya tujuan, cadangan pajak, dan margin sebelum penerimaan kutipan.')}</CardDescription>
 		</CardHeader>
 <CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button href="/costing/create">{t('Create scenario')}</Button>
-			<Button href={csvExportUrl('/costing/export.csv')} variant="outline">Export CSV</Button>
+			<Button href={csvExportUrl('/costing/export.csv')} variant="outline">{t('Ekspor CSV')}</Button>
 			<Button variant="secondary" disabled={selected.length < 2 || comparing} onclick={runCompare}>
-				{comparing ? t('Membandingkan...') : `Compare (${selected.length})`}
+				{comparing ? t('Membandingkan...') : `${t('Bandingkan')} (${selected.length})`}
 			</Button>
-			<Badge variant="secondary">Avg margin {averageMargin}%</Badge>
+			<Badge variant="secondary">{t('Avg margin')} {averageMargin}%</Badge>
 		</CardContent>
 	</Card>
 
@@ -170,9 +170,9 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Scenarios</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{costingScenarios.items.length}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total landed estimate</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(totalLanded)}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Average margin</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{averageMargin}%</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Skenario')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{costingScenarios.items.length}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Total estimasi landed')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(totalLanded)}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Margin rata-rata')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{averageMargin}%</strong></CardContent></Card>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -190,16 +190,16 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 						<h3 class="mt-3 text-2xl font-bold tracking-tight">{scenario.title}</h3>
 						<p class="mt-1 text-sm text-muted-foreground">{projectName(scenario.projectId)}</p>
 						<div class="mt-4 grid grid-cols-2 gap-2">
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Incoterm<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.incoterm}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Destination<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.destination}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.incoterm}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Tujuan')}<strong class="mt-1 block text-sm font-bold text-foreground">{scenario.destination}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">FOB<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.fobPrice)}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Landed<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.landedCost)}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Landed')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(scenario.landedCost)}</strong></div>
 						</div>
 					</a>
 				</label>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No costing scenario matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada skenario costing yang cocok dengan pencarian.')}</div>
 		{/each}
 	</div>
 </AppShell>
