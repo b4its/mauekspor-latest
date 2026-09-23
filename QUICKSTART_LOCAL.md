@@ -219,7 +219,7 @@ FRONTEND_PORT=5188    # Frontend dev port
 
 MAUEKSPOR_AI_MODE=remote       # Use real AI (not mock)
 MAUEKSPOR_AI_BASE_URL=http://localhost:20128/v1
-MAUEKSPOR_AI_API_KEY=sk-dede08aea594e222-upk4p8-5bfa2c54
+MAUEKSPOR_AI_API_KEY=your-ai-api-key-here
 ```
 
 Change any of these in `.env.local` then run `make dev-restart`.

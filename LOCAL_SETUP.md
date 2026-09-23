@@ -191,7 +191,7 @@ make dev-up --build
 Test AI connectivity:
 ```bash
 curl http://localhost:20128/v1/models \
-  -H "Authorization: Bearer sk-dede08aea594e222-upk4p8-5bfa2c54"
+  -H "Authorization: Bearer your-ai-api-key-here"
 ```
 
 If AI service is down:

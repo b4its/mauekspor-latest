@@ -80,7 +80,7 @@ MAUEKSPOR_UPLOAD_DIR=/app/uploads
 
 # AI Configuration - uses AI service on localhost:20128
 MAUEKSPOR_AI_MODE=remote
-MAUEKSPOR_AI_API_KEY=sk-dede08aea594e222-upk4p8-5bfa2c54
+MAUEKSPOR_AI_API_KEY=your-ai-api-key-here
 MAUEKSPOR_AI_BASE_URL=http://localhost:20128/v1
 MAUEKSPOR_AI_MODEL=qd/dmodel
 
