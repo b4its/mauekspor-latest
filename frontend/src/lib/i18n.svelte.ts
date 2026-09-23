@@ -850,7 +850,6 @@ const dictionary: Record<string, Entry> = {
 	'Gagal menandai pembayaran diterima.': { id: 'Gagal menandai pembayaran diterima.', en: 'Failed to mark payment received.' },
 	'Gagal mengirim pengingat.': { id: 'Gagal mengirim pengingat.', en: 'Failed to send reminder.' },
 	'Quotation Terms': { id: 'Ketentuan Kutipan', en: 'Quotation Terms' },
-	'Quotation from quotation {id}': { id: '', en: '' },
 	'Accept quotation': { id: 'Terima kutipan', en: 'Accept quotation' },
 	'Copy to order': { id: 'Salin ke order', en: 'Copy to order' },
 	'Shipment estimate': { id: 'Estimasi pengiriman', en: 'Shipment estimate' },
