@@ -9,8 +9,9 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Alert } from '$lib/components/ui/alert/index.js';
 	import { products as seedProducts, projects as seedProjects } from '$lib/data/trade';
-	import { createCatalog } from '$lib/api/catalogs';
+	import { createCatalog, addCatalogImage } from '$lib/api/catalogs';
 	import { listProducts, generateCatalogDescription } from '$lib/api/products';
+	import { uploadFileBinary, fileDownloadUrl } from '$lib/api/files';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import type { Product } from '$lib/data/trade';
 
@@ -29,6 +30,8 @@
 	let creating = $state(false);
 	let generating = $state(false);
 	let error = $state('');
+	let createdId = $state('');
+	let imageFile = $state<File | null>(null);
 
 	let valid = $derived(title.trim().length > 3 && productId && targetMarket.trim().length > 1 && moq.trim().length > 1);
 
@@ -40,7 +43,7 @@
 		}
 		creating = true;
 		try {
-			await createCatalog({
+			const res = await createCatalog({
 				productId,
 				projectId: projectId || '',
 				title,
@@ -51,6 +54,16 @@
 				description,
 				tags: tags.split(',').map((t) => t.trim()).filter(Boolean)
 			});
+			createdId = res.data.id;
+			// Upload gambar opsional dan tautkan ke katalog yang baru dibuat
+			if (imageFile) {
+				try {
+					const fileRes = await uploadFileBinary(imageFile, 'Catalog Image', projectId || '', []);
+					await addCatalogImage(createdId, { image_url: fileDownloadUrl(fileRes.data.id), alt_text: imageFile.name, is_primary: true });
+				} catch {
+					// gambar gagal diunggah — katalog tetap jadi
+				}
+			}
 			created = true;
 		} catch {
 			error = 'Gagal membuat katalog. Coba lagi.';
@@ -107,9 +120,12 @@
 				<Badge variant="secondary">Catalog draft created</Badge>
 				<h3 class="text-xl font-semibold tracking-tight">{title}</h3>
 				<p class="text-muted-foreground">
-					Katalog berhasil disimpan di backend.
+					Katalog berhasil disimpan di backend{imageFile ? ' beserta gambar utama' : ''}.
 				</p>
-				<Button href="/catalogs">Back to catalogs</Button>
+				<div class="flex flex-wrap gap-2">
+					<Button href={createdId ? `/catalogs/${createdId}` : '/catalogs'}>Buka katalog</Button>
+					<Button variant="outline" href="/catalogs">Back to catalogs</Button>
+				</div>
 			</CardContent>
 		</Card>
 	{:else}
@@ -167,6 +183,10 @@
 			<div class="grid gap-2">
 				<Label for="cat-desc">Buyer-facing description</Label>
 				<Textarea id="cat-desc" bind:value={description} rows={3} placeholder="Deskripsi untuk buyer internasional..." />
+			</div>
+			<div class="grid gap-2">
+				<Label for="cat-img">Gambar utama (opsional)</Label>
+				<input id="cat-img" type="file" accept="image/*" class="rounded-lg border bg-muted/30 px-3 py-2 text-sm" onchange={(e) => (imageFile = (e.currentTarget as HTMLInputElement).files?.[0] ?? null)} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}

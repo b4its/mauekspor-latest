@@ -29,6 +29,8 @@
 	let valid = $derived(productId && destination);
 	let selected = $derived(products.items.find((product) => product.id === productId)?.name);
 	let selectedCountry = $derived(countries.find((c) => c.country_code === destination)?.country_name ?? destination);
+	let selectedProduct = $derived(products.items.find((product) => product.id === productId));
+	let notEnriched = $derived(selectedProduct ? selectedProduct.status === 'Needs HS Review' : false);
 
 	async function create() {
 		error = '';
@@ -84,11 +86,16 @@
 			onsubmit={(event) => { event.preventDefault(); create(); }}
 		>
 			<div class="grid gap-2">
-				<Label>Product</Label>
-				<NativeSelect bind:value={productId} class="w-full">
+				<Label for="ea-product">Product</Label>
+				<NativeSelect id="ea-product" bind:value={productId} class="w-full">
 					<option value="">Select product...</option>
 					{#each products.items as product}<option value={product.id}>{product.name} (HS {product.hs})</option>{/each}
 				</NativeSelect>
+				{#if notEnriched}
+					<p class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-700">
+						⚠️ Produk belum di-enrich (HS code belum pasti). Jalankan AI enrichment di halaman produk agar hasil analisis lebih akurat.
+					</p>
+				{/if}
 			</div>
 			<div class="grid gap-2">
 				<Label>Destination market</Label>
