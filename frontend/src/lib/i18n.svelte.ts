@@ -426,7 +426,26 @@ const dictionary: Record<string, Entry> = {
 	'Due': { id: 'Jatuh tempo', en: 'Due' },
 	'Method': { id: 'Metode', en: 'Method' },
 	'No payment matched your search.': { id: 'Tidak ada pembayaran yang cocok.', en: 'No payment matched your search.' },
-	'Gagal mengirim pengingat pembayaran.': { id: 'Gagal mengirim pengingat pembayaran.', en: 'Failed to send payment reminder.' }
+	'Gagal mengirim pengingat pembayaran.': { id: 'Gagal mengirim pengingat pembayaran.', en: 'Failed to send payment reminder.' },
+
+	// --- Compliance ---
+	'Evidence-based export readiness': { id: 'Kesiapan ekspor berbasis bukti', en: 'Evidence-based export readiness' },
+	'Source-backed workflow': { id: 'Alur kerja berbasis sumber', en: 'Source-backed workflow' },
+	'Turn regulatory gaps into verified action items.': {
+		id: 'Ubah celah regulasi menjadi item aksi terverifikasi.',
+		en: 'Turn regulatory gaps into verified action items.'
+	},
+	'Track source, severity, owner, evidence, human verification, and confidence for each export requirement before documents or quotation are finalized.': {
+		id: 'Pantau sumber, tingkat keparahan, pemilik, bukti, verifikasi manusia, dan tingkat keyakinan untuk setiap persyaratan ekspor sebelum dokumen atau quotation difinalisasi.',
+		en: 'Track source, severity, owner, evidence, human verification, and confidence for each export requirement before documents or quotation are finalized.'
+	},
+	'Critical': { id: 'Kritis', en: 'Critical' },
+	'Search requirement, source, project...': { id: 'Cari persyaratan, sumber, proyek...', en: 'Search requirement, source, project...' },
+	'Owner': { id: 'Pemilik', en: 'Owner' },
+	'Due': { id: 'Jatuh tempo', en: 'Due' },
+	'Confidence': { id: 'Tingkat keyakinan', en: 'Confidence' },
+	'Source: {item.source}': { id: 'Sumber: {item.source}', en: 'Source: {item.source}' },
+	'No compliance requirement matched your search.': { id: 'Tidak ada persyaratan kepatuhan yang cocok.', en: 'No compliance requirement matched your search.' }
 };
 
 let initial: Locale = 'id';
