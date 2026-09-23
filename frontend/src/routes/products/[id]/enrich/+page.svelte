@@ -65,7 +65,7 @@
 <AppShell title="Enrichment Override" eyebrow={`${data.product.name} - AI result edit`}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Manual override</Badge>
+			<Badge variant="outline">{t('Manual override')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 				Reviews and overrides the AI enrichment results.
 			</CardTitle>
@@ -79,13 +79,13 @@
 	{#if saved}
 		<Card class="grid gap-4">
 			<CardContent class="grid gap-4 p-0">
-				<Badge>Override saved</Badge>
-				<h3 class="text-xl font-semibold tracking-tight">Manually edited</h3>
+				<Badge>{t('Override saved')}</Badge>
+				<h3 class="text-xl font-semibold tracking-tight">{t('Manually edited')}</h3>
 				<p class="text-muted-foreground">
 					HS {hsCode} is now the approved recommendation for {data.product.name}. Badge will show
 					"Manually Edited" on the product detail page.
 				</p>
-				<Button href={`/products/${data.product.id}`}>Back to product</Button>
+				<Button href={`/products/${data.product.id}`}>{t('Back to product')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
@@ -97,28 +97,28 @@
 			}}
 		>
 			<div class="grid gap-2">
-				<Label for="en-hs">HS Code recommendation</Label>
+				<Label for="en-hs">{t('HS Code recommendation')}</Label>
 				<Input id="en-hs" bind:value={hsCode} placeholder="0901.21" list="hs-options" oninput={loadHsSuggestions} />
 				<datalist id="hs-options">
 					{#each hsSuggestions as suggestion}
 						<option value={suggestion.split(' — ')[0]}>{suggestion}</option>
 					{/each}
 				</datalist>
-				<small class="text-xs text-muted-foreground">8-digit validation ready; ketik 2+ digit untuk saran HS dari dataset 6.941 kode.</small>
+				<small class="text-xs text-muted-foreground">{t('8-digit validation ready; ketik 2+ digit untuk saran HS dari dataset 6.941 kode.')}</small>
 			</div>
 			<div class="grid gap-2">
-				<Label>Generated SKU</Label>
+				<Label>{t('Generated SKU')}</Label>
 				<Input bind:value={sku} />
 			</div>
 			<div class="grid gap-2">
-				<Label>Description (English B2B)</Label>
+				<Label>{t('Description (English B2B)')}</Label>
 				<Textarea bind:value={descriptionEn} rows={4} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}
 
 			<div class="flex flex-wrap gap-2">
-				<Button variant="outline" href={`/products/${data.product.id}`}>Cancel</Button>
+				<Button variant="outline" href={`/products/${data.product.id}`}>{t('Batal')}</Button>
 				<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save override'}</Button>
 			</div>
 		</form>

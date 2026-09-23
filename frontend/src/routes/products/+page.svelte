@@ -92,7 +92,7 @@
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant="secondary">Product intelligence</Badge>
+				<Badge variant="secondary">{t('Product intelligence')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 					Structured product data for export readiness.
 				</CardTitle>
@@ -167,7 +167,7 @@
 						</div>
 					</div>
 					<div class="mt-3 flex items-center justify-end gap-2">
-						<Button size="sm" variant="outline" href={`/products/${product.id}/edit`}>Edit</Button>
+						<Button size="sm" variant="outline" href={`/products/${product.id}/edit`}>{t('Edit')}</Button>
 						<Button size="sm" variant="destructive" disabled={deleting === product.id} onclick={(e) => { e.preventDefault(); removeProduct(product.id, product.name); }}>
 							{deleting === product.id ? '...' : 'Hapus'}
 						</Button>
@@ -175,7 +175,7 @@
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No product matched your filter.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No product matched your filter.')}</div>
 		{/each}
 	</div>
 	{#if error}

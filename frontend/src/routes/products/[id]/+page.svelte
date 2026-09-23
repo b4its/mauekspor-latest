@@ -117,7 +117,7 @@
 		<Card>
 			<CardHeader class="p-0"><CardTitle>{t('Pemasaran AI')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2 p-0 pt-4">
-				<Button variant="outline" href="/marketing" class="w-fit">Market Intelligence & Pricing</Button>
+				<Button variant="outline" href="/marketing" class="w-fit">{t('Market Intelligence & Pricing')}</Button>
 				{#if data.product.status === 'Enriched'}
 					<span class="text-xs font-semibold text-muted-foreground">{t('Produk siap dianalisis pasar (HS & SKU tersedia).')}</span>
 				{:else}

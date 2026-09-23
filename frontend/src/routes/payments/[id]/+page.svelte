@@ -46,7 +46,7 @@
 	<title>{data.payment.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.payment.id} eyebrow="Payment detail">
+<AppShell title={data.payment.id} eyebrow={t('Payment detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -57,7 +57,7 @@
 				<CardDescription class="mt-2">{data.payment.method} · Due {data.payment.dueDate}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Collected</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Collected')}</span>
 				<strong class="mt-1 block text-4xl font-bold tracking-tight">{Math.round((paidAmount / data.payment.amount) * 100)}%</strong>
 			</div>
 		</div>
@@ -67,8 +67,8 @@
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Settlement Control</CardTitle>
-					<CardDescription>Payment status is connected to order release, document handoff, and shipment readiness.</CardDescription>
+					<CardTitle>{t('Settlement Control')}</CardTitle>
+					<CardDescription>{t('Payment status is connected to order release, document handoff, and shipment readiness.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" onclick={handleReminder}>{reminded ? 'Reminder sent' : 'Send reminder'}</Button>
@@ -105,8 +105,8 @@
 
 		<Card class="md:col-span-2 bg-gradient-to-br from-amber-500/10 to-background">
 			<CardHeader class="p-0">
-				<Badge variant="secondary">Payment milestones</Badge>
-				<CardTitle>Milestone Schedule</CardTitle>
+				<Badge variant="secondary">{t('Payment milestones')}</Badge>
+				<CardTitle>{t('Milestone Schedule')}</CardTitle>
 			</CardHeader>
 			<CardContent class="grid gap-3 pt-4">
 				<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -124,10 +124,10 @@
 					</a>
 				{/if}
 				{#if reminded}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Pengingat dikirim via backend.</p>
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Pengingat dikirim via backend.')}</p>
 				{/if}
 				{#if received}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Pembayaran ditandai diterima di backend.</p>
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Pembayaran ditandai diterima di backend.')}</p>
 				{/if}
 			</CardContent>
 		</Card>
