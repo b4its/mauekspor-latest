@@ -9,6 +9,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { sendPaymentReminder } from '$lib/api/payments';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Pending', 'Deposit Paid', 'Due Soon', 'Overdue', 'Settled'];
 	let activeFilter = $state('All');
@@ -52,7 +53,7 @@
 			if (target) await sendPaymentReminder(target.id);
 			reminderSent = true;
 		} catch {
-			error = 'Gagal mengirim pengingat pembayaran.';
+			error = t('Gagal mengirim pengingat pembayaran.');
 		} finally {
 			reminding = false;
 		}
@@ -63,16 +64,16 @@
 	<title>Payments | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Payments" eyebrow="Export receivables and settlement">
+<AppShell title="Payments" eyebrow={t('Export receivables and settlement')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Cashflow control</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Track deposits, LC milestones, and export receivables before shipment release.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Keep payment terms connected to orders, document release, and buyer risk so operations never ships without commercial control.</CardDescription>
+			<Badge variant="outline">{t('Cashflow control')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Track deposits, LC milestones, and export receivables before shipment release.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Keep payment terms connected to orders, document release, and buyer risk so operations never ships without commercial control.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleReminders} disabled={reminding}>{reminderSent ? 'Reminder sent' : reminding ? 'Sending...' : 'Send reminders'}</Button>
-			<Badge variant="destructive">Risk {highRisk}</Badge>
+			<Button onclick={handleReminders} disabled={reminding}>{reminderSent ? t('Reminder sent') : reminding ? t('Sending...') : t('Send reminders')}</Button>
+			<Badge variant="destructive">{t('Risk')} {highRisk}</Badge>
 		</CardContent>
 	</Card>
 
@@ -82,8 +83,8 @@
 
 	{#if reminderSent}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Payment reminders sent.</strong>
-			<span class="block text-sm text-muted-foreground">Pengingat dikirim melalui backend.</span>
+			<strong class="block">{t('Payment reminders sent.')}</strong>
+			<span class="block text-sm text-muted-foreground">{t('Pengingat dikirim melalui backend.')}</span>
 		</div>
 	{/if}
 
@@ -93,13 +94,13 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search payment, buyer, order..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search payment, buyer, order...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Collected</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(collected)}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Receivable</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(receivable)}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tracked payments</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{payments.items.length}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Collected')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(collected)}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Receivable')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(receivable)}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Tracked payments')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{payments.items.length}</strong></CardContent></Card>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -113,15 +114,15 @@
 					<h3 class="text-2xl font-bold tracking-tight">{payment.id}</h3>
 					<p class="text-sm text-muted-foreground">{payment.buyer} · {payment.orderId}</p>
 					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Total<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(payment.amount)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Paid<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(payment.paid)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Due<strong class="mt-1 block text-sm font-bold text-foreground">{payment.dueDate}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Method<strong class="mt-1 block text-sm font-bold text-foreground">{payment.method}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Total')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(payment.amount)}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Paid')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(payment.paid)}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')}<strong class="mt-1 block text-sm font-bold text-foreground">{payment.dueDate}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Method')}<strong class="mt-1 block text-sm font-bold text-foreground">{payment.method}</strong></div>
 					</div>
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No payment matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No payment matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>

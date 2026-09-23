@@ -398,7 +398,35 @@ const dictionary: Record<string, Entry> = {
 	'Booking': { id: 'Booking', en: 'Booking' },
 	'ETA': { id: 'ETA', en: 'ETA' },
 	'No shipment matched your search.': { id: 'Tidak ada pengiriman yang cocok.', en: 'No shipment matched your search.' },
-	'Gagal meminta kuotasi pengiriman.': { id: 'Gagal meminta kuotasi pengiriman.', en: 'Failed to request freight quote.' }
+	'Gagal meminta kuotasi pengiriman.': { id: 'Gagal meminta kuotasi pengiriman.', en: 'Failed to request freight quote.' },
+
+	// --- Payments ---
+	'Export receivables and settlement': { id: 'Piutang dan penyelesaian ekspor', en: 'Export receivables and settlement' },
+	'Cashflow control': { id: 'Kontrol arus kas', en: 'Cashflow control' },
+	'Track deposits, LC milestones, and export receivables before shipment release.': {
+		id: 'Pantau deposit, tonggak LC, dan piutang ekspor sebelum pengiriman dilepas.',
+		en: 'Track deposits, LC milestones, and export receivables before shipment release.'
+	},
+	'Keep payment terms connected to orders, document release, and buyer risk so operations never ships without commercial control.': {
+		id: 'Jaga syarat pembayaran terhubung dengan pesanan, pelepasan dokumen, dan risiko pembeli sehingga operasi tidak pernah mengirim tanpa kendali komersial.',
+		en: 'Keep payment terms connected to orders, document release, and buyer risk so operations never ships without commercial control.'
+	},
+	'Send reminders': { id: 'Kirim pengingat', en: 'Send reminders' },
+	'Sending...': { id: 'Mengirim...', en: 'Sending...' },
+	'Reminder sent': { id: 'Pengingat terkirim', en: 'Reminder sent' },
+	'Risk': { id: 'Risiko', en: 'Risk' },
+	'Payment reminders sent.': { id: 'Pengingat pembayaran terkirim.', en: 'Payment reminders sent.' },
+	'Pengingat dikirim melalui backend.': { id: 'Pengingat dikirim melalui backend.', en: 'Reminders sent through backend.' },
+	'Search payment, buyer, order...': { id: 'Cari pembayaran, pembeli, pesanan...', en: 'Search payment, buyer, order...' },
+	'Collected': { id: 'Terkumpul', en: 'Collected' },
+	'Receivable': { id: 'Piutang', en: 'Receivable' },
+	'Tracked payments': { id: 'Pembayaran terpantau', en: 'Tracked payments' },
+	'Total': { id: 'Total', en: 'Total' },
+	'Paid': { id: 'Terbayar', en: 'Paid' },
+	'Due': { id: 'Jatuh tempo', en: 'Due' },
+	'Method': { id: 'Metode', en: 'Method' },
+	'No payment matched your search.': { id: 'Tidak ada pembayaran yang cocok.', en: 'No payment matched your search.' },
+	'Gagal mengirim pengingat pembayaran.': { id: 'Gagal mengirim pengingat pembayaran.', en: 'Failed to send payment reminder.' }
 };
 
 let initial: Locale = 'id';
