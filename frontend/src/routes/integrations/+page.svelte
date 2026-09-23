@@ -8,8 +8,17 @@
 	import { statusTone } from '$lib/utils/format';
 	import { listIntegrations, connectIntegration, syncIntegration } from '$lib/api/integrations';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Logistics', 'Finance', 'Compliance', 'Commerce', 'AI'];
+
+	function trCat(x: string) {
+		return t(x === 'All' ? 'Semua' : x === 'Logistics' ? 'Logistik' : x === 'Finance' ? 'Keuangan' : x === 'Compliance' ? 'Kepatuhan' : x === 'Commerce' ? 'Commerce' : 'Kecerdasan buatan');
+	}
+
+	function trStatus(s: string) {
+		return t(s === 'Connected' ? 'Terhubung' : s === 'Needs Auth' ? 'Butuh otorisasi' : 'Terputus');
+	}
 	let activeFilter = $state('All');
 	let query = $state('');
 	let synced = $state(false);
@@ -47,7 +56,7 @@
 			if (connected) await syncIntegration(connected.id);
 			synced = true;
 		} catch {
-			error = 'Gagal sinkronisasi.';
+			error = t('Gagal sinkronisasi.');
 		} finally {
 			syncing = false;
 		}
@@ -59,7 +68,7 @@
 			await connectIntegration(itemId);
 			connectedId = itemId;
 		} catch {
-			error = 'Gagal menghubungkan integrasi.';
+			error = t('Gagal menghubungkan integrasi.');
 		}
 	}
 </script>
@@ -68,20 +77,20 @@
 	<title>Integrations | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Integrations" eyebrow="Connected trade systems">
+<AppShell title="Integrations" eyebrow={t('Sistem dagang yang terhubung')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge>Integration hub</Badge>
+			<Badge>{t('Pusat integrasi')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Connect MauEkspor to logistics, finance, compliance, commerce, and AI systems.
+				{t('Hubungkan MauEkspor dengan sistem logistik, keuangan, kepatuhan, commerce, dan AI.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Keep rates, payment milestones, regulatory references, and AI workflows synchronized with the export operating system.
+				{t('Jaga tarif, tonggak pembayaran, referensi regulasi, dan alur kerja AI tetap sinkron dengan sistem operasi ekspor.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleSync} disabled={syncing}>{synced ? 'Synced' : syncing ? 'Syncing...' : 'Sync connected'}</Button>
-			<Badge variant="secondary">Connected {connectedCount}</Badge>
+			<Button onclick={handleSync} disabled={syncing}>{synced ? t('Tersinkronisasi') : syncing ? t('Menyinkronkan...') : t('Sinkronkan yang terhubung')}</Button>
+			<Badge variant="secondary">{t('Terhubung')} {connectedCount}</Badge>
 		</CardContent>
 	</Card>
 
@@ -91,9 +100,9 @@
 
 	{#if synced}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Integrations synced.</strong>
+			<strong class="block">{t('Integrasi tersinkronisasi.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				Sinkronisasi dijalankan di backend.
+				{t('Sinkronisasi dijalankan di backend.')}
 			</span>
 		</div>
 	{/if}
@@ -101,18 +110,18 @@
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">
 			{#each filters as filter}
-				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
+				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trCat(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search integration, scope, status..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Cari integrasi, lingkup, status...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 		{#each filteredIntegrations as item}
 			<Card class="gap-4">
 				<div class="flex items-center justify-between gap-3">
-					<Badge variant={toneVariant(statusTone((connected || connectedId === item.id) && item.status === 'Needs Auth' ? 'Connected' : item.status))}>{(connected || connectedId === item.id) && item.status === 'Needs Auth' ? 'Connected' : item.status}</Badge>
-					<strong class="text-sm font-bold text-muted-foreground">{item.category}</strong>
+					<Badge variant={toneVariant(statusTone((connected || connectedId === item.id) && item.status === 'Needs Auth' ? 'Connected' : item.status))}>{(connected || connectedId === item.id) && item.status === 'Needs Auth' ? t('Terhubung') : trStatus(item.status)}</Badge>
+					<strong class="text-sm font-bold text-muted-foreground">{trCat(item.category)}</strong>
 				</div>
 				<CardHeader class="p-0">
 					<CardTitle class="text-xl font-bold tracking-tight">{item.name}</CardTitle>
@@ -121,10 +130,10 @@
 				<CardContent class="grid gap-3 p-0">
 					<div class="grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Last sync <strong class="mt-1 block text-sm font-bold text-foreground">{connected && item.status === 'Needs Auth' ? 'Just now' : item.lastSync}</strong>
+							{t('Sinkronisasi terakhir')} <strong class="mt-1 block text-sm font-bold text-foreground">{connected && item.status === 'Needs Auth' ? t('Baru saja') : item.lastSync}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Scopes <strong class="mt-1 block text-sm font-bold text-foreground">{item.scopes.length}</strong>
+							{t('Lingkup')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.scopes.length}</strong>
 						</div>
 					</div>
 					<div class="flex flex-wrap gap-2">
@@ -133,10 +142,10 @@
 						{/each}
 					</div>
 				</CardContent>
-				<Button variant="outline" onclick={() => handleConnect(item.id)}>{(connected || connectedId === item.id) && item.status === 'Needs Auth' ? 'Connected' : item.status === 'Connected' ? 'Reconnect' : 'Connect'}</Button>
+				<Button variant="outline" onclick={() => handleConnect(item.id)}>{(connected || connectedId === item.id) && item.status === 'Needs Auth' ? t('Terhubung') : item.status === 'Connected' ? t('Hubungkan ulang') : t('Hubungkan')}</Button>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No integration matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada integrasi yang cocok dengan pencarian.')}</div>
 		{/each}
 	</div>
 </AppShell>
