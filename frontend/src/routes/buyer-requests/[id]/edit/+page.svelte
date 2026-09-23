@@ -26,7 +26,7 @@
 	async function save() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib sebelum menyimpan.';
+			error = t('Lengkapi kolom wajib sebelum menyimpan.');
 			return;
 		}
 		saving = true;
@@ -40,7 +40,7 @@
 			});
 			saved = true;
 		} catch {
-			error = 'Gagal menyimpan request ke backend.';
+			error = t('Gagal menyimpan request ke backend.');
 		} finally {
 			saving = false;
 		}
@@ -51,13 +51,13 @@
 	<title>Edit {data.request.subject} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.request.id} eyebrow="Edit buyer request">
+<AppShell title={data.request.id} eyebrow={t('Edit buyer request')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Inbound demand</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Update {initial.subject}.</CardTitle>
+			<Badge variant="secondary">{t('Permintaan inbound')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Perbarui')} {initial.subject}.</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Keep subject, destination, quantity, and deadline current so the matching engine stays accurate.
+				{t('Jaga subjek, tujuan, jumlah, dan batas waktu tetap terkini agar mesin pencocokan tetap akurat.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -65,47 +65,47 @@
 	{#if saved}
 		<Card class="grid gap-4">
 			<CardHeader class="p-0">
-				<Badge variant="secondary">Request saved</Badge>
+				<Badge variant="secondary">{t('Permintaan disimpan')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight">{subject}</CardTitle>
 				<CardDescription class="mt-2 leading-relaxed">
-					{quantity} to {destination}. Perubahan tersimpan & matching diperbarui di backend.
+					{quantity} {t('ke')} {destination}. {t('Perubahan tersimpan & matching diperbarui di backend.')}
 				</CardDescription>
 			</CardHeader>
 			<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-				<Button href={`/buyer-requests/${data.request.id}`}>Back to request</Button>
+				<Button href={`/buyer-requests/${data.request.id}`}>{t('Kembali ke permintaan')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
 		<Card>
 			<form class="grid gap-4 p-1" onsubmit={(event) => { event.preventDefault(); save(); }}>
 				<div class="grid gap-2">
-					<Label for="br-subject">Subject</Label>
+					<Label for="br-subject">{t('Subjek')}</Label>
 					<Input id="br-subject" bind:value={subject} />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label for="br-dest">Destination</Label>
+						<Label for="br-dest">{t('Tujuan')}</Label>
 						<Input id="br-dest" bind:value={destination} />
 					</div>
 					<div class="grid gap-2">
-						<Label for="br-deadline">Deadline</Label>
+						<Label for="br-deadline">{t('Batas waktu')}</Label>
 						<Input id="br-deadline" bind:value={deadline} type="date" />
 					</div>
 				</div>
 				<div class="grid gap-2">
-					<Label for="br-qty">Quantity</Label>
+					<Label for="br-qty">{t('Jumlah')}</Label>
 					<Input id="br-qty" bind:value={quantity} />
 				</div>
 				<div class="grid gap-2">
-					<Label for="br-req">Requirements (one per line)</Label>
+					<Label for="br-req">{t('Persyaratan (satu per baris)')}</Label>
 					<Textarea id="br-req" bind:value={requirements} rows={3} />
 				</div>
 
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-3">
-					<Button variant="outline" href={`/buyer-requests/${data.request.id}`}>Cancel</Button>
-					<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save request'}</Button>
+					<Button variant="outline" href={`/buyer-requests/${data.request.id}`}>{t('Batal')}</Button>
+					<Button type="submit" disabled={saving}>{saving ? t('Menyimpan...') : t('Simpan permintaan')}</Button>
 				</div>
 			</form>
 		</Card>
