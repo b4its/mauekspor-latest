@@ -17,6 +17,7 @@
 	import ArrowRightLeftIcon from '@lucide/svelte/icons/arrow-right-left';
 	import MenuIcon from '@lucide/svelte/icons/menu';
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
+	import { goto } from '$app/navigation';
 	import { listNotifications } from '$lib/api/notifications';
 	import { getAccessToken } from '$lib/api/client';
 import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
@@ -39,8 +40,21 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	async function handleLogout() {
 		loggingOut = true;
 		await logout();
-		window.location.href = '/login';
+		await goto('/login');
 	}
+
+	/** Sesi kedaluwarsa (refresh token gagal): reset store + arahkan ke /login.
+	 * Sebelumnya event ini di-dispatch tanpa listener sehingga UI tetap
+	 * menampilkan status 'authenticated' palsu. */
+	async function handleSessionExpired() {
+		await logout();
+		await goto('/login');
+	}
+
+	$effect(() => {
+		window.addEventListener('mauekspor-session-expired', handleSessionExpired);
+		return () => window.removeEventListener('mauekspor-session-expired', handleSessionExpired);
+	});
 
 	function trGroup(g: string) {
 		const map: Record<string, string> = {
@@ -61,6 +75,14 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 	$effect(() => {
+		// Tunggu sesi terautentikasi sebelum memanggil /notifications/ yang kini
+		// butuh auth; jika tidak, request awal 401 → badge salah 0.
+		const status = userStatus;
+		if (status !== 'authenticated') {
+			unreadCount = 0;
+			return;
+		}
+
 		async function refreshNotifications() {
 			try {
 				const res = await listNotifications();
@@ -242,10 +264,10 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 									<span>{i18n.locale === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
 								</DropdownMenu.Item>
 								<DropdownMenu.Separator />
-								<DropdownMenu.Item onclick={() => (window.location.href = '/trade-projects')}>
+								<DropdownMenu.Item onclick={() => goto('/trade-projects')}>
 									<span>{t('View projects')}</span>
 								</DropdownMenu.Item>
-								<DropdownMenu.Item onclick={() => (window.location.href = '/trade-projects/new')}>
+								<DropdownMenu.Item onclick={() => goto('/trade-projects/new')}>
 									<span>{t('New trade project')}</span>
 								</DropdownMenu.Item>
 								<DropdownMenu.Separator />
@@ -254,7 +276,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 										<span>{t('Logout')} — {user.name}</span>
 									</DropdownMenu.Item>
 								{:else if userStatus === 'unauthenticated'}
-									<DropdownMenu.Item onclick={() => (window.location.href = '/login')}>
+									<DropdownMenu.Item onclick={() => goto('/login')}>
 										<span>{t('Login')}</span>
 									</DropdownMenu.Item>
 								{/if}

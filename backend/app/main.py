@@ -136,6 +136,30 @@ def _is_public_mutation(path: str) -> bool:
     }
 
 
+# Endpoint profil self-service: route handlers sudah membatasi aksi ke
+# current_user (atau ownership), jadi tidak perlu gate peran per-modul.
+# Prefix tanpa query-string; `.split("?", 1)` agar query tidak merusak match.
+_SELF_SERVICE_PREFIXES = (
+    "/api/v1/buyers/profile/",
+    "/api/v1/forwarders/profile/",
+)
+
+
+def _is_self_service_mutation(path: str) -> bool:
+    return path.split("?", 1)[0].startswith(_SELF_SERVICE_PREFIXES)
+
+
+# Path GET yang tetap boleh diakses anonim (katalog publik & endpoint publik lain).
+_ANON_READ_PREFIXES = (
+    "/api/v1/catalogs/public/",
+    "/api/v1/catalogs/public",
+)
+
+
+def _is_anon_read(path: str) -> bool:
+    return path.split("?", 1)[0].startswith(_ANON_READ_PREFIXES)
+
+
 def _module_of(path: str) -> str:
     parts = path.strip("/").split("/")
     return parts[2] if len(parts) > 2 else ""
@@ -172,7 +196,7 @@ import time as _time
 _RL_WINDOW = 60
 _RL_DEFAULT = 120  # max requests per window per IP
 _RL_LOGIN = int(os.getenv("MAUEKSPOR_RL_LOGIN", "5"))  # login rate limit (5 by default)
-_RL_ENABLED = os.getenv("MAUEKSPOR_DISABLE_PERSISTENCE", "").lower() not in {"1", "true", "yes"}
+_RL_ENABLED = os.getenv("MAUEKSPOR_DISABLE_RATE_LIMIT", "").lower() not in {"1", "true", "yes"}
 
 
 def _rate_limit_key(request) -> str:
@@ -181,18 +205,17 @@ def _rate_limit_key(request) -> str:
     Di belakang proxy (ngrok tunnel / nginx), request.client.host adalah IP
     proxy — SEMUA user publik share satu IP sehingga rate limit per-IP
     memblokir seluruh pengunjung setelah 5 login (bug 429 massal).
-    Gunakan X-Forwarded-For (di-set ngrok & nginx) agar tiap user asli
-    punya kuota sendiri. Fallback: IP socket langsung.
+    Percaya HANYA X-Real-IP (selalu dioverwrite proxy dari $remote_addr —
+    tidak bisa dipalsukan client dari sisi proxy). X-Forwarded-For pertama
+    bisa dipalsukan client (nginx hanya menambah hop, tidak menimpa),
+    sehingga tidak dipakai sebagai kunci. Set MAUEKSPOR_TRUST_PROXY=0 untuk
+    mengabaikan header proxy sepenuhnya (mis. backend terekspos langsung).
+    Fallback: IP socket langsung.
     """
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if forwarded:
-        # Hop pertama = klien asli
-        first = forwarded.split(",")[0].strip()
-        if first:
-            return first
-    real_ip = request.headers.get("x-real-ip", "").strip()
-    if real_ip:
-        return real_ip
+    if os.getenv("MAUEKSPOR_TRUST_PROXY", "1").lower() not in {"0", "false", "no"}:
+        real_ip = request.headers.get("x-real-ip", "").strip()
+        if real_ip:
+            return real_ip
     ip = request.client.host if request.client else "unknown"
     return ip
 
@@ -276,7 +299,10 @@ async def login_lockout(request, call_next):
         response = await call_next(request)
         if response.status_code == 401:
             _record_login_failure(identifier)
-        else:
+        elif 200 <= response.status_code < 300:
+            # Sukses login → reset. Status lain (429/422/5xx) NETRAL —
+            # sebelumnya di sini clear, sehingga membanjiri limiter 429
+            # efektif menghapus counter dan lockout tak pernah aktif.
             _clear_login_failures(identifier)
         return response
     return await call_next(request)
@@ -289,8 +315,23 @@ import secrets as _secrets
 _csrf_tokens: dict[str, str] = {}
 
 
+def _active_csrf_tokens() -> dict[str, float]:
+    """Buang token CSRF kedaluwarsa (>1 jam); dipanggil saat penerbitan.
+    Tanpa ini _csrf_tokens tumbuh selamanya dan token lama valid selamanya."""
+    now = _time.time()
+    expired = [t for t, ts in _csrf_tokens.items() if now - ts > 3600]
+    for t in expired:
+        _csrf_tokens.pop(t, None)
+    return _csrf_tokens
+
+
 def issue_csrf_token(request) -> str:
-    """Buat / kembalikan token CSRF untuk request yang memakai cookie."""
+    """Buat token CSRF untuk request yang memakai cookie.
+
+    Pangkas token kedaluwarsa di sini juga, karena endpoint GET /auth/csrf/
+    publik → tanpa pruning dict tumbuh tanpa batas.
+    """
+    _active_csrf_tokens()
     token = _secrets.token_urlsafe(32)
     _csrf_tokens[token] = _time.time()
     return token
@@ -317,7 +358,7 @@ async def csrf_protection(request, call_next):
         and not _is_public_mutation(request.url.path)
     ):
         csrf = request.headers.get("x-csrf-token")
-        if not csrf or csrf not in _csrf_tokens:
+        if not csrf or csrf not in _active_csrf_tokens():
             return JSONResponse(
                 status_code=403,
                 content=_error_body(403, "CSRF token missing or invalid. Gunakan Authorization Bearer atau sertakan X-CSRF-Token."),
@@ -383,13 +424,21 @@ async def require_auth_for_mutations(request, call_next):
             return JSONResponse(status_code=401, content=_error_body(401, "Not authenticated"))
         if not user:
             return JSONResponse(status_code=401, content=_error_body(401, "User not found"))
-        if not can_mutate_module(user.get("role", ""), module):
+        if not can_mutate_module(user.get("role", ""), module) and not _is_self_service_mutation(
+            request.url.path
+        ):
             return JSONResponse(
                 status_code=403,
                 content=_error_body(403, f"Role {user.get('role', '')} cannot modify this resource"),
             )
-    elif not can_read_module((user or {}).get("role", ""), module):
-        return JSONResponse(status_code=403, content=_error_body(403, "Admin access required"))
+    elif not can_read_module((user or {}).get("role", ""), module) and not _is_anon_read(
+        request.url.path
+    ):
+        # 403 untuk modul admin-only, 401 untuk modul yang butuh login.
+        from app.core.permissions import ADMIN_ONLY_MODULES as _ADMIN_ONLY
+        if module in _ADMIN_ONLY:
+            return JSONResponse(status_code=403, content=_error_body(403, "Admin access required"))
+        return JSONResponse(status_code=401, content=_error_body(401, "Authentication required"))
     return await call_next(request)
 
 

@@ -297,7 +297,7 @@ def seed_100_records():
             "lanes": [f"{_pick(CITIES, n())} - {_pick(REGIONS[_pick(ALL_REGIONS, n())], n())}"],
             "contact": f"fwd{i:03d}@example.com",
             "averageRating": 0, "totalReviews": 0, "updatedAt": "now"})
-        db.insert("forwarder_reviews", {"id": f"REV-{i:03d}",
+        db.insert("forwarder_reviews", {"id": f"REV-{i+100:03d}",
             "forwarderId": fid, "rating": n()%5+1,
             "reviewText": _pick(["Fast booking","Competitive rates","Good communication","Reliable tracking"], n()),
             "umkmId": _pick(user_ids, n()),
@@ -601,7 +601,7 @@ def seed_100_records():
 
     # -- CHAT SESSIONS (100) --
     for i in range(1, 101):
-        db.insert("chat_sessions", {"id": f"CHS-{i:03d}",
+        db.insert("chat_sessions", {"id": f"CHS-{i+100:03d}",
             "title": f"Chat {i}: {_pick(['Export guidance','Compliance question','Pricing inquiry','Market research'], n())}",
             "messages": [{"role":"user","text":f"How to export to {_pick(ALL_REGIONS, n())}?"},
                         {"role":"ai","text":"Based on your workspace data, here are the steps..."}],
@@ -661,7 +661,7 @@ def seed_100_records():
     buyer_users = [f"U-{100 + i:03d}" for i in range(1, 101) if roles[i-1] == "Buyer"] or [f"U-{100 + i:03d}" for i in range(1, 101)]
     for i in range(1, 101):
         owner = buyer_users[(i-1) % len(buyer_users)]
-        db.insert("buyer_profiles", {"id": f"BYP-{i:03d}", "userId": owner,
+        db.insert("buyer_profiles", {"id": f"BYP-{i+100:03d}", "userId": owner,
             "company_name": _pick(BUYER_COMPANIES, n()),
             "companyName": _pick(BUYER_COMPANIES, n()+1),
             "company_description": f"{_pick(BUYER_COMPANIES, n())} is an importer focused on {_pick(CATEGORIES, n()).lower()}.",
@@ -682,7 +682,7 @@ def seed_100_records():
     fwd_users = [f"U-{100 + i:03d}" for i in range(1, 101) if roles[i-1] == "Forwarder"] or [f"U-{100 + i:03d}" for i in range(1, 101)]
     for i in range(1, 101):
         owner = fwd_users[(i-1) % len(fwd_users)]
-        db.insert("forwarder_profiles", {"id": f"FWP-{i:03d}", "userId": owner,
+        db.insert("forwarder_profiles", {"id": f"FWP-{i+100:03d}", "userId": owner,
             "company_name": _pick(FORWARDER_COMPANIES, n()),
             "companyName": _pick(FORWARDER_COMPANIES, n()+1),
             "contact_info": {"email": f"fwd{i:03d}@example.com", "phone": f"+{n()%100+1}-{n()%9000000+1000000}"},

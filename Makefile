@@ -1,256 +1,146 @@
-# MauEkspor Makefile - Production with Ngrok Tunnel
-#
-# PORT LAYOUT (anti-tabrakan):
-#   Production Docker  : db=5447, backend=8015, frontend=3015, nginx=8080
-#   Development local  : backend=8016, frontend=5188 (vite dev dengan proxy)
-#   AI endpoint lokal  : 20128
-#   Ngrok admin UI     : 4040
+# MauEkspor - Complete Local Development with Docker + LAN Access
+# ================================================================
+# Auto-installation dengan Docker - support akses dari device lain
+# ================================================================
 
-.PHONY: help \
-        ngrok-prod-build ngrok-prod-up ngrok-prod-down ngrok-prod-stop \
-        ngrok-prod-logs ngrok-prod-reseed ngrok-prod-status \
-        ngrok-tunnel-start ngrok-tunnel-stop ngrok-show-urls ngrok-with-ai port-doctor \
-        dev-backend dev-frontend dev-up dev-down \
-        stop stop-all build docker-up docker-down \
-        test test-backend test-frontend
-
-# ─── Load .env (secrets & config) ─────────────────────────────────────────────
-# .env is gitignored; make 'include' parses KEY=VALUE lines, 'export' passes
-# them to every recipe shell. Override precedence: real env vars win.
-ifneq (,$(wildcard .env))
-include .env
-export
-endif
-
-# ─── Ports (defaults; .env values win via ?=) ─────────────────────────────────
-BACKEND_PORT      ?= 8015
-NGINX_PORT        ?= 8080
-FRONTEND_PORT     ?= 3015
-DB_PORT           ?= 5447
-DEV_BACKEND_PORT  ?= 8016
-DEV_FRONTEND_PORT ?= 5188
+.PHONY: help install dev-up dev-down dev-restart dev-status dev-logs \
+        dev-logs-backend dev-logs-frontend dev-shell-backend dev-network \
+        dev-clean dev-rebuild dev-db-reset
 
 SHELL := /bin/bash
+COMPOSE_FILE := docker-compose.dev.yml
+PROJECT_NAME := mauekspor-dev
+ENV_FILE := .env.local
 
-# ─────────────────────────────────────────────────────────────────────────────
 help:
-	@echo "════════════════════════════════════════════════════════"
-	@echo "  🌍  MauEkspor - Deployment Guide"
-	@echo "════════════════════════════════════════════════════════"
 	@echo ""
-	@echo "  QUICK START:"
-	@echo "    make ngrok-prod-build   # Build Docker images (sekali)"
-	@echo "    make ngrok-prod-up      # Start production stack"
-	@echo "    make ngrok-tunnel-start # Buka tunnel publik"
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║  🚀 MauEkspor - Docker Development Commands (LAN Ready)  ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
 	@echo ""
-	@echo "  PRODUCTION:"
-	@echo "    ngrok-prod-build  - Build semua Docker images"
-	@echo "    ngrok-prod-up     - Start db/backend/frontend/nginx (Docker)"
-	@echo "    ngrok-prod-down   - Stop & remove production containers"
-	@echo "    ngrok-prod-status - Cek status semua services"
-	@echo "    ngrok-prod-logs   - Tail logs production"
-	@echo "    ngrok-prod-reseed - Reset & seed ulang database"
+	@echo "🎯 FIRST TIME SETUP:"
+	@echo "  make install          # Run complete auto-installation"
 	@echo ""
-	@echo "  TUNNEL:"
-	@echo "    ngrok-tunnel-start - Buka ngrok -> nginx:$(NGINX_PORT)"
-	@echo "    ngrok-tunnel-stop  - Stop ngrok"
-	@echo "    ngrok-show-urls    - Tampilkan public URL aktif"
+	@echo "🚀 DAILY COMMANDS:"
+	@echo "  make dev-up           # Start all services (build if needed)"
+	@echo "  make dev-down         # Stop all services"
+	@echo "  make dev-restart      # Restart all services"
+	@echo "  make dev-status       # Show status & health checks"
+	@echo "  make dev-network      # Show LAN network access URLs"
 	@echo ""
-	@echo "  DEVELOPMENT:"
-	@echo "    dev-backend   - Backend lokal port $(DEV_BACKEND_PORT)"
-	@echo "    dev-frontend  - Frontend dev port $(DEV_FRONTEND_PORT)"
-	@echo "    backend-local - Backend + AI access (port 8016, real AI not mock)"
-	@echo "    ngrok-with-ai - Prod ngrok + AI via cloudflared (REAL AI, RECOMMENDED)"
-	@echo "    port-doctor   - Diagnosa pemegang port production"
-	@echo "    dev-down      - Stop semua proses dev"
+	@echo "📊 MONITORING:"
+	@echo "  make dev-logs         # Show all logs"
+	@echo "  make dev-logs-backend # Backend logs only"
+	@echo "  make dev-logs-frontend# Frontend logs only"
+	@echo "  make dev-shell-backend# Open shell in backend container"
 	@echo ""
-	@echo "  TESTING:"
-	@echo "    test          - Run semua tests"
-	@echo "    test-backend  - Backend pytest"
-	@echo "    test-frontend - Frontend vitest"
+	@echo "🧹 MAINTENANCE:"
+	@echo "  make dev-clean        # Remove containers, volumes, images"
+	@echo "  make dev-rebuild      # Clean rebuild from scratch"
+	@echo "  make dev-db-reset     # Reset database (HAPUS SEMUA DATA!)"
 	@echo ""
-	@echo "  PORT LAYOUT:"
-	@echo "    Prod Docker: db=$(DB_PORT) | backend=$(BACKEND_PORT) | frontend=$(FRONTEND_PORT) | nginx=$(NGINX_PORT)"
-	@echo "    Dev local:   backend=$(DEV_BACKEND_PORT) | frontend=$(DEV_FRONTEND_PORT)"
-	@echo "════════════════════════════════════════════════════════"
-
-# ─────────────────────────────────────────────────────────────────────────────
-# BUILD
-# ─────────────────────────────────────────────────────────────────────────────
-ngrok-prod-build:
-	@echo "🔨 Building Docker images..."
-	docker compose -p mauekspor-prod -f docker-compose.production.yml build db backend frontend-prod nginx
-	@echo "✅ Build selesai!"
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PRODUCTION UP
-# ─────────────────────────────────────────────────────────────────────────────
-ngrok-prod-up:
-	@bash scripts/prod-up.sh
-
-# Diagnosa pemegang port production — tampilkan siapa memegang apa + cara resolusi
-port-doctor:
-	@bash -c '\
-	. ./.env 2>/dev/null; \
-	BD=$${BACKEND_PORT:-8015}; NG=$${NGINX_PORT:-8080}; FE=$${FRONTEND_PORT:-3015}; DB=$${DB_PORT:-5448}; \
-	echo "  🔍 Port Doctor — production ports: $$BD $$NG $$FE $$DB"; \
-	echo ""; \
-	for port in $$BD $$NG $$FE $$DB; do \
-		holders=$$(docker ps --filter "publish=$$port" --format "{{.Names}} ({{.Label \"com.docker.compose.project\"}})"); \
-		hostpid=$$(ss -tlnpH 2>/dev/null | grep ":$$port " | grep -oP "pid=\K[0-9]+" | head -1); \
-		if [ -n "$$holders" ]; then \
-			echo "  ⚠️  $$port → container: $$holders"; \
-		elif [ -n "$$hostpid" ]; then \
-			echo "  ⚠️  $$port → proses host pid=$$hostpid ($$(ps -p $$hostpid -o comm= 2>/dev/null))"; \
-		else \
-			echo "  ✅ $$port bebas"; \
-		fi; \
-	done; \
-	echo ""; \
-	echo "  Resolusi cepat: FORCE_PORT_KILL=1 make ngrok-prod-up"'
-
-ngrok-prod-down:
-	@echo "🛑 Stopping production stack..."
-	@docker compose -p mauekspor-prod -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
-	@docker rm -f mauekspor-db-prod mauekspor-backend-prod mauekspor-frontend-prod mauekspor-nginx-prod mauekspor-ngrok-prod 2>/dev/null || true
-	@echo "✅ Production stack dihentikan"
-
-ngrok-prod-stop: ngrok-prod-down
-
-ngrok-prod-status:
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "  📊 Production Stack Status"
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@docker ps --format "  {{.Names}}\t{{.Status}}\t{{.Ports}}" \
-		--filter "name=mauekspor" 2>/dev/null | column -t || echo "  (tidak ada container)"
+	@echo "🌐 URLs:"
+	@echo "  Local:    http://localhost:5188"
+	@echo "  LAN:      http://$$(make -s _host-ip):5188"
+	@echo "  Backend:  http://localhost:8016/api/v1"
 	@echo ""
-	@echo "  Local URLs:"
-	@echo "    Frontend → http://localhost:$(FRONTEND_PORT)"
-	@echo "    Backend  → http://localhost:$(BACKEND_PORT)/api/v1"
-	@echo "    Nginx    → http://localhost:$(NGINX_PORT)"
-	@echo ""
-	@echo "  run: make ngrok-tunnel-start untuk public URL"
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-ngrok-prod-logs:
-	docker compose -p mauekspor-prod -f docker-compose.production.yml logs -f --tail=100
-
-ngrok-prod-reseed:
-	@echo "⚠️  WARNING: Ini akan MENGHAPUS semua data!"
-	@read -p "Ketik YES untuk lanjut: " confirm; \
-	if [ "$$confirm" = "YES" ]; then \
-		docker exec mauekspor-db-prod psql -U mauekspor -d mauekspor \
-			-c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true; \
-		docker exec mauekspor-backend-prod python -c \
-			"from app.seed import seed_if_empty; seed_if_empty()" 2>/dev/null || true; \
-		echo "✅ Re-seed selesai!"; \
-	else \
-		echo "Dibatalkan."; \
-	fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# NGROK TUNNEL
-# ─────────────────────────────────────────────────────────────────────────────
-ngrok-tunnel-start:
-	@bash scripts/tunnel-start.sh
-
-ngrok-tunnel-stop:
-	@bash scripts/tunnel-stop.sh
-
-# Watchdog: auto-restart ngrok kalau mati (untuk free tier yang sering expire)
-# Run di terminal terpisah: make tunnel-keep-alive
-tunnel-keep-alive:
-	@bash scripts/tunnel-monitor.sh
-
-ngrok-show-urls:
-	@echo ""
-	@echo "  🌍 Public Tunnel URLs:"
-	@curl -s http://127.0.0.1:4040/api/tunnels 2>/dev/null \
-		| python3 -c "\
-import sys, json; \
-d = json.load(sys.stdin); \
-tunnels = d.get('tunnels', []); \
-[print('  ➤', t['public_url']) for t in tunnels] \
-if tunnels else print('  (belum aktif — coba: make ngrok-tunnel-start)')" \
-		2>/dev/null || echo "  (ngrok API tidak dapat dijangkau)"
+	@echo "🔑 Login: admin@mauekspor.example / admin123"
 	@echo ""
 
-stop:
-	@pkill -f "uvicorn" 2>/dev/null && echo "✅ uvicorn dihentikan" || echo "✅ tidak ada uvicorn"
+_host-ip:
+	@bash -c 'IP=$$(ip route get 1.1.1.1 2>/dev/null | grep -oP "src \K\S+"); [ -z "$$IP" ] && IP=$$(ip addr show 2>/dev/null | grep -E "inet .* scope global" | head -1 | awk "{print \$$2}" | cut -d/ -f1); [ -z "$$IP" ] && IP="127.0.0.1"; echo "$$IP"'
 
-stop-all:
-	@bash -c "pkill -f 'uvicorn' 2>/dev/null || true"
-	@bash -c "pkill -f 'vite.*$(DEV_FRONTEND_PORT)' 2>/dev/null || true"
-	@bash -c "pkill -f 'ngrok http' 2>/dev/null || true"
-	@echo "✅ Semua service lokal dihentikan"
-
-# ─────────────────────────────────────────────────────────────────────────────
-# DEVELOPMENT (port terpisah: 8016 / 5188, tidak tabrakan dengan prod 8015)
-# ─────────────────────────────────────────────────────────────────────────────
-dev-backend:
-	@echo "🔧 Starting dev backend → http://localhost:$(DEV_BACKEND_PORT)"
-	cd backend && .venv/bin/uvicorn app.main:app \
-		--host 0.0.0.0 --port $(DEV_BACKEND_PORT) --reload
-
-dev-frontend:
-	@echo "🔧 Starting dev frontend → http://localhost:$(DEV_FRONTEND_PORT)"
-	cd frontend && BACKEND_ORIGIN=http://localhost:$(DEV_BACKEND_PORT) pnpm dev \
-		--port $(DEV_FRONTEND_PORT)
+install:
+	@bash ./install.sh
 
 dev-up:
-	@echo "🔧 Dev services:"
-	@echo "   Terminal 1: make dev-backend   (port $(DEV_BACKEND_PORT))"
-	@echo "   Terminal 2: make dev-frontend  (port $(DEV_FRONTEND_PORT))"
-
-# Backend lokal dengan AI access (port 8016, connect ke PostgreSQL Docker port 5447)
-# Gunakan ini saat butuh AI features yang real (bukan mock)
-backend-local:
-	@bash scripts/backend-local.sh
+	@bash ./scripts/fix-firewall.sh
+	@echo ""
+	@echo "🚀 Starting MauEkspor development stack..."
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) up -d --build
+	@echo ""
+	@echo "⏳ Waiting for services..."
+	@sleep 20
+	@make dev-status
 
 dev-down:
-	@bash -c "pkill -f 'uvicorn.*$(DEV_BACKEND_PORT)' 2>/dev/null || true; echo 'Dev backend stopped'"
-	@bash -c "pkill -f '$(DEV_FRONTEND_PORT)' 2>/dev/null || true; echo 'Dev frontend stopped'"
+	@echo ""
+	@echo "🛑 Stopping MauEkspor development stack..."
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down
+	@echo "✅ Services stopped"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# NGROK WITH AI SERVICE (production + public AI access)
-# ─────────────────────────────────────────────────────────────────────────────
-# Start production backend/frontend AND expose AI service via ngrok tunnel
-# Use this when you want full stack accessible publicly WITH real AI responses
-ngrok-with-ai:
-	@bash scripts/ngrok-with-ai.sh
+dev-restart:
+	@echo ""
+	@echo "🔄 Restarting services..."
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) restart
+	@echo "✅ Services restarted"
 
-# ─────────────────────────────────────────────────────────────────────────────
-build:
-	cd frontend && pnpm build && echo "✅ Frontend build selesai!"
+dev-status:
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  📊 Services Status"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) ps
+	@echo ""
+	@echo "🔍 Health Checks:"
+	@echo -n "  Database  : " && docker inspect --format='{{.State.Health.Status}}' mauekspor-dev-db 2>/dev/null || echo "N/A"
+	@echo -n "  Backend   : " && (curl -s --max-time 3 http://localhost:8016/api/v1/health 2>/dev/null | grep -q ok && echo "✅ OK") || echo "❌ Not responding"
+	@echo -n "  Frontend  : " && (curl -s --max-time 3 http://localhost:5188/ 2>/dev/null | head -c 1 | grep -q . && echo "✅ OK") || echo "❌ Not responding"
+	@echo -n "  AI Service: " && (curl -s --max-time 3 http://localhost:20128/v1/models 2>/dev/null | grep -q qd && echo "✅ OK") || echo "❌ Not responding"
+	@echo ""
+	@make -s dev-network
 
-docker-up:
-	docker compose -p mauekspor-prod -f docker-compose.production.yml up -d && echo "✅ Up!"
+dev-network:
+	@HOST_IP=$$(make -s _host-ip); \
+	echo "🌐 Network Access (same WiFi/LAN):"; \
+	echo "  This device: http://localhost:5188"; \
+	echo "  Other devices: http://$$HOST_IP:5188"; \
+	echo "  Backend API:   http://$$HOST_IP:8016/api/v1"; \
+	echo "  Swagger Docs:  http://$$HOST_IP:8016/docs"
 
-docker-down:
-	docker compose -p mauekspor-prod -f docker-compose.production.yml down && echo "✅ Down!"
+dev-logs:
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) logs -f
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TESTING
-# ─────────────────────────────────────────────────────────────────────────────
-test-backend:
-	@echo "🧪 Backend tests..."
-	cd backend && .venv/bin/python -m pytest tests/ --tb=short -q
+dev-logs-backend:
+	@docker logs -f mauekspor-dev-backend
 
-test-frontend:
-	@echo "🧪 Frontend tests..."
-	cd frontend && pnpm test
+dev-logs-frontend:
+	@docker logs -f mauekspor-dev-frontend
 
-test: test-backend test-frontend
-	@echo "✅ All tests done"
+dev-logs-db:
+	@docker logs -f mauekspor-dev-db
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CLOUDFLARE TUNNEL (alternatif ngrok)
-# ─────────────────────────────────────────────────────────────────────────────
-cloudflared-install:
-	@cd /tmp && curl -L --output cloudflare.deb \
-		https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb \
-		&& sudo dpkg -i cloudflare.deb && rm cloudflare.deb && echo "✅ Cloudflared installed!"
+dev-shell-backend:
+	@docker exec -it mauekspor-dev-backend /bin/bash
 
-cloudflared-tunnel-start:
-	@echo "Starting Cloudflare Tunnel → http://localhost:$(NGINX_PORT)"
-	cloudflared tunnel --url http://localhost:$(NGINX_PORT)
+dev-shell-frontend:
+	@docker exec -it mauekspor-dev-frontend /bin/sh
+
+dev-clean:
+	@echo ""
+	@echo "🧹 Cleaning up all development resources..."
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down -v --remove-orphans
+	@echo "✅ Cleanup complete"
+
+dev-rebuild:
+	@echo ""
+	@echo "🔨 Rebuilding from scratch..."
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down -v --remove-orphans
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) build --no-cache
+	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) up -d
+	@echo "✅ Rebuild complete"
+
+dev-db-reset:
+	@echo ""
+	@echo "🗑️  Resetting database - ALL DATA WILL BE LOST!"
+	@read -p "Are you sure? (y/N): " confirm; \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down; \
+		docker volume rm mauekspor-dev_db-data 2>/dev/null || true; \
+		docker volume rm mauekspor-dev_uploads 2>/dev/null || true; \
+		docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) up -d; \
+		echo "✅ Database reset complete"; \
+	else \
+		echo "❌ Cancelled"; \
+	fi

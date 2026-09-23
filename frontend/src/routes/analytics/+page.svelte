@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
+	import { getStatus } from '$lib/stores/session.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
@@ -52,6 +53,8 @@
 
 
 	$effect(() => {
+		// Muat hanya setelah sesi terautentikasi (read API kini butuh auth).
+		if (getStatus() !== 'authenticated') return;
 		projects.load();
 		payments.load();
 		complianceRequirements.load();
@@ -60,7 +63,9 @@
 		suppliers.load();
 		getAnalyticsOverview()
 			.then((res) => {
-				metrics = seedMetrics.map((seed) => res.data.find((m) => m.label === seed.label) ?? seed);
+				// Backend adalah sumber metrik kanonik; seed hanya fallback saat kosong.
+				// Sebelumnya merge by label selalu gagal (label seed beda) → demo values.
+				metrics = res.data.length ? res.data : seedMetrics;
 			})
 			.catch(() => { error = t('Gagal memuat metrik analytics.'); });
 		getAnalyticsLanes()

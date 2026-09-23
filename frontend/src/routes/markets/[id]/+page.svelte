@@ -76,7 +76,7 @@
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
 					<CardTitle>{t('Market Decision Summary')}</CardTitle>
-					<CardDescription>{data.market.entryStrategy}</CardDescription>
+					<CardDescription>{data.market.entryStrategy ?? '—'}</CardDescription>
 				</div>
 				<div class="flex flex-wrap items-center gap-2.5">
 					<NativeSelect bind:value={selectedScenario} class="w-40">
@@ -92,13 +92,13 @@
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Import value')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.importValue}</strong>
+					{t('Import value')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.importValue ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Pertumbuhan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.growth}</strong>
+					{t('Pertumbuhan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.growth ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Tarif/kepatuhan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.tariff}</strong>
+					{t('Tarif/kepatuhan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.tariff ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Kompleksitas')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.complianceComplexity}</strong>
@@ -115,7 +115,7 @@
 		<Card>
 			<CardHeader class="p-0"><CardTitle>{t('Peluang')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5 p-0 pt-4">
-				{#each data.market.opportunities as item}
+				{#each data.market.opportunities ?? [] as item}
 					<span class="rounded-lg bg-primary/10 px-3 py-3 font-bold leading-relaxed text-primary">{item}</span>
 				{/each}
 			</CardContent>
@@ -124,7 +124,7 @@
 		<Card>
 			<CardHeader class="p-0"><CardTitle>{t('Risks')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5 p-0 pt-4">
-				{#each data.market.risks as item}
+				{#each data.market.risks ?? [] as item}
 					<span class="rounded-lg bg-orange-500/10 px-3 py-3 font-bold leading-relaxed text-orange-700">{item}</span>
 				{/each}
 			</CardContent>
@@ -137,7 +137,7 @@
 			</CardHeader>
 			<CardContent class="grid gap-3 pt-4">
 				<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-					{#each data.market.sources as source}
+					{#each data.market.sources ?? [] as source}
 						<div class="rounded-lg border bg-muted/30 p-3.5">
 							<strong class="block text-sm font-bold">{source.name}</strong>
 							<span class="mt-1 block text-sm text-muted-foreground">{source.date}</span>

@@ -60,7 +60,9 @@ services:
       - 8.8.8.8
     environment:
       # Override via .env — do NOT hardcode secrets here
-      MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
+      # WAJIB diisi di .env — tanpa ini backend menolak boot (fail-fast).
+      MAUEKSPOR_ENVIRONMENT: production
+      MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:?Set MAUEKSPOR_SECRET_KEY in .env (random strong value)}
       MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@db:5432/${POSTGRES_DB:-mauekspor}
       MAUEKSPOR_UPLOAD_DIR: /app/uploads
       # Izinkan request dari localhost, ngrok, cloudflare tunnel, dan ngrok-free.app

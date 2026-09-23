@@ -483,7 +483,10 @@ def test_costing_compare_and_xlsx_exports():
         assert r.status_code == 200, r.text
         assert r.json()["data"]["runs"] == before + 1
         notif = c.get("/api/v1/notifications/").json()["data"]
-        assert any(n.get("type") == "automation" and n.get("status") == "Unread" for n in notif)
+        assert any(
+            n.get("module") == "Automations" and n.get("status") == "Unread" and n.get("href")
+            for n in notif
+        )
         r = c.post("/api/v1/automations/AUT-LABEL-BLOCKER/activate/")
         assert r.status_code == 200
         assert r.json()["data"]["status"] == "Active"

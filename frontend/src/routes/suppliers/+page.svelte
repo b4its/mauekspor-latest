@@ -31,7 +31,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let filteredSuppliers = $derived(
 		suppliers.items.filter((supplier) => {
-			const names = supplier.productIds.map((id) => products.items.find((product) => product.id === id)?.name ?? id).join(' ');
+			const names = (supplier.productIds ?? []).map((id) => products.items.find((product) => product.id === id)?.name ?? id).join(' ');
 			return (
 				(activeFilter === 'All' || supplier.status === activeFilter) &&
 				[supplier.name, supplier.location, supplier.category, names].join(' ').toLowerCase().includes(query.trim().toLowerCase())
@@ -40,8 +40,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	);
 	let verifiedCount = $derived(suppliers.items.filter((supplier) => supplier.status === 'Verified').length);
 	let avgCapability = $derived(Math.round(suppliers.items.reduce((sum, supplier) => sum + supplier.capabilityScore, 0) / (suppliers.items.length || 1)));
-	function productNames(ids: string[]) {
-		return ids.map((id) => products.items.find((product) => product.id === id)?.name ?? id).join(', ');
+	function productNames(ids?: string[]) {
+		return (ids ?? []).map((id) => products.items.find((product) => product.id === id)?.name ?? id).join(', ');
 	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {

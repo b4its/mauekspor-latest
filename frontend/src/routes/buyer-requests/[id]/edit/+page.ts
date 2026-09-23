@@ -6,6 +6,9 @@ import { getProduct } from '$lib/api/products';
 import { loadById } from '$lib/api/remote-list.svelte';
 import type { PageLoad } from './$types';
 
+// SSR dimatikan: loader butuh token/cookie auth yang hanya ada di klien.
+export const ssr = false;
+
 export const load: PageLoad = async ({ params }) => {
 	const request = await loadById(getBuyerRequest, seedRequests, params.id);
 	if (!request) error(404, 'Buyer request not found');

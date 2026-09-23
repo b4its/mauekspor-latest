@@ -30,7 +30,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		teamMembers.items.filter(
 			(member) =>
 				(activeFilter === 'All' || member.role === activeFilter) &&
-				[member.name, member.email, member.role, member.status, ...member.permissions].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				[member.name, member.email, member.role, member.status, ...(member.permissions ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
 	let activeCount = $derived(teamMembers.items.filter((member) => member.status === 'Active').length);

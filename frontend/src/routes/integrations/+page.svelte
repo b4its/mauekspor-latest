@@ -39,7 +39,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		items.items.filter(
 			(item) =>
 				(activeFilter === 'All' || item.category === activeFilter) &&
-				[item.name, item.category, item.status, item.description, ...item.scopes].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				[item.name, item.category, item.status, item.description, ...(item.scopes ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
 	let connectedCount = $derived(items.items.filter((item) => item.status === 'Connected').length + (connected ? 1 : 0));

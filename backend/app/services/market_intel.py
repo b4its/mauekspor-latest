@@ -83,7 +83,7 @@ def _fallback_market_intelligence(product: dict) -> dict[str, Any]:
         ],
         "marketTrends": ["Kenaikan permintaan produk berkualitas & tersertifikasi."],
         "competitiveLandscape": "Banyak pemain lokal; diferensiasi lewat sertifikasi dan cerita asal-usul.",
-        "growthOpportunities": ["Pasar specialty & premium", "Kanál e-commerce B2B"],
+        "growthOpportunities": ["Pasar specialty & premium", "Kanal e-commerce B2B"],
         "risksAndChallenges": ["Kepatuhan labeling", "Fluktuasi freight"],
         "overallRecommendation": "Fokus pada 1-2 pasar prioritas dengan kepatuhan lengkap.",
         "generatedAt": "now",

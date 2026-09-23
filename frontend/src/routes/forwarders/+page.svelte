@@ -27,7 +27,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let filteredForwarders = $derived(
 		forwarders.items.filter((forwarder) => {
 			const matchesFilter = activeFilter === 'All' || forwarder.mode === activeFilter;
-			const matchesQuery = [forwarder.name, forwarder.coverage, forwarder.mode, ...forwarder.lanes]
+			const matchesQuery = [forwarder.name, forwarder.coverage, forwarder.mode, ...(forwarder.lanes ?? [])]
 				.join(' ')
 				.toLowerCase()
 				.includes(query.trim().toLowerCase());

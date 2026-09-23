@@ -3,6 +3,9 @@ import { products as seedProducts } from '$lib/data/trade';
 import { getProduct } from '$lib/api/products';
 import type { PageLoad } from './$types';
 
+// SSR dimatikan: loader butuh token/cookie auth yang hanya ada di klien.
+export const ssr = false;
+
 async function findProduct(id: string) {
 	try {
 		const res = await getProduct(id);

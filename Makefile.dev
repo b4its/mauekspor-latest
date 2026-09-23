@@ -1,0 +1,206 @@
+# MauEkspor Local Development Makefile
+# ============================================
+# Run your app locally with REAL AI integration!
+# ============================================
+
+.PHONY: help dev-up dev-down dev-status dev-restart dev-logs \
+        dev-db-start dev-db-stop dev-db-seed \
+        dev-backend-start dev-backend-stop dev-backend-logs \
+        dev-frontend-start dev-frontend-stop dev-frontend-logs \
+        test test-backend test-frontend clean
+
+SHELL := /bin/bash
+ENV_FILE := .env.local
+
+# Include environment variables
+ifneq (,$(wildcard $(ENV_FILE)))
+include $(ENV_FILE)
+export
+endif
+
+# Default target
+help:
+	@echo "╔══════════════════════════════════════════════════╗"
+	@echo "║  🚀 MauEkspor - Local Development              ║"
+	@echo "╚══════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "QUICK START:"
+	@echo "  make dev-up          # Start everything (DB + Backend + Frontend)"
+	@echo "  make dev-down        # Stop everything"
+	@echo "  make dev-status      # Show running containers"
+	@echo ""
+	@echo "INDIVIDUAL SERVICES:"
+	@echo "  make dev-db-start    # Start only database"
+	@echo "  make dev-db-stop     # Stop database"
+	@echo "  make dev-db-seed     # Reset & seed database"
+	@echo ""
+	@echo "  make dev-backend-start   # Start backend API"
+	@echo "  make dev-backend-stop    # Stop backend"
+	@echo "  make dev-backend-logs    # View backend logs"
+	@echo ""
+	@echo "  make dev-frontend-start  # Start frontend"
+	@echo "  make dev-frontend-stop   # Stop frontend"
+	@echo "  make dev-frontend-logs   # View frontend logs"
+	@echo ""
+	@echo "TESTING:"
+	@echo "  make test-backend    # Run backend tests"
+	@echo "  make test-frontend   # Run frontend tests"
+	@echo ""
+	@echo "URLs:"
+	@echo "  Frontend: http://localhost:5188"
+	@echo "  Backend:  http://localhost:8016/api/v1"
+	@echo "  Database: localhost:5447"
+	@echo ""
+	@echo "Login credentials:"
+	@echo "  Email: admin@mauekspor.example"
+	@echo "  Password: admin123"
+	@echo ""
+
+dev-up:
+	@echo "═══════════════════════════════════════════════════════"
+	@echo "  🚀 Starting Local Development Stack"
+	@echo "═══════════════════════════════════════════════════════"
+	@echo ""
+	@echo "⚙️  Loading configuration..."
+	@if [ ! -f "$(ENV_FILE)" ]; then \
+		echo "❌ Error: $(ENV_FILE) not found!"; \
+		echo "Running 'make init-local' first..."; \
+		make init-local; \
+	fi
+	@echo ""
+	@echo "🐳 Starting Docker Compose services..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml up -d --build
+	@echo ""
+	@echo "✅ Waiting for services to be healthy..."
+	@sleep 10
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  ✅ ALL SERVICES RUNNING!"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "📍 URLs:"
+	@echo "   🎨 Frontend → http://localhost:$(FRONTEND_PORT)"
+	@echo "   🔧 Backend  → http://localhost:$(BACKEND_PORT)/api/v1"
+	@echo "   💾 Database → localhost:$(DB_PORT)"
+	@echo ""
+	@echo "🔑 Login:"
+	@echo "   Email: admin@mauekspor.example"
+	@echo "   Password: admin123"
+	@echo ""
+	@echo "📊 Logs:"
+	@echo "   Backend:  make dev-backend-logs"
+	@echo "   Frontend: make dev-frontend-logs"
+	@echo ""
+	@echo "🛑 Stop: make dev-down"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+dev-down:
+	@echo "═══════════════════════════════════════════════════"
+	@echo "  🛑 Stopping Local Development Stack"
+	@echo "═══════════════════════════════════════════════════════"
+	@echo ""
+	@echo "🐳 Stopping all services..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml down
+	@echo ""
+	@echo "✅ All stopped!"
+
+dev-status:
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  📊 Local Development Status"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@docker ps --filter "name=mauekspor" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "No mauekspor containers running"
+	@echo ""
+	@echo "Checking health..."
+	@echo -n "  Backend:  " && curl -s http://localhost:$(BACKEND_PORT)/api/v1/health 2>/dev/null | python3 -m json.tool > /dev/null && echo "✅ OK" || echo "❌ Not responding"
+	@echo -n "  Frontend: " && curl -s http://localhost:$(FRONTEND_PORT)/ 2>/dev/null | head -c 1 | grep -q '<' && echo "✅ OK" || echo "❌ Not responding"
+	@echo -n "  Database: " && timeout 2 bash -c "echo > /dev/tcp/localhost/$(DB_PORT)" 2>/dev/null && echo "✅ OK" || echo "❌ Not responding"
+	@echo ""
+	@docker compose -p mauekspor-dev -f docker-compose.dev.yml ps 2>/dev/null || true
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+dev-restart:
+	@echo "🔄 Restarting all services..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml restart
+
+# ─── DATABASE ────────────────────────────────────────────────────────
+dev-db-start:
+	@echo "🐳 Starting database..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml up -d db
+	@echo "✅ Database started on port $(DB_PORT)"
+
+dev-db-stop:
+	@echo "🛑 Stopping database..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml stop db
+	@echo "✅ Database stopped"
+
+dev-db-reset:
+	@echo "🗑️  Dropping database volume..."
+	docker volume rm mauekspar-dev_db-dev-data 2>/dev/null || true
+	@echo "✅ Volume removed"
+
+dev-db-seed:
+	@echo "💉 Seeding database..."
+	docker exec mauekspor-dev-backend-dev python -c "from app.seed import seed_if_empty; seed_if_empty()"
+	@echo "✅ Database seeded"
+
+dev-db-logs:
+	docker logs -f mauekspor-dev-db-dev
+
+# ─── BACKEND ──────────────────────────────────────────────────────────
+dev-backend-start:
+	@echo "🔧 Starting backend API..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml up -d backend
+	@echo "✅ Backend API started on port $(BACKEND_PORT)"
+
+dev-backend-stop:
+	@echo "🛑 Stopping backend API..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml stop backend
+	@echo "✅ Backend API stopped"
+
+dev-backend-logs:
+	docker logs -f mauekspor-dev-backend-dev
+
+dev-backend-shell:
+	docker exec -it mauekspor-dev-backend-dev /bin/bash
+
+# ─── FRONTEND ─────────────────────────────────────────────────────────
+dev-frontend-start:
+	@echo "🎨 Starting frontend dev server..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml up -d frontend
+	@echo "✅ Frontend started on port $(FRONTEND_PORT)"
+
+dev-frontend-stop:
+	@echo "🛑 Stopping frontend dev server..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml stop frontend
+	@echo "✅ Frontend stopped"
+
+dev-frontend-logs:
+	docker logs -f mauekspor-dev-frontend-dev
+
+# ─── TESTING ──────────────────────────────────────────────────────────
+test-backend:
+	@echo "🧪 Running backend tests..."
+	cd backend && .venv/bin/python -m pytest tests/ --tb=short -v
+
+test-frontend:
+	@echo "🧪 Running frontend tests..."
+	cd frontend && pnpm test
+
+test: test-backend test-frontend
+	@echo "✅ All tests passed!"
+
+# ─── UTILITIES ────────────────────────────────────────────────────────
+clean:
+	@echo "🧹 Cleaning up..."
+	docker compose -p mauekspor-dev -f docker-compose.dev.yml down -v --remove-orphans
+	docker volume rm mauekspor-dev_db-dev-data 2>/dev/null || true
+	@echo "✅ Cleanup complete"
+
+check-ai:
+	@echo "🤖 Testing AI connectivity..."
+	@curl -s http://localhost:20128/v1/models | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'✅ AI service has {len(d.get(\"data\",[]))} models')" || echo "❌ AI service not accessible at localhost:20128"
+
+init-local:
+	@echo "📝 Creating initial local setup..."
+	@cp .env.local.example .env.local 2>/dev/null || echo "# Create .env.local manually"
+	@echo "✅ Initialization complete"

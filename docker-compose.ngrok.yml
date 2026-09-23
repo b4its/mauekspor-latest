@@ -62,9 +62,6 @@ services:
       frontend-prod:
         condition: service_started
 
-volumes:
-  # No persistent storage needed
-
 networks:
   mauekspor-network:
     driver: bridge

@@ -72,7 +72,7 @@
 
 	let filteredSessions = $derived(
 		searchQuery.trim()
-			? sessions.filter((s) => s.title.toLowerCase().includes(searchQuery.toLowerCase()))
+			? sessions.filter((s) => (s.title ?? '').toLowerCase().includes(searchQuery.toLowerCase()))
 			: sessions
 	);
 
@@ -85,8 +85,8 @@
 	);
 	// Kelompokkan sesi yang punya pesan vs kosong
 	let groupedSessions = $derived({
-		active: pagedSessions.filter((s) => (s.messageCount ?? s.messages.length) > 0),
-		empty: pagedSessions.filter((s) => (s.messageCount ?? s.messages.length) === 0)
+		active: pagedSessions.filter((s) => ((s.messageCount ?? s.messages?.length) ?? 0) > 0),
+		empty: pagedSessions.filter((s) => ((s.messageCount ?? s.messages?.length) ?? 0) === 0)
 	});
 	$effect(() => {
 		if (sessionPage > sessionTotalPages) sessionPage = sessionTotalPages;

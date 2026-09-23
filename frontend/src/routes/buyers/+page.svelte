@@ -29,7 +29,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let filteredBuyers = $derived(
 		buyers.items.filter((buyer) => {
 			const matchesFilter = activeFilter === 'All' || buyer.status === activeFilter;
-			const matchesQuery = [buyer.name, buyer.country, buyer.segment, buyer.status, ...buyer.interestedProducts]
+			const matchesQuery = [buyer.name, buyer.country, buyer.segment, buyer.status, ...(buyer.interestedProducts ?? [])]
 				.join(' ')
 				.toLowerCase()
 				.includes(query.trim().toLowerCase());

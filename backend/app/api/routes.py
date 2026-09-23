@@ -1,6 +1,8 @@
 """Semua endpoint API. Prefix /api/v1, respons # {"data": T, "meta": {}}."""
 
+import hmac
 import json
+import logging
 import os
 import pathlib
 import time
@@ -8,6 +10,16 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, File, Form
 from fastapi.responses import FileResponse
+
+logger = logging.getLogger("mauekspor.api")
+
+
+def _as_float(value, field: str = "value") -> float:
+    """Parse angka dari input user; non-numerik → 422 (bukan 500)."""
+    try:
+        return float(str(value).replace(",", ""))
+    except (TypeError, ValueError):
+        raise HTTPException(422, f"{field} must be a number")
 
 from app import ai, db
 from app.core.config import settings
@@ -41,6 +53,10 @@ def _serialize(record):
     return out
 
 
+# Batas atas `limit` untuk semua list endpoint (anti unbounded scan / DoS).
+_MAX_LIMIT = 500
+
+
 def _list_query(table: str) -> dict:
     return {"data": [_serialize(r) for r in db.all(table)], "meta": {}}
 
@@ -57,7 +73,11 @@ def _filtered_query(
     """List dengan filter opsional: search (LIKE pada field), status, dan pagination.
 
     Bila `limit` <= 0, kembalikan semua (perilaku default lama agar kontrak frontend tetap).
+    `limit`/`offset` di-clamp: negatif → 0, dan limit dibatasi `_MAX_LIMIT` agar
+    query string tidak bisa meminta irisan tak wajar.
     """
+    limit = min(max(int(limit or 0), 0), _MAX_LIMIT)
+    offset = max(int(offset or 0), 0)
     items = db.all(table)
     if search:
         q = search.lower()
@@ -119,8 +139,9 @@ def _profile_payload(data: dict) -> dict:
     return merged
 
 
-def _profile_one(record) -> dict:
-    db.save(record)
+def _profile_one(record, *, persist: bool = True) -> dict:
+    if persist:
+        db.save(record)
     out = _serialize(record)
     for k, alias in _PROFILE_CAMEL.items():
         if k in record and alias not in out:
@@ -167,8 +188,9 @@ def api_root():
 # ----------------------------------------------------------------------------
 @router.post("/auth/login/")
 def login(payload: sc.LoginPayload, response: Response):
-    user = db.get_by("users", email=str(payload.email))
-    if not user or not verify_password(payload.password, user["password"]):
+    email_norm = str(payload.email).strip().lower()
+    user = db.get_by("users", email=email_norm)
+    if not user or not verify_password(payload.password, user.get("password") or "!invalid"):
         raise HTTPException(401, "Incorrect email or password")
     access, refresh = _issue_tokens(user, response)
     return {"data": _serialize(user), "meta": {"access_token": access, "refresh_token": refresh}}
@@ -220,7 +242,7 @@ def get_csrf_token(request: Request):
 
 @router.post("/auth/register/")
 def register(payload: sc.RegisterPayload, response: Response):
-    if db.get_by("users", email=str(payload.email)):
+    if db.get_by("users", email=str(payload.email).strip().lower()):
         raise HTTPException(409, "Email already registered")
     # Password policy
     _validate_password_strength(payload.password)
@@ -255,14 +277,15 @@ def register_admin(payload: sc.RegisterAdminPayload, response: Response):
     code = os.environ.get("MAUEKSPOR_ADMIN_CODE", "")
     if not code:
         raise HTTPException(403, "Admin code not configured")
-    if not payload.admin_code or payload.admin_code != code:
+    if not payload.admin_code or not hmac.compare_digest(str(payload.admin_code), str(code)):
         raise HTTPException(403, "Invalid admin code")
-    if db.get_by("users", email=str(payload.email)):
+    email_norm = str(payload.email).strip().lower()
+    if db.get_by("users", email=email_norm):
         raise HTTPException(409, "Email already registered")
     _validate_password_strength(payload.password)
     user = db.insert("users", {
         "id": db.gen_id("users", "U"),
-        "email": str(payload.email),
+        "email": email_norm,
         "fullName": payload.full_name,
         "name": payload.full_name,
         "role": "Admin",
@@ -865,7 +888,7 @@ def create_product_pricing(product_id: str, payload: dict):
     if margin is None:
         margin = payload.get("targetMarginPercent", 30)
     country = payload.get("target_country_code") or payload.get("targetCountryCode") or "JP"
-    result = generate_product_pricing(product, float(cogs), float(margin), str(country))
+    result = generate_product_pricing(product, _as_float(cogs, "cogs_per_unit_idr"), _as_float(margin, "target_margin_percent"), str(country))
     existing = db.get_by("pricing_results", productId=product_id)
     if existing:
         existing.update(result)
@@ -1045,14 +1068,20 @@ def get_my_buyer_profile(current_user: dict = Depends(get_current_user)):
     record = db.get_by("buyer_profiles", userId=current_user["id"])
     if not record:
         raise HTTPException(404, "Buyer profile not found")
-    return _profile_one(record)
+    return _profile_one(record, persist=False)
 
 
 @router.put("/buyers/profile/{profile_id}/")
-def update_buyer_profile(profile_id: str, payload: sc.UpdateBuyerProfilePayload):
+def update_buyer_profile(
+    profile_id: str,
+    payload: sc.UpdateBuyerProfilePayload,
+    current_user: dict = Depends(get_current_user),
+):
     record = db.get("buyer_profiles", profile_id)
     if not record:
         raise HTTPException(404, "Buyer profile not found")
+    if current_user.get("role") != "Admin" and record.get("userId") != current_user["id"]:
+        raise HTTPException(403, "You can only update your own buyer profile")
     data = _profile_payload(payload.model_dump())
     record.update(data)
     record["updatedAt"] = "now"
@@ -1062,6 +1091,148 @@ def update_buyer_profile(profile_id: str, payload: sc.UpdateBuyerProfilePayload)
 @router.get("/buyers/")
 def list_buyers(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
     return _filtered_query("buyers", search=search, search_fields=("name", "country", "segment"), status=status, limit=limit, offset=offset)
+
+
+@router.get("/buyers/portal/")
+def buyer_portal(
+    country: str = "",
+    search: str = "",
+    buyer_id: str = "",
+    request: Request = None,
+):
+    """Portal ekspor untuk pembeli: katalog Published disesuaikan negara asal pembeli.
+
+    Sumber negara (urut prioritas):
+    1. query `country` (ISO alpha-2 atau nama negara) — untuk Admin memilih negara.
+    2. `GET /buyers/profile/me/` milik user login (Buyer) via sourceCountries.
+    3. `buyer_id` → field `country` pada record buyers.
+
+    Selalu mengembalikan daftar negara asal yang terdeteksi (`meta.countries`)
+    agar UI bisa menampilkan & mengizinkan ganti negara tanpa request kedua.
+    """
+    from app.data.world_countries import WORLD_COUNTRIES
+    from app.core.security import decode_token
+
+    # Identifikasi user opsional (endpoint read-only; anonim → tanpa personalisasi).
+    user = None
+    try:
+        token = _request_token(request)
+        payload = decode_token(token) if token else None
+        if payload and payload.get("type") == "access":
+            user = db.get("users", payload["sub"])
+    except Exception:
+        user = None
+
+    name_by_code = {c["country_code"]: c["country_name"] for c in WORLD_COUNTRIES}
+    code_by_name = {c["country_name"].lower(): c["country_code"] for c in WORLD_COUNTRIES}
+
+    def normalize(value: str) -> tuple[str, str]:
+        """Kembalikan (kode, nama) dari input bebas; ('', '') bila kosong."""
+        value = (value or "").strip()
+        if not value:
+            return "", ""
+        upper = value.upper()
+        if upper in name_by_code:
+            return upper, name_by_code[upper]
+        if value.lower() in code_by_name:
+            code = code_by_name[value.lower()]
+            return code, name_by_code.get(code, value)
+        return upper, value
+
+    countries: list[str] = []
+    # 1. parameter eksplisit menang
+    if country:
+        _, name = normalize(country)
+        if name:
+            countries.append(name)
+    # 2. profil buyer milik user login
+    if not countries and user:
+        profile = db.get_by("buyer_profiles", userId=user["id"])
+        raw = (profile or {}).get("sourceCountries") or (profile or {}).get("source_countries") or []
+        for item in raw:
+            _, name = normalize(str(item))
+            if name:
+                countries.append(name)
+    # 3. data buyers
+    if not countries and (buyer_id or country):
+        target = buyer_id or country
+        record = db.get("buyers", target)
+        if not record:
+            record = db.get_by("buyers", country=country) if country else None
+        if record and record.get("country"):
+            _, name = normalize(str(record["country"]))
+            if name:
+                countries.append(name)
+
+    # Wilayah/negara untuk pencocokan target market katalog
+    regions: set[str] = set()
+    codes: set[str] = set()
+    for name in countries:
+        code, _ = normalize(name)
+        codes.add(code)
+        for c in WORLD_COUNTRIES:
+            if c["country_name"].lower() == name.lower():
+                regions.add(str(c.get("region", "")).lower())
+                break
+
+    def matches(text: str) -> bool:
+        if not text:
+            return False
+        lowered = text.lower()
+        for name in countries:
+            if name and name.lower() in lowered:
+                return True
+        for code in codes:
+            if code and code.lower() in lowered:
+                return True
+        for region in regions:
+            if region and region in lowered:
+                return True
+        return False
+
+    published = [c for c in db.all("catalogs") if str(c.get("status", "")).lower() == "published"]
+    items = [dict(c) for c in published]
+    for item in items:
+        product = db.get("products", str(item.get("productId", ""))) if item.get("productId") else None
+        item["productName"] = (product or {}).get("name", "")
+        item["productOrigin"] = (product or {}).get("origin", "")
+        # Skor relevansi: makin spesifik (negara > wilayah) makin tinggi.
+        market = str(item.get("targetMarket", ""))
+        score = 0
+        if any(n and n.lower() in market.lower() for n in countries):
+            score = 100
+        elif any(c and c.lower() == market.strip().lower() for c in codes):
+            score = 90
+        elif any(r and r in market.lower() for r in regions):
+            score = 60
+        item["relevanceScore"] = score
+        item["matchedCountry"] = countries[0] if countries else ""
+
+    if countries:
+        # Hanya katalog relevan untuk negara pembeli; UI menampilkan empty-state
+        # terpisah dan Admin tetap bisa mengganti/pengosongkan negara.
+        items = [i for i in items if i["relevanceScore"] > 0]
+    items.sort(key=lambda i: (-int(i.get("relevanceScore", 0)), str(i.get("title", ""))))
+
+    if search:
+        q = search.lower()
+        items = [
+            i for i in items
+            if q in str(i.get("title", "")).lower()
+            or q in str(i.get("description", "")).lower()
+            or q in str(i.get("targetMarket", "")).lower()
+            or q in str(i.get("productName", "")).lower()
+        ]
+
+    return {
+        "data": items,
+        "meta": {
+            "countries": countries,
+            "detectedCountry": countries[0] if countries else "",
+            "total": len(items),
+            "publishedTotal": len(published),
+        },
+    }
 
 
 @router.get("/buyers/{buyer_id}/")
@@ -1254,14 +1425,20 @@ def get_my_forwarder_profile(current_user: dict = Depends(get_current_user)):
     record = db.get_by("forwarder_profiles", userId=current_user["id"])
     if not record:
         raise HTTPException(404, "Forwarder profile not found")
-    return _profile_one(record)
+    return _profile_one(record, persist=False)
 
 
 @router.put("/forwarders/profile/{profile_id}/")
-def update_forwarder_profile(profile_id: str, payload: sc.UpdateForwarderProfilePayload):
+def update_forwarder_profile(
+    profile_id: str,
+    payload: sc.UpdateForwarderProfilePayload,
+    current_user: dict = Depends(get_current_user),
+):
     record = db.get("forwarder_profiles", profile_id)
     if not record:
         raise HTTPException(404, "Forwarder profile not found")
+    if current_user.get("role") != "Admin" and record.get("userId") != current_user["id"]:
+        raise HTTPException(403, "You can only update your own forwarder profile")
     data = _profile_payload(payload.model_dump())
     record.update(data)
     record["updatedAt"] = "now"
@@ -1354,10 +1531,18 @@ def create_forwarder_review(forwarder_id: str, payload: sc.CreateForwarderReview
 
 
 @router.put("/forwarders/{forwarder_id}/reviews/{review_id}/")
-def update_forwarder_review(forwarder_id: str, review_id: str, payload: sc.UpdateForwarderReviewPayload):
+def update_forwarder_review(
+    forwarder_id: str,
+    review_id: str,
+    payload: sc.UpdateForwarderReviewPayload,
+    current_user: dict = Depends(get_current_user),
+):
     review = db.get("forwarder_reviews", review_id)
     if not review:
         raise HTTPException(404, "Review not found")
+    # Ownership: hanya pemilik review (umkmId) atau Admin yang boleh mengubah.
+    if current_user.get("role") != "Admin" and review.get("umkmId") != current_user["id"]:
+        raise HTTPException(403, "You can only update your own review")
     if payload.rating < 1 or payload.rating > 5:
         raise HTTPException(422, "Rating must be 1-5")
     review["rating"] = payload.rating
@@ -1371,10 +1556,16 @@ def update_forwarder_review(forwarder_id: str, review_id: str, payload: sc.Updat
 
 
 @router.delete("/forwarders/{forwarder_id}/reviews/{review_id}/delete/")
-def delete_forwarder_review(forwarder_id: str, review_id: str):
+def delete_forwarder_review(
+    forwarder_id: str,
+    review_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     review = db.get("forwarder_reviews", review_id)
     if not review:
         raise HTTPException(404, "Review not found")
+    if current_user.get("role") != "Admin" and review.get("umkmId") != current_user["id"]:
+        raise HTTPException(403, "You can only delete your own review")
     db.delete("forwarder_reviews", review_id)
     record = db.get("forwarders", forwarder_id)
     if record:
@@ -1789,7 +1980,7 @@ def create_catalog_pricing(catalog_id: str, payload: dict):
     if margin is None:
         margin = payload.get("targetMarginPercent", 30)
     country = payload.get("target_country_code") or payload.get("targetCountryCode") or "JP"
-    result = generate_product_pricing(product or record, float(cogs), float(margin), str(country))
+    result = generate_product_pricing(product or record, _as_float(cogs, "cogs_per_unit_idr"), _as_float(margin, "target_margin_percent"), str(country))
     existing = db.get_by("pricing_results", productId=str(record.get("productId", "")))
     if existing:
         existing.update(result)
@@ -1818,7 +2009,8 @@ def generate_catalog_ai_description(catalog_id: str, payload: dict):
 @router.get("/costing/exchange-rate/")
 def get_exchange_rate_endpoint():
     from app.services.pricing import get_exchange_rate, BASE_CURRENCY, DISPLAY_CURRENCY
-    rec = get_exchange_rate()
+    # Read-only: tidak memicu outbound fetch / tulis DB pada GET.
+    rec = dict(get_exchange_rate())
     rec.setdefault("baseCurrency", BASE_CURRENCY)
     rec.setdefault("targetCurrency", DISPLAY_CURRENCY)
     return _one(rec)
@@ -1830,7 +2022,13 @@ def update_exchange_rate(payload: dict):
     rate = payload.get("rate") or payload.get("exchange_rate")
     if not rate:
         raise HTTPException(422, "rate is required")
-    return _one(set_exchange_rate(float(rate), source="manual"))
+    try:
+        rate_value = float(rate)
+    except (TypeError, ValueError):
+        raise HTTPException(422, "rate must be a number")
+    if rate_value <= 0:
+        raise HTTPException(422, "rate must be positive")
+    return _one(set_exchange_rate(rate_value, source="manual"))
 
 
 @router.post("/costing/exchange-rate/refresh/")
@@ -2452,8 +2650,18 @@ def mark_payment_received(payment_id: str, payload: dict):
     record = db.get("payments", payment_id)
     if not record:
         raise HTTPException(404, "Payment not found")
-    amount = float(payload.get("amount") or record.get("paid") or record.get("amount", 0))
-    owed = float(record.get("amount", 0))
+
+    def _to_float(value) -> float:
+        try:
+            # Terima format "42,800" (pemisah ribuan) maupun angka murni.
+            return float(str(value).replace(",", ""))
+        except (TypeError, ValueError):
+            raise HTTPException(422, "amount must be a number")
+
+    amount = _to_float(payload.get("amount") or record.get("paid") or record.get("amount", 0))
+    owed = _to_float(record.get("amount", 0) or 0)
+    if amount < 0:
+        raise HTTPException(422, "amount must not be negative")
     record["paid"] = amount
     record["status"] = "Settled" if amount >= owed else "Deposit Paid"
     record["updatedAt"] = "now"
@@ -2816,17 +3024,18 @@ def run_automation(automation_id: str):
     record["runs"] = record.get("runs", 0) + 1
     record["lastRun"] = "now"
     db.save(record)
-    # Notifikasi realtime agar badge SSE ikut ter-update
-    db.insert("notifications", {
-        "id": db.gen_id("notifications", "NTF"),
-        "title": f"Automation '{record.get('name', automation_id)}' dijalankan",
-        "description": f"{record.get('trigger', '')} -> {record.get('action', '')}",
-        "category": "Automations",
-        "status": "Unread",
-        "type": "automation",
-        "createdAt": "now",
-        "ownerId": record.get("ownerId", "U-001"),
-    })
+    # Notifikasi realtime agar badge SSE ikut ter-update.
+    # Pakai _notify agar bentuk field konsisten dengan notifikasi lain
+    # (module/severity/time/href) — sebelumnya hanya category/type sehingga
+    # UI menampilkan "undefined · undefined".
+    _notify(
+        f"Automation '{record.get('name', automation_id)}' dijalankan",
+        f"{record.get('trigger', '')} -> {record.get('action', '')}",
+        "Automations",
+        severity="Info",
+        href="/automations",
+        owner_id=record.get("ownerId"),
+    )
     return _one(record)
 
 
@@ -2902,6 +3111,10 @@ def create_educational_module(payload: sc.CreateEducationalModulePayload):
         "description": payload.description,
         "orderIndex": payload.order_index,
         "status": "Published",
+        # Default field yang dibaca UI agar tidak muncul "undefined%"/level kosong.
+        "summary": payload.description,
+        "level": "Beginner",
+        "completion": 0,
         "createdAt": "now",
         "updatedAt": "now",
     })
@@ -2942,7 +3155,6 @@ def delete_educational_module(module_id: str):
     return {"data": {"status": "deleted"}, "meta": {}}
 
 
-@router.post("/educational/{module_id}/publish/")
 @router.post("/educational/modules/{module_id}/publish/")
 def publish_educational_module(module_id: str):
     record = db.get("educational_modules", module_id)
@@ -3315,21 +3527,33 @@ def revoke_api_key(key_id: str):
 # ----------------------------------------------------------------------------
 # CHAT SESSIONS & SUGGESTIONS (AI Copilot)
 # ----------------------------------------------------------------------------
+def _chat_session_owned(record: dict, user: dict) -> bool:
+    """Sesi boleh diakses pemiliknya atau Admin; sesi tanpa owner = demo bersama."""
+    owner = record.get("userId")
+    if owner is None:
+        return True
+    return user.get("role") == "Admin" or owner == user["id"]
+
+
 @router.get("/chat/sessions/")
-def list_chat_sessions():
-    sessions = db.all("chat_sessions")
+def list_chat_sessions(current_user: dict = Depends(get_current_user)):
+    sessions = [s for s in db.all("chat_sessions") if _chat_session_owned(s, current_user)]
+    out = []
     for s in sessions:
-        s["messageCount"] = len(s.get("messages", []) or [])
-    return {"data": sessions, "meta": {}}
+        item = _serialize(s)
+        item["messageCount"] = len(s.get("messages", []) or [])
+        out.append(item)
+    return {"data": out, "meta": {}}
 
 
 @router.post("/chat/sessions/")
-def create_chat_session(payload: sc.CreateChatSessionPayload):
+def create_chat_session(payload: sc.CreateChatSessionPayload, current_user: dict = Depends(get_current_user)):
     record = db.insert("chat_sessions", {
         "id": db.gen_id("chat_sessions", "CHS"),
         "title": payload.title or "Percakapan baru",
         "messages": [],
         "messageCount": 0,
+        "userId": current_user["id"],
         "createdAt": "now",
         "updatedAt": "now",
     })
@@ -3337,27 +3561,28 @@ def create_chat_session(payload: sc.CreateChatSessionPayload):
 
 
 @router.get("/chat/sessions/{session_id}/")
-def get_chat_session(session_id: str):
+def get_chat_session(session_id: str, current_user: dict = Depends(get_current_user)):
     record = db.get("chat_sessions", session_id)
-    if not record:
+    if not record or not _chat_session_owned(record, current_user):
         raise HTTPException(404, "Chat session not found")
-    record["messageCount"] = len(record.get("messages", []) or [])
-    return _one(record)
+    out = _serialize(record)
+    out["messageCount"] = len(record.get("messages", []) or [])
+    return {"data": out, "meta": {}}
 
 
 @router.delete("/chat/sessions/{session_id}/")
-def delete_chat_session(session_id: str):
+def delete_chat_session(session_id: str, current_user: dict = Depends(get_current_user)):
     record = db.get("chat_sessions", session_id)
-    if not record:
+    if not record or not _chat_session_owned(record, current_user):
         raise HTTPException(404, "Chat session not found")
     db.delete("chat_sessions", session_id)
     return {"data": {"status": "deleted"}, "meta": {}}
 
 
 @router.put("/chat/sessions/{session_id}/")
-def rename_chat_session(session_id: str, payload: sc.RenameChatSessionPayload):
+def rename_chat_session(session_id: str, payload: sc.RenameChatSessionPayload, current_user: dict = Depends(get_current_user)):
     record = db.get("chat_sessions", session_id)
-    if not record:
+    if not record or not _chat_session_owned(record, current_user):
         raise HTTPException(404, "Chat session not found")
     record["title"] = payload.title
     record["updatedAt"] = "now"
@@ -3427,11 +3652,12 @@ def ai_status():
 
 
 @router.post("/ai/test/")
-def ai_test():
+def ai_test(current_user: dict = Depends(get_current_user)):
     """Quick test to verify AI is responding.
-    
+
     Tests the AI with a simple prompt to ensure real AI is accessible,
-    not just fallback mock responses.
+    not just fallback mock responses. Requires auth: the call burns
+    provider quota / thread time server-side.
     """
     try:
         test_reply = ai.complete(

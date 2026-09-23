@@ -190,5 +190,7 @@ def resolve_country(value: str) -> str:
 
 
 def region_of(country_code: str) -> str:
-    country = get_country(country_code)
+    # Terima kode ISO maupun nama negara ("Japan") → petakan ke kode dulu.
+    code = (country_code or "").strip()
+    country = get_country(code) or get_country(resolve_country(code))
     return (country or {}).get("region", "Asia")

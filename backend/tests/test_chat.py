@@ -62,8 +62,8 @@ def test_chat_session_tidak_ada_404():
         assert res.status_code == 404
 
 
-def test_chat_session_tanpa_auth_tetap_dapat_diakses():
-    # Chat read tidak memerlukan auth (module chat readable) — pastikan tidak error
+def test_chat_session_tanpa_auth_ditolak():
+    # Chat read kini butuh login (data percakapan privat) — anonim harus 401.
     with TestClient(app) as c:
         res = c.get("/api/v1/chat/sessions/")
-        assert res.status_code == 200
+        assert res.status_code == 401

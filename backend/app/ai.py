@@ -21,13 +21,10 @@ from pathlib import Path
 from typing import Any, Optional
 
 import httpx
-from dotenv import load_dotenv
 
 logger = logging.getLogger("mauekspor.ai")
 
-# Load .env secara eksplisit dari direktori backend
-_BACKEND_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(_BACKEND_DIR / ".env")
+
 
 MOCK = "mock"
 REMOTE = "remote"
@@ -36,6 +33,10 @@ REMOTE = "remote"
 DEFAULT_BASE_URL = "http://localhost:20128/v1"
 DEFAULT_MODEL = "qd/dmodel"
 TIMEOUT_SECONDS = int(os.environ.get("MAUEKSPOR_AI_TIMEOUT", "60"))
+
+# Health probe hits /models, which can be slow on some gateways (e.g. 9router
+# answers /v1/models in 7–10s). Keep this comfortably above that.
+HEALTH_TIMEOUT_SECONDS = int(os.environ.get("MAUEKSPOR_AI_HEALTH_TIMEOUT", "30"))
 
 # ── Circuit Breaker ──────────────────────────────────────────────────────────
 _CB_FAILURE_COUNT: int = 0
@@ -92,7 +93,9 @@ def configured() -> bool:
 
 def get_base_url() -> str:
     """Return the AI base URL from env, normalized to include /v1."""
-    url = os.environ.get("MAUEKSPOR_AI_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+    # Try PUBLIC_URL first (set by ngrok-with-ai script for public tunnels)
+    url = os.environ.get("MAUEKSPOR_AI_PUBLIC_URL") or \
+          os.environ.get("MAUEKSPOR_AI_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
     # Normalize: callers append /chat/completions & /models, which live under /v1
     if not url.endswith("/v1"):
         url = f"{url}/v1"
@@ -125,7 +128,7 @@ def _probe_health(url: str) -> bool:
     try:
         r = httpx.get(
             f"{url}/models",
-            timeout=5,
+            timeout=HEALTH_TIMEOUT_SECONDS,
             follow_redirects=True,
             headers=headers,
         )
@@ -180,8 +183,8 @@ _MOCK_OUTPUTS: dict[str, Any] = {
         ],
     },
     "chat_reply": (
-        "Maaf, layanan AI sedang tidak tersedia saat ini. "
-        "Silakan coba lagi dalam beberapa menit atau hubungi administrator."
+        "Halo! Saya adalah asisten MauEkspor. Saat ini saya sedang dalam mode demo (mock AI). "
+        "Saya dapat membantu Anda dengan informasi umum tentang ekspor komoditas Indonesia."
     ),
     "analytics_summary": (
         "Pipeline ekspor menunjukkan 3 trade lane aktif dengan readiness rata-rata 82%. "

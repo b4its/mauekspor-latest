@@ -6,7 +6,8 @@
  	import { login } from '$lib/stores/session.svelte';
  	import { cn } from '$lib/utils.js';
  	import type { HTMLAttributes } from 'svelte/elements';
- 	import { t } from '$lib/i18n.svelte';
+ 	import { goto } from '$app/navigation';
+import { t } from '$lib/i18n.svelte';
  	import EyeIcon from '@lucide/svelte/icons/eye';
  	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 
@@ -35,7 +36,7 @@
  		loading = true;
  		try {
  			await login({ email, password });
- 			window.location.href = '/dashboard';
+ 			await goto('/dashboard');
  		} catch (err) {
  			error = err instanceof Error ? err.message : t('Gagal masuk. Silakan coba lagi.');
  		} finally {

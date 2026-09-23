@@ -137,8 +137,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<h3 class="mt-3 text-2xl font-bold tracking-tight">{report.title}</h3>
 						<p class="mt-1 text-sm text-muted-foreground">{report.period} · {report.owner}</p>
 						<div class="mt-4 grid grid-cols-2 gap-2">
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.sections.length}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Wawasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.insights.length}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{(report.sections ?? []).length}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Wawasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{(report.insights ?? []).length}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Updated')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.updatedAt}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ID Laporan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.id}</strong></div>
 						</div>

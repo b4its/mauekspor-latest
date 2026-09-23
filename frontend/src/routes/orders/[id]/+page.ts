@@ -6,6 +6,9 @@ import { getQuotation } from '$lib/api/quotations';
 import { loadById } from '$lib/api/remote-list.svelte';
 import type { PageLoad } from './$types';
 
+// SSR dimatikan: loader butuh token/cookie auth yang hanya ada di klien.
+export const ssr = false;
+
 export const load: PageLoad = async ({ params }) => {
 	const order = await loadById(getOrder, seedOrders, params.id);
 	if (!order) error(404, 'Order not found');

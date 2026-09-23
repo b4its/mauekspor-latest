@@ -36,8 +36,25 @@ echo "════════════════════════�
 # ── 0. Pre-flight ─────────────────────────────────────────────────────────────
 echo ""
 echo "⚙️  Pre-flight checks..."
-if ! curl -s --max-time 3 "http://localhost:${AI_PORT}/v1/models" -o /dev/null; then
-    echo "  ❌ AI service tidak merespons di localhost:${AI_PORT}"
+# NOTE: /v1/models pada 9router bisa memakan 7–10 detik — jangan pakai timeout pendek.
+# 1) Liveness cepat: ada yang dengarkan di port ini? (root path jawab instan)
+if ! curl -s --max-time 5 -o /dev/null "http://localhost:${AI_PORT}/"; then
+    echo "  ❌ Tidak ada service yang mendengarkan di localhost:${AI_PORT}"
+    echo "     → Pastikan 9router (AI gateway) sudah jalan: port ${AI_PORT}"
+    exit 1
+fi
+# 2) Readiness: AI API harus menjawab /v1/models dengan HTTP 2xx (timeout longgar + retry)
+AI_OK=0
+for attempt in 1 2 3; do
+    if curl -sf --max-time 30 "http://localhost:${AI_PORT}/v1/models" -o /dev/null; then
+        AI_OK=1
+        break
+    fi
+    echo "     ⏳ AI belum menjawab /v1/models (percobaan ${attempt}/3)..."
+    sleep 3
+done
+if [ "$AI_OK" -ne 1 ]; then
+    echo "  ❌ AI service tidak merespons di localhost:${AI_PORT} (timeout /v1/models)"
     exit 1
 fi
 echo "  ✅ AI service aktif di localhost:${AI_PORT}"
@@ -108,7 +125,7 @@ echo "  ✅ AI tunnel  : ${AI_URL}"
 # ── 5. Verify AI via its tunnel ───────────────────────────────────────────────
 echo ""
 echo "  🧪 Test AI via tunnel publik..."
-AI_TEST=$(curl -s --max-time 15 "${AI_URL}/v1/models" 2>/dev/null | head -c 80)
+AI_TEST=$(curl -s --max-time 30 "${AI_URL}/v1/models" 2>/dev/null | head -c 80)
 if [ -n "$AI_TEST" ]; then
     echo "  ✅ AI merespons: ${AI_TEST:0:60}..."
 else

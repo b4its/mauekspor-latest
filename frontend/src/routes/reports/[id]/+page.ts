@@ -4,6 +4,9 @@ import { getReport } from '$lib/api/reports';
 import { loadById } from '$lib/api/remote-list.svelte';
 import type { PageLoad } from './$types';
 
+// SSR dimatikan: loader butuh token/cookie auth yang hanya ada di klien.
+export const ssr = false;
+
 export const load: PageLoad = async ({ params }) => {
 	const report = await loadById(getReport, seedReports, params.id);
 	if (!report) error(404, 'Report not found');

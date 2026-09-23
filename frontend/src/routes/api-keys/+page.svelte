@@ -27,7 +27,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		keys.items.filter(
 			(key) =>
 				(activeFilter === 'All' || key.status === activeFilter) &&
-				[key.name, key.prefix, key.status, key.owner, ...key.scopes].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				[key.name, key.prefix, key.status, key.owner, ...(key.scopes ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
 	let activeCount = $derived(keys.items.filter((key) => key.status === 'Active').length + (created ? 1 : 0));

@@ -25,6 +25,7 @@ def test_health():
 
 def test_products_list_and_detail():
     with TestClient(app) as c:
+        _login(c)
         listed = c.get("/api/v1/products/")
         assert listed.status_code == 200
         assert len(listed.json()["data"]) >= 1
@@ -89,6 +90,7 @@ def test_export_analysis_flow():
 
 def test_unknown_product_404():
     with TestClient(app) as c:
+        _login(c)
         assert c.get("/api/v1/products/NOPE/").status_code == 404
 
 
@@ -117,6 +119,7 @@ def test_mutating_request_requires_session():
 
 def test_buyer_contract_lists():
     with TestClient(app) as c:
+        _login(c)
         for path in ["/buyers/", "/buyer-requests/", "/forwarders/", "/catalogs/", "/costing/", "/rfqs/"]:
             res = c.get(f"/api/v1{path}")
             assert res.status_code == 200, path

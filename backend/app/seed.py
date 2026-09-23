@@ -32,21 +32,26 @@ def seed_if_empty():
         })
 
     # ---------- AUTH / user ----------
-    db.insert("users", {
-        "id": "U-001", "email": settings.seed_admin_email, "fullName": "MauEkspor Admin",
-        "role": "Admin", "password": hash_password(settings.seed_admin_password),
-        "organization": "MauEkspor", "status": "Active", "createdAt": "2026-07-01", "lastLogin": "2026-08-06 10:58",
-    })
-    db.insert("users", {
-        "id": "U-002", "email": settings.seed_exporter_email, "fullName": "Rizal Fahmi",
-        "role": "Exporter", "password": hash_password(settings.seed_exporter_password),
-        "organization": "PT Kopi Gayo Nusantara", "status": "Active", "createdAt": "2026-07-12", "lastLogin": "2026-08-06 09:20",
-    })
-    db.insert("users", {
-        "id": "U-003", "email": "aya@hikari.example", "fullName": "Aya Nakamura",
-        "role": "Buyer", "password": hash_password("buyer123"),
-        "organization": "Hikari Foods Co.", "status": "Active", "createdAt": "2026-08-03", "lastLogin": "2026-08-06 08:00",
-    })
+    # Seed-if-missing: db.insert memperbarui in-place saat id sudah ada, sehingga
+    # reseed saat restart akan MENIMPA edit user (termasuk ganti password). Guard.
+    if not db.get("users", "U-001"):
+        db.insert("users", {
+            "id": "U-001", "email": settings.seed_admin_email, "fullName": "MauEkspor Admin",
+            "role": "Admin", "password": hash_password(settings.seed_admin_password),
+            "organization": "MauEkspor", "status": "Active", "createdAt": "2026-07-01", "lastLogin": "2026-08-06 10:58",
+        })
+    if not db.get("users", "U-002"):
+        db.insert("users", {
+            "id": "U-002", "email": settings.seed_exporter_email, "fullName": "Rizal Fahmi",
+            "role": "Exporter", "password": hash_password(settings.seed_exporter_password),
+            "organization": "PT Kopi Gayo Nusantara", "status": "Active", "createdAt": "2026-07-12", "lastLogin": "2026-08-06 09:20",
+        })
+    if not db.get("users", "U-003"):
+        db.insert("users", {
+            "id": "U-003", "email": "aya@hikari.example", "fullName": "Aya Nakamura",
+            "role": "Buyer", "password": hash_password("buyer123"),
+            "organization": "Hikari Foods Co.", "status": "Active", "createdAt": "2026-08-03", "lastLogin": "2026-08-06 08:00",
+        })
 
     # ---------- Trade projects ----------
     db.insert("projects", {
