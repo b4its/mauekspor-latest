@@ -1,5 +1,6 @@
 """Semua endpoint API. Prefix /api/v1, respons # {"data": T, "meta": {}}."""
 
+import hmac
 import json
 import os
 import pathlib
@@ -167,8 +168,9 @@ def api_root():
 # ----------------------------------------------------------------------------
 @router.post("/auth/login/")
 def login(payload: sc.LoginPayload, response: Response):
-    user = db.get_by("users", email=str(payload.email))
-    if not user or not verify_password(payload.password, user["password"]):
+    email_norm = str(payload.email).strip().lower()
+    user = db.get_by("users", email=email_norm)
+    if not user or not verify_password(payload.password, user.get("password") or "!invalid"):
         raise HTTPException(401, "Incorrect email or password")
     access, refresh = _issue_tokens(user, response)
     return {"data": _serialize(user), "meta": {"access_token": access, "refresh_token": refresh}}
@@ -220,7 +222,7 @@ def get_csrf_token(request: Request):
 
 @router.post("/auth/register/")
 def register(payload: sc.RegisterPayload, response: Response):
-    if db.get_by("users", email=str(payload.email)):
+    if db.get_by("users", email=str(payload.email).strip().lower()):
         raise HTTPException(409, "Email already registered")
     # Password policy
     _validate_password_strength(payload.password)
@@ -255,14 +257,15 @@ def register_admin(payload: sc.RegisterAdminPayload, response: Response):
     code = os.environ.get("MAUEKSPOR_ADMIN_CODE", "")
     if not code:
         raise HTTPException(403, "Admin code not configured")
-    if not payload.admin_code or payload.admin_code != code:
+    if not payload.admin_code or not hmac.compare_digest(str(payload.admin_code), str(code)):
         raise HTTPException(403, "Invalid admin code")
-    if db.get_by("users", email=str(payload.email)):
+    email_norm = str(payload.email).strip().lower()
+    if db.get_by("users", email=email_norm):
         raise HTTPException(409, "Email already registered")
     _validate_password_strength(payload.password)
     user = db.insert("users", {
         "id": db.gen_id("users", "U"),
-        "email": str(payload.email),
+        "email": email_norm,
         "fullName": payload.full_name,
         "name": payload.full_name,
         "role": "Admin",
@@ -1049,10 +1052,16 @@ def get_my_buyer_profile(current_user: dict = Depends(get_current_user)):
 
 
 @router.put("/buyers/profile/{profile_id}/")
-def update_buyer_profile(profile_id: str, payload: sc.UpdateBuyerProfilePayload):
+def update_buyer_profile(
+    profile_id: str,
+    payload: sc.UpdateBuyerProfilePayload,
+    current_user: dict = Depends(get_current_user),
+):
     record = db.get("buyer_profiles", profile_id)
     if not record:
         raise HTTPException(404, "Buyer profile not found")
+    if current_user.get("role") != "Admin" and record.get("userId") != current_user["id"]:
+        raise HTTPException(403, "You can only update your own buyer profile")
     data = _profile_payload(payload.model_dump())
     record.update(data)
     record["updatedAt"] = "now"
@@ -1400,10 +1409,16 @@ def get_my_forwarder_profile(current_user: dict = Depends(get_current_user)):
 
 
 @router.put("/forwarders/profile/{profile_id}/")
-def update_forwarder_profile(profile_id: str, payload: sc.UpdateForwarderProfilePayload):
+def update_forwarder_profile(
+    profile_id: str,
+    payload: sc.UpdateForwarderProfilePayload,
+    current_user: dict = Depends(get_current_user),
+):
     record = db.get("forwarder_profiles", profile_id)
     if not record:
         raise HTTPException(404, "Forwarder profile not found")
+    if current_user.get("role") != "Admin" and record.get("userId") != current_user["id"]:
+        raise HTTPException(403, "You can only update your own forwarder profile")
     data = _profile_payload(payload.model_dump())
     record.update(data)
     record["updatedAt"] = "now"
@@ -1972,7 +1987,13 @@ def update_exchange_rate(payload: dict):
     rate = payload.get("rate") or payload.get("exchange_rate")
     if not rate:
         raise HTTPException(422, "rate is required")
-    return _one(set_exchange_rate(float(rate), source="manual"))
+    try:
+        rate_value = float(rate)
+    except (TypeError, ValueError):
+        raise HTTPException(422, "rate must be a number")
+    if rate_value <= 0:
+        raise HTTPException(422, "rate must be positive")
+    return _one(set_exchange_rate(rate_value, source="manual"))
 
 
 @router.post("/costing/exchange-rate/refresh/")
@@ -2958,17 +2979,18 @@ def run_automation(automation_id: str):
     record["runs"] = record.get("runs", 0) + 1
     record["lastRun"] = "now"
     db.save(record)
-    # Notifikasi realtime agar badge SSE ikut ter-update
-    db.insert("notifications", {
-        "id": db.gen_id("notifications", "NTF"),
-        "title": f"Automation '{record.get('name', automation_id)}' dijalankan",
-        "description": f"{record.get('trigger', '')} -> {record.get('action', '')}",
-        "category": "Automations",
-        "status": "Unread",
-        "type": "automation",
-        "createdAt": "now",
-        "ownerId": record.get("ownerId", "U-001"),
-    })
+    # Notifikasi realtime agar badge SSE ikut ter-update.
+    # Pakai _notify agar bentuk field konsisten dengan notifikasi lain
+    # (module/severity/time/href) — sebelumnya hanya category/type sehingga
+    # UI menampilkan "undefined · undefined".
+    _notify(
+        f"Automation '{record.get('name', automation_id)}' dijalankan",
+        f"{record.get('trigger', '')} -> {record.get('action', '')}",
+        "Automations",
+        severity="Info",
+        href="/automations",
+        owner_id=record.get("ownerId"),
+    )
     return _one(record)
 
 
@@ -3044,6 +3066,10 @@ def create_educational_module(payload: sc.CreateEducationalModulePayload):
         "description": payload.description,
         "orderIndex": payload.order_index,
         "status": "Published",
+        # Default field yang dibaca UI agar tidak muncul "undefined%"/level kosong.
+        "summary": payload.description,
+        "level": "Beginner",
+        "completion": 0,
         "createdAt": "now",
         "updatedAt": "now",
     })
@@ -3569,11 +3595,12 @@ def ai_status():
 
 
 @router.post("/ai/test/")
-def ai_test():
+def ai_test(current_user: dict = Depends(get_current_user)):
     """Quick test to verify AI is responding.
-    
+
     Tests the AI with a simple prompt to ensure real AI is accessible,
-    not just fallback mock responses.
+    not just fallback mock responses. Requires auth: the call burns
+    provider quota / thread time server-side.
     """
     try:
         test_reply = ai.complete(

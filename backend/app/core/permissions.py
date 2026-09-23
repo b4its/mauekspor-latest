@@ -12,7 +12,7 @@ ADMIN_ONLY_MODULES = {"users", "audit", "api-keys", "settings", "admin"}
 MUTATE_MODULES: dict[str, set[str] | str] = {
     "Admin": "*",
     "Exporter": {
-        "business-profile",
+        "business-profiles",
         "products",
         "export-analysis",
         "trade-projects",
@@ -22,7 +22,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "forwarders",
         "catalogs",
         "costing",
-        "rfq",
+        "rfqs",
         "quotations",
         "orders",
         "compliance",
@@ -32,6 +32,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "tasks",
         "team",
         "notifications",
+        "analytics",
         "integrations",
         "templates",
         "automations",
@@ -51,6 +52,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "shipments",
         "messages",
         "notifications",
+        "analytics",
     },
     "CustomsBroker": {
         "shipments",
@@ -58,6 +60,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "documents",
         "payments",
         "messages",
+        "analytics",
     },
     "Finance": {
         "payments",
@@ -65,6 +68,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "orders",
         "quotations",
         "messages",
+        "analytics",
     },
     "Buyer": {
         "buyer-requests",
@@ -72,6 +76,8 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "orders",
         "chat",
         "messages",
+        "notifications",
+        "analytics",
     },
     "KepalaDesa": {
         "products",
@@ -79,6 +85,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "documents",
         "messages",
         "notifications",
+        "analytics",
     },
 }
 

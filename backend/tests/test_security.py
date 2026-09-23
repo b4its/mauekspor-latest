@@ -98,10 +98,13 @@ def test_get_token_tanpa_apapun_401():
     assert exc.value.status_code == 401
 
 
-def test_rate_limit_key_pakai_x_forwarded_for():
-    """Di belakang ngrok/nginx, tiap user asli (XFF) harus punya kuota sendiri.
+def test_rate_limit_key_pakai_x_real_ip_bukan_xff():
+    """Di belakang ngrok/nginx, tiap user asli punya kuota sendiri.
 
-    Bug: semua user tunnel share IP proxy → login ke-2 langsung 429 massal.
+    Bug lama: semua user tunnel share IP proxy → login ke-2 langsung 429 massal.
+    Keamanan: X-Forwarded-For hop-pertama bisa DIPALSUKAN client (nginx hanya
+    menambah hop), sehingga HANYA X-Real-IP (selalu dioverwrite $remote_addr)
+    yang dipercaya sebagai kunci rate limit.
     """
     from app.main import _rate_limit_key
 
@@ -110,19 +113,19 @@ def test_rate_limit_key_pakai_x_forwarded_for():
             self.headers = headers
             self.client = type("C", (), {"host": client_host})()
 
-    # XFF ada → pakai IP klien asli (hop pertama)
-    r = FakeRequest({"x-forwarded-for": "103.1.2.3, 172.18.0.5"})
+    # X-Real-IP dipercaya
+    r = FakeRequest({"x-real-ip": "103.1.2.3"})
     assert _rate_limit_key(r) == "103.1.2.3"
 
-    # X-Real-Only fallback
-    r2 = FakeRequest({"x-real-ip": "103.9.9.9"})
-    assert _rate_limit_key(r2) == "103.9.9.9"
+    # XFF sendirian (tanpa X-Real-IP) TIDAK dipercaya → IP socket
+    r2 = FakeRequest({"x-forwarded-for": "103.9.9.9, 172.18.0.5"})
+    assert _rate_limit_key(r2) == "10.0.0.1"
 
     # Tanpa header → IP socket
     r3 = FakeRequest({})
     assert _rate_limit_key(r3) == "10.0.0.1"
 
     # Dua user berbeda via tunnel → key berbeda (tidak saling blokir)
-    a = FakeRequest({"x-forwarded-for": "1.1.1.1"})
-    b = FakeRequest({"x-forwarded-for": "2.2.2.2"})
+    a = FakeRequest({"x-real-ip": "1.1.1.1"})
+    b = FakeRequest({"x-real-ip": "2.2.2.2"})
     assert _rate_limit_key(a) != _rate_limit_key(b)
