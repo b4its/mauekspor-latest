@@ -8,6 +8,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { listAuditEvents, exportAuditTrail } from '$lib/api/audit';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Info', 'Warning', 'Critical'];
 	let activeFilter = $state('All');
@@ -43,7 +44,7 @@
 			await exportAuditTrail();
 			exported = true;
 		} catch {
-			error = 'Gagal mengekspor audit trail.';
+			error = t('Gagal mengekspor audit trail.');
 		} finally {
 			exporting = false;
 		}
@@ -56,17 +57,17 @@
 	<title>Audit Log | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Audit Log" eyebrow="Traceability and governance">
+<AppShell title="Audit Log" eyebrow={t('Traceability and governance')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Governance</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Trace important operational and AI-assisted export actions.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Keep a searchable event trail for compliance, document approvals, supplier risk, payment reminders, and AI-generated insights.</CardDescription>
+			<Badge variant="outline">{t('Governance')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Trace important operational and AI-assisted export actions.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Keep a searchable event trail for compliance, document approvals, supplier risk, payment reminders, and AI-generated insights.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleExport} disabled={exporting}>{exported ? 'Audit exported' : exporting ? 'Exporting...' : 'Export audit trail'}</Button>
-			<Button variant="outline" href={csvUrl}>Download CSV</Button>
-			<Badge variant="outline">Events {events.items.length}</Badge>
+			<Button onclick={handleExport} disabled={exporting}>{exported ? t('Audit exported') : exporting ? t('Exporting...') : t('Export audit trail')}</Button>
+			<Button variant="outline" href={csvUrl}>{t('Download CSV')}</Button>
+			<Badge variant="outline">{t('Events')} {events.items.length}</Badge>
 		</CardContent>
 	</Card>
 
@@ -76,8 +77,8 @@
 
 	{#if exported}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Audit export prepared.</strong>
-			<span class="block text-sm text-muted-foreground">Export dijalankan di backend.</span>
+			<strong class="block">{t('Audit export prepared.')}</strong>
+			<span class="block text-sm text-muted-foreground">{t('Export dijalankan di backend.')}</span>
 		</div>
 	{/if}
 
@@ -87,7 +88,7 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search actor, module, entity..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search actor, module, entity...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4">
@@ -107,7 +108,7 @@
 				</CardContent>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No audit event matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No audit event matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>

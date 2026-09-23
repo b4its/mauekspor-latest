@@ -7,6 +7,7 @@
 	import { userAccounts as seedUsers } from '$lib/data/trade';
 	import { listUsers, deleteUser } from '$lib/api/users';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 	import type { UserAccount } from '$lib/data/trade';
 
 	const roleFilters = ['All', 'Admin', 'UMKM', 'Buyer', 'Forwarder'];
@@ -46,14 +47,14 @@
 	const totalPages = $derived(Math.max(1, Math.ceil(total / PAGE_SIZE)));
 
 	async function removeUser(id: string, name: string) {
-		if (!confirm(`Hapus akun "${name}" beserta data terkaitnya?`)) return;
+		if (!confirm(`${t('Hapus akun "')}${name}" ${t('beserta data terkaitnya?')}`)) return;
 		error = '';
 		deleting = id;
 		try {
 			await deleteUser(id);
 			await loadUsers();
 		} catch {
-			error = 'Gagal menghapus akun.';
+			error = t('Gagal menghapus akun.');
 		} finally {
 			deleting = '';
 		}
@@ -71,22 +72,22 @@
 	<title>Users | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Users" eyebrow="Account management">
+<AppShell title="Users" eyebrow={t('Account management')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant="secondary">Admin only</Badge>
+				<Badge variant="secondary">{t('Admin only')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-					Manage the accounts in your export workspace.
+					{t('Manage the accounts in your export workspace.')}
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-xl leading-relaxed">
-					Filter by role, search by email or full name, and open a user to inspect account detail.
+					{t('Filter by role, search by email or full name, and open a user to inspect account detail.')}
 				</CardDescription>
 			</div>
 			<Card>
 				<CardContent class="p-5">
 				<div class="grid gap-2.5 md:min-w-[200px]">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total users</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Total users')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{total}</strong>
 				</div>
 				</CardContent>
@@ -112,7 +113,7 @@
 		<Input
 			bind:value={query}
 			type="search"
-			placeholder="Search email or name..."
+			placeholder={t('Search email or name...')}
 			class="max-w-xs"
 			oninput={() => (page = 1)}
 		/>
@@ -120,10 +121,10 @@
 
 	<Card class="p-2">
 		<div class="grid grid-cols-2 gap-1 p-3 text-xs font-bold text-muted-foreground md:grid-cols-4 lg:grid-cols-5">
-			<span>User</span><span>Role</span><span>Status</span><span>Created</span><span class="hidden lg:block"></span>
+			<span>{t('User')}</span><span>{t('Role')}</span><span>{t('Status')}</span><span>{t('Created')}</span><span class="hidden lg:block"></span>
 		</div>
 		{#if loading}
-			<div class="p-6 text-center font-semibold text-muted-foreground">Memuat...</div>
+			<div class="p-6 text-center font-semibold text-muted-foreground">{t('Memuat...')}</div>
 		{:else}
 			{#each users as user}
 				<div class="grid grid-cols-2 items-center gap-3 rounded-lg border-b p-3 text-sm transition-colors last:border-b-0 hover:bg-muted/40 md:grid-cols-4 lg:grid-cols-5">
@@ -137,12 +138,12 @@
 					<span class="grid justify-end">
 						<Button size="sm" variant="ghost" href={`/users/${user.id}`}>Open</Button>
 						<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() => removeUser(user.id, user.fullName)}>
-							{deleting === user.id ? '...' : 'Hapus'}
+							{deleting === user.id ? '...' : t('Hapus')}
 						</Button>
 					</span>
 				</div>
 			{:else}
-				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No user matched your filter.</div>
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No user matched your filter.')}</div>
 			{/each}
 		{/if}
 		{#if error}
@@ -152,8 +153,8 @@
 			<div class="flex items-center justify-between gap-3 border-t p-3">
 				<span class="text-xs font-semibold text-muted-foreground">Halaman {page} dari {totalPages} · {total} pengguna</span>
 				<div class="flex gap-2">
-					<Button size="sm" variant="outline" disabled={page <= 1} onclick={() => (page -= 1)}>Sebelumnya</Button>
-					<Button size="sm" variant="outline" disabled={page >= totalPages} onclick={() => (page += 1)}>Berikutnya</Button>
+					<Button size="sm" variant="outline" disabled={page <= 1} onclick={() => (page -= 1)}>{t('Sebelumnya')}</Button>
+					<Button size="sm" variant="outline" disabled={page >= totalPages} onclick={() => (page += 1)}>{t('Berikutnya')}</Button>
 				</div>
 			</div>
 		{/if}

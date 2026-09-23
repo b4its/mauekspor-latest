@@ -106,7 +106,6 @@ const dictionary: Record<string, Entry> = {
 	'Negara tujuan': { id: 'Negara tujuan', en: 'Destination' },
 	'Margin (%)': { id: 'Margin (%)', en: 'Margin (%)' },
 	'Kurs (IDR/USD)': { id: 'Kurs (IDR/USD)', en: 'Rate (IDR/USD)' },
-	'Status': { id: 'Status', en: 'Status' },
 
 	// --- Trade projects ---
 	'Search buyer, product, country...': { id: 'Cari pembeli, produk, negara...', en: 'Search buyer, product, country...' },
@@ -117,7 +116,6 @@ const dictionary: Record<string, Entry> = {
 	// --- Umum (filter & tombol lintas halaman) ---
 	'All': { id: 'Semua', en: 'All' },
 	'Updated': { id: 'Diperbarui', en: 'Updated' },
-	'Created': { id: 'Dibuat', en: 'Created' },
 	'Category': { id: 'Kategori', en: 'Category' },
 	'Scopes': { id: 'Cakupan', en: 'Scopes' },
 	'Used by': { id: 'Dipakai oleh', en: 'Used by' },
@@ -624,7 +622,54 @@ const dictionary: Record<string, Entry> = {
 	'Updating...': { id: 'Memperbarui...', en: 'Updating...' },
 	'No team member matched your search.': { id: 'Tidak ada anggota tim yang cocok.', en: 'No team member matched your search.' },
 	'Gagal mengirim undangan.': { id: 'Gagal mengirim undangan.', en: 'Failed to send invitation.' },
-	'Gagal memperbarui peran.': { id: 'Gagal memperbarui peran.', en: 'Failed to update role.' }
+	'Gagal memperbarui peran.': { id: 'Gagal memperbarui peran.', en: 'Failed to update role.' },
+
+	// --- Audit Log ---
+	'Traceability and governance': { id: 'Ketertelusuran dan tata kelola', en: 'Traceability and governance' },
+	'Governance': { id: 'Tata kelola', en: 'Governance' },
+	'Trace important operational and AI-assisted export actions.': {
+		id: 'Telusuri aksi ekspor operasional dan berbantuan AI yang penting.',
+		en: 'Trace important operational and AI-assisted export actions.'
+	},
+	'Keep a searchable event trail for compliance, document approvals, supplier risk, payment reminders, and AI-generated insights.': {
+		id: 'Simpan jejak event yang dapat dicari untuk kepatuhan, persetujuan dokumen, risiko pemasok, pengingat pembayaran, dan insight hasil AI.',
+		en: 'Keep a searchable event trail for compliance, document approvals, supplier risk, payment reminders, and AI-generated insights.'
+	},
+	'Export audit trail': { id: 'Ekspor audit trail', en: 'Export audit trail' },
+	'Exporting...': { id: 'Mengekspor...', en: 'Exporting...' },
+	'Audit exported': { id: 'Audit diekspor', en: 'Audit exported' },
+	'Download CSV': { id: 'Unduh CSV', en: 'Download CSV' },
+	'Events': { id: 'Event', en: 'Events' },
+	'Audit export prepared.': { id: 'Ekspor audit disiapkan.', en: 'Audit export prepared.' },
+	'Export dijalankan di backend.': { id: 'Export dijalankan di backend.', en: 'Export ran in backend.' },
+	'Search actor, module, entity...': { id: 'Cari aktor, modul, entitas...', en: 'Search actor, module, entity...' },
+	'No audit event matched your search.': { id: 'Tidak ada event audit yang cocok.', en: 'No audit event matched your search.' },
+	'Gagal mengekspor audit trail.': { id: 'Gagal mengekspor audit trail.', en: 'Failed to export audit trail.' },
+
+	// --- Users ---
+	'Account management': { id: 'Manajemen akun', en: 'Account management' },
+	'Admin only': { id: 'Khusus admin', en: 'Admin only' },
+	'Manage the accounts in your export workspace.': {
+		id: 'Kelola akun di workspace ekspor Anda.',
+		en: 'Manage the accounts in your export workspace.'
+	},
+	'Filter by role, search by email or full name, and open a user to inspect account detail.': {
+		id: 'Filter berdasarkan peran, cari berdasarkan email atau nama lengkap, dan buka pengguna untuk memeriksa detail akun.',
+		en: 'Filter by role, search by email or full name, and open a user to inspect account detail.'
+	},
+	'Total users': { id: 'Total pengguna', en: 'Total users' },
+	'Search email or name...': { id: 'Cari email atau nama...', en: 'Search email or name...' },
+	'User': { id: 'Pengguna', en: 'User' },
+	'Role': { id: 'Peran', en: 'Role' },
+	'Status': { id: 'Status', en: 'Status' },
+	'Created': { id: 'Dibuat', en: 'Created' },
+	'Memuat...': { id: 'Memuat...', en: 'Loading...' },
+	'No user matched your filter.': { id: 'Tidak ada pengguna yang cocok.', en: 'No user matched your filter.' },
+	'Gagal menghapus akun.': { id: 'Gagal menghapus akun.', en: 'Failed to delete account.' },
+	'Hapus akun "': { id: 'Hapus akun "', en: 'Delete account "' },
+	'beserta data terkaitnya?': { id: 'beserta data terkaitnya?', en: 'and its related data?' },
+	'Sebelumnya': { id: 'Sebelumnya', en: 'Previous' },
+	'Berikutnya': { id: 'Berikutnya', en: 'Next' }
 };
 
 let initial: Locale = 'id';
