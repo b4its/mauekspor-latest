@@ -11,6 +11,8 @@
 """
 from fastapi.testclient import TestClient
 
+import pytest
+
 from app.main import app
 
 
@@ -458,6 +460,36 @@ def test_costing_compare_and_xlsx_exports():
         assert r.headers["content-type"] == "application/pdf"
         assert r.content.startswith(b"%PDF")
         assert b"BEST OPTION" in r.content
+
+        # SSE notifications: endpoint terdaftar; tanpa auth -> 401; generator
+        # menghasilkan event 'unread' saat punya cookie valid.
+        # (TestClient/httpx tidak bisa menahan stream tanpa hang, jadi uji
+        # fungsinya langsung di Python.)
+        import json as _json
+        from types import SimpleNamespace
+
+        from fastapi import HTTPException as _HTTPException
+        from app.api.routes import stream_notifications
+
+        async def _anext(agen):
+            return await agen.__anext__()
+
+        with pytest.raises(_HTTPException) as exc_info:
+            stream_notifications(SimpleNamespace(cookies={}))
+        assert exc_info.value.status_code == 401
+
+        # Token diambil dari body respons login (bukan cookie jar httpx yang
+        # bisa mengubah encoding nilai cookie secara nondeterministik)
+        login_resp = c.post("/api/v1/auth/login/", json={"email": "admin@mauekspor.example", "password": "admin123"})
+        token = login_resp.json()["meta"]["access_token"]
+        assert token
+        resp = stream_notifications(SimpleNamespace(cookies={"access_token": token}))
+        import asyncio as _asyncio
+
+        first = _asyncio.run(_anext(resp.body_iterator))
+        assert first.startswith("event: unread")
+        payload = _json.loads(first.split("data: ", 1)[1].strip())
+        assert "unread_count" in payload
 
         # Export XLSX valid (zip XML) untuk semua modul
         for url in ("/api/v1/products/export.xlsx", "/api/v1/buyers/export.xlsx",

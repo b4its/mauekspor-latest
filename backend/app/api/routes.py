@@ -1,5 +1,6 @@
 """Semua endpoint API. Prefix /api/v1, respons # {"data": T, "meta": {}}."""
 
+import json
 import os
 import pathlib
 import time
@@ -2337,6 +2338,47 @@ def analytics_refresh():
 @router.get("/notifications/")
 def list_notifications():
     return _list_query("notifications")
+
+
+@router.get("/notifications/stream/")
+def stream_notifications(request: Request):
+    """Realtime SSE: kirim jumlah notifikasi unread setiap perubahan (polling server-side).
+
+    Didefinisikan sebelum rute parameterized {notification_id} agar tidak tertutup.
+    Client: EventSource(url, {withCredentials: true}) -> 'unread:<n>'.
+    """
+    from fastapi.responses import StreamingResponse
+
+    user = None
+    token = request.cookies.get("access_token")
+    if token:
+        try:
+            payload = decode_token(token)
+            user = db.get("users", payload.get("sub", ""))
+        except HTTPException:
+            user = None
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    async def event_generator():
+        import asyncio
+
+        last_count = None
+        while True:
+            unread = [n for n in db.find("notifications") if n.get("status") == "Unread"]
+            count = len(unread)
+            if count != last_count:
+                last_count = count
+                event = {"unread_count": count, "items": unread[:5]}
+                yield f"event: unread\ndata: {json.dumps(event)}\n\n"
+            yield ": keep-alive\n\n"
+            await asyncio.sleep(5)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
+    )
 
 
 @router.post("/notifications/{notification_id}/read/")

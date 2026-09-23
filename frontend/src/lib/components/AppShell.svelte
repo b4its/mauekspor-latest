@@ -77,9 +77,32 @@
 			}
 		}
 		refreshNotifications();
-		// Polling ringan agar badge notifikasi tetap segar (tiap 30 detik)
-		const timer = setInterval(refreshNotifications, 30_000);
-		return () => clearInterval(timer);
+
+		// Realtime: SSE stream (cookie auth), fallback polling 30 detik
+		let timer: ReturnType<typeof setInterval> | undefined;
+		let source: EventSource | undefined;
+		try {
+			source = new EventSource(`${API_BASE}/notifications/stream/`, { withCredentials: true });
+			source.addEventListener('unread', (ev) => {
+				try {
+					const payload = JSON.parse((ev as MessageEvent).data);
+					unreadCount = payload.unread_count;
+				} catch {
+					/* abaikan event malformed */
+				}
+			});
+			source.onerror = () => {
+				source?.close();
+				source = undefined;
+				timer = setInterval(refreshNotifications, 30_000);
+			};
+		} catch {
+			timer = setInterval(refreshNotifications, 30_000);
+		}
+		return () => {
+			source?.close();
+			if (timer) clearInterval(timer);
+		};
 	});
 
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
