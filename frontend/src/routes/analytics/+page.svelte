@@ -22,6 +22,7 @@
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { listShipments } from '$lib/api/shipments';
 	import { listSuppliers } from '$lib/api/suppliers';
+	import { t } from '$lib/i18n.svelte';
 	let refreshed = $state(false);
 	let refreshing = $state(false);
 	let error = $state('');
@@ -74,7 +75,7 @@
 			await refreshAnalytics();
 			refreshed = true;
 		} catch {
-			error = 'Gagal me-refresh analytics.';
+			error = t('Gagal me-refresh analytics.');
 		} finally {
 			refreshing = false;
 		}
@@ -85,16 +86,16 @@
 	<title>Analytics | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Analytics" eyebrow="Executive trade intelligence">
+<AppShell title="Analytics" eyebrow={t('Executive trade intelligence')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">Control tower</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">One executive view across pipeline, readiness, cash, risk, and delivery.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Aggregate signals from projects, buyers, suppliers, compliance, payments, documents, and shipments to prioritize the next trade actions.</CardDescription>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('One executive view across pipeline, readiness, cash, risk, and delivery.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Aggregate signals from projects, buyers, suppliers, compliance, payments, documents, and shipments to prioritize the next trade actions.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleRefresh} disabled={refreshing}>{refreshed ? 'Analytics refreshed' : refreshing ? 'Refreshing...' : 'Refresh analytics'}</Button>
-			<Badge>Network {qualifiedNetwork}</Badge>
+			<Button onclick={handleRefresh} disabled={refreshing}>{refreshed ? t('Analytics refreshed') : refreshing ? t('Refreshing...') : t('Refresh analytics')}</Button>
+			<Badge>{t('Network')} {qualifiedNetwork}</Badge>
 		</CardContent>
 	</Card>
 
@@ -104,8 +105,8 @@
 
 	{#if refreshed}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Analytics refreshed.</strong>
-			<span class="block text-sm text-muted-foreground">Data disegarkan dari backend.</span>
+			<strong class="block">{t('Analytics refreshed.')}</strong>
+			<span class="block text-sm text-muted-foreground">{t('Data disegarkan dari backend.')}</span>
 		</div>
 	{/if}
 
@@ -124,32 +125,32 @@
 	<div class="grid gap-4 lg:grid-cols-2">
 		<Card>
 			<CardHeader class="p-5">
-				<CardTitle>Commercial Snapshot</CardTitle>
+				<CardTitle>{t('Commercial Snapshot')}</CardTitle>
 			</CardHeader>
 			<CardContent class="grid gap-2 p-5">
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Project pipeline<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(totalPipeline)}</strong></div>
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Open receivable<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(receivable)}</strong></div>
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Active buyers<strong class="mt-1 block text-sm font-bold text-foreground">{buyers.items.filter((buyer) => buyer.status === 'Active').length}</strong></div>
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Verified suppliers<strong class="mt-1 block text-sm font-bold text-foreground">{suppliers.items.filter((supplier) => supplier.status === 'Verified').length}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Project pipeline')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(totalPipeline)}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Open receivable')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(receivable)}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Active buyers')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyers.items.filter((buyer) => buyer.status === 'Active').length}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Verified suppliers')}<strong class="mt-1 block text-sm font-bold text-foreground">{suppliers.items.filter((supplier) => supplier.status === 'Verified').length}</strong></div>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader class="p-5">
-				<CardTitle>Risk Concentration</CardTitle>
+				<CardTitle>{t('Risk Concentration')}</CardTitle>
 			</CardHeader>
 			<CardContent class="grid gap-2 p-5">
 				<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3">
 					<strong class="text-3xl font-bold tracking-tight">{criticalCompliance}</strong>
-					<span class="text-sm text-muted-foreground">critical compliance blockers</span>
+					<span class="text-sm text-muted-foreground">{t('critical compliance blockers')}</span>
 				</div>
 				<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3">
 					<strong class="text-3xl font-bold tracking-tight">{shipmentRisk}</strong>
-					<span class="text-sm text-muted-foreground">shipment exception</span>
+					<span class="text-sm text-muted-foreground">{t('shipment exception')}</span>
 				</div>
 				<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3">
 					<strong class="text-3xl font-bold tracking-tight">{payments.items.filter((payment) => payment.risk === 'High').length}</strong>
-					<span class="text-sm text-muted-foreground">high-risk payment</span>
+					<span class="text-sm text-muted-foreground">{t('high-risk payment')}</span>
 				</div>
 			</CardContent>
 		</Card>
@@ -157,15 +158,15 @@
 
 	<Card>
 		<CardHeader class="p-5">
-			<Badge variant="outline" class="w-fit">Trade lanes</Badge>
-			<CardTitle>Readiness by Export Lane</CardTitle>
+			<Badge variant="outline" class="w-fit">{t('Trade lanes')}</Badge>
+			<CardTitle>{t('Readiness by Export Lane')}</CardTitle>
 		</CardHeader>
 		<CardContent class="grid gap-3 p-5 md:grid-cols-3">
 			{#each lanes as lane}
 				<a href={lane.href} class="grid gap-2 rounded-lg border bg-muted/30 p-3 no-underline transition-colors hover:border-ring/40">
 					<div class="flex items-center justify-between gap-3">
 						<strong class="text-sm font-bold">{lane.label}</strong>
-						<span class="text-xs font-semibold text-muted-foreground">{lane.readiness}% ready</span>
+						<span class="text-xs font-semibold text-muted-foreground">{lane.readiness}{t('% ready')}</span>
 					</div>
 					<Progress value={lane.readiness} />
 					<small class="text-xs text-muted-foreground">{lane.risk}</small>

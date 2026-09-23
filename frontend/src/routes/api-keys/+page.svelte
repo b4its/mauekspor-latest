@@ -8,6 +8,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { listApiKeys } from '$lib/api/api-keys';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 	import { createApiKey, revokeApiKey } from '$lib/api/api-keys';
 
 	const filters = ['All', 'Active', 'Expiring Soon', 'Revoked'];
@@ -46,7 +47,7 @@
 			await createApiKey(`Export API Key ${keys.items.length + 1}`, ['catalogs:read', 'quotations:read']);
 			created = true;
 		} catch {
-			error = 'Gagal membuat API key.';
+			error = t('Gagal membuat API key.');
 		} finally {
 			creating = false;
 		}
@@ -59,7 +60,7 @@
 			await revokeApiKey(id);
 			revoked = true;
 		} catch {
-			error = 'Gagal mencabut API key.';
+			error = t('Gagal mencabut API key.');
 		} finally {
 			revokingId = '';
 		}
@@ -70,20 +71,20 @@
 	<title>API Keys | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="API Keys" eyebrow="Developer access controls">
+<AppShell title="API Keys" eyebrow={t('Developer access controls')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge>Developer access</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Manage API credentials for logistics, finance, and reporting integrations.
+				{t('Manage API credentials for logistics, finance, and reporting integrations.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Create scoped API keys, monitor usage, and revoke old credentials before they become integration or security risks.
+				{t('Create scoped API keys, monitor usage, and revoke old credentials before they become integration or security risks.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? 'Key created' : creating ? 'Creating...' : 'Create API key'}</Button>
-			<Badge variant="secondary">Active {activeCount}</Badge>
+			<Button onclick={handleCreate} disabled={creating}>{created ? t('Key created') : creating ? t('Creating...') : t('Create API key')}</Button>
+			<Badge variant="secondary">{t('Active')} {activeCount}</Badge>
 		</CardContent>
 	</Card>
 
@@ -93,10 +94,9 @@
 
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">API key created.</strong>
+			<strong class="block">{t('API key created.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				Key tersimpan di backend; simpan nilai rahasia di tempat aman.
-			</span>
+				{t('Key tersimpan di backend; simpan nilai rahasia di tempat aman.')}</span>
 		</div>
 	{/if}
 
@@ -106,7 +106,7 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search key, scope, owner..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search key, scope, owner...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -118,15 +118,15 @@
 				</div>
 				<CardHeader class="p-0">
 					<CardTitle class="text-xl font-bold tracking-tight">{key.name}</CardTitle>
-					<CardDescription>{key.owner} · Last used {revoked ? 'Never' : key.lastUsed}</CardDescription>
+					<CardDescription>{key.owner} · {t('Last used')} {revoked ? 'Never' : key.lastUsed}</CardDescription>
 				</CardHeader>
 				<CardContent class="grid gap-3 p-0">
 					<div class="grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Created <strong class="mt-1 block text-sm font-bold text-foreground">{key.createdAt}</strong>
+							{t('Created')} <strong class="mt-1 block text-sm font-bold text-foreground">{key.createdAt}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Scopes <strong class="mt-1 block text-sm font-bold text-foreground">{key.scopes.length}</strong>
+							{t('Scopes')} <strong class="mt-1 block text-sm font-bold text-foreground">{key.scopes.length}</strong>
 						</div>
 					</div>
 					<div class="flex flex-wrap gap-2">
@@ -135,10 +135,10 @@
 						{/each}
 					</div>
 				</CardContent>
-				<Button variant="outline" onclick={() => handleRevoke(key.id)} disabled={revokingId === key.id}>{revokingId === key.id ? 'Revoking...' : 'Revoke'}</Button>
+				<Button variant="outline" onclick={() => handleRevoke(key.id)} disabled={revokingId === key.id}>{revokingId === key.id ? t('Revoking...') : t('Revoke')}</Button>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No API key matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No API key matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>

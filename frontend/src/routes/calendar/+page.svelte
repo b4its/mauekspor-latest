@@ -9,6 +9,7 @@
 	import { listCalendarEvents } from '$lib/api/calendar';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 	import { createCalendarEvent, markCalendarEventDone } from '$lib/api/calendar';
 
 	const filters = ['All', 'Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
@@ -57,7 +58,7 @@
 			});
 			created = true;
 		} catch {
-			error = 'Gagal membuat event kalender.';
+			error = t('Gagal membuat event kalender.');
 		} finally {
 			creating = false;
 		}
@@ -69,7 +70,7 @@
 			await markCalendarEventDone(eventId);
 			doneEventId = eventId;
 		} catch {
-			error = 'Gagal menandai event selesai.';
+			error = t('Gagal menandai event selesai.');
 		}
 	}
 </script>
@@ -78,20 +79,20 @@
 	<title>Calendar | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Calendar" eyebrow="Trade milestone schedule">
+<AppShell title="Calendar" eyebrow={t('Trade milestone schedule')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">Milestone calendar</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Keep every export deadline visible before it becomes a blocker.
+				{t('Keep every export deadline visible before it becomes a blocker.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Track compliance deadlines, shipment events, payment follow-ups, buyer meetings, and supplier evidence audits in one calendar view.
+				{t('Track compliance deadlines, shipment events, payment follow-ups, buyer meetings, and supplier evidence audits in one calendar view.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? 'Event created' : creating ? 'Creating...' : 'Create event'}</Button>
-			<Badge variant="destructive">Needs action {dueSoon}</Badge>
+			<Button onclick={handleCreate} disabled={creating}>{created ? t('Event created') : creating ? t('Creating...') : t('Create event')}</Button>
+			<Badge variant="destructive">{t('Needs action')} {dueSoon}</Badge>
 		</CardContent>
 	</Card>
 
@@ -101,10 +102,9 @@
 
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Calendar event created.</strong>
+			<strong class="block">{t('Calendar event created.')}</strong>
 			<span class="block text-sm text-muted-foreground">
-				Event tersimpan di backend.
-			</span>
+				{t('Event tersimpan di backend.')}</span>
 		</div>
 	{/if}
 
@@ -114,7 +114,7 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search event, owner, status..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search event, owner, status...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4">
@@ -131,12 +131,12 @@
 						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
 						<small class="block text-xs text-muted-foreground">{event.type} · {projectName(event.projectId)} · {event.owner}</small>
 					</div>
-					<Button variant="outline" onclick={() => handleDone(event.id)}>Mark done</Button>
+					<Button variant="outline" onclick={() => handleDone(event.id)}>{t('Mark done')}</Button>
 				</CardContent>
 			</Card>
 		{:else}
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
-				No calendar event matched your search.
+				{t('No calendar event matched your search.')}
 			</div>
 		{/each}
 	</div>

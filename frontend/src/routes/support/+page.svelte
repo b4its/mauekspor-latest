@@ -8,6 +8,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { listSupportTickets } from '$lib/api/support';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 	import { createSupportTicket, resolveSupportTicket } from '$lib/api/support';
 
 	const filters = ['All', 'Bug', 'Question', 'Billing', 'Integration', 'Operations'];
@@ -50,7 +51,7 @@
 			});
 			created = true;
 		} catch {
-			error = 'Gagal membuat tiket.';
+			error = t('Gagal membuat tiket.');
 		} finally {
 			creating = false;
 		}
@@ -62,7 +63,7 @@
 			await resolveSupportTicket(ticketId);
 			resolvedId = ticketId;
 		} catch {
-			error = 'Gagal menyelesaikan tiket.';
+			error = t('Gagal menyelesaikan tiket.');
 		}
 	}
 </script>
@@ -71,16 +72,16 @@
 	<title>Support | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Support" eyebrow="Help desk and product support">
+<AppShell title="Support" eyebrow={t('Help desk and product support')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">Support desk</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Get help with export workflows, integrations, billing, and platform issues.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Track support tickets from creation to resolution while keeping each request tied to a clear category and owner.</CardDescription>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Get help with export workflows, integrations, billing, and platform issues.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Track support tickets from creation to resolution while keeping each request tied to a clear category and owner.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? 'Ticket created' : creating ? 'Creating...' : 'Create ticket'}</Button>
-			<Badge variant="outline">Open {openCount}</Badge>
+			<Button onclick={handleCreate} disabled={creating}>{created ? t('Ticket created') : creating ? t('Creating...') : t('Create ticket')}</Button>
+			<Badge variant="outline">{t('Open')} {openCount}</Badge>
 		</CardContent>
 	</Card>
 
@@ -90,8 +91,8 @@
 
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Support ticket created.</strong>
-			<span class="block text-sm text-muted-foreground">Tiket tersimpan di backend.</span>
+			<strong class="block">{t('Support ticket created.')}</strong>
+			<span class="block text-sm text-muted-foreground">{t('Tiket tersimpan di backend.')}</span>
 		</div>
 	{/if}
 
@@ -101,7 +102,7 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search ticket, owner, issue..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search ticket, owner, issue...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-3">
@@ -115,11 +116,11 @@
 				</div>
 				<aside class="grid justify-items-start gap-2 whitespace-nowrap md:justify-items-end">
 					<strong class="text-xl font-bold tracking-tight">{ticket.priority}</strong>
-					<Button variant="outline" size="sm" onclick={() => handleResolve(ticket.id)}>{resolvedId === ticket.id ? 'Resolved' : 'Resolve'}</Button>
+					<Button variant="outline" size="sm" onclick={() => handleResolve(ticket.id)}>{resolvedId === ticket.id ? t('Resolved') : t('Resolve')}</Button>
 				</aside>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No support ticket matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No support ticket matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>

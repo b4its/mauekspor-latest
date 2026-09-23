@@ -8,6 +8,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { changePlan, downloadInvoice, getBilling } from '$lib/api/billing';
 	import { currency, statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 	
 	let changed = $state(false);
 	let downloaded = $state(false);
@@ -34,7 +35,7 @@
 			await changePlan(billing.plan === 'Starter' ? 'Growth' : 'Starter');
 			changed = true;
 		} catch {
-			error = 'Gagal mengubah plan.';
+			error = t('Gagal mengubah plan.');
 		} finally {
 			busy = false;
 		}
@@ -47,7 +48,7 @@
 			await downloadInvoice(billing.id);
 			downloaded = true;
 		} catch {
-			error = 'Gagal mengunduh invoice.';
+			error = t('Gagal mengunduh invoice.');
 		} finally {
 			busy = false;
 		}
@@ -58,20 +59,20 @@
 	<title>Billing | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Billing" eyebrow="Subscription and usage">
+<AppShell title="Billing" eyebrow={t('Subscription and usage')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(billing.status))}>{billing.status}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				{billing.plan} plan for export operations.
+				{billing.plan} {t('plan for export operations.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Monitor subscription status, usage limits, invoice period, and upgrade needs for your MauEkspor workspace.
+				{t('Monitor subscription status, usage limits, invoice period, and upgrade needs for your MauEkspor workspace.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleChangePlan} disabled={busy}>{changed ? 'Plan updated' : 'Change plan'}</Button>
-			<Button variant="outline" onclick={handleDownload} disabled={busy}>{downloaded ? 'Invoice ready' : 'Download invoice'}</Button>
+			<Button onclick={handleChangePlan} disabled={busy}>{changed ? t('Plan updated') : t('Change plan')}</Button>
+			<Button variant="outline" onclick={handleDownload} disabled={busy}>{downloaded ? t('Invoice ready') : t('Download invoice')}</Button>
 		</CardContent>
 	</Card>
 
@@ -81,37 +82,35 @@
 
 	{#if changed}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Plan change simulated.</strong>
+			<strong class="block">{t('Plan change simulated.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				Perubahan plan tersimpan di backend.
-			</span>
+				{t('Perubahan plan tersimpan di backend.')}</span>
 		</div>
 	{/if}
 	{#if downloaded}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Invoice download prepared.</strong>
+			<strong class="block">{t('Invoice download prepared.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				Invoice diekspor dari backend.
-			</span>
+				{t('Invoice diekspor dari backend.')}</span>
 		</div>
 	{/if}
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Monthly amount</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Monthly amount')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(billing.amount)}</strong>
 			</CardContent>
 		</Card>
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Period</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Period')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{billing.period}</strong>
 			</CardContent>
 		</Card>
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Due date</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Due date')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{billing.dueDate}</strong>
 			</CardContent>
 		</Card>

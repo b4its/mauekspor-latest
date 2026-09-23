@@ -114,7 +114,170 @@ const dictionary: Record<string, Entry> = {
 	'Buyer': { id: 'Pembeli', en: 'Buyer' },
 	'Destination': { id: 'Negara tujuan', en: 'Destination' },
 	'Stage': { id: 'Tahap', en: 'Stage' },
-	'Value': { id: 'Nilai', en: 'Value' }
+	'Value': { id: 'Nilai', en: 'Value' },
+
+	// --- Umum (filter & tombol lintas halaman) ---
+	'All': { id: 'Semua', en: 'All' },
+	'Updated': { id: 'Diperbarui', en: 'Updated' },
+	'Created': { id: 'Dibuat', en: 'Created' },
+	'Category': { id: 'Kategori', en: 'Category' },
+	'Scopes': { id: 'Cakupan', en: 'Scopes' },
+	'Used by': { id: 'Dipakai oleh', en: 'Used by' },
+	'Apply': { id: 'Terapkan', en: 'Apply' },
+	'Applied': { id: 'Diterapkan', en: 'Applied' },
+	'Last used': { id: 'Terakhir dipakai', en: 'Last used' },
+	'Period': { id: 'Periode', en: 'Period' },
+	'Due date': { id: 'Jatuh tempo', en: 'Due date' },
+	'Monthly amount': { id: 'Biaya bulanan', en: 'Monthly amount' },
+	'Open': { id: 'Terbuka', en: 'Open' },
+	'Mark done': { id: 'Tandai selesai', en: 'Mark done' },
+	'Resolve': { id: 'Selesaikan', en: 'Resolve' },
+	'Resolved': { id: 'Selesai', en: 'Resolved' },
+	'Revoke': { id: 'Cabut', en: 'Revoke' },
+	'Revoking...': { id: 'Mencabut...', en: 'Revoking...' },
+	'No template matched your search.': { id: 'Tidak ada templat yang cocok.', en: 'No template matched your search.' },
+	'No calendar event matched your search.': { id: 'Tidak ada event kalender yang cocok.', en: 'No calendar event matched your search.' },
+	'No article matched your search.': { id: 'Tidak ada artikel yang cocok.', en: 'No article matched your search.' },
+	'No support ticket matched your search.': { id: 'Tidak ada tiket yang cocok.', en: 'No support ticket matched your search.' },
+	'No API key matched your search.': { id: 'Tidak ada kunci API yang cocok.', en: 'No API key matched your search.' },
+
+	// --- Templates ---
+	'Reusable export assets': { id: 'Aset ekspor yang dapat dipakai ulang', en: 'Reusable export assets' },
+	'Standardize export documents, emails, workflows, and catalogs.': { id: 'Standardisasi dokumen ekspor, email, alur kerja, dan katalog.', en: 'Standardize export documents, emails, workflows, and catalogs.' },
+	'Use controlled templates to reduce manual work, keep evidence consistent, and speed up RFQ-to-shipment execution.': {
+		id: 'Gunakan templat terkontrol untuk mengurangi pekerjaan manual, menjaga konsistensi bukti, dan mempercepat proses RFQ hingga pengiriman.',
+		en: 'Use controlled templates to reduce manual work, keep evidence consistent, and speed up RFQ-to-shipment execution.'
+	},
+	'Use template': { id: 'Gunakan templat', en: 'Use template' },
+	'Template used': { id: 'Templat terpakai', en: 'Template used' },
+	'Ready': { id: 'Siap', en: 'Ready' },
+	'Template applied.': { id: 'Templat diterapkan.', en: 'Template applied.' },
+	'Search template, field, module...': { id: 'Cari templat, bidang, modul...', en: 'Search template, field, module...' },
+	'Gagal menerapkan template.': { id: 'Gagal menerapkan template.', en: 'Failed to apply template.' },
+
+	// --- Calendar ---
+	'Trade milestone schedule': { id: 'Jadwal tonggak perdagangan', en: 'Trade milestone schedule' },
+	'Keep every export deadline visible before it becomes a blocker.': {
+		id: 'Pastikan setiap tenggat ekspor terlihat sebelum menjadi penghambat.',
+		en: 'Keep every export deadline visible before it becomes a blocker.'
+	},
+	'Track compliance deadlines, shipment events, payment follow-ups, buyer meetings, and supplier evidence audits in one calendar view.': {
+		id: 'Pantau tenggat kepatuhan, event pengiriman, tindak lanjut pembayaran, pertemuan pembeli, dan audit bukti pemasok dalam satu tampilan kalender.',
+		en: 'Track compliance deadlines, shipment events, payment follow-ups, buyer meetings, and supplier evidence audits in one calendar view.'
+	},
+	'Create event': { id: 'Buat event', en: 'Create event' },
+	'Creating...': { id: 'Membuat...', en: 'Creating...' },
+	'Event created': { id: 'Event dibuat', en: 'Event created' },
+	'Needs action': { id: 'Perlu tindakan', en: 'Needs action' },
+	'Calendar event created.': { id: 'Event kalender dibuat.', en: 'Calendar event created.' },
+	'Search event, owner, status...': { id: 'Cari event, pemilik, status...', en: 'Search event, owner, status...' },
+	'Gagal membuat event kalender.': { id: 'Gagal membuat event kalender.', en: 'Failed to create calendar event.' },
+	'Gagal menandai event selesai.': { id: 'Gagal menandai event selesai.', en: 'Failed to mark event done.' },
+
+	// --- Knowledge Base ---
+	'Export operating playbooks': { id: 'Panduan operasional ekspor', en: 'Export operating playbooks' },
+	'Keep export know-how close to the workflow.': { id: 'Jaga pengetahuan ekspor tetap dekat dengan alur kerja.', en: 'Keep export know-how close to the workflow.' },
+	'Publish practical playbooks for product readiness, HS review, Incoterms, shipment exceptions, finance, and platform usage.': {
+		id: 'Terbitkan panduan praktis untuk kesiapan produk, tinjauan HS, Incoterms, pengecualian pengiriman, keuangan, dan penggunaan platform.',
+		en: 'Publish practical playbooks for product readiness, HS review, Incoterms, shipment exceptions, finance, and platform usage.'
+	},
+	'Publish article': { id: 'Terbitkan artikel', en: 'Publish article' },
+	'Article published': { id: 'Artikel diterbitkan', en: 'Article published' },
+	'Published': { id: 'Diterbitkan', en: 'Published' },
+	'Article published.': { id: 'Artikel diterbitkan.', en: 'Article published.' },
+	'Search article, step, category...': { id: 'Cari artikel, langkah, kategori...', en: 'Search article, step, category...' },
+	'Gagal mempublikasikan artikel.': { id: 'Gagal mempublikasikan artikel.', en: 'Failed to publish article.' },
+
+	// --- Support ---
+	'Help desk and product support': { id: 'Help desk dan dukungan produk', en: 'Help desk and product support' },
+	'Get help with export workflows, integrations, billing, and platform issues.': {
+		id: 'Dapatkan bantuan untuk alur kerja ekspor, integrasi, penagihan, dan masalah platform.',
+		en: 'Get help with export workflows, integrations, billing, and platform issues.'
+	},
+	'Track support tickets from creation to resolution while keeping each request tied to a clear category and owner.': {
+		id: 'Pantau tiket dukungan dari pembuatan hingga penyelesaian, dengan setiap permintaan terhubung ke kategori dan pemilik yang jelas.',
+		en: 'Track support tickets from creation to resolution while keeping each request tied to a clear category and owner.'
+	},
+	'Create ticket': { id: 'Buat tiket', en: 'Create ticket' },
+	'Ticket created': { id: 'Tiket dibuat', en: 'Ticket created' },
+	'Support ticket created.': { id: 'Tiket dukungan dibuat.', en: 'Support ticket created.' },
+	'Search ticket, owner, issue...': { id: 'Cari tiket, pemilik, masalah...', en: 'Search ticket, owner, issue...' },
+	'Gagal membuat tiket.': { id: 'Gagal membuat tiket.', en: 'Failed to create ticket.' },
+	'Gagal menyelesaikan tiket.': { id: 'Gagal menyelesaikan tiket.', en: 'Failed to resolve ticket.' },
+
+	// --- Billing ---
+	'Subscription and usage': { id: 'Langganan dan pemakaian', en: 'Subscription and usage' },
+	'plan for export operations.': { id: 'rencana untuk operasi ekspor.', en: 'plan for export operations.' },
+	'Monitor subscription status, usage limits, invoice period, and upgrade needs for your MauEkspor workspace.': {
+		id: 'Pantau status langganan, batas pemakaian, periode invoice, dan kebutuhan upgrade untuk workspace MauEkspor Anda.',
+		en: 'Monitor subscription status, usage limits, invoice period, and upgrade needs for your MauEkspor workspace.'
+	},
+	'Change plan': { id: 'Ubah plan', en: 'Change plan' },
+	'Plan updated': { id: 'Plan diperbarui', en: 'Plan updated' },
+	'Download invoice': { id: 'Unduh invoice', en: 'Download invoice' },
+	'Invoice ready': { id: 'Invoice siap', en: 'Invoice ready' },
+	'Plan change simulated.': { id: 'Perubahan plan disimulasikan.', en: 'Plan change simulated.' },
+	'Invoice download prepared.': { id: 'Unduhan invoice disiapkan.', en: 'Invoice download prepared.' },
+	'Gagal mengubah plan.': { id: 'Gagal mengubah plan.', en: 'Failed to change plan.' },
+	'Gagal mengunduh invoice.': { id: 'Gagal mengunduh invoice.', en: 'Failed to download invoice.' },
+
+	// --- API Keys ---
+	'Developer access controls': { id: 'Kontrol akses pengembang', en: 'Developer access controls' },
+	'Manage API credentials for logistics, finance, and reporting integrations.': {
+		id: 'Kelola kredensial API untuk integrasi logistik, keuangan, dan laporan.',
+		en: 'Manage API credentials for logistics, finance, and reporting integrations.'
+	},
+	'Create scoped API keys, monitor usage, and revoke old credentials before they become integration or security risks.': {
+		id: 'Buat kunci API ber-scope, pantau pemakaian, dan cabut kredensial lama sebelum menjadi risiko integrasi atau keamanan.',
+		en: 'Create scoped API keys, monitor usage, and revoke old credentials before they become integration or security risks.'
+	},
+	'Create API key': { id: 'Buat kunci API', en: 'Create API key' },
+	'Key created': { id: 'Kunci dibuat', en: 'Key created' },
+	'API key created.': { id: 'Kunci API dibuat.', en: 'API key created.' },
+	'Search key, scope, owner...': { id: 'Cari kunci, scope, pemilik...', en: 'Search key, scope, owner...' },
+	'Gagal membuat API key.': { id: 'Gagal membuat API key.', en: 'Failed to create API key.' },
+	'Gagal mencabut API key.': { id: 'Gagal mencabut API key.', en: 'Failed to revoke API key.' },
+
+	// --- Analytics ---
+	'Executive trade intelligence': { id: 'Intelijen perdagangan eksekutif', en: 'Executive trade intelligence' },
+	'One executive view across pipeline, readiness, cash, risk, and delivery.': {
+		id: 'Satu tampilan eksekutif untuk pipeline, kesiapan, kas, risiko, dan pengiriman.',
+		en: 'One executive view across pipeline, readiness, cash, risk, and delivery.'
+	},
+	'Aggregate signals from projects, buyers, suppliers, compliance, payments, documents, and shipments to prioritize the next trade actions.': {
+		id: 'Gabungkan sinyal dari proyek, pembeli, pemasok, kepatuhan, pembayaran, dokumen, dan pengiriman untuk memprioritaskan aksi perdagangan berikutnya.',
+		en: 'Aggregate signals from projects, buyers, suppliers, compliance, payments, documents, and shipments to prioritize the next trade actions.'
+	},
+	'Refresh analytics': { id: 'Segarkan analitik', en: 'Refresh analytics' },
+	'Refreshing...': { id: 'Menyegarkan...', en: 'Refreshing...' },
+	'Analytics refreshed': { id: 'Analitik disegarkan', en: 'Analytics refreshed' },
+	'Network': { id: 'Jaringan', en: 'Network' },
+	'Analytics refreshed.': { id: 'Analitik disegarkan.', en: 'Analytics refreshed.' },
+	'Commercial Snapshot': { id: 'Ringkasan Komersial', en: 'Commercial Snapshot' },
+	'Project pipeline': { id: 'Pipeline proyek', en: 'Project pipeline' },
+	'Open receivable': { id: 'Piutang terbuka', en: 'Open receivable' },
+	'Active buyers': { id: 'Pembeli aktif', en: 'Active buyers' },
+	'Verified suppliers': { id: 'Pemasok terverifikasi', en: 'Verified suppliers' },
+	'Risk Concentration': { id: 'Konsentrasi Risiko', en: 'Risk Concentration' },
+	'critical compliance blockers': { id: 'penghambat kepatuhan kritis', en: 'critical compliance blockers' },
+	'shipment exception': { id: 'pengecualian pengiriman', en: 'shipment exception' },
+	'high-risk payment': { id: 'pembayaran berisiko tinggi', en: 'high-risk payment' },
+	'Readiness by Export Lane': { id: 'Kesiapan per Jalur Ekspor', en: 'Readiness by Export Lane' },
+	'Trade lanes': { id: 'Jalur perdagangan', en: 'Trade lanes' },
+	'% ready': { id: '% siap', en: '% ready' },
+
+	// --- Pesan hasil aksi (ID default, EN = terjemahan) ---
+	'Template diterapkan di backend.': { id: 'Template diterapkan di backend.', en: 'Template applied in backend.' },
+	'Event tersimpan di backend.': { id: 'Event tersimpan di backend.', en: 'Event saved in backend.' },
+	'Artikel dipublikasikan di backend.': { id: 'Artikel dipublikasikan di backend.', en: 'Article published in backend.' },
+	'Tiket tersimpan di backend.': { id: 'Tiket tersimpan di backend.', en: 'Ticket saved in backend.' },
+	'Perubahan plan tersimpan di backend.': { id: 'Perubahan plan tersimpan di backend.', en: 'Plan change saved in backend.' },
+	'Invoice diekspor dari backend.': { id: 'Invoice diekspor dari backend.', en: 'Invoice exported from backend.' },
+	'Data disegarkan dari backend.': { id: 'Data disegarkan dari backend.', en: 'Data refreshed from backend.' },
+	'Key tersimpan di backend; simpan nilai rahasia di tempat aman.': {
+		id: 'Key tersimpan di backend; simpan nilai rahasia di tempat aman.',
+		en: 'Key saved in backend; keep the secret value in a safe place.'
+	}
 };
 
 let initial: Locale = 'id';
