@@ -10,6 +10,7 @@
 	import { getOrCreateMarketIntelligence, getOrCreateProductPricing } from '$lib/api/marketing';
 	import type { MarketIntelligence, ProductPricing } from '$lib/api/marketing';
 	import type { Product } from '$lib/data/trade';
+	import { t } from '$lib/i18n.svelte';
 
 	let products = createRemoteList<Product>(listProducts, seedProducts);
 products.load();
@@ -55,7 +56,7 @@ products.load();
 		try {
 			mi = await getOrCreateMarketIntelligence(p.id);
 		} catch {
-			miError = 'Gagal memuat Market Intelligence untuk produk ini.';
+			miError = t('Gagal memuat Market Intelligence untuk produk ini.');
 		} finally {
 			miLoading = false;
 		}
@@ -73,7 +74,7 @@ products.load();
 				target_country_code: country
 			});
 		} catch {
-			pricingError = 'Gagal menghitung pricing untuk produk ini.';
+			pricingError = t('Gagal menghitung pricing untuk produk ini.');
 		} finally {
 			pricingLoading = false;
 		}
@@ -95,16 +96,16 @@ products.load();
 	<title>Marketing | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Marketing" eyebrow="AI market intelligence & pricing">
+<AppShell title="Marketing" eyebrow={t('Intelijen pasar AI & penetapan harga')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant="secondary">AI Marketing Center</Badge>
+				<Badge variant="secondary">{t('Pusat Pemasaran AI')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-					Market Intelligence & Pricing Calculator.
+					{t('Kalkulator Market Intelligence & Pricing.')}
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl">
-					Generate rekomendasi negara tujuan (dengan forwarder) dan hitung harga EXW/FOB/CIF per produk.
+					{t('Generate rekomendasi negara tujuan (dengan forwarder) dan hitung harga EXW/FOB/CIF per produk.')}
 				</CardDescription>
 			</div>
 		</div>
@@ -112,14 +113,14 @@ products.load();
 
 	<div class="flex flex-wrap gap-2">
 		<Button variant={tab === 'mi' ? 'default' : 'outline'} onclick={() => (tab = 'mi')}>Market Intelligence</Button>
-		<Button variant={tab === 'pricing' ? 'default' : 'outline'} onclick={() => (tab = 'pricing')}>Pricing Calculator</Button>
+		<Button variant={tab === 'pricing' ? 'default' : 'outline'} onclick={() => (tab = 'pricing')}>{t('Kalkulator Pricing')}</Button>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
 				<div class="flex flex-wrap gap-2">
-					<Input placeholder="Cari produk..." bind:value={search} class="w-56" />
+					<Input placeholder={t('Cari produk...')} bind:value={search} class="w-56" />
 					<select
 						class="h-10 rounded-md border bg-background px-3 text-sm"
 						bind:value={category}
@@ -129,7 +130,7 @@ products.load();
 						{/each}
 					</select>
 				</div>
-				<CardDescription>{filtered.length} produk</CardDescription>
+				<CardDescription>{filtered.length} {t('produk')}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
 				{#each filtered as product}
@@ -139,10 +140,10 @@ products.load();
 					>
 						<div class="flex items-center justify-between gap-2">
 							<strong class="text-sm">{product.name}</strong>
-							<Badge variant={product.status === 'Enriched' ? 'default' : 'secondary'}>{product.status}</Badge>
+							<Badge variant={product.status === 'Enriched' ? 'default' : 'secondary'}>{t(product.status === 'Enriched' ? 'Diperkaya' : 'Draf')}</Badge>
 						</div>
 						<span class="mt-1 block text-xs text-muted-foreground">{product.category} · HS {product.hs}</span>
-						<span class="mt-1 block text-xs font-bold text-muted-foreground">Readiness {product.readiness}%</span>
+						<span class="mt-1 block text-xs font-bold text-muted-foreground">{t('Kesiapan')} {product.readiness}%</span>
 					</button>
 				{/each}
 			</CardContent>
@@ -153,25 +154,25 @@ products.load();
 				<CardHeader class="flex-row items-center justify-between gap-3">
 					<div>
 						<CardTitle>Market Intelligence {selectedProduct ? `— ${selectedProduct.name}` : ''}</CardTitle>
-						<CardDescription>Negara yang direkomendasikan, risiko, tren, dan rekomendasi forwarder.</CardDescription>
+						<CardDescription>{t('Negara yang direkomendasikan, risiko, tren, dan rekomendasi forwarder.')}</CardDescription>
 					</div>
 					{#if selectedProduct}
 						<Button variant="outline" size="sm" onclick={() => openMarketIntelligence(selectedProduct!)} disabled={miLoading}>
-							{miLoading ? 'Loading...' : 'Refresh'}
+							{miLoading ? t('Memuat...') : t('Muat ulang')}
 						</Button>
 					{/if}
 				</CardHeader>
 				<CardContent>
 					{#if !selectedProduct}
-						<p class="text-sm font-semibold text-muted-foreground">Pilih produk di atas untuk melihat Market Intelligence.</p>
+						<p class="text-sm font-semibold text-muted-foreground">{t('Pilih produk di atas untuk melihat Market Intelligence.')}</p>
 					{:else if miLoading && !mi}
-						<p class="text-sm font-semibold text-muted-foreground">Menganalisis pasar dengan AI...</p>
+						<p class="text-sm font-semibold text-muted-foreground">{t('Menganalisis pasar dengan AI...')}</p>
 					{:else if miError}
 						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{miError}</p>
 					{:else if mi}
 						<div class="grid gap-4">
 							<div>
-								<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">Negara direkomendasikan</h4>
+								<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Negara direkomendasikan')}</h4>
 								<div class="grid gap-2.5 md:grid-cols-2">
 									{#each mi.recommendedCountries ?? [] as rec}
 										<div class="rounded-lg border bg-muted/30 p-4">
@@ -182,11 +183,11 @@ products.load();
 											<p class="mt-1.5 text-xs leading-relaxed text-muted-foreground">{rec.reason}</p>
 											{#if rec.market_size || rec.competition_level || rec.price_range}
 												<p class="mt-1.5 text-xs text-muted-foreground">
-													<b>Pasar:</b> {rec.market_size ?? '—'} · <b>Kompetisi:</b> {rec.competition_level ?? '—'} · <b>Harga:</b> {rec.price_range ?? '—'}
+													<b>{t('Pasar:')}</b> {rec.market_size ?? '—'} · <b>{t('Kompetisi:')}</b> {rec.competition_level ?? '—'} · <b>{t('Harga:')}</b> {rec.price_range ?? '—'}
 												</p>
 											{/if}
 											{#if rec.entry_strategy}
-												<p class="mt-1 text-xs text-muted-foreground"><b>Strategi:</b> {rec.entry_strategy}</p>
+												<p class="mt-1 text-xs text-muted-foreground"><b>{t('Strategi:')}</b> {rec.entry_strategy}</p>
 											{/if}
 											{#if rec.forwarders && rec.forwarders.length > 0}
 												<div class="mt-2 grid gap-1.5">
@@ -208,7 +209,7 @@ products.load();
 							<div class="grid gap-4 md:grid-cols-2">
 								{#if (mi.countriesToAvoid ?? []).length > 0}
 									<div>
-										<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">Negara dihindari</h4>
+										<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Negara dihindari')}</h4>
 										<div class="grid gap-2">
 											{#each mi.countriesToAvoid ?? [] as avoid}
 												<div class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs">
@@ -219,7 +220,7 @@ products.load();
 									</div>
 								{/if}
 								<div>
-									<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">Tren pasar</h4>
+									<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Tren pasar')}</h4>
 									<ul class="grid gap-1.5">
 										{#each mi.marketTrends ?? [] as trend}
 											<li class="rounded-lg border bg-muted/30 px-3 py-2 text-xs">• {trend}</li>
@@ -230,7 +231,7 @@ products.load();
 
 							{#if mi.overallRecommendation}
 								<div class="rounded-xl border bg-primary/10 p-4 text-sm leading-relaxed">
-									<b>Rekomendasi keseluruhan:</b> {mi.overallRecommendation}
+									<b>{t('Rekomendasi keseluruhan:')}</b> {mi.overallRecommendation}
 								</div>
 							{/if}
 						</div>
@@ -242,24 +243,24 @@ products.load();
 				<CardHeader class="flex-row items-center justify-between gap-3">
 					<div>
 						<CardTitle>Pricing Calculator {selectedProduct ? `— ${selectedProduct.name}` : ''}</CardTitle>
-						<CardDescription>Hitung EXW/FOB/CIF dengan margin target dan kurs terbaru.</CardDescription>
+						<CardDescription>{t('Hitung EXW/FOB/CIF dengan margin target dan kurs terbaru.')}</CardDescription>
 					</div>
 				</CardHeader>
 				<CardContent class="grid gap-4">
 					{#if !selectedProduct}
-						<p class="text-sm font-semibold text-muted-foreground">Pilih produk di atas untuk menghitung pricing.</p>
+						<p class="text-sm font-semibold text-muted-foreground">{t('Pilih produk di atas untuk menghitung pricing.')}</p>
 					{:else}
 						<div class="grid gap-3 sm:grid-cols-3">
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
-								HPP (IDR / unit)
+								{t('HPP (IDR / unit)')}
 								<Input type="number" bind:value={cogs} />
 							</label>
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
-								Target margin (%)
+								{t('Target margin (%)')}
 								<Input type="number" bind:value={margin} />
 							</label>
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
-								Negara tujuan
+								{t('Negara tujuan')}
 								<select class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={country}>
 									<option value="JP">Japan</option>
 									<option value="US">United States</option>
@@ -275,7 +276,7 @@ products.load();
 							</label>
 						</div>
 						<Button onclick={() => openPricing(selectedProduct!)} disabled={pricingLoading}>
-							{pricingLoading ? 'Menghitung...' : 'Hitung pricing'}
+							{pricingLoading ? t('Menghitung...') : t('Hitung pricing')}
 						</Button>
 
 						{#if pricingError}
@@ -300,7 +301,7 @@ products.load();
 
 							<div class="grid gap-4 md:grid-cols-2">
 								<div class="rounded-lg border bg-muted/30 p-4 text-xs">
-									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">Breakdown</h4>
+									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">{t('Rincian')}</h4>
 									{#if pricing.pricingBreakdown}
 										{#each Object.entries(pricing.pricingBreakdown) as [key, value]}
 											<div class="flex justify-between gap-3 border-b border-muted/40 py-1.5 last:border-0">
@@ -312,9 +313,9 @@ products.load();
 								</div>
 								<div class="rounded-lg border bg-primary/10 p-4 text-sm leading-relaxed">
 									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">AI Insight</h4>
-									<p>{pricing.pricingInsight ?? 'Harga kompetitif untuk pasar tujuan.'}</p>
+									<p>{pricing.pricingInsight ?? t('Harga kompetitif untuk pasar tujuan.')}</p>
 									<p class="mt-2 text-xs text-muted-foreground">
-										Kurs dipakai: {pricing.exchangeRateUsed} IDR/USD · Margin {pricing.targetMarginPercent}%
+										{t('Kurs dipakai:')} {pricing.exchangeRateUsed} IDR/USD · {t('Margin')} {pricing.targetMarginPercent}%
 									</p>
 								</div>
 							</div>
