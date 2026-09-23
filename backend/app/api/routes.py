@@ -345,6 +345,7 @@ def create_product(payload: sc.CreateProductPayload):
         "weight_gross": None,
         "updatedAt": "now",
     })
+    data["readiness"] = compute_product_readiness(data)
     return _one(db.insert("products", data))
 
 
@@ -358,6 +359,32 @@ def _generate_sku(product: dict) -> str:
         mat = "MAT"
     seq = len(db.find("product_enrichments", productId=str(product.get("id", "")))) + 1
     return f"{cat}-{mat}-{seq:03d}"
+
+
+def compute_product_readiness(product: dict) -> int:
+    """Skor kesiapan produk 0-100 dari kelengkapan data (diadaptasi dari readiness model ExportReadyAI)."""
+    score = 20  # base
+    name = str(product.get("name", "")).strip()
+    category = str(product.get("category", "")).strip()
+    if name and category:
+        score += 15
+    if product.get("description") or product.get("quality_specs") or product.get("material_composition"):
+        score += 10
+    if product.get("packaging"):
+        score += 10
+    if product.get("netWeight") or product.get("weight_net"):
+        score += 5
+    if product.get("grossWeight") or product.get("weight_gross"):
+        score += 5
+    if product.get("moq") or product.get("min_order_quantity"):
+        score += 5
+    if product.get("leadTime") or product.get("lead_time_days"):
+        score += 5
+    if product.get("certificates"):
+        score += min(len(product["certificates"]) * 5, 15)
+    if product.get("status") == "Enriched" and product.get("hs") not in (None, "", "TBD"):
+        score += 10
+    return max(0, min(100, score))
 
 
 @router.post("/products/{product_id}/enrich/")
@@ -394,7 +421,8 @@ def enrich_product(product_id: str):
     record["hs"] = hs_code
     record["hsConfidence"] = confidence if confidence is not None else 88
     record["sku"] = sku
-    record["readiness"] = min(record.get("readiness", 0) + 10, 100)
+    record["status"] = "Enriched"
+    record["readiness"] = compute_product_readiness(record)
     record["updatedAt"] = "now"
 
     # Simpan enrichment terpisah (1-per-produk)
@@ -432,6 +460,7 @@ def update_product(product_id: str, payload: sc.UpdateProductPayload):
     if data.get("netWeight"):
         data["netWeight"] = data["netWeight"]
     record.update(data)
+    record["readiness"] = compute_product_readiness(record)
     record["updatedAt"] = "now"
     # Jika ada field enrichment, update tabel enrichment juga
     enrich_patch = {}
@@ -1810,17 +1839,46 @@ def get_document(document_id: str):
 
 @router.post("/documents/generate/")
 def generate_document(payload: sc.GenerateDocumentPayload):
+    fields = dict(payload.data or {})
+    checks: list[dict] = []
+    project = db.get("projects", str(payload.projectId or "")) if payload.projectId else None
+    product = None
+    if project:
+        fields.setdefault("buyer", project.get("buyer", ""))
+        fields.setdefault("destination", project.get("country", ""))
+        fields.setdefault("value", project.get("value", 0))
+        fields.setdefault("incoterm", project.get("incoterm", ""))
+        fields.setdefault("hsCode", project.get("hsCode", ""))
+        # Cari produk terkait
+        pid = project.get("productId")
+        if pid:
+            product = db.get("products", pid)
+    # Invoice number otomatis
+    doc_type = payload.type or "Commercial Invoice"
+    if not fields.get("invoiceNo") and doc_type.lower().startswith("commercial"):
+        fields["invoiceNo"] = f"INV-{payload.projectId or 'DRAFT'}-{len(db.all('documents')) + 1:03d}"
+    # Checks & validation score
+    checks.append({"label": "Buyer terisi", "status": "Passed" if fields.get("buyer") else "Failed", "detail": "Buyer wajib pada dokumen komersial"})
+    checks.append({"label": "HS code", "status": "Passed" if fields.get("hsCode") else "Needs Review", "detail": "HS code dari data proyek/produk"})
+    if product:
+        fields.setdefault("product", product.get("name", ""))
+        fields.setdefault("origin", product.get("origin", ""))
+        checks.append({"label": "Produk terisi", "status": "Passed", "detail": product.get("name", "")})
+    if fields.get("value"):
+        checks.append({"label": "Nilai dokumen", "status": "Passed", "detail": f"{fields['value']}"})
+    passed = sum(1 for c in checks if c["status"] == "Passed")
+    validation_score = round((passed / len(checks)) * 100) if checks else 0
     record = db.insert("documents", {
         "id": db.gen_id("documents", "DOC"),
         "projectId": payload.projectId,
-        "type": payload.type,
+        "type": doc_type,
         "status": "Draft",
         "version": "v1.0",
         "owner": "System",
         "updatedAt": "now",
-        "validationScore": 0,
-        "fields": payload.data,
-        "checks": [],
+        "validationScore": validation_score,
+        "fields": fields,
+        "checks": checks,
     })
     return _one(record)
 

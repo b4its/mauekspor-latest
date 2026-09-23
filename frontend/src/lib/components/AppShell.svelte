@@ -68,9 +68,18 @@
 	const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
 
 	$effect(() => {
-		listNotifications()
-			.then((res) => (unreadCount = res.data.filter((n) => n.status === 'Unread').length))
-			.catch(() => (unreadCount = 0));
+		async function refreshNotifications() {
+			try {
+				const res = await listNotifications();
+				unreadCount = res.data.filter((n) => n.status === 'Unread').length;
+			} catch {
+				unreadCount = 0;
+			}
+		}
+		refreshNotifications();
+		// Polling ringan agar badge notifikasi tetap segar (tiap 30 detik)
+		const timer = setInterval(refreshNotifications, 30_000);
+		return () => clearInterval(timer);
 	});
 
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;

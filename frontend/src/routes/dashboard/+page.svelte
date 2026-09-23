@@ -80,6 +80,48 @@
 
 	let marketScores = $derived(exportAnalyses.items.slice(0, 5));
 
+	// ---------- Onboarding checklist ----------
+	type ChecklistStep = {
+		label: string;
+		href: string;
+		done: boolean;
+		detail: string;
+	};
+	let checklist = $derived<ChecklistStep[]>([
+		{
+			label: 'Lengkapi profil bisnis',
+			href: '/business-profile',
+			done: hasProfile && (profiles.items[0]?.status === 'Complete' || (profiles.items[0]?.readiness ?? 0) >= 80),
+			detail: hasProfile ? 'Profil bisnis tersedia' : 'Tambahkan profil & sertifikasi'
+		},
+		{
+			label: 'Tambahkan produk',
+			href: '/products/new',
+			done: products.items.length > 0,
+			detail: products.items.length > 0 ? `${products.items.length} produk terdaftar` : 'Buat master data produk'
+		},
+		{
+			label: 'Jalankan AI enrichment',
+			href: '/products',
+			done: products.items.some((p) => p.status === 'Enriched'),
+			detail: products.items.some((p) => p.status === 'Enriched') ? 'HS code & SKU tersedia' : 'Enrich produk untuk HS & SKU'
+		},
+		{
+			label: 'Buat export analysis',
+			href: '/export-analysis/create',
+			done: exportAnalyses.items.length > 0,
+			detail: exportAnalyses.items.length > 0 ? `${exportAnalyses.items.length} analisis pasar` : 'Analisis kepatuhan & pasar tujuan'
+		},
+		{
+			label: 'Publikasikan katalog',
+			href: '/catalogs',
+			done: summaryCounts ? (summaryCounts.catalogs ?? 0) > 0 : false,
+			detail: summaryCounts && (summaryCounts.catalogs ?? 0) > 0 ? `${summaryCounts.catalogs} katalog dibuat` : 'Bangun katalog buyer-facing'
+		}
+	]);
+	let checklistDone = $derived(checklist.filter((s) => s.done).length);
+	let checklistPercent = $derived(Math.round((checklistDone / checklist.length) * 100));
+
 	function scoreColor(score: number) {
 		if (score >= 80) return 'bg-emerald-500';
 		if (score >= 50) return 'bg-amber-500';
@@ -235,6 +277,36 @@
 							<Badge variant={badgeVariant(analysis.status)}>{analysis.status}</Badge>
 							<b class="text-xl font-bold tracking-tight">{analysis.score}</b>
 						</div>
+					</a>
+				{/each}
+			</CardContent>
+		</Card>
+	</div>
+
+	<div class="grid gap-4 lg:grid-cols-3">
+		<Card class="lg:col-span-3">
+			<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
+				<div>
+					<CardTitle>Checklist kesiapan ekspor</CardTitle>
+					<CardDescription>{checklistDone} dari {checklist.length} langkah selesai — {checklistPercent}%</CardDescription>
+				</div>
+				<div class="flex items-center gap-2">
+					<div class="h-2 w-40 overflow-hidden rounded-full bg-muted">
+						<div class="h-full rounded-full bg-emerald-500" style={`width:${checklistPercent}%`}></div>
+					</div>
+					<Badge variant={checklistPercent === 100 ? 'default' : 'outline'}>{checklistPercent}%</Badge>
+				</div>
+			</CardHeader>
+			<CardContent class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+				{#each checklist as step}
+					<a href={step.href} class="rounded-xl border bg-muted/30 p-3.5 no-underline transition-colors hover:border-ring/40">
+						<div class="flex items-center justify-between gap-2">
+							<span class={`size-5 rounded-full grid place-items-center text-xs font-bold ${step.done ? 'bg-emerald-500 text-white' : 'border bg-background text-muted-foreground'}`}>
+								{step.done ? '✓' : ''}
+							</span>
+							<span class="text-xs font-bold text-muted-foreground">{step.detail}</span>
+						</div>
+						<strong class="mt-2 block text-sm">{step.label}</strong>
 					</a>
 				{/each}
 			</CardContent>
