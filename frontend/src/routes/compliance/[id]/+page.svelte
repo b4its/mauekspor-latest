@@ -7,6 +7,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let evidenceNote = $state('');
@@ -21,7 +22,7 @@
 	function uploadEvidence() {
 		error = '';
 		if (evidenceNote.trim().length < 8) {
-			error = 'Tambahkan catatan evidence minimal 8 karakter.';
+			error = t('Tambahkan catatan evidence minimal 8 karakter.');
 			return;
 		}
 		uploaded = true;
@@ -47,7 +48,7 @@
 	<title>{data.requirement.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.requirement.id} eyebrow="Compliance requirement detail">
+<AppShell title={data.requirement.id} eyebrow={t('Compliance requirement detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -58,7 +59,7 @@
 				<CardDescription class="mt-2">{data.project?.name ?? data.requirement.projectId} - {data.product?.name ?? data.requirement.productId}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">AI confidence</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('AI confidence')}</span>
 				<strong class="mt-1 block text-4xl font-bold tracking-tight">{data.requirement.confidence}%</strong>
 			</div>
 		</div>
@@ -66,62 +67,62 @@
 
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card class="md:col-span-2">
-			<CardHeader class="p-0"><CardTitle>Requirement Context</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Requirement Context')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Category <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.category}</strong>
+					{t('Kategori')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.category}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Severity <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.severity}</strong>
+					{t('Tingkat keparahan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.severity}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Owner <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.owner}</strong>
+					{t('Pemilik')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.owner}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Due <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.due}</strong>
+					{t('Jatuh tempo')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.due}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Source <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.source}</strong>
+					{t('Sumber')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.source}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Source date <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.sourceDate}</strong>
+					{t('Tanggal sumber')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.sourceDate}</strong>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader class="p-0"><CardTitle>Required Evidence</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Required Evidence')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3 p-0 pt-4">
 				<p class="text-muted-foreground">{data.requirement.requiredEvidence}</p>
 				<div class="rounded-lg border bg-muted/30 p-3.5">
-					<span class="block text-xs font-bold uppercase tracking-wide text-muted-foreground">Current state</span>
+					<span class="block text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Status saat ini')}</span>
 					<strong class="mt-1 block text-sm font-bold">{uploaded ? evidenceNote : data.requirement.currentEvidence}</strong>
 					{#if fileName}
-						<small class="mt-1 block text-sm text-muted-foreground">Attached file: {fileName}</small>
+						<small class="mt-1 block text-sm text-muted-foreground">{t('File terlampir:')} {fileName}</small>
 					{/if}
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader class="p-0"><CardTitle>Upload Evidence Demo</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Demo Unggah Bukti')}</CardTitle></CardHeader>
 			<CardContent class="p-0 pt-4">
 				<form class="grid gap-3.5" onsubmit={(event) => { event.preventDefault(); uploadEvidence(); }}>
 					<div class="grid gap-2">
-						<Label>Evidence note</Label>
-						<Textarea bind:value={evidenceNote} placeholder="Uploaded Japanese label artwork reviewed by importer..." rows={5} />
+						<Label>{t('Catatan bukti')}</Label>
+						<Textarea bind:value={evidenceNote} placeholder={t('Label artwork Jepang diunggah, ditinjau oleh importir...')} rows={5} />
 					</div>
 					<div class="grid gap-2">
-						<Label>File name</Label>
+						<Label>{t('Nama file')}</Label>
 						<Input bind:value={fileName} placeholder="jp-label-artwork-v2.pdf" />
 					</div>
 					{#if error}
 						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 					{/if}
 					<div class="flex flex-wrap gap-2.5">
-						<Button variant="outline" type="submit">Save evidence</Button>
+						<Button variant="outline" type="submit">{t('Simpan bukti')}</Button>
 						<Button disabled={!uploaded || verifying || verified} onclick={verifyEvidence}>
-							{verifying ? 'Verifying...' : verified ? 'Verified' : 'Mark verified'}
+							{verifying ? t('Memverifikasi...') : verified ? t('Terverifikasi') : t('Tandai terverifikasi')}
 						</Button>
 					</div>
 				</form>

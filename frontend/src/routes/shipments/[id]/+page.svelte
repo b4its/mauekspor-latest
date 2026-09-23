@@ -7,6 +7,7 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { updateShipmentMilestone } from '$lib/api/shipments';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let exceptionNote = $state('');
@@ -21,7 +22,7 @@
 	async function resolveException() {
 		error = '';
 		if (exceptionNote.trim().length < 8) {
-			error = 'Tambahkan catatan resolusi minimal 8 karakter.';
+			error = t('Tambahkan catatan resolusi minimal 8 karakter.');
 			return;
 		}
 		resolving = true;
@@ -29,7 +30,7 @@
 			await updateShipmentMilestone(data.shipment.id, 'Booking Requested');
 			resolved = true;
 		} catch {
-			error = 'Gagal memperbarui milestone.';
+			error = t('Gagal memperbarui milestone.');
 		} finally {
 			resolving = false;
 		}
@@ -41,7 +42,7 @@
 			await updateShipmentMilestone(data.shipment.id, 'In Transit');
 			advanced = true;
 		} catch {
-			error = 'Gagal memajukan milestone.';
+			error = t('Gagal memajukan milestone.');
 		}
 	}
 
@@ -57,7 +58,7 @@
 	<title>{data.shipment.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.shipment.id} eyebrow="Shipment tracking detail">
+<AppShell title={data.shipment.id} eyebrow={t('Shipment tracking detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -68,7 +69,7 @@
 				<CardDescription class="mt-2">{data.project?.name ?? data.shipment.projectId} - {data.shipment.forwarder}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Shipment progress</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Shipment progress')}</span>
 				<strong class="mt-1 block text-4xl font-bold tracking-tight">{displayProgress}%</strong>
 			</div>
 		</div>
@@ -78,35 +79,35 @@
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Shipment Facts</CardTitle>
-					<CardDescription>Operational view for forwarder coordination, customs milestones, and exception ownership.</CardDescription>
+					<CardTitle>{t('Shipment Facts')}</CardTitle>
+					<CardDescription>{t('Operational view for forwarder coordination, customs milestones, and exception ownership.')}</CardDescription>
 				</div>
-				<Button disabled={advanced} onclick={handleAdvance}>Advance milestone</Button>
+				<Button disabled={advanced} onclick={handleAdvance}>{t('Advance milestone')}</Button>
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Booking <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.bookingNo}</strong>
+					{t('Booking')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.bookingNo}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Mode <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.mode}</strong>
+					{t('Mode')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.mode}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Container <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.container}</strong>
+					{t('Container')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.container}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					ETA <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.eta}</strong>
+					{t('ETA')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.eta}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					Forwarder <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.forwarder}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Route <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.route}</strong>
+					{t('Route')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.route}</strong>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader class="p-0"><CardTitle>Milestone Timeline</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Milestone Timeline')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5 p-0 pt-4">
 				{#each data.shipment.milestones as milestone}
 					<div class="grid grid-cols-[auto_1fr] gap-3 rounded-lg border bg-muted/30 p-3.5">
@@ -125,9 +126,9 @@
 					<div class="grid grid-cols-[auto_1fr] gap-3 rounded-lg border bg-muted/30 p-3.5">
 						<span class="mt-1 size-3 rounded-full bg-green-600"></span>
 						<div>
-							<div class="flex items-center justify-between gap-2.5"><strong class="text-sm font-bold">Milestone Advanced</strong><Badge>Done</Badge></div>
-							<p class="my-2 text-sm leading-relaxed text-muted-foreground">Milestone diperbarui di backend.</p>
-							<small class="text-sm text-muted-foreground">Just now</small>
+							<div class="flex items-center justify-between gap-2.5"><strong class="text-sm font-bold">{t('Milestone Advanced')}</strong><Badge>{t('Selesai')}</Badge></div>
+							<p class="my-2 text-sm leading-relaxed text-muted-foreground">{t('Milestone diperbarui di backend.')}</p>
+							<small class="text-sm text-muted-foreground">{t('Baru saja')}</small>
 						</div>
 					</div>
 				{/if}
@@ -137,22 +138,22 @@
 		<Card>
 			<CardHeader class="p-0">
 				<Badge variant={data.shipment.exception && !resolved ? 'destructive' : 'default'} class="w-fit">
-					{data.shipment.exception && !resolved ? 'Open exception' : 'No open exception'}
+					{data.shipment.exception && !resolved ? t('Open exception') : t('No open exception')}
 				</Badge>
-				<CardTitle>Exception Handling</CardTitle>
+				<CardTitle>{t('Exception Handling')}</CardTitle>
 			</CardHeader>
 			<CardContent class="grid gap-3 p-0 pt-4">
 				<form class="grid gap-3" onsubmit={(event) => { event.preventDefault(); resolveException(); }}>
-					<p class="text-muted-foreground">{resolved ? 'Exception diselesaikan di backend.' : data.shipment.exception ?? 'No active logistics issue for this shipment.'}</p>
+					<p class="text-muted-foreground">{resolved ? t('Exception diselesaikan di backend.') : data.shipment.exception ?? t('No active logistics issue for this shipment.')}</p>
 					<div class="grid gap-2">
-						<Label>Resolution note</Label>
-						<Textarea bind:value={exceptionNote} rows={5} placeholder="Commercial team approved booking before rate expiry..." disabled={!data.shipment.exception || resolved} />
+						<Label>{t('Resolution note')}</Label>
+						<Textarea bind:value={exceptionNote} rows={5} placeholder={t('Commercial team approved booking before rate expiry...')} disabled={!data.shipment.exception || resolved} />
 					</div>
 					{#if error}
 						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 					{/if}
 					<Button type="submit" class="w-fit" disabled={!data.shipment.exception || resolving || resolved}>
-						{resolving ? 'Resolving...' : resolved ? 'Resolved' : 'Resolve exception'}
+						{resolving ? t('Resolving...') : resolved ? t('Selesai') : t('Resolve exception')}
 					</Button>
 				</form>
 			</CardContent>

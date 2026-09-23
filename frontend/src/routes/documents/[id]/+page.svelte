@@ -4,6 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 	import { generateTradeDocument, approveTradeDocument } from '$lib/api/documents';
 
 	let { data } = $props();
@@ -21,7 +22,7 @@
 			await generateTradeDocument({ projectId: data.document.projectId, type: data.document.type });
 			regenerated = true;
 		} catch {
-			error = 'Gagal regenerate dokumen.';
+			error = t('Gagal regenerate dokumen.');
 		}
 	}
 
@@ -32,7 +33,7 @@
 			await approveTradeDocument(data.document.id);
 			approved = true;
 		} catch {
-			error = 'Gagal menyetujui dokumen.';
+			error = t('Gagal menyetujui dokumen.');
 		} finally {
 			approving = false;
 		}
@@ -61,7 +62,7 @@
 				<CardDescription class="mt-2">{data.project?.name ?? data.document.projectId} - {data.document.version}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Validation score</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Skor validasi')}</span>
 				<strong class="mt-1 block text-4xl font-bold tracking-tight">{displayScore}%</strong>
 			</div>
 		</div>
@@ -71,13 +72,13 @@
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Document Fields</CardTitle>
-					<CardDescription>Fields are generated from project, product, quotation, and shipment data.</CardDescription>
+					<CardTitle>{t('Kolom Dokumen')}</CardTitle>
+					<CardDescription>{t('Kolom dihasilkan dari data proyek, produk, kutipan, dan pengiriman.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" onclick={regenerate}>Regenerate</Button>
+					<Button variant="outline" onclick={regenerate}>{t('Regenerasi')}</Button>
 					<Button disabled={approving || approved || displayScore < 90} onclick={approve}>
-						{approving ? 'Approving...' : approved ? 'Approved' : 'Approve document'}
+						{approving ? t('Menyetujui...') : approved ? t('Disetujui') : t('Setujui dokumen')}
 					</Button>
 				</div>
 			</CardHeader>
@@ -92,7 +93,7 @@
 		</Card>
 
 		<Card>
-			<CardHeader class="p-0"><CardTitle>Validation Checklist</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Daftar Periksa Validasi')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3 p-0 pt-4">
 				{#each data.document.checks as check}
 					<div class="grid gap-2.5 rounded-lg border bg-muted/40 p-3">
@@ -108,23 +109,22 @@
 
 		<Card class="bg-gradient-to-br from-primary/10 to-background">
 			<CardHeader class="p-0">
-				<Badge variant="secondary">Document guardrail</Badge>
-				<CardTitle>Cross-document consistency</CardTitle>
+				<Badge variant="secondary">{t('Pagar pembatas dokumen')}</Badge>
+				<CardTitle>{t('Konsistensi lintas dokumen')}</CardTitle>
 			</CardHeader>
 			<CardContent class="p-0 pt-4">
 				<p class="leading-relaxed text-muted-foreground">
-					Approval should only be enabled when invoice, packing list, HS code, Incoterm, buyer, and
-					origin fields are consistent across all trade documents.
+					{t('Persetujuan hanya boleh diaktifkan ketika invoice, packing list, kode HS, Incoterm, buyer, dan asal konsisten di semua dokumen dagang.')}
 				</p>
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
 				{#if regenerated}
 					<p class="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">
-						Dokumen diregenerasi di backend.
+						{t('Dokumen diregenerasi di backend.')}
 					</p>
 				{/if}
 				{#if approved}
 					<p class="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">
-						Dokumen disetujui di backend.
+						{t('Dokumen disetujui di backend.')}
 					</p>
 				{/if}
 			</CardContent>
