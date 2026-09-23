@@ -6,6 +6,10 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Lainnya': { id: 'Lainnya', en: 'More' },
+	'Buka/Tutup Sidebar': { id: 'Buka/Tutup Sidebar', en: 'Toggle Sidebar' },
+	'Sidebar': { id: 'Sidebar', en: 'Sidebar' },
+	'Menampilkan sidebar seluler.': { id: 'Menampilkan sidebar seluler.', en: 'Displays the mobile sidebar.' },
 	'Trade OS': { id: 'Trade OS', en: 'Trade OS' },
 	'MauEkspor Dashboard': { id: 'MauEkspor Dashboard', en: 'MauEkspor Dashboard' },
 	'AI copilot active': { id: 'AI copilot aktif', en: 'AI copilot active' },

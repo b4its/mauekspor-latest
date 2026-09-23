@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from "bits-ui";
+	import { t } from '$lib/i18n.svelte';
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { cn, type WithElementRef } from "$lib/utils.js";
 	import type { HTMLAttributes } from "svelte/elements";
@@ -25,7 +26,7 @@
 	{#if showCloseButton}
 		<DialogPrimitive.Close>
 			{#snippet child({ props })}
-				<Button variant="outline" {...props}>Close</Button>
+				<Button variant="outline" {...props}>{t('Tutup')}</Button>
 			{/snippet}
 		</DialogPrimitive.Close>
 	{/if}
