@@ -11,6 +11,7 @@ import { listTradeProjects } from '$lib/api/trade-projects';
 import { csvExportUrl } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Ready', 'Needs Review', 'Draft'];
 	let activeFilter = $state('All');
@@ -100,10 +101,10 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Model EXW, FOB, CIF, DAP, freight validity, currency exposure, destination charges, tax reserve, and margin before quotation acceptance.</CardDescription>
 		</CardHeader>
 <CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button href="/costing/create">Create scenario</Button>
+			<Button href="/costing/create">{t('Create scenario')}</Button>
 			<Button href={csvExportUrl('/costing/export.csv')} variant="outline">Export CSV</Button>
 			<Button variant="secondary" disabled={selected.length < 2 || comparing} onclick={runCompare}>
-				{comparing ? 'Membandingkan...' : `Compare (${selected.length})`}
+				{comparing ? t('Membandingkan...') : `Compare (${selected.length})`}
 			</Button>
 			<Badge variant="secondary">Avg margin {averageMargin}%</Badge>
 		</CardContent>
@@ -118,7 +119,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 			<CardHeader>
 				<div class="flex flex-wrap items-center justify-between gap-3">
 					<div>
-						<CardTitle>Perbandingan {compareResult.count} skenario</CardTitle>
+						<CardTitle>{t('Perbandingan')} {compareResult.count} {t('skenario')}</CardTitle>
 						<CardDescription>
 							{#if compareResult.recommendation}
 								Rekomendasi: <strong>{compareResult.recommendation.title}</strong> — {compareResult.recommendation.reason}
@@ -127,7 +128,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 							{/if}
 						</CardDescription>
 					</div>
-					<Button size="sm" variant="outline" onclick={() => (compareResult = null)}>Tutup</Button>
+					<Button size="sm" variant="outline" onclick={() => (compareResult = null)}>{t('Tutup')}</Button>
 				</div>
 			</CardHeader>
 			<CardContent class="overflow-x-auto p-0">

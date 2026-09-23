@@ -16,6 +16,7 @@
 	import ArrowRightLeftIcon from '@lucide/svelte/icons/arrow-right-left';
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
 	import { listNotifications } from '$lib/api/notifications';
+import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 	let { title = 'Overview', eyebrow = 'Export-import command center', children } = $props();
 	let commandOpen = $state(false);
@@ -168,14 +169,18 @@
 
 			<div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
 				<ThemeToggle />
+				<Button variant="outline" size="sm" title={i18n.locale === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'} onclick={toggleLocale}>
+					<span class="text-xs font-bold uppercase tracking-wide">{i18n.locale === 'id' ? 'EN' : 'ID'}</span>
+					<span class="hidden sm:inline">{i18n.locale === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
+				</Button>
 				<Button variant="outline" size="sm" onclick={() => (commandOpen = true)}>
 					<SearchIcon class="size-3.5" />
-					<span class="hidden sm:inline">Search</span>
+					<span class="hidden sm:inline">{t('Search')}</span>
 					<kbd class="ml-1 hidden rounded border border-border bg-secondary px-1 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-block">⌘K</kbd>
 				</Button>
 				<Button href="/notifications" variant="outline" size="sm" class="relative">
 					<BellIcon class="size-3.5" />
-					<span class="hidden sm:inline">Notifications</span>
+					<span class="hidden sm:inline">{t('Notifications')}</span>
 					{#if unreadCount > 0}
 						<span class="ml-0.5 rounded-full bg-red-600 px-1.5 text-[10px] font-semibold text-white">
 							{unreadCount}
@@ -189,17 +194,17 @@
 					onclick={() => (activityOpen = !activityOpen)}
 				>
 					<ActivityIcon class="size-3.5" />
-					<span class="hidden sm:inline">Activity</span>
+					<span class="hidden sm:inline">{t('Activity')}</span>
 					{#if activityCount}
 						<span class="ml-0.5 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
 							{activityCount}
 						</span>
 					{/if}
 				</Button>
-				<Button href="/trade-projects" variant="outline" size="sm" class="hidden md:inline-flex">View projects</Button>
+				<Button href="/trade-projects" variant="outline" size="sm" class="hidden md:inline-flex">{t('View projects')}</Button>
 				<Button href="/trade-projects/new" size="sm">
-					<span class="hidden sm:inline">New trade project</span>
-					<span class="sm:hidden">New project</span>
+					<span class="hidden sm:inline">{t('New trade project')}</span>
+					<span class="sm:hidden">{t('New project')}</span>
 				</Button>
 				{#if user}
 					<Button
@@ -211,10 +216,10 @@
 						class="text-muted-foreground"
 					>
 						<span class="hidden truncate sm:inline">{user.name}</span>
-						<span class="text-[11px] font-semibold uppercase tracking-wide">{loggingOut ? '...' : 'Logout'}</span>
+						<span class="text-[11px] font-semibold uppercase tracking-wide">{loggingOut ? '...' : t('Logout')}</span>
 					</Button>
 				{:else if userStatus === 'unauthenticated'}
-					<Button href="/login" variant="outline" size="sm">Login</Button>
+					<Button href="/login" variant="outline" size="sm">{t('Login')}</Button>
 				{/if}
 			</div>
 		</header>

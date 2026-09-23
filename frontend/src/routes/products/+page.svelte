@@ -8,6 +8,7 @@
 	import { listProducts, deleteProduct, batchEnrichProducts } from '$lib/api/products';
 	import { csvExportUrl } from '$lib/api/client';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 	import type { Product } from '$lib/data/trade';
 
 	let filter = $state('All');
@@ -100,19 +101,19 @@
 					revisions before compliance analysis or quotation.
 				</CardDescription>
 			</div>
-		<Button href="/products/new">Add product</Button>
+		<Button href="/products/new">{t('Add product')}</Button>
 		<div class="flex gap-2">
-			<Button variant="outline" href={csvExportUrl('/products/export.csv')}>CSV</Button>
-			<Button variant="outline" href={csvExportUrl('/products/export.xlsx')}>Excel (.xlsx)</Button>
+			<Button variant="outline" href={csvExportUrl('/products/export.csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" href={csvExportUrl('/products/export.xlsx')}>{t('Excel (.xlsx)')}</Button>
 		</div>
 	</div>
 	{#if pendingCount > 0}
 		<div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed p-4">
 			<div class="text-sm font-semibold text-muted-foreground">
-				{pendingCount} produk masih butuh AI enrichment (HS code + SKU).
+				{pendingCount} {t('produk masih butuh AI enrichment')}.
 			</div>
 			<Button size="sm" variant="secondary" disabled={batching === 'enrich'} onclick={runBatchEnrich}>
-				{batching === 'enrich' ? 'Enriching...' : `Enrich semua (${pendingCount})`}
+				{batching === 'enrich' ? t('Enriching...') : `Enrich semua (${pendingCount})`}
 			</Button>
 		</div>
 	{/if}

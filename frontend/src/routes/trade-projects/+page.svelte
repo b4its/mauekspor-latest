@@ -7,6 +7,7 @@
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	let search = $state('');
 	let projects = createRemoteList(listTradeProjects, seedProjects);
@@ -49,7 +50,7 @@
 					documents, and shipment milestones.
 				</CardDescription>
 			</div>
-			<Input bind:value={search} type="search" placeholder="Search buyer, product, country..." class="min-w-[min(380px,100%)]" />
+			<Input bind:value={search} type="search" placeholder={t('Search buyer, product, country...')} class="min-w-[min(380px,100%)]" />
 		</CardHeader>
 
 		<CardContent class="mt-6 grid gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
@@ -57,16 +58,16 @@
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/trade-projects/${project.id}`} class="grid h-full gap-4 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(project.risk))}>{project.risk} risk</Badge>
+							<Badge variant={toneVariant(statusTone(project.risk))}>{project.risk} {t('risk')}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{project.readiness}%</strong>
 						</div>
 						<h3 class="text-2xl font-bold tracking-tight">{project.name}</h3>
 						<p class="text-sm text-muted-foreground">{project.product}</p>
 						<div class="grid grid-cols-2 gap-2">
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Buyer<strong class="mt-1 block text-sm font-bold text-foreground">{project.buyer}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Destination<strong class="mt-1 block text-sm font-bold text-foreground">{project.country}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Stage<strong class="mt-1 block text-sm font-bold text-foreground">{project.stage}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Value<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(project.value)}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Buyer')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.buyer}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Destination')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.country}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Stage')}<strong class="mt-1 block text-sm font-bold text-foreground">{project.stage}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(project.value)}</strong></div>
 						</div>
 					</a>
 				</Card>

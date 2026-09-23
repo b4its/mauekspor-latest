@@ -14,6 +14,7 @@
 	import { listEducationalModulesV2 } from '$lib/api/educational';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	let profiles = createRemoteList(listBusinessProfiles, seedProfiles);
 	let projects = createRemoteList(listTradeProjects, seedProjects);
@@ -89,31 +90,31 @@
 	};
 	let checklist = $derived<ChecklistStep[]>([
 		{
-			label: 'Lengkapi profil bisnis',
+			label: t('Lengkapi profil bisnis'),
 			href: '/business-profile',
 			done: hasProfile && (profiles.items[0]?.status === 'Complete' || (profiles.items[0]?.readiness ?? 0) >= 80),
-			detail: hasProfile ? 'Profil bisnis tersedia' : 'Tambahkan profil & sertifikasi'
+			detail: hasProfile ? t('Profil bisnis tersedia') : t('Tambahkan profil & sertifikasi')
 		},
 		{
-			label: 'Tambahkan produk',
+			label: t('Tambahkan produk'),
 			href: '/products/new',
 			done: products.items.length > 0,
 			detail: products.items.length > 0 ? `${products.items.length} produk terdaftar` : 'Buat master data produk'
 		},
 		{
-			label: 'Jalankan AI enrichment',
+			label: t('Jalankan AI enrichment'),
 			href: '/products',
 			done: products.items.some((p) => p.status === 'Enriched'),
-			detail: products.items.some((p) => p.status === 'Enriched') ? 'HS code & SKU tersedia' : 'Enrich produk untuk HS & SKU'
+			detail: products.items.some((p) => p.status === 'Enriched') ? 'HS code & SKU tersedia' : t('Enrich produk untuk HS & SKU')
 		},
 		{
-			label: 'Buat export analysis',
+			label: t('Buat export analysis'),
 			href: '/export-analysis/create',
 			done: exportAnalyses.items.length > 0,
 			detail: exportAnalyses.items.length > 0 ? `${exportAnalyses.items.length} analisis pasar` : 'Analisis kepatuhan & pasar tujuan'
 		},
 		{
-			label: 'Publikasikan katalog',
+			label: t('Publikasikan katalog'),
 			href: '/catalogs',
 			done: summaryCounts ? (summaryCounts.catalogs ?? 0) > 0 : false,
 			detail: summaryCounts && (summaryCounts.catalogs ?? 0) > 0 ? `${summaryCounts.catalogs} katalog dibuat` : 'Bangun katalog buyer-facing'
@@ -287,8 +288,8 @@
 		<Card class="lg:col-span-3">
 			<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
 				<div>
-					<CardTitle>Checklist kesiapan ekspor</CardTitle>
-					<CardDescription>{checklistDone} dari {checklist.length} langkah selesai — {checklistPercent}%</CardDescription>
+					<CardTitle>{t('Checklist kesiapan ekspor')}</CardTitle>
+					<CardDescription>{checklistDone} dari {checklist.length} {t('langkah selesai')} — {checklistPercent}%</CardDescription>
 				</div>
 				<div class="flex items-center gap-2">
 					<div class="h-2 w-40 overflow-hidden rounded-full bg-muted">

@@ -7,6 +7,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import { navGroups, projects, userAccounts } from '$lib/data/trade';
+	import { t } from '$lib/i18n.svelte';
 
 	import InfoIcon from '@lucide/svelte/icons/info';
 	import RouteIcon from '@lucide/svelte/icons/route';
@@ -158,16 +159,16 @@
 			{@const GroupIcon = groupIconFor[group.label] ?? InfoIcon}
 			{#if group.label === 'Overview'}
 				<Sidebar.Group>
-					<Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
+					<Sidebar.GroupLabel>{t(group.label)}</Sidebar.GroupLabel>
 					<Sidebar.Menu>
 						{#each group.items as item (item.href)}
 							{@const NavIcon = iconFor[item.label] ?? InfoIcon}
 							<Sidebar.MenuItem>
-								<Sidebar.MenuButton isActive={isActive(item.href)} tooltipContent={item.label}>
+								<Sidebar.MenuButton isActive={isActive(item.href)} tooltipContent={t(item.label)}>
 									{#snippet child({ props }: { props: Record<string, unknown> })}
 										<a {...props} href={item.href} onclick={() => sidebar.setOpenMobile(false)}>
 											<NavIcon class="size-4 shrink-0" />
-											<span>{item.label}</span>
+											<span>{t(item.label)}</span>
 										</a>
 									{/snippet}
 								</Sidebar.MenuButton>
@@ -177,16 +178,16 @@
 				</Sidebar.Group>
 			{:else}
 				<Sidebar.Group>
-					<Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
+					<Sidebar.GroupLabel>{t(group.label)}</Sidebar.GroupLabel>
 					<Sidebar.Menu>
 						<Collapsible.Root open={groupIsActive(group.items)} class="group/collapsible">
 							{#snippet child({ props })}
 								<Sidebar.MenuItem {...props}>
 									<Collapsible.Trigger>
 										{#snippet child({ props })}
-											<Sidebar.MenuButton {...props} tooltipContent={group.label}>
+											<Sidebar.MenuButton {...props} tooltipContent={t(group.label)}>
 												<GroupIcon class="size-4 shrink-0" />
-												<span>{group.label}</span>
+												<span>{t(group.label)}</span>
 												<ChevronRightIcon
 													class="ms-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
 												/>
@@ -204,7 +205,7 @@
 															href={item.href}
 															onclick={() => sidebar.setOpenMobile(false)}
 														>
-															<span>{item.label}</span>
+															<span>{t(item.label)}</span>
 															{#if item.label === 'Compliance' && openRiskCount}
 																<Badge variant="destructive" class="ms-auto h-4 min-w-4 px-1 text-[10px]">
 																	{openRiskCount}
