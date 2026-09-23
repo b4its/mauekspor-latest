@@ -8,6 +8,7 @@
 	import { listBuyerRequests } from '$lib/api/buyer-requests';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'New', 'Matched', 'Quoted', 'Closed'];
 	let activeFilter = $state('All');
@@ -51,16 +52,16 @@
 	<title>Buyer Requests | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Buyer Requests" eyebrow="Inbound demand">
+<AppShell title="Buyer Requests" eyebrow={t('Inbound demand')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Inbound lead flow</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Act on buyer demand before it cools.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Review request subject, destination, quantity, deadline, and requirements, then match products or send a quotation.</CardDescription>
+			<Badge variant="secondary">{t('Inbound lead flow')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Act on buyer demand before it cools.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Review request subject, destination, quantity, deadline, and requirements, then match products or send a quotation.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button href="/buyer-requests/create">Log buyer request</Button>
-			<Badge variant="secondary">{newCount} new</Badge>
+			<Button href="/buyer-requests/create">{t('Log buyer request')}</Button>
+			<Badge variant="secondary">{newCount} {t('new')}</Badge>
 		</CardContent>
 	</Card>
 
@@ -76,7 +77,7 @@
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search subject, destination, product..." class="max-w-xs" />
+		<Input bind:value={query} type="search" placeholder={t('Search subject, destination, product...')} class="max-w-xs" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -88,12 +89,12 @@
 						<small class="text-xs font-semibold text-muted-foreground">{request.deadline}</small>
 					</div>
 					<h3 class="mt-4 text-2xl font-bold tracking-tight">{request.subject}</h3>
-					<p class="mt-2 text-sm text-muted-foreground">{resolveBuyer(request.buyerId)} wants {request.quantity} for {request.destination}.</p>
+					<p class="mt-2 text-sm text-muted-foreground">{resolveBuyer(request.buyerId)} {t('wants')} {request.quantity} {t('for')} {request.destination}.</p>
 					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Product <strong class="mt-1 block text-sm font-bold text-foreground">{resolveProduct(request.productId)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Quantity <strong class="mt-1 block text-sm font-bold text-foreground">{request.quantity}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Destination <strong class="mt-1 block text-sm font-bold text-foreground">{request.destination}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Deadline <strong class="mt-1 block text-sm font-bold text-foreground">{request.deadline}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Product')} <strong class="mt-1 block text-sm font-bold text-foreground">{resolveProduct(request.productId)}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Quantity')} <strong class="mt-1 block text-sm font-bold text-foreground">{request.quantity}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Destination')} <strong class="mt-1 block text-sm font-bold text-foreground">{request.destination}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{request.deadline}</strong></div>
 					</div>
 					<div class="mt-4 flex flex-wrap gap-2">
 						{#each request.requirements as requirement}
@@ -103,7 +104,7 @@
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No buyer request matched your filter.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No buyer request matched your filter.')}</div>
 		{/each}
 	</div>
 </AppShell>

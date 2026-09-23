@@ -8,6 +8,7 @@
 	import { listForwarders } from '$lib/api/forwarders';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const modeFilters = ['All', 'Ocean', 'Air', 'Multimodal'];
 	let activeFilter = $state('All');
@@ -41,12 +42,12 @@
 	<title>Forwarders | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Forwarders" eyebrow="Freight partner network">
+<AppShell title="Forwarders" eyebrow={t('Freight partner network')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Logistics network</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Verified freight partners for your export lanes.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Compare on-time rates, quote speed, and covered lanes, then request a quote for active shipments.</CardDescription>
+			<Badge variant="secondary">{t('Logistics network')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Verified freight partners for your export lanes.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Compare on-time rates, quote speed, and covered lanes, then request a quote for active shipments.')}</CardDescription>
 		</CardHeader>
 	</Card>
 
@@ -62,7 +63,7 @@
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search forwarder, lane, coverage..." class="max-w-xs" />
+		<Input bind:value={query} type="search" placeholder={t('Search forwarder, lane, coverage...')} class="max-w-xs" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -76,9 +77,9 @@
 					<h3 class="text-2xl font-bold tracking-tight">{forwarder.name}</h3>
 					<p class="text-sm text-muted-foreground">{forwarder.coverage}</p>
 					<div class="grid gap-2 sm:grid-cols-3">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">On-time<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.onTimeRate}%</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Quote speed<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.quoteSpeed}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Lanes<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.lanes.length}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('On-time')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.onTimeRate}%</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Quote speed')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.quoteSpeed}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lanes')}<strong class="mt-1 block text-sm font-bold text-foreground">{forwarder.lanes.length}</strong></div>
 					</div>
 					<div class="flex flex-wrap gap-2">
 						{#each forwarder.lanes as lane}<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{lane}</span>{/each}
@@ -86,7 +87,7 @@
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No forwarder matched your filter.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No forwarder matched your filter.')}</div>
 		{/each}
 	</div>
 </AppShell>

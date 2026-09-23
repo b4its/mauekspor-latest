@@ -112,7 +112,6 @@ const dictionary: Record<string, Entry> = {
 	'Search buyer, product, country...': { id: 'Cari pembeli, produk, negara...', en: 'Search buyer, product, country...' },
 	'risk': { id: 'risiko', en: 'risk' },
 	'Buyer': { id: 'Pembeli', en: 'Buyer' },
-	'Destination': { id: 'Negara tujuan', en: 'Destination' },
 	'Stage': { id: 'Tahap', en: 'Stage' },
 
 	// --- Umum (filter & tombol lintas halaman) ---
@@ -561,7 +560,44 @@ const dictionary: Record<string, Entry> = {
 	'Images': { id: 'Gambar', en: 'Images' },
 	'No catalog matched your search.': { id: 'Tidak ada katalog yang cocok.', en: 'No catalog matched your search.' },
 	'Gagal menghapus katalog.': { id: 'Gagal menghapus katalog.', en: 'Failed to delete catalog.' },
-	'Hapus katalog "': { id: 'Hapus katalog "', en: 'Delete catalog "' }
+	'Hapus katalog "': { id: 'Hapus katalog "', en: 'Delete catalog "' },
+
+	// --- Forwarders ---
+	'Freight partner network': { id: 'Jaringan mitra freight', en: 'Freight partner network' },
+	'Logistics network': { id: 'Jaringan logistik', en: 'Logistics network' },
+	'Verified freight partners for your export lanes.': {
+		id: 'Mitra freight terverifikasi untuk jalur ekspor Anda.',
+		en: 'Verified freight partners for your export lanes.'
+	},
+	'Compare on-time rates, quote speed, and covered lanes, then request a quote for active shipments.': {
+		id: 'Bandingkan tingkat on-time, kecepatan kuotasi, dan jalur yang dilayani, lalu minta kuotasi untuk pengiriman aktif.',
+		en: 'Compare on-time rates, quote speed, and covered lanes, then request a quote for active shipments.'
+	},
+	'Search forwarder, lane, coverage...': { id: 'Cari forwarder, jalur, cakupan...', en: 'Search forwarder, lane, coverage...' },
+	'On-time': { id: 'Tepat waktu', en: 'On-time' },
+	'Quote speed': { id: 'Kecepatan kuotasi', en: 'Quote speed' },
+	'Lanes': { id: 'Jalur', en: 'Lanes' },
+	'No forwarder matched your filter.': { id: 'Tidak ada forwarder yang cocok.', en: 'No forwarder matched your filter.' },
+
+	// --- Buyer Requests ---
+	'Inbound demand': { id: 'Permintaan masuk', en: 'Inbound demand' },
+	'Inbound lead flow': { id: 'Aliran lead masuk', en: 'Inbound lead flow' },
+	'Act on buyer demand before it cools.': {
+		id: 'Tanggapi permintaan pembeli sebelum mendingin.',
+		en: 'Act on buyer demand before it cools.'
+	},
+	'Review request subject, destination, quantity, deadline, and requirements, then match products or send a quotation.': {
+		id: 'Tinjau subjek permintaan, tujuan, jumlah, tenggat, dan persyaratan, lalu cocokkan produk atau kirim quotation.',
+		en: 'Review request subject, destination, quantity, deadline, and requirements, then match products or send a quotation.'
+	},
+	'Log buyer request': { id: 'Catat permintaan pembeli', en: 'Log buyer request' },
+	'new': { id: 'baru', en: 'new' },
+	'Search subject, destination, product...': { id: 'Cari subjek, tujuan, produk...', en: 'Search subject, destination, product...' },
+	'wants': { id: 'ingin', en: 'wants' },
+	'for': { id: 'untuk', en: 'for' },
+	'Product': { id: 'Produk', en: 'Product' },
+	'Destination': { id: 'Negara tujuan', en: 'Destination' },
+	'No buyer request matched your filter.': { id: 'Tidak ada permintaan pembeli yang cocok.', en: 'No buyer request matched your filter.' }
 };
 
 let initial: Locale = 'id';
