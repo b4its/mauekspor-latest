@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import threading
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +33,20 @@ _TABLES = [
 
 _STORE: dict[str, list[dict[str, Any]]] = {}
 _LOADED = False
+
+# Semua handler FastAPI di app ini adalah `def` sinkron → dijalankan di threadpool
+# Starlette. Tanpa lock, `gen_id` (scan-then-return) dan `insert` (get-then-append)
+# balapan antar thread → id duplikat / lost update. Lock RLock melindungi SEMUA
+# mutasi store in-memory. (Operasi persisten tetap memakai koneksi sendiri.)
+_LOCK = threading.RLock()
+
+
+@contextmanager
+def store_lock():
+    """Konteks eksplisit untuk kritikal-seksi read-modify-write multi-langkah
+    (mis. invoice numbering) agar tidak balapan antar thread."""
+    with _LOCK:
+        yield
 
 
 def _persistence_enabled() -> bool:
@@ -77,7 +93,9 @@ def _connect_sqlite() -> sqlite3.Connection:
     path = _sqlite_path()
     if path.parent and str(path.parent) not in {"", "."}:
         path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path)
+    # check_same_thread=False: satu koneksi dipakai lintas threadpool; akses
+    # diserialisasi oleh _LOCK sehingga aman. timeout menunggu write lock.
+    conn = sqlite3.connect(path, check_same_thread=False, timeout=30.0)
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS records (
@@ -88,6 +106,13 @@ def _connect_sqlite() -> sqlite3.Connection:
         )
         """
     )
+    # WAL: pembaca tidak memblokir penulis dan sebaliknya (kurangi 'database is locked').
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=30000")
+    except sqlite3.Error:
+        pass
+    conn.commit()
     return conn
 
 
@@ -132,6 +157,27 @@ def _connect():
     return _connect_sqlite()
 
 
+@contextmanager
+def _connection():
+    """Koneksi yang DIJAMIN ditutup (sqlite3/psycopg2 context manager hanya
+    commit/rollback, tidak menutup → koneksi bocor sampai GC)."""
+    conn = _connect()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Persistence operations (unified over SQLite / PostgreSQL)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -140,7 +186,7 @@ def _load_from_disk() -> None:
     if _LOADED or not _persistence_enabled():
         _LOADED = True
         return
-    with _connect() as conn:
+    with _connection() as conn:
         if is_postgres():
             import psycopg2.extras
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -167,7 +213,7 @@ def _persist_record(table: str, record: dict[str, Any]) -> None:
         return
     payload = {k: v for k, v in record.items() if not k.startswith("__")}
     payload_json = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
-    with _connect() as conn:
+    with _connection() as conn:
         if is_postgres():
             with conn.cursor() as cur:
                 cur.execute(
@@ -192,7 +238,7 @@ def _persist_record(table: str, record: dict[str, Any]) -> None:
 def _delete_record(table: str, record_id: str) -> None:
     if not _persistence_enabled():
         return
-    with _connect() as conn:
+    with _connection() as conn:
         if is_postgres():
             with conn.cursor() as cur:
                 cur.execute("DELETE FROM records WHERE table_name = %s AND id = %s", (table, record_id))
@@ -203,7 +249,7 @@ def _delete_record(table: str, record_id: str) -> None:
 def _clear_disk() -> None:
     if not _persistence_enabled():
         return
-    with _connect() as conn:
+    with _connection() as conn:
         if is_postgres():
             with conn.cursor() as cur:
                 cur.execute("DELETE FROM records")
@@ -227,10 +273,11 @@ def init_store():
 
 def reset_store():
     global _LOADED
-    _STORE.clear()
-    for name in _TABLES:
-        _STORE[name] = []
-    _LOADED = True
+    with _LOCK:
+        _STORE.clear()
+        for name in _TABLES:
+            _STORE[name] = []
+        _LOADED = True
     _clear_disk()
 
 
@@ -243,8 +290,14 @@ def all(table: str) -> list[dict[str, Any]]:
 
 
 def get(table: str, record_id: str) -> dict[str, Any] | None:
+    with _LOCK:
+        return _get_locked(table, record_id)
+
+
+def _get_locked(table: str, record_id: str) -> dict[str, Any] | None:
+    rid = str(record_id)
     for record in all(table):
-        if record.get("id") == record_id:
+        if str(record.get("id")) == rid:
             return record
     return None
 
@@ -265,21 +318,22 @@ def get_by(table: str, **filters: Any) -> dict[str, Any] | None:
 
 
 def insert(table: str, record: dict[str, Any]) -> dict[str, Any]:
-    if "id" not in record:
-        record["id"] = gen_id(table)
-    _attach(table, record)
-    # Idempotent insert: if a record with this id already exists in memory,
-    # update it in place instead of appending a duplicate. (The DB primary key
-    # would reject the duplicate on persist, but the in-memory copy would keep
-    # serving duplicates until restart — e.g. seed re-run on a loaded store.)
-    existing = get(table, str(record["id"]))
-    if existing is not None:
-        existing.update(record)
-        _persist_record(table, existing)
-        return existing
-    all(table).append(record)
-    _persist_record(table, record)
-    return record
+    with _LOCK:
+        if "id" not in record:
+            record["id"] = _gen_id_locked(table)
+        _attach(table, record)
+        # Idempotent insert: if a record with this id already exists in memory,
+        # update it in place instead of appending a duplicate. (The DB primary key
+        # would reject the duplicate on persist, but the in-memory copy would keep
+        # serving duplicates until restart — e.g. seed re-run on a loaded store.)
+        existing = _get_locked(table, str(record["id"]))
+        if existing is not None:
+            existing.update(record)
+            _persist_record(table, existing)
+            return existing
+        all(table).append(record)
+        _persist_record(table, record)
+        return record
 
 
 def save(record: dict[str, Any]) -> dict[str, Any]:
@@ -290,37 +344,42 @@ def save(record: dict[str, Any]) -> dict[str, Any]:
 
 
 def update(table: str, record_id: str, patch: dict[str, Any]) -> dict[str, Any] | None:
-    record = get(table, record_id)
-    if not record:
-        return None
-    record.update({k: v for k, v in patch.items() if v is not None})
-    _persist_record(table, record)
-    return record
+    with _LOCK:
+        record = _get_locked(table, record_id)
+        if not record:
+            return None
+        record.update({k: v for k, v in patch.items() if v is not None})
+        _persist_record(table, record)
+        return record
 
 
 def replace(table: str, record_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
-    for i, record in enumerate(all(table)):
-        if record.get("id") == record_id:
-            data["id"] = record_id
-            all(table)[i] = data
-            _persist_record(table, data)
-            return data
-    return None
+    with _LOCK:
+        for i, record in enumerate(all(table)):
+            if record.get("id") == record_id:
+                data["id"] = record_id
+                all(table)[i] = data
+                _persist_record(table, data)
+                return data
+        return None
 
 
 def delete(table: str, record_id: str) -> bool:
-    before = len(all(table))
-    all(table)[:] = [r for r in all(table) if r.get("id") != record_id]
-    deleted = len(all(table)) < before
-    if deleted:
-        _delete_record(table, record_id)
-    return deleted
+    with _LOCK:
+        rid = str(record_id)
+        before = len(all(table))
+        all(table)[:] = [r for r in all(table) if str(r.get("id")) != rid]
+        deleted = len(all(table)) < before
+        if deleted:
+            # Gunakan str() agar konsisten dengan _persist_record (id int pada
+            # record admin-made sebelumnya tidak terhapus dari DB → muncul lagi).
+            _delete_record(table, rid)
+        return deleted
 
 
-def gen_id(table: str, prefix: str | None = None) -> str:
+def _gen_id_locked(table: str, prefix: str | None = None) -> str:
     if prefix is None:
         prefix = table.rstrip("s").upper()
-    # Cari nomor urut tertinggi dari record yang ada (hindari duplikasi setelah delete)
     max_seq = 0
     for r in all(table):
         rid = str(r.get("id", ""))
@@ -331,6 +390,11 @@ def gen_id(table: str, prefix: str | None = None) -> str:
             except ValueError:
                 pass
     return f"{prefix}-{max_seq + 1:03d}"
+
+
+def gen_id(table: str, prefix: str | None = None) -> str:
+    with _LOCK:
+        return _gen_id_locked(table, prefix)
 
 
 def loaded_records(table: str) -> int:
