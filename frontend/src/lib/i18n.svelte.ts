@@ -114,7 +114,6 @@ const dictionary: Record<string, Entry> = {
 	'Buyer': { id: 'Pembeli', en: 'Buyer' },
 	'Destination': { id: 'Negara tujuan', en: 'Destination' },
 	'Stage': { id: 'Tahap', en: 'Stage' },
-	'Value': { id: 'Nilai', en: 'Value' },
 
 	// --- Umum (filter & tombol lintas halaman) ---
 	'All': { id: 'Semua', en: 'All' },
@@ -327,7 +326,51 @@ const dictionary: Record<string, Entry> = {
 	'Lead time': { id: 'Waktu produksi', en: 'Lead time' },
 	'Next audit': { id: 'Audit berikutnya', en: 'Next audit' },
 	'No supplier matched your search.': { id: 'Tidak ada pemasok yang cocok.', en: 'No supplier matched your search.' },
-	'Gagal meminta bukti kepatuhan.': { id: 'Gagal meminta bukti kepatuhan.', en: 'Failed to request compliance evidence.' }
+	'Gagal meminta bukti kepatuhan.': { id: 'Gagal meminta bukti kepatuhan.', en: 'Failed to request compliance evidence.' },
+
+	// --- Orders ---
+	'Accepted quotation to execution': { id: 'Dari quotation diterima hingga eksekusi', en: 'Accepted quotation to execution' },
+	'Sales order control': { id: 'Kontrol sales order', en: 'Sales order control' },
+	'Convert accepted quotations into executable export orders.': {
+		id: 'Ubah quotation yang diterima menjadi pesanan ekspor yang dapat dieksekusi.',
+		en: 'Convert accepted quotations into executable export orders.'
+	},
+	'Track payment terms, delivery windows, order lines, document readiness, and shipment handoff from one operational view.': {
+		id: 'Pantau syarat pembayaran, jendela pengiriman, baris pesanan, kesiapan dokumen, dan serah terima pengiriman dari satu tampilan operasional.',
+		en: 'Track payment terms, delivery windows, order lines, document readiness, and shipment handoff from one operational view.'
+	},
+	'Create order': { id: 'Buat pesanan', en: 'Create order' },
+	'Order draft created': { id: 'Draf pesanan dibuat', en: 'Order draft created' },
+	'Order draft ready.': { id: 'Draf pesanan siap.', en: 'Order draft ready.' },
+	'Order tersimpan di backend.': { id: 'Order tersimpan di backend.', en: 'Order saved in backend.' },
+	'Search order, buyer, supplier...': { id: 'Cari pesanan, pembeli, pemasok...', en: 'Search order, buyer, supplier...' },
+	'Total value': { id: 'Total nilai', en: 'Total value' },
+	'Readiness': { id: 'Kesiapan', en: 'Readiness' },
+	'Value': { id: 'Nilai', en: 'Value' },
+	'Incoterm': { id: 'Incoterm', en: 'Incoterm' },
+	'Delivery': { id: 'Pengiriman', en: 'Delivery' },
+	'No order matched your search.': { id: 'Tidak ada pesanan yang cocok.', en: 'No order matched your search.' },
+	'Gagal membuat order.': { id: 'Gagal membuat order.', en: 'Failed to create order.' },
+
+	// --- Quotations ---
+	'Commercial offer management': { id: 'Manajemen penawaran komersial', en: 'Commercial offer management' },
+	'Incoterm clarity': { id: 'Kejelasan Incoterm', en: 'Incoterm clarity' },
+	'Create traceable export quotations with cost and validity control.': {
+		id: 'Buat quotation ekspor yang dapat dilacak dengan kendali biaya dan masa berlaku.',
+		en: 'Create traceable export quotations with cost and validity control.'
+	},
+	'Separate EXW, FOB, CIF, landed-cost assumptions, freight validity, currency, named place, margin, and revision history.': {
+		id: 'Pisahkan asumsi EXW, FOB, CIF, landed cost, masa berlaku freight, mata uang, tempat tujuan, margin, dan riwayat revisi.',
+		en: 'Separate EXW, FOB, CIF, landed-cost assumptions, freight validity, currency, named place, margin, and revision history.'
+	},
+	'Create quotation': { id: 'Buat quotation', en: 'Create quotation' },
+	'Quotation draft created': { id: 'Draf quotation dibuat', en: 'Quotation draft created' },
+	'Quotation draft ready.': { id: 'Draf quotation siap.', en: 'Quotation draft ready.' },
+	'Quotation tersimpan di backend.': { id: 'Quotation tersimpan di backend.', en: 'Quotation saved in backend.' },
+	'Search quotation, buyer, incoterm...': { id: 'Cari quotation, pembeli, incoterm...', en: 'Search quotation, buyer, incoterm...' },
+	'Valid until': { id: 'Berlaku hingga', en: 'Valid until' },
+	'No quotation matched your search.': { id: 'Tidak ada quotation yang cocok.', en: 'No quotation matched your search.' },
+	'Gagal membuat quotation.': { id: 'Gagal membuat quotation.', en: 'Failed to create quotation.' }
 };
 
 let initial: Locale = 'id';

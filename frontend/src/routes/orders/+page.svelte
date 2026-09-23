@@ -9,6 +9,7 @@
 	import { listOrders, createOrder } from '$lib/api/orders';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Draft', 'Confirmed', 'Document Prep', 'In Shipment'];
 	let activeFilter = $state('All');
@@ -55,7 +56,7 @@
 			});
 			created = true;
 		} catch {
-			error = 'Gagal membuat order.';
+			error = t('Gagal membuat order.');
 		} finally {
 			creating = false;
 		}
@@ -66,16 +67,16 @@
 	<title>Orders | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Orders" eyebrow="Accepted quotation to execution">
+<AppShell title="Orders" eyebrow={t('Accepted quotation to execution')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge>Sales order control</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Convert accepted quotations into executable export orders.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Track payment terms, delivery windows, order lines, document readiness, and shipment handoff from one operational view.</CardDescription>
+			<Badge>{t('Sales order control')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Convert accepted quotations into executable export orders.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Track payment terms, delivery windows, order lines, document readiness, and shipment handoff from one operational view.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? 'Order draft created' : creating ? 'Creating...' : 'Create order'}</Button>
-			<Badge variant="secondary">Pipeline {currency.format(totalValue)}</Badge>
+			<Button onclick={handleCreate} disabled={creating}>{created ? t('Order draft created') : creating ? t('Creating...') : t('Create order')}</Button>
+			<Badge variant="secondary">{t('Pipeline')} {currency.format(totalValue)}</Badge>
 		</CardContent>
 	</Card>
 
@@ -85,8 +86,8 @@
 
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Order draft ready.</strong>
-			<span class="block text-sm text-muted-foreground">Order tersimpan di backend.</span>
+			<strong class="block">{t('Order draft ready.')}</strong>
+			<span class="block text-sm text-muted-foreground">{t('Order tersimpan di backend.')}</span>
 		</div>
 	{/if}
 
@@ -96,13 +97,13 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search order, buyer, supplier..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search order, buyer, supplier...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Orders</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{orders.items.length}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total value</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(totalValue)}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Readiness</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{avgReadiness}%</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Orders')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{orders.items.length}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Total value')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(totalValue)}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Readiness')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{avgReadiness}%</strong></CardContent></Card>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -117,15 +118,15 @@
 					<p class="text-sm text-muted-foreground">{order.supplier} to {order.buyer}</p>
 					<Progress value={order.readiness} />
 					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Value<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(order.value)}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Incoterm<strong class="mt-1 block text-sm font-bold text-foreground">{order.incoterm}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Payment<strong class="mt-1 block text-sm font-bold text-foreground">{order.paymentTerms}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Delivery<strong class="mt-1 block text-sm font-bold text-foreground">{order.deliveryWindow}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(order.value)}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{order.incoterm}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Payment')}<strong class="mt-1 block text-sm font-bold text-foreground">{order.paymentTerms}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Delivery')}<strong class="mt-1 block text-sm font-bold text-foreground">{order.deliveryWindow}</strong></div>
 					</div>
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No order matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No order matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>
