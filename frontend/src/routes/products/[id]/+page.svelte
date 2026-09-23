@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -34,7 +35,7 @@
 		deleting = true;
 		try {
 			await deleteProduct(data.product.id);
-			window.location.href = '/products';
+			await goto('/products');
 		} catch {
 			deleting = false;
 		}

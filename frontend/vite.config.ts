@@ -3,6 +3,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
+// Minimal declaration to use `process.env` in this config without adding @types/node dep.
+declare const process: { env: Record<string, string | undefined> };
+
 // PORT LAYOUT (anti-tabrakan):
 //   Dev mode   : frontend=5188, backend via BACKEND_ORIGIN env
 //   Prod Docker: frontend=3015, backend=8015 (via nginx proxy)

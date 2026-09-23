@@ -8,7 +8,8 @@
 	import type { UserRole } from '$lib/api/auth';
 	import { cn } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { t } from '$lib/i18n.svelte';
+	import { goto } from '$app/navigation';
+import { t } from '$lib/i18n.svelte';
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 
@@ -49,7 +50,7 @@
 		loading = true;
 		try {
 			await register({ name, organization, role, email, password });
-			window.location.href = '/dashboard';
+			await goto('/dashboard');
 		} catch (err) {
 			error = err instanceof Error ? err.message : t('Gagal membuat akun. Silakan coba lagi.');
 		} finally {

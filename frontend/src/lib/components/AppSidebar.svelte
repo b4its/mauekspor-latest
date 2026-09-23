@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
@@ -326,7 +327,7 @@
 							</DropdownMenu.Item>
 						</DropdownMenu.Group>
 						<DropdownMenu.Separator />
-						<DropdownMenu.Item onclick={async () => { await logout(); window.location.href = '/login'; }}>
+						<DropdownMenu.Item onclick={async () => { await logout(); await goto('/login'); }}>
 							{#snippet child({ props })}
 								<a {...props}>
 									<LogOutIcon class="text-muted-foreground" />

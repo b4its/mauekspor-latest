@@ -118,9 +118,9 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					<p class="mt-1 text-sm text-muted-foreground">{analysis.destination} - HS {analysis.hsCode}</p>
 					<div class="mt-4 grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Keyakinan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.confidence}%</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Permintaan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.marketDemand}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bea masuk')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.duties.split(' ')[0]}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pembatasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.restrictions.length}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Permintaan')}<strong class="mt-1 block text-sm font-bold text-foreground">{analysis.marketDemand ?? '—'}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bea masuk')}<strong class="mt-1 block text-sm font-bold text-foreground">{(analysis.duties ?? '—').split(' ')[0]}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pembatasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{(analysis.restrictions ?? []).length}</strong></div>
 					</div>
 					<div class="mt-4 flex flex-wrap gap-3">
 						<Button variant="ghost" size="sm" href={`/export-analysis/${analysis.id}`}>{t('Buka analisis')}</Button>

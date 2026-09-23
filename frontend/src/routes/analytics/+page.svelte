@@ -60,7 +60,9 @@
 		suppliers.load();
 		getAnalyticsOverview()
 			.then((res) => {
-				metrics = seedMetrics.map((seed) => res.data.find((m) => m.label === seed.label) ?? seed);
+				// Backend adalah sumber metrik kanonik; seed hanya fallback saat kosong.
+				// Sebelumnya merge by label selalu gagal (label seed beda) → demo values.
+				metrics = res.data.length ? res.data : seedMetrics;
 			})
 			.catch(() => { error = t('Gagal memuat metrik analytics.'); });
 		getAnalyticsLanes()

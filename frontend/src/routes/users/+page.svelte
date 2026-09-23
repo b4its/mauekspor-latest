@@ -11,7 +11,7 @@
 	import { t } from '$lib/i18n.svelte';
 	import type { UserAccount } from '$lib/data/trade';
 
-	const roleFilters = ['All', 'Admin', 'UMKM', 'Buyer', 'Forwarder'];
+	const roleFilters = ['All', 'Admin', 'Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance'];
 	const PAGE_SIZE = 5;
 	let roleFilter = $state('All');
 	let query = $state('');
@@ -107,7 +107,7 @@
 						page = 1;
 					}}
 				>
-					{t(filter === 'UMKM' ? 'Kelompok Tani/BUMDes' : filter)}
+					{t(filter === 'Exporter' ? 'Eksportir' : filter)}
 				</Button>
 			{/each}
 		</div>

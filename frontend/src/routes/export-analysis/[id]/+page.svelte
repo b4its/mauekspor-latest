@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { t, i18n } from '$lib/i18n.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -134,7 +135,7 @@
 		deleting = true;
 		try {
 			await deleteExportAnalysis(data.analysis.id);
-			window.location.href = '/export-analysis';
+			await goto('/export-analysis');
 		} catch {
 			error = t('Gagal menghapus analisis.');
 		} finally {

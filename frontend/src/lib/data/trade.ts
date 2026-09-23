@@ -521,7 +521,7 @@ export type UserAccount = {
 	id: string;
 	email: string;
 	fullName: string;
-	role: 'Admin' | 'UMKM' | 'Buyer' | 'Forwarder';
+	role: 'Admin' | 'Exporter' | 'Buyer' | 'Forwarder' | 'CustomsBroker' | 'Finance';
 	status: 'Active' | 'Invited' | 'Suspended';
 	createdAt: string;
 	lastLogin: string;
@@ -1887,7 +1887,7 @@ export const businessProfiles: BusinessProfile[] = [
 
 export const userAccounts: UserAccount[] = [
 	{ id: 'U-001', email: 'admin@mauekspor.example', fullName: 'MauEkspor Admin', role: 'Admin', status: 'Active', createdAt: '2026-07-01', lastLogin: '2026-08-06 10:58' },
-	{ id: 'U-002', email: 'rizal@kopigayo.example', fullName: 'Rizal Fahmi', role: 'UMKM', status: 'Active', createdAt: '2026-07-12', lastLogin: '2026-08-06 09:20' },
+	{ id: 'U-002', email: 'rizal@kopigayo.example', fullName: 'Rizal Fahmi', role: 'Exporter', status: 'Active', createdAt: '2026-07-12', lastLogin: '2026-08-06 09:20' },
 	{ id: 'U-003', email: 'aya@hikari.example', fullName: 'Aya Nakamura', role: 'Buyer', status: 'Invited', createdAt: '2026-08-03', lastLogin: 'Invitation pending' },
 	{ id: 'U-004', email: 'ops@ngl.example', fullName: 'NGL Operations', role: 'Forwarder', status: 'Active', createdAt: '2026-07-20', lastLogin: '2026-08-05 16:12' }
 ];
