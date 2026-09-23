@@ -273,7 +273,7 @@
 					<CardDescription class="mt-1.5 max-w-2xl leading-relaxed">{displayDescription || t('Belum ada deskripsi katalog.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" href={`/catalogs/${data.catalog.id}/edit`}>{t('Edit katalog')}</Button>
+					<Button variant="outline" href={`/catalogs/${data.catalog.id}/edit`}>{t('Edit catalog')}</Button>
 					<Button variant="outline" onclick={handleGenerate} disabled={loadingAi}>
 						{loadingAi ? t('Memproses...') : aiDesc ? t('Buat ulang AI copy') : t('Buat AI copy')}
 					</Button>

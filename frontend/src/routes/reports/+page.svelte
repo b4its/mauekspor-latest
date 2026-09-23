@@ -70,7 +70,7 @@
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={handleGenerate} disabled={generating}>{generated ? t('Laporan berhasil dibuat') : generating ? t('Membuat...') : t('Buat laporan')}</Button>
-			<Badge>{t('Siap')} {readyCount}</Badge>
+			<Badge>{t('Ready')} {readyCount}</Badge>
 		</CardContent>
 	</Card>
 
@@ -107,7 +107,7 @@
 					<div class="mt-4 grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.sections.length}</strong></div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Wawasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.insights.length}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Diperbarui')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.updatedAt}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Updated')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.updatedAt}</strong></div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ID Laporan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.id}</strong></div>
 					</div>
 				</a>

@@ -89,7 +89,7 @@
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={handleSend} disabled={sending}>{sent ? t('Pesan terkirim') : sending ? t('Mengirim...') : t('Kirim pesan')}</Button>
-			<Badge variant="outline">{t('Terbuka')} {openCount}</Badge>
+			<Badge variant="outline">{t('Open')} {openCount}</Badge>
 		</CardContent>
 	</Card>
 

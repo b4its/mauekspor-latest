@@ -6,6 +6,17 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Email': { id: 'Email', en: 'Email' },
+	'Phone': { id: 'Telepon', en: 'Phone' },
+	'Active': { id: 'Aktif', en: 'Active' },
+	'NIB': { id: 'NIB', en: 'NIB' },
+	'Operational alerts': { id: 'Peringatan operasional', en: 'Operational alerts' },
+	'Buyer Signals': { id: 'Sinyal Pembeli', en: 'Buyer Signals' },
+	'Total review': { id: 'Total review', en: 'Total reviews' },
+	'Tambahkan catatan resolusi minimal 8 karakter.': { id: 'Tambahkan catatan resolusi minimal 8 karakter.', en: 'Add a resolution note of at least 8 characters.' },
+	'Gagal memperbarui milestone.': { id: 'Gagal memperbarui milestone.', en: 'Failed to update milestone.' },
+	'Gagal memajukan milestone.': { id: 'Gagal memajukan milestone.', en: 'Failed to advance milestone.' },
+	'Gagal me-refresh analytics.': { id: 'Gagal me-refresh analytics.', en: 'Failed to refresh analytics.' },
 	'Catalog detail': { id: 'Detail katalog', en: 'Catalog detail' },
 	'Catalog readiness': { id: 'Kesiapan katalog', en: 'Catalog readiness' },
 	'Buyer-Facing Copy': { id: 'Konten untuk Pembeli', en: 'Buyer-Facing Copy' },

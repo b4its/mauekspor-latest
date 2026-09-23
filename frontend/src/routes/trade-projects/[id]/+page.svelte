@@ -69,7 +69,7 @@
 		</Card>
 
 		<Card>
-			<CardHeader><CardTitle>{t('Ketentuan Komersial')}</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Commercial Terms')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5">
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
 					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Incoterm')}</span>

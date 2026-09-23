@@ -140,7 +140,7 @@
 				<CardContent class="grid gap-3 p-0">
 					<div class="grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							{t('Diperbarui')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.updatedAt}</strong>
+							{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.updatedAt}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 							{t('Ukuran')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.size}</strong>

@@ -69,7 +69,7 @@
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div>
 						<h3 class="text-xl font-bold tracking-tight">{t('Pembuat laporan')}</h3>
-						<p class="mt-1 text-sm text-muted-foreground">{t('Diperbarui')} {data.report.updatedAt}. {t('Buat laporan baru atau jadwalkan pengiriman berulang.')}</p>
+						<p class="mt-1 text-sm text-muted-foreground">{t('Updated')} {data.report.updatedAt}. {t('Buat laporan baru atau jadwalkan pengiriman berulang.')}</p>
 					</div>
 					<div class="flex flex-wrap gap-2">
 						<Button variant="outline" onclick={handleSchedule} disabled={busy}>{scheduled ? t('Dijadwalkan') : t('Jadwalkan')}</Button>
