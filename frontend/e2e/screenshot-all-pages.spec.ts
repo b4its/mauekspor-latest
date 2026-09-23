@@ -16,6 +16,7 @@ const ALL_PAGES: Array<{ route: string; name: string }> = [
   { route: '/costing',              name: '05-costing'            },
   { route: '/buyer-requests',       name: '06-buyer-requests'     },
   { route: '/buyers',               name: '07-buyers'             },
+  { route: '/buyers/portal',        name: '07b-buyer-portal'      },
   { route: '/forwarders',           name: '08-forwarders'         },
   { route: '/markets',              name: '09-markets'            },
   { route: '/trade-projects',       name: '10-trade-projects'     },
@@ -335,6 +336,7 @@ test.describe('Protected pages – Buyer role', () => {
     { route: '/quotations',        name: 'buy-03-quotations'   },
     { route: '/orders',            name: 'buy-04-orders'       },
     { route: '/buyers/my-profile', name: 'buy-05-my-profile'   },
+    { route: '/buyers/portal',     name: 'buy-06-buyer-portal'  },
   ];
 
   for (const { route, name } of BUYER_PAGES) {

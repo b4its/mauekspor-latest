@@ -18,6 +18,7 @@
 	import GlobeIcon from '@lucide/svelte/icons/globe';
 	import FolderOpenIcon from '@lucide/svelte/icons/folder-open';
 	import ContactIcon from '@lucide/svelte/icons/contact';
+	import StoreIcon from '@lucide/svelte/icons/store';
 	import ClipboardListIcon from '@lucide/svelte/icons/clipboard-list';
 	import FactoryIcon from '@lucide/svelte/icons/factory';
 	import TruckIcon from '@lucide/svelte/icons/truck';
@@ -91,6 +92,7 @@
 		Countries: GlobeIcon,
 		Catalogs: FolderOpenIcon,
 		Buyers: ContactIcon,
+		'Buyer Portal': StoreIcon,
 		'Buyer Requests': ClipboardListIcon,
 		Suppliers: FactoryIcon,
 		Forwarders: TruckIcon,

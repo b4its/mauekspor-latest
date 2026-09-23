@@ -661,6 +661,7 @@ export const navItems = [
 	{ label: 'Markets', href: '/markets' },
 	{ label: 'Catalogs', href: '/catalogs' },
 	{ label: 'Buyers', href: '/buyers' },
+	{ label: 'Buyer Portal', href: '/buyers/portal' },
 	{ label: 'Buyer Requests', href: '/buyer-requests' },
 	{ label: 'Suppliers', href: '/suppliers' },
 	{ label: 'Forwarders', href: '/forwarders' },
@@ -726,6 +727,7 @@ export const navGroups: NavGroup[] = [
 		label: 'Commercial',
 		items: [
 			{ label: 'Buyers', href: '/buyers' },
+			{ label: 'Buyer Portal', href: '/buyers/portal' },
 			{ label: 'Buyer Requests', href: '/buyer-requests' },
 			{ label: 'Suppliers', href: '/suppliers' },
 			{ label: 'Forwarders', href: '/forwarders' },
