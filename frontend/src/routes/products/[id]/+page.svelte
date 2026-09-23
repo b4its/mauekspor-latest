@@ -5,6 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { enrichProduct, deleteProduct } from '$lib/api/products';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let enriching = $state(false);
@@ -24,7 +25,7 @@
 	}
 
 	async function handleDelete() {
-		if (!confirm('Hapus produk ini?')) return;
+		if (!confirm(t('Hapus produk ini?'))) return;
 		deleting = true;
 		try {
 			await deleteProduct(data.product.id);
@@ -57,7 +58,7 @@
 				<CardDescription class="mt-2">{data.product.category} from {data.product.origin}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Product readiness</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Product readiness')}</span>
 				<strong class="mt-1 block text-4xl font-bold tracking-tight">{data.product.readiness}%</strong>
 			</div>
 		</div>
@@ -67,45 +68,45 @@
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Export Data Sheet</CardTitle>
-					<CardDescription>Core information used for HS classification, compliance analysis, catalog, and quotation.</CardDescription>
+					<CardTitle>{t('Lembar Data Ekspor')}</CardTitle>
+					<CardDescription>{t('Informasi inti yang digunakan untuk klasifikasi HS, analisis kepatuhan, katalog, dan kutipan harga.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" href={`/products/${data.product.id}/edit`}>Edit product</Button>
-					<Button variant="outline" href={`/products/${data.product.id}/enrich`}>Override AI enrichment</Button>
+					<Button variant="outline" href={`/products/${data.product.id}/edit`}>{t('Edit produk')}</Button>
+					<Button variant="outline" href={`/products/${data.product.id}/enrich`}>{t('Timpa enrichment AI')}</Button>
 					<Button disabled={enriching} onclick={runEnrichment}>
-						{enriching ? 'Generating...' : enriched ? 'AI enrichment updated' : 'Run AI enrichment'}
+						{enriching ? t('Memproses...') : enriched ? t('Enrichment AI diperbarui') : t('Jalankan enrichment AI')}
 					</Button>
-					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>Delete</Button>
+					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>{t('Hapus')}</Button>
 				</div>
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					HS Code <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.hs}{data.product.hsConfidence ? ` (${data.product.hsConfidence}% conf)` : ''}</strong>
+					{t('Kode HS')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.hs}{data.product.hsConfidence ? ` (${data.product.hsConfidence}% conf)` : ''}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					SKU <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.sku ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Packaging <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.packaging}</strong>
+					{t('Kemasan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.packaging}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Net weight <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.netWeight}</strong>
+					{t('Berat bersih')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.netWeight}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Gross weight <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.grossWeight}</strong>
+					{t('Berat kotor')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.grossWeight}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					MOQ <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.moq}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Lead time <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.leadTime}</strong>
+					{t('Waktu tunggu')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.leadTime}</strong>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader class="p-0"><CardTitle>Certificates</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Sertifikat')}</CardTitle></CardHeader>
 			<CardContent class="flex flex-wrap gap-2.5 p-0 pt-4">
 				{#each data.product.certificates ?? [] as certificate}
 					<Badge variant="outline">{certificate}</Badge>
@@ -114,30 +115,29 @@
 		</Card>
 
 		<Card>
-			<CardHeader class="p-0"><CardTitle>AI Marketing</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Pemasaran AI')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2 p-0 pt-4">
 				<Button variant="outline" href="/marketing" class="w-fit">Market Intelligence & Pricing</Button>
 				{#if data.product.status === 'Enriched'}
-					<span class="text-xs font-semibold text-muted-foreground">Produk siap dianalisis pasar (HS & SKU tersedia).</span>
+					<span class="text-xs font-semibold text-muted-foreground">{t('Produk siap dianalisis pasar (HS & SKU tersedia).')}</span>
 				{:else}
-					<span class="text-xs font-semibold text-muted-foreground">Jalankan enrichment dulu sebelum analisis pasar.</span>
+					<span class="text-xs font-semibold text-muted-foreground">{t('Jalankan enrichment dulu sebelum analisis pasar.')}</span>
 				{/if}
 			</CardContent>
 		</Card>
 
 		<Card class="bg-gradient-to-br from-primary/10 to-background">
 			<CardHeader class="p-0">
-				<Badge variant="secondary">AI guardrail</Badge>
-				<CardTitle>Classification note</CardTitle>
+				<Badge variant="secondary">{t('Pagar pembatas AI')}</Badge>
+				<CardTitle>{t('Catatan klasifikasi')}</CardTitle>
 			</CardHeader>
 			<CardContent class="p-0 pt-4">
 				<p class="leading-relaxed text-muted-foreground">
-					HS recommendation must be confirmed by a human reviewer before it is used on commercial
-					invoice, packing list, or certificate of origin.
+					{t('Rekomendasi HS harus dikonfirmasi oleh peninjau manusia sebelum digunakan pada invoice komersial, packing list, atau certificate of origin.')}
 				</p>
 				{#if enriched}
 					<p class="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">
-						Enrichment diproses di backend.
+						{t('Enrichment diproses di backend.')}
 					</p>
 				{/if}
 			</CardContent>
