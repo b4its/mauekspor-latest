@@ -75,6 +75,14 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 	$effect(() => {
+		// Tunggu sesi terautentikasi sebelum memanggil /notifications/ yang kini
+		// butuh auth; jika tidak, request awal 401 → badge salah 0.
+		const status = userStatus;
+		if (status !== 'authenticated') {
+			unreadCount = 0;
+			return;
+		}
+
 		async function refreshNotifications() {
 			try {
 				const res = await listNotifications();

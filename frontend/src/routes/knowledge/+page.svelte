@@ -25,7 +25,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		articles.items.filter(
 			(article) =>
 				(activeFilter === 'All' || article.category === activeFilter) &&
-				[article.title, article.category, article.status, article.summary, ...article.steps].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				[article.title, article.category, article.status, article.summary, ...(article.steps ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
 	let publishedCount = $derived(articles.items.filter((article) => article.status === 'Published').length + (published ? 1 : 0));

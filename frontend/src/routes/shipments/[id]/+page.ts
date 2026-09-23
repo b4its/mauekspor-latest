@@ -5,6 +5,9 @@ import { getTradeProject } from '$lib/api/trade-projects';
 import { loadById } from '$lib/api/remote-list.svelte';
 import type { PageLoad } from './$types';
 
+// SSR dimatikan: loader butuh token/cookie auth yang hanya ada di klien.
+export const ssr = false;
+
 export const load: PageLoad = async ({ params }) => {
 	const shipment = await loadById(getShipment, seedShipments, params.id);
 	if (!shipment) error(404, 'Shipment not found');

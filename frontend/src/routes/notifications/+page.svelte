@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
+	import { getStatus } from '$lib/stores/session.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -30,6 +31,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let notifications = createRemoteList(listNotifications, seedNotifications);
 	$effect(() => {
+		// Muat hanya setelah sesi terautentikasi (read API kini butuh auth).
+		if (getStatus() !== 'authenticated') return;
 		notifications.load();
 	});
 

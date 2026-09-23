@@ -39,7 +39,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		threads.items.filter(
 			(thread) =>
 				(activeFilter === 'All' || thread.channel === activeFilter) &&
-				[thread.subject, thread.party, thread.channel, thread.status, thread.lastMessage, ...thread.participants].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				[thread.subject, thread.party, thread.channel, thread.status, thread.lastMessage, ...(thread.participants ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
 	let openCount = $derived(threads.items.filter((thread) => ['Open', 'Waiting Reply', 'Escalated'].includes(thread.status)).length);

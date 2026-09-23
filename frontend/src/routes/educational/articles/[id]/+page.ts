@@ -4,6 +4,9 @@ import { getEducationalArticle } from '$lib/api/educational-articles';
 import { loadById } from '$lib/api/remote-list.svelte';
 import type { PageLoad } from './$types';
 
+// SSR dimatikan: loader butuh token/cookie auth yang hanya ada di klien.
+export const ssr = false;
+
 export const load: PageLoad = async ({ params }) => {
 	const article = await loadById(getEducationalArticle, seedArticles, params.id);
 	if (!article) error(404, 'Article not found');

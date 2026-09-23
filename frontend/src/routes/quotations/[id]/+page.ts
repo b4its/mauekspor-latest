@@ -6,6 +6,9 @@ import { getRFQ } from '$lib/api/rfq';
 import { loadById } from '$lib/api/remote-list.svelte';
 import type { PageLoad } from './$types';
 
+// SSR dimatikan: loader butuh token/cookie auth yang hanya ada di klien.
+export const ssr = false;
+
 export const load: PageLoad = async ({ params }) => {
 	const quotation = await loadById(getQuotation, seedQuotations, params.id);
 	if (!quotation) error(404, 'Quotation not found');

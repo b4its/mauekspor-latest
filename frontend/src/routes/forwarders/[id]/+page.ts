@@ -5,6 +5,9 @@ import { loadById } from '$lib/api/remote-list.svelte';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
+// SSR dimatikan: loader butuh token/cookie auth yang hanya ada di klien.
+export const ssr = false;
+
 export const load: PageLoad = async ({ params }): Promise<{ forwarder: Forwarder }> => {
 	const forwarder = await loadById(getForwarder, seedForwarders, params.id);
 	if (!forwarder) error(404, 'Forwarder not found');
