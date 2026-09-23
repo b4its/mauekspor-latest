@@ -5,6 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { confirmOrder } from '$lib/api/orders';
+	import { t } from '$lib/i18n.svelte';
 	import { generateTradeDocument } from '$lib/api/documents';
 
 	let { data } = $props();
@@ -29,7 +30,7 @@
 			await generateTradeDocument({ projectId: data.project?.id ?? data.order.projectId, type: 'Commercial Invoice' });
 			docsStarted = true;
 		} catch {
-			error = 'Gagal menyiapkan dokumen.';
+			error = t('Gagal menyiapkan dokumen.');
 		} finally {
 			startingDocs = false;
 		}
@@ -41,7 +42,7 @@
 			await confirmOrder(data.order.id);
 			confirmed = true;
 		} catch {
-			error = 'Gagal mengonfirmasi order.';
+			error = t('Gagal mengonfirmasi order.');
 		}
 	}
 </script>
@@ -50,7 +51,7 @@
 	<title>{data.order.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.order.id} eyebrow="Sales order detail">
+<AppShell title={data.order.id} eyebrow={t('Sales order detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>
@@ -60,7 +61,7 @@
 		<CardContent class="mt-6 flex flex-wrap justify-end gap-3 p-0">
 			<Card class="w-full max-w-56 text-right">
 				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Execution readiness</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Kesiapan eksekusi')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{displayReadiness}%</strong>
 				</CardContent>
 			</Card>
@@ -72,37 +73,37 @@
 			<CardContent class="grid gap-4 p-5">
 				<div class="flex flex-wrap items-start justify-between gap-4">
 					<div>
-						<h3 class="text-2xl font-bold tracking-tight">Order Terms</h3>
-						<p class="mt-1 text-sm text-muted-foreground">Order generated from quotation {data.order.quotationId}.</p>
+						<h3 class="text-2xl font-bold tracking-tight">{t('Ketentuan Order')}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{t('Order dibuat dari kutipan')} {data.order.quotationId}.</p>
 					</div>
 					<div class="flex flex-wrap gap-2">
-						<Button variant="outline" disabled={confirmed} onclick={handleConfirm}>Confirm order</Button>
-						<Button disabled={docsStarted || startingDocs} onclick={handleDocs}>{startingDocs ? 'Starting...' : 'Start document prep'}</Button>
+						<Button variant="outline" disabled={confirmed} onclick={handleConfirm}>{t('Konfirmasi order')}</Button>
+						<Button disabled={docsStarted || startingDocs} onclick={handleDocs}>{startingDocs ? t('Memulai...') : t('Mulai persiapan dokumen')}</Button>
 					</div>
 					{#if error}
 						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 					{/if}
 				</div>
 				<div class="grid gap-2 sm:grid-cols-3">
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Value<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.order.value)}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Incoterm<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.incoterm}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Payment<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.paymentTerms}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Delivery<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.deliveryWindow}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Currency<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.currency}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Quotation<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.quotationId}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.order.value)}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.incoterm}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Payment')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.paymentTerms}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Delivery')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.deliveryWindow}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Mata uang')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.currency}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Kutipan')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.quotationId}</strong></div>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardContent class="grid gap-4 p-5">
-				<h3 class="text-xl font-bold tracking-tight">Order Lines</h3>
+				<h3 class="text-xl font-bold tracking-tight">{t('Baris Order')}</h3>
 				<div class="grid gap-2">
 					{#each data.order.lines as line}
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 							<span class="block">{line.product}</span>
 							<strong class="mt-1 block text-sm font-bold text-foreground">{line.quantity}</strong>
-							<small class="mt-1 block">{currency.format(line.unitPrice)} each - {currency.format(line.total)}</small>
+							<small class="mt-1 block">{currency.format(line.unitPrice)} {t('per unit')} - {currency.format(line.total)}</small>
 						</div>
 					{/each}
 				</div>
@@ -111,7 +112,7 @@
 
 		<Card>
 			<CardContent class="grid gap-4 p-5">
-				<h3 class="text-xl font-bold tracking-tight">Execution Checklist</h3>
+				<h3 class="text-xl font-bold tracking-tight">{t('Daftar Periksa Eksekusi')}</h3>
 				<div class="grid gap-2">
 					{#each data.order.checklist as item}
 						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
@@ -121,14 +122,14 @@
 					{/each}
 					{#if confirmed}
 						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
-							<Badge>Done</Badge>
-							<strong class="text-sm font-bold">Order confirmation demo completed</strong>
+							<Badge>{t('Selesai')}</Badge>
+							<strong class="text-sm font-bold">{t('Demo konfirmasi order selesai')}</strong>
 						</div>
 					{/if}
 					{#if docsStarted}
 						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
-							<Badge variant="outline">Current</Badge>
-							<strong class="text-sm font-bold">Document preparation started</strong>
+							<Badge variant="outline">{t('Saat ini')}</Badge>
+							<strong class="text-sm font-bold">{t('Persiapan dokumen dimulai')}</strong>
 						</div>
 					{/if}
 				</div>
