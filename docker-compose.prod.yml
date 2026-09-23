@@ -33,7 +33,9 @@ services:
       db:
         condition: service_healthy
     environment:
-      MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
+      # WAJIB diisi di .env — tanpa ini backend menolak boot (fail-fast).
+      MAUEKSPOR_ENVIRONMENT: production
+      MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:?Set MAUEKSPOR_SECRET_KEY in .env (random strong value)}
       MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@localhost:5447/${POSTGRES_DB:-mauekspor}
       MAUEKSPOR_UPLOAD_DIR: /app/uploads
       MAUEKSPOR_CORS_ORIGINS: '["http://localhost:5188","http://localhost:3015","http://127.0.0.1:5188"]'
