@@ -82,7 +82,7 @@
 			editSaved = true;
 			editMode = false;
 		} catch {
-			editError = 'Gagal menyimpan perbaikan produk.';
+			editError = t('Gagal menyimpan perbaikan produk.');
 		} finally {
 			savingEdit = false;
 		}
@@ -113,21 +113,21 @@
 		try {
 			data.analysis = (await reanalyzeExportAnalysis(data.analysis.id)).data;
 		} catch {
-			error = 'Gagal menjalankan ulang analisis.';
+			error = t('Gagal menjalankan ulang analisis.');
 		} finally {
 			rerunning = false;
 		}
 	}
 
 	async function handleDelete() {
-		if (!confirm('Hapus analisis ini?')) return;
+		if (!confirm(t('Hapus analisis ini?'))) return;
 		error = '';
 		deleting = true;
 		try {
 			await deleteExportAnalysis(data.analysis.id);
 			window.location.href = '/export-analysis';
 		} catch {
-			error = 'Gagal menghapus analisis.';
+			error = t('Gagal menghapus analisis.');
 		} finally {
 			deleting = false;
 		}
@@ -147,7 +147,7 @@
 	<title>{data.analysis.productName} Export Analysis | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.analysis.id} eyebrow="Market & compliance analysis detail">
+<AppShell title={data.analysis.id} eyebrow={t('Market & compliance analysis detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -158,10 +158,10 @@
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 					{data.analysis.productName} to {data.analysis.destination}
 				</CardTitle>
-				<CardDescription class="mt-2">HS {data.analysis.hsCode} - classification confidence {data.analysis.confidence}%.</CardDescription>
+				<CardDescription class="mt-2">HS {data.analysis.hsCode} - {t('keyakinan klasifikasi')} {data.analysis.confidence}%.</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Readiness score</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Readiness score')}</span>
 				<strong class="mt-1 block text-4xl font-bold tracking-tight">{data.analysis.score}</strong>
 				<small class="text-xs font-bold text-muted-foreground">/ 100</small>
 			</div>
@@ -170,7 +170,7 @@
 
 	{#if productChanged}
 		<div class="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-700">
-			Produk berubah sejak analisis dijalankan. Jalankan ulang (re-analyze) untuk memperbarui snapshot produk & skor kepatuhan.
+			{t('Produk berubah sejak analisis dijalankan. Jalankan ulang (re-analyze) untuk memperbarui snapshot produk & skor kepatuhan.')}
 		</div>
 	{/if}
 
@@ -178,17 +178,17 @@
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Compliance summary</CardTitle>
+					<CardTitle>{t('Ringkasan kepatuhan')}</CardTitle>
 					<CardDescription class="mt-1.5 max-w-2xl leading-relaxed">{data.analysis.summary}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" href={analysisPdfUrl(data.analysis.id)}>Download PDF</Button>
-					<Button variant="outline" href={`/export-analysis/${data.analysis.id}/regulation-recommendations`}>View recommendations</Button>
-					<Button variant="outline" onclick={handleRegs}>10-section guidance</Button>
+					<Button variant="outline" href={analysisPdfUrl(data.analysis.id)}>{t('Unduh PDF')}</Button>
+					<Button variant="outline" href={`/export-analysis/${data.analysis.id}/regulation-recommendations`}>{t('Lihat rekomendasi')}</Button>
+					<Button variant="outline" onclick={handleRegs}>{t('Panduan 10 bagian')}</Button>
 					<Button variant="outline" disabled={rerunning} onclick={handleRerun}>
-						{rerunning ? 'Re-analyzing...' : 'Re-analyze'}
+						{rerunning ? t('Menganalisis ulang...') : t('Analisis ulang')}
 					</Button>
-					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>Delete</Button>
+					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>{t('Hapus')}</Button>
 				</div>
 			</CardHeader>
 			{#if error}
@@ -196,16 +196,16 @@
 			{/if}
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					HS Code <strong class="mt-1 block text-sm font-bold text-foreground">{data.analysis.hsCode}</strong>
+					{t('Kode HS')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.analysis.hsCode}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Market demand <strong class="mt-1 block text-sm font-bold text-foreground">{data.analysis.marketDemand ?? '—'}</strong>
+					{t('Permintaan pasar')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.analysis.marketDemand ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Confidence <strong class="mt-1 block text-sm font-bold text-foreground">{data.analysis.confidence}%</strong>
+					{t('Keyakinan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.analysis.confidence}%</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Duties <strong class="mt-1 block text-sm font-bold text-foreground">{data.analysis.duties ?? '—'}</strong>
+					{t('Bea masuk')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.analysis.duties ?? '—'}</strong>
 				</div>
 			</CardContent>
 		</Card>
@@ -213,15 +213,15 @@
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Compliance issues ({issues.length})</CardTitle>
-					<CardDescription>Ditemukan oleh compliance checker (bahan, spesifikasi, kemasan).</CardDescription>
+					<CardTitle>{t('Isu kepatuhan')} ({issues.length})</CardTitle>
+					<CardDescription>{t('Ditemukan oleh compliance checker (bahan, spesifikasi, kemasan).')}</CardDescription>
 				</div>
-				<Button variant="outline" size="sm" onclick={openEditor} disabled={!data.product}>Perbaiki kepatuhan</Button>
+				<Button variant="outline" size="sm" onclick={openEditor} disabled={!data.product}>{t('Perbaiki kepatuhan')}</Button>
 			</CardHeader>
 			<CardContent class="grid gap-2.5">
 				{#if issues.length === 0}
 					<p class="rounded-lg border bg-muted/30 p-4 text-sm font-semibold text-muted-foreground">
-						Tidak ada isu kepatuhan. Produk siap untuk analisis pasar.
+						{t('Tidak ada isu kepatuhan. Produk siap untuk analisis pasar.')}
 					</p>
 				{/if}
 				{#each issues as issue (issue.rule_key + issue.type)}
@@ -231,10 +231,10 @@
 							<Badge variant={severityTone(issue.severity)}>{issue.severity ?? 'minor'}</Badge>
 						</div>
 						{#if issue.your_value}
-							<p class="mt-1.5 text-xs text-muted-foreground"><b>Nilai saat ini:</b> {issue.your_value}</p>
+							<p class="mt-1.5 text-xs text-muted-foreground"><b>{t('Nilai saat ini:')}</b> {issue.your_value}</p>
 						{/if}
 						{#if issue.required_value}
-							<p class="mt-1 text-xs text-muted-foreground"><b>Diperlukan:</b> {issue.required_value}</p>
+							<p class="mt-1 text-xs text-muted-foreground"><b>{t('Diperlukan:')}</b> {issue.required_value}</p>
 						{/if}
 						{#if issue.description}
 							<p class="mt-1 text-xs text-muted-foreground">{issue.description}</p>
@@ -244,40 +244,40 @@
 
 				{#if editMode}
 					<div class="mt-2 rounded-xl border bg-background p-4">
-						<h4 class="text-sm font-bold">Editor produk (perbaikan kepatuhan)</h4>
+						<h4 class="text-sm font-bold">{t('Editor produk (perbaikan kepatuhan)')}</h4>
 						<p class="mt-1 text-xs text-muted-foreground">
-							Perbaiki data produk lalu klik "Simpan & Re-Analyze" agar snapshot dan skor diperbarui.
+							{t('Perbaiki data produk lalu klik "Simpan & Re-Analyze" agar snapshot dan skor diperbarui.')}
 						</p>
 						{#if editError}
 							<p class="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{editError}</p>
 						{/if}
 						{#if editSaved}
-							<p class="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Produk diperbarui. Jalankan Re-analyze untuk skor terbaru.</p>
+							<p class="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Produk diperbarui. Jalankan Re-analyze untuk skor terbaru.')}</p>
 						{/if}
 						<div class="mt-3 grid gap-3 sm:grid-cols-2">
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
-								Kemasan
+								{t('Kemasan')}
 								<Input bind:value={packaging} placeholder="contoh: ISPM-15 pallet" />
 							</label>
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
-								Komposisi bahan
+								{t('Komposisi bahan')}
 								<Input bind:value={material} placeholder="contoh: 100% natural fiber" />
 							</label>
 						</div>
 						<label class="mt-3 grid gap-1.5 text-xs font-bold text-muted-foreground">
-							Deskripsi
+							{t('Deskripsi')}
 							<Textarea bind:value={description} rows={2} />
 						</label>
 						<div class="mt-3">
 							<div class="flex items-center justify-between">
-								<span class="text-xs font-bold text-muted-foreground">Quality specs</span>
-								<Button type="button" size="sm" variant="outline" onclick={addSpecRow}>+ Tambah</Button>
+								<span class="text-xs font-bold text-muted-foreground">{t('Spesifikasi kualitas')}</span>
+								<Button type="button" size="sm" variant="outline" onclick={addSpecRow}>{t('+ Tambah')}</Button>
 							</div>
 							<div class="mt-2 grid gap-2">
 								{#each Object.entries(qualitySpecs) as [key, value]}
 									<div class="flex gap-2">
 										<Input
-											placeholder="Label (mis. Allergen)"
+											placeholder={t('Label (mis. Allergen)')}
 											value={key}
 											oninput={(e) => {
 												const newKey = (e.currentTarget as HTMLInputElement).value;
@@ -289,7 +289,7 @@
 											}}
 										/>
 										<Input
-											placeholder="Nilai"
+											placeholder={t('Nilai')}
 											value={value}
 											oninput={(e) => {
 												qualitySpecs = { ...qualitySpecs, [key]: (e.currentTarget as HTMLInputElement).value };
@@ -301,9 +301,9 @@
 							</div>
 						</div>
 						<div class="mt-4 flex flex-wrap gap-2">
-							<Button type="button" variant="outline" onclick={() => (editMode = false)}>Batal</Button>
+							<Button type="button" variant="outline" onclick={() => (editMode = false)}>{t('Batal')}</Button>
 							<Button type="button" onclick={saveComplianceFix} disabled={savingEdit}>
-								{savingEdit ? 'Menyimpan...' : 'Simpan perubahan produk'}
+								{savingEdit ? t('Menyimpan...') : t('Simpan perubahan produk')}
 							</Button>
 						</div>
 					</div>
@@ -314,8 +314,8 @@
 		{#if typeof data.analysis.recommendations === 'string' && (data.analysis.recommendations as string).length > 0}
 			<Card>
 				<CardHeader>
-					<Badge variant="secondary">Rekomendasi</Badge>
-					<CardTitle>Langkah perbaikan</CardTitle>
+					<Badge variant="secondary">{t('Rekomendasi')}</Badge>
+					<CardTitle>{t('Langkah perbaikan')}</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<ul class="grid gap-2">
@@ -333,16 +333,16 @@
 		{#if snapshot && Object.keys(snapshot).length > 0}
 			<Card>
 				<CardHeader>
-					<CardTitle>Product snapshot</CardTitle>
-					<CardDescription>Data produk saat analisis dijalankan (audit trail).</CardDescription>
+					<CardTitle>{t('Snapshot produk')}</CardTitle>
+					<CardDescription>{t('Data produk saat analisis dijalankan (audit trail).')}</CardDescription>
 				</CardHeader>
 				<CardContent class="grid gap-2 text-xs">
-					<div class="flex justify-between gap-3 rounded-lg border bg-muted/30 p-2.5"><span class="text-muted-foreground">Nama</span><b>{snapshot.name}</b></div>
-					<div class="flex justify-between gap-3 rounded-lg border bg-muted/30 p-2.5"><span class="text-muted-foreground">Kategori</span><b>{snapshot.category}</b></div>
+					<div class="flex justify-between gap-3 rounded-lg border bg-muted/30 p-2.5"><span class="text-muted-foreground">{t('Nama')}</span><b>{snapshot.name}</b></div>
+					<div class="flex justify-between gap-3 rounded-lg border bg-muted/30 p-2.5"><span class="text-muted-foreground">{t('Kategori')}</span><b>{snapshot.category}</b></div>
 					<div class="flex justify-between gap-3 rounded-lg border bg-muted/30 p-2.5"><span class="text-muted-foreground">HS</span><b>{snapshot.hs ?? snapshot.hs_code}</b></div>
 					<div class="flex justify-between gap-3 rounded-lg border bg-muted/30 p-2.5"><span class="text-muted-foreground">SKU</span><b>{snapshot.sku ?? '—'}</b></div>
 					{#if snapshot.packaging}
-						<div class="flex justify-between gap-3 rounded-lg border bg-muted/30 p-2.5"><span class="text-muted-foreground">Kemasan</span><b>{snapshot.packaging}</b></div>
+						<div class="flex justify-between gap-3 rounded-lg border bg-muted/30 p-2.5"><span class="text-muted-foreground">{t('Kemasan')}</span><b>{snapshot.packaging}</b></div>
 					{/if}
 				</CardContent>
 			</Card>
@@ -350,13 +350,12 @@
 
 		<Card class="bg-gradient-to-br from-primary/10 to-background">
 			<CardHeader>
-				<Badge variant="secondary">AI note</Badge>
-				<CardTitle>Next best action</CardTitle>
+				<Badge variant="secondary">{t('Catatan AI')}</Badge>
+				<CardTitle>{t('Tindakan terbaik berikutnya')}</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<p class="leading-relaxed text-muted-foreground">
-					Perbaiki isu kepatuhan, lampirkan bukti, lalu lanjutkan ke costing & katalog.
-					Gunakan tombol Re-analyze setelah memperbarui data produk agar snapshot dan skor terbaru.
+					{t('Perbaiki isu kepatuhan, lampirkan bukti, lalu lanjutkan ke costing & katalog. Gunakan tombol Re-analyze setelah memperbarui data produk agar snapshot dan skor terbaru.')}
 				</p>
 			</CardContent>
 		</Card>
@@ -365,8 +364,8 @@
 	{#if showRegs}
 		<Card class="mt-4">
 			<CardHeader class="flex-row items-center justify-between">
-				<CardTitle>Regulation guidance (10 sections)</CardTitle>
-				<Button variant="outline" size="sm" onclick={() => (showRegs = false)}>Tutup</Button>
+				<CardTitle>{t('Panduan regulasi (10 bagian)')}</CardTitle>
+				<Button variant="outline" size="sm" onclick={() => (showRegs = false)}>{t('Tutup')}</Button>
 			</CardHeader>
 			<CardContent class="grid gap-3 md:grid-cols-2">
 				{#if regs}
@@ -377,7 +376,7 @@
 						</div>
 					{/each}
 				{:else}
-					<p class="text-sm font-semibold text-muted-foreground">Memuat panduan regulasi...</p>
+					<p class="text-sm font-semibold text-muted-foreground">{t('Memuat panduan regulasi...')}</p>
 				{/if}
 			</CardContent>
 		</Card>
