@@ -101,7 +101,10 @@
 				</CardDescription>
 			</div>
 		<Button href="/products/new">Add product</Button>
-		<Button variant="outline" href={csvExportUrl('/products/export.csv')}>Export CSV</Button>
+		<div class="flex gap-2">
+			<Button variant="outline" href={csvExportUrl('/products/export.csv')}>CSV</Button>
+			<Button variant="outline" href={csvExportUrl('/products/export.xlsx')}>Excel (.xlsx)</Button>
+		</div>
 	</div>
 	{#if pendingCount > 0}
 		<div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed p-4">

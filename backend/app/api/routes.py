@@ -263,6 +263,123 @@ def _csv_response(rows: list[list], filename: str) -> Response:
     )
 
 
+def _xlsx_bytes(sheet_name: str, rows: list[list]) -> bytes:
+    """Buat workbook .xlsx minimal tanpa dependensi (zipped XML + inline strings)."""
+    import html as _html
+    import io as _io
+    import zipfile
+
+    def esc(v):
+        return _html.escape(str(v), quote=True)
+
+    sheet_rows = []
+    for r_idx, row in enumerate(rows, start=1):
+        cells = []
+        for c_idx, value in enumerate(row, start=1):
+            ref = f"{chr(64 + c_idx)}{r_idx}"
+            if value is None or str(value) == "":
+                cells.append(f'<c r="{ref}"/>')
+            elif isinstance(value, (int, float)) and not isinstance(value, bool):
+                cells.append(f'<c r="{ref}"><v>{value}</v></c>')
+            else:
+                cells.append(f'<c r="{ref}" t="inlineStr"><is><t>{esc(value)}</t></is></c>')
+        sheet_rows.append("<row>" + "".join(cells) + "</row>")
+
+    sheet_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        f'<sheetData>{"".join(sheet_rows)}</sheetData></worksheet>'
+    )
+    content_types = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        "</Types>"
+    )
+    root_rels = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        "</Relationships>"
+    )
+    workbook_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        f'<sheets><sheet name="{esc(sheet_name)}" sheetId="1" r:id="rId1"/></sheets></workbook>'
+    )
+    workbook_rels = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+        "</Relationships>"
+    )
+    buffer = _io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", content_types)
+        zf.writestr("_rels/.rels", root_rels)
+        zf.writestr("xl/workbook.xml", workbook_xml)
+        zf.writestr("xl/_rels/workbook.xml.rels", workbook_rels)
+        zf.writestr("xl/worksheets/sheet1.xml", sheet_xml)
+    return buffer.getvalue()
+
+
+def _xlsx_response(rows: list[list], sheet_name: str, filename: str) -> Response:
+    content = _xlsx_bytes(sheet_name, rows)
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/products/export.xlsx")
+def export_products_xlsx():
+    rows = [["id", "name", "category", "status", "hs", "origin", "packaging", "netWeight", "grossWeight", "moq", "leadTime", "readiness"]]
+    for p in db.all("products"):
+        rows.append([p.get("id"), p.get("name"), p.get("category"), p.get("status"), p.get("hs"), p.get("origin"),
+                     p.get("packaging"), p.get("netWeight"), p.get("grossWeight"), p.get("moq"), p.get("leadTime"), p.get("readiness")])
+    return _xlsx_response(rows, "Products", "products.xlsx")
+
+
+@router.get("/buyers/export.xlsx")
+def export_buyers_xlsx():
+    rows = [["id", "name", "country", "segment", "status", "fitScore", "estimatedAnnualValue", "nextStep"]]
+    for b in db.all("buyers"):
+        rows.append([b.get("id"), b.get("name"), b.get("country"), b.get("segment"), b.get("status"),
+                     b.get("fitScore"), b.get("estimatedAnnualValue"), b.get("nextStep")])
+    return _xlsx_response(rows, "Buyers", "buyers.xlsx")
+
+
+@router.get("/export-analysis/export.xlsx")
+def export_analyses_xlsx():
+    rows = [["id", "productName", "destination", "status", "hsCode", "score", "grade", "confidence", "summary"]]
+    for a in db.all("export_analyses"):
+        rows.append([a.get("id"), a.get("productName"), a.get("destination"), a.get("status"), a.get("hsCode"),
+                     a.get("score"), a.get("statusGrade"), a.get("confidence"), a.get("summary")])
+    return _xlsx_response(rows, "ExportAnalysis", "export-analyses.xlsx")
+
+
+@router.get("/costing/export.xlsx")
+def export_costing_xlsx():
+    rows = [["id", "title", "destination", "incoterm", "margin", "exchangeRate", "exwPrice", "fobPrice", "cifPrice", "status"]]
+    for c in db.all("costing"):
+        rows.append([c.get("id"), c.get("title"), c.get("destination"), c.get("incoterm"), c.get("margin"),
+                     c.get("exchangeRate"), c.get("exwPrice"), c.get("fobPrice"), c.get("cifPrice"), c.get("status")])
+    return _xlsx_response(rows, "Costing", "costing.xlsx")
+
+
+@router.get("/audit/export.xlsx")
+def export_audit_xlsx():
+    rows = [["time", "actor", "action", "detail"]]
+    for a in db.all("audit"):
+        rows.append([a.get("time"), a.get("actor"), a.get("action"), a.get("detail")])
+    return _xlsx_response(rows, "Audit", "audit.xlsx")
+
+
 @router.get("/products/export.csv")
 def export_products_csv():
     rows = [["id", "name", "category", "status", "hs", "origin", "packaging", "netWeight", "grossWeight", "moq", "leadTime", "readiness"]]

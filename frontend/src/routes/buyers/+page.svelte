@@ -77,7 +77,8 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={handleCreate} disabled={creating} class="w-full">{created ? 'Lead captured' : creating ? 'Adding...' : 'Add buyer lead'}</Button>
-			<Button href={csvExportUrl('/buyers/export.csv')} variant="outline">Export CSV</Button>
+			<Button href={csvExportUrl('/buyers/export.csv')} variant="outline">CSV</Button>
+			<Button href={csvExportUrl('/buyers/export.xlsx')} variant="outline">Excel (.xlsx)</Button>
 			<Badge variant="secondary">Active {activeCount}</Badge>
 		</CardContent>
 	</Card>
