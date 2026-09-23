@@ -112,7 +112,7 @@ products.load();
 	</Card>
 
 	<div class="flex flex-wrap gap-2">
-		<Button variant={tab === 'mi' ? 'default' : 'outline'} onclick={() => (tab = 'mi')}>Market Intelligence</Button>
+		<Button variant={tab === 'mi' ? 'default' : 'outline'} onclick={() => (tab = 'mi')}>{t('Market Intelligence')}</Button>
 		<Button variant={tab === 'pricing' ? 'default' : 'outline'} onclick={() => (tab = 'pricing')}>{t('Kalkulator Pricing')}</Button>
 	</div>
 
@@ -153,7 +153,7 @@ products.load();
 			<Card class="md:col-span-2">
 				<CardHeader class="flex-row items-center justify-between gap-3">
 					<div>
-						<CardTitle>Market Intelligence {selectedProduct ? `— ${selectedProduct.name}` : ''}</CardTitle>
+						<CardTitle>{t('Market Intelligence')} {selectedProduct ? `— ${selectedProduct.name}` : ''}</CardTitle>
 						<CardDescription>{t('Negara yang direkomendasikan, risiko, tren, dan rekomendasi forwarder.')}</CardDescription>
 					</div>
 					{#if selectedProduct}
@@ -312,7 +312,7 @@ products.load();
 									{/if}
 								</div>
 								<div class="rounded-lg border bg-primary/10 p-4 text-sm leading-relaxed">
-									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">AI Insight</h4>
+									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">{t('Wawasan AI')}</h4>
 									<p>{pricing.pricingInsight ?? t('Harga kompetitif untuk pasar tujuan.')}</p>
 									<p class="mt-2 text-xs text-muted-foreground">
 										{t('Kurs dipakai:')} {pricing.exchangeRateUsed} IDR/USD · {t('Margin')} {pricing.targetMarginPercent}%

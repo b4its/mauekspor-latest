@@ -91,7 +91,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 					<div class="grid gap-2">
 						<Label>{t('Produk')}</Label>
 						<NativeSelect bind:value={productId}>
-							<option value="">Optional...</option>
+							<option value="">{t('Opsional...')}</option>
 							{#each products as product}<option value={product.id}>{product.name}</option>{/each}
 						</NativeSelect>
 					</div>

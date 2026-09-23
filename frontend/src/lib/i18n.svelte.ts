@@ -6,6 +6,11 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Beralih ke tema terang': { id: 'Beralih ke tema terang', en: 'Switch to light theme' },
+	'Beralih ke tema gelap': { id: 'Beralih ke tema gelap', en: 'Switch to dark theme' },
+	'Beralih tema': { id: 'Beralih tema', en: 'Toggle theme' },
+	'Market Intelligence': { id: 'Market Intelligence', en: 'Market Intelligence' },
+	'Wawasan AI': { id: 'Wawasan AI', en: 'AI Insight' },
 	'Create buyer-facing catalog': { id: 'Buat katalog untuk pembeli', en: 'Create buyer-facing catalog' },
 	'Penyiapan katalog': { id: 'Penyiapan katalog', en: 'Catalog setup' },
 	'Kemas produk untuk pasar target.': { id: 'Kemas produk untuk pasar target.', en: 'Package a product for a target market.' },
@@ -331,7 +336,6 @@ const dictionary: Record<string, Entry> = {
 	'Varian dan Incoterm': { id: 'Varian dan Incoterm', en: 'Variants and Incoterms' },
 	'Pricing EXW/FOB/CIF & market intelligence untuk katalog ini.': { id: 'Pricing EXW/FOB/CIF & market intelligence untuk katalog ini.', en: 'EXW/FOB/CIF pricing & market intelligence for this catalog.' },
 	'Pricing': { id: 'Pricing', en: 'Pricing' },
-	'Market Intelligence': { id: 'Market Intelligence', en: 'Market Intelligence' },
 	'Menganalisis...': { id: 'Menganalisis...', en: 'Analyzing...' },
 	'Lembar spesifikasi': { id: 'Lembar spesifikasi', en: 'Specification sheet' },
 	'Spesifikasi Teknis': { id: 'Spesifikasi Teknis', en: 'Technical Specifications' },

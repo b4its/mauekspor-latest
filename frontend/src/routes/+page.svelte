@@ -130,8 +130,8 @@
 							{/each}
 						</nav>
 						<Sheet.Footer class="flex-col gap-2">
-							<Button href="/login" variant="outline" class="w-full border-[#0b3d91]/20" onclick={() => (mobileNavOpen = false)}>Masuk</Button>
-							<Button href="/register" class="w-full bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85" onclick={() => (mobileNavOpen = false)}>Mulai Ekspor</Button>
+							<Button href="/login" variant="outline" class="w-full border-[#0b3d91]/20" onclick={() => (mobileNavOpen = false)}>{t('Masuk')}</Button>
+							<Button href="/register" class="w-full bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85" onclick={() => (mobileNavOpen = false)}>{t('Mulai Ekspor')}</Button>
 						</Sheet.Footer>
 					</Sheet.Content>
 				</Sheet.Root>
@@ -346,7 +346,7 @@
 			</div>
 			<div class="flex flex-wrap gap-3">
 				<Button size="lg" href="/register" class="h-11 bg-[#0b3d91] px-6 text-base text-white hover:bg-[#0b3d91]/85">{t('Buat Workspace Anda')}</Button>
-				<Button variant="outline" size="lg" href="/login" class="h-11 border-[#0b3d91]/20 px-6 text-base">Masuk</Button>
+				<Button variant="outline" size="lg" href="/login" class="h-11 border-[#0b3d91]/20 px-6 text-base">{t('Masuk')}</Button>
 			</div>
 		</section>
 
@@ -360,7 +360,7 @@
 			<p class="max-w-xl">{t('Satu workspace dari kesiapan produk hingga pengiriman kargo — dibangun untuk eksportir Indonesia.')}</p>
 			<nav class="flex gap-4 text-sm font-bold text-[#0b1d3a]/60 dark:text-white/60" aria-label="Footer">
 				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/about">{t('Tentang')}</a>
-				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/login">Masuk</a>
+				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/login">{t('Masuk')}</a>
 				<a class="transition-colors hover:text-[#0b3d91] dark:hover:text-white" href="/register">{t('Daftar')}</a>
 			</nav>
 		</footer>
