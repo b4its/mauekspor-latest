@@ -8,6 +8,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { products, projects } from '$lib/data/trade';
 	import { createCostingScenario } from '$lib/api/costing';
+	import { t } from '$lib/i18n.svelte';
 
 	let projectId = $state('');
 	let productId = $state('');
@@ -26,7 +27,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 	async function create() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib: judul, produk, destination, dan target margin.';
+			error = t('Lengkapi kolom wajib: judul, produk, destination, dan target margin.');
 			return;
 		}
 		creating = true;
@@ -41,7 +42,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 			});
 			created = true;
 		} catch {
-			error = 'Gagal membuat skenario costing.';
+			error = t('Gagal membuat skenario costing.');
 		} finally {
 			creating = false;
 		}
@@ -52,14 +53,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 	<title>Create Costing Scenario | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Costing" eyebrow="Create costing scenario">
+<AppShell title="Costing" eyebrow={t('Create costing scenario')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Pricing model</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Model margin and landed cost for a market.</CardTitle>
+			<Badge variant="outline">{t('Model harga')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Model margin dan biaya landed untuk sebuah pasar.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Covers EXW through DAP, exchange rates, freight, insurance, and destination fees.
-				Skenario disimpan ke backend.
+				{t('Mencakup EXW hingga DAP, kurs, freight, asuransi, dan biaya tujuan. Skenario disimpan ke backend.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -67,29 +67,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 	{#if created}
 		<Card>
 			<CardContent class="grid gap-2 p-6">
-				<Badge variant="secondary" class="w-fit">Scenario drafted</Badge>
+				<Badge variant="secondary" class="w-fit">{t('Skenario dibuat')}</Badge>
 				<h3 class="text-2xl font-bold tracking-tight">{title}</h3>
-				<p class="text-sm text-muted-foreground">{destination} · {incoterm} · target margin {targetMargin}%. Skenario tersimpan di backend.</p>
-				<Button href="/costing" class="mt-2 w-fit">Back to costing</Button>
+				<p class="text-sm text-muted-foreground">{destination} · {incoterm} · {t('margin target')} {targetMargin}%. {t('Skenario tersimpan di backend.')}</p>
+				<Button href="/costing" class="mt-2 w-fit">{t('Kembali ke costing')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
 		<Card>
 			<form class="grid gap-4 p-6" onsubmit={(event) => { event.preventDefault(); create(); }}>
 				<div class="grid gap-2">
-					<Label>Scenario title</Label>
+					<Label>{t('Judul skenario')}</Label>
 					<Input bind:value={title} placeholder="Japan Coffee FOB Base Case" />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label>Project</Label>
+						<Label>{t('Proyek')}</Label>
 						<NativeSelect bind:value={projectId}>
-							<option value="">Optional...</option>
+							<option value="">{t('Opsional...')}</option>
 							{#each projects as project}<option value={project.id}>{project.name}</option>{/each}
 						</NativeSelect>
 					</div>
 					<div class="grid gap-2">
-						<Label>Product</Label>
+						<Label>{t('Produk')}</Label>
 						<NativeSelect bind:value={productId}>
 							<option value="">Optional...</option>
 							{#each products as product}<option value={product.id}>{product.name}</option>{/each}
@@ -98,26 +98,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label>Destination</Label>
+						<Label>{t('Tujuan')}</Label>
 						<Input bind:value={destination} placeholder="Japan" />
 					</div>
 					<div class="grid gap-2">
-						<Label>Incoterm</Label>
+						<Label>{t('Incoterm')}</Label>
 						<NativeSelect bind:value={incoterm}>
 							{#each incoterms as option}<option>{option}</option>{/each}
 						</NativeSelect>
 					</div>
 				</div>
 				<div class="grid gap-2">
-					<Label>Target margin %</Label>
+					<Label>{t('Target margin %')}</Label>
 					<Input bind:value={targetMargin} inputmode="decimal" />
 				</div>
 
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-3">
-					<Button variant="outline" href="/costing">Cancel</Button>
-					<Button type="submit" disabled={creating}>{creating ? 'Creating...' : 'Create scenario draft'}</Button>
+					<Button variant="outline" href="/costing">{t('Batal')}</Button>
+					<Button type="submit" disabled={creating}>{creating ? t('Membuat...') : t('Buat draf skenario')}</Button>
 				</div>
 			</form>
 		</Card>

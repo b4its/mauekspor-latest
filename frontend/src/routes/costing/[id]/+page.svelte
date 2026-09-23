@@ -6,6 +6,7 @@
 	import { currency, statusTone } from '$lib/utils/format';
 	import { recalculateCostingScenario, costingPdfUrl, getExchangeRate } from '$lib/api/costing';
 	import type { ExchangeRate } from '$lib/api/costing';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let recalculated = $state(false);
@@ -45,7 +46,7 @@
 			data.scenario = (await recalculateCostingScenario(data.scenario.id)).data;
 			recalculated = true;
 		} catch {
-			error = 'Gagal menghitung ulang costing.';
+			error = t('Gagal menghitung ulang costing.');
 		}
 	}
 
@@ -62,7 +63,7 @@
 	<title>{data.scenario.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.scenario.id} eyebrow="Costing scenario detail">
+<AppShell title={data.scenario.id} eyebrow={t('Costing scenario detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -73,7 +74,7 @@
 				<CardDescription class="mt-2">{data.project?.name ?? data.scenario.projectId} - {data.product?.name ?? data.scenario.productId}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
-				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Landed estimate</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Landed estimate')}</span>
 				<strong class="mt-1 block text-3xl font-bold tracking-tight">{currency.format(displayLanded)}</strong>
 			</div>
 		</div>
@@ -83,15 +84,15 @@
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Scenario Summary</CardTitle>
-					<CardDescription class="mt-1.5 max-w-2xl">Kalkulasi nyata EXW → FOB → CIF dengan kurs {data.scenario.exchangeRate ?? '—'} IDR/USD ({data.scenario.exchangeSource ?? ''}).</CardDescription>
+					<CardTitle>{t('Scenario Summary')}</CardTitle>
+					<CardDescription class="mt-1.5 max-w-2xl">{t('Kalkulasi nyata EXW → FOB → CIF dengan kurs')} {data.scenario.exchangeRate ?? '—'} IDR/USD ({data.scenario.exchangeSource ?? ''}).</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" href={`/costing/${data.scenario.id}/edit`}>Edit scenario</Button>
-					<Button variant="outline" onclick={handleFx}>{fx ? `FX ${fx.rate} (${fx.source})` : 'Show FX rate'}</Button>
-					<Button variant="outline" onclick={() => (fxShock = !fxShock)}>{fxShock ? 'Remove FX shock' : 'Apply +3.5% FX shock'}</Button>
-					<Button onclick={handleRecalculate}>{recalculated ? 'Recalculated' : 'Recalculate'}</Button>
-					<Button variant="outline" href={costingPdfUrl(data.scenario.id)}>Download PDF</Button>
+					<Button variant="outline" href={`/costing/${data.scenario.id}/edit`}>{t('Edit skenario')}</Button>
+					<Button variant="outline" onclick={handleFx}>{fx ? `FX ${fx.rate} (${fx.source})` : t('Tampilkan kurs FX')}</Button>
+					<Button variant="outline" onclick={() => (fxShock = !fxShock)}>{fxShock ? t('Hapus shock FX') : t('Terapkan shock FX +3.5%')}</Button>
+					<Button onclick={handleRecalculate}>{recalculated ? t('Dihitung ulang') : t('Hitung ulang')}</Button>
+					<Button variant="outline" href={costingPdfUrl(data.scenario.id)}>{t('Unduh PDF')}</Button>
 				</div>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
@@ -99,10 +100,10 @@
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Incoterm <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.incoterm}</strong>
+					{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.incoterm}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Destination <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.destination}</strong>
+					{t('Tujuan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.destination}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					EXW <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.scenario.exwPrice)}</strong>
@@ -114,19 +115,19 @@
 					CIF <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.scenario.cifPrice)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Margin <strong class="mt-1 block text-sm font-bold text-foreground">{displayMargin}%</strong>
+					{t('Margin')} <strong class="mt-1 block text-sm font-bold text-foreground">{displayMargin}%</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Exchange rate <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.exchangeRate ?? '—'}</strong>
+					{t('Kurs')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.exchangeRate ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Confidence <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.confidence ?? '—'}%</strong>
+					{t('Keyakinan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.confidence ?? '—'}%</strong>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader><CardTitle>Cost Breakdown</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Cost Breakdown')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5">
 				{#each lines as line}
 					<div class="rounded-lg border bg-muted/30 p-3.5">
@@ -136,13 +137,13 @@
 					</div>
 				{/each}
 				{#if lines.length === 0}
-					<p class="text-sm font-semibold text-muted-foreground">Belum ada rincian biaya. Tambahkan COGS pada form edit.</p>
+					<p class="text-sm font-semibold text-muted-foreground">{t('Belum ada rincian biaya. Tambahkan COGS pada form edit.')}</p>
 				{/if}
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader><CardTitle>Category Totals</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Total Kategori')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5">
 				{#each groupedLines as [category, amount]}
 					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
@@ -155,15 +156,15 @@
 
 		{#if container}
 			<Card>
-				<CardHeader><CardTitle>Container Capacity</CardTitle></CardHeader>
+				<CardHeader><CardTitle>{t('Kapasitas Kontainer')}</CardTitle></CardHeader>
 				<CardContent class="grid gap-2.5 text-sm">
 					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-						<span class="text-muted-foreground">20ft capacity</span>
-						<strong>{container.capacity_20ft ?? '—'} unit</strong>
+						<span class="text-muted-foreground">{t('Kapasitas 20ft')}</span>
+						<strong>{container.capacity_20ft ?? '—'} {t('unit')}</strong>
 					</div>
 					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-						<span class="text-muted-foreground">40ft capacity</span>
-						<strong>{container.capacity_40ft ?? '—'} unit</strong>
+						<span class="text-muted-foreground">{t('Kapasitas 40ft')}</span>
+						<strong>{container.capacity_40ft ?? '—'} {t('unit')}</strong>
 					</div>
 					{#if container.utilization_note}
 						<p class="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">{container.utilization_note}</p>
@@ -179,8 +180,8 @@
 
 		<Card class="md:col-span-2 bg-gradient-to-br from-primary/10 to-background">
 			<CardHeader>
-				<Badge variant="secondary">Pricing guardrail</Badge>
-				<CardTitle>Risks and assumptions</CardTitle>
+				<Badge variant="secondary">{t('Pagar pembatas harga')}</Badge>
+				<CardTitle>{t('Risiko dan asumsi')}</CardTitle>
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				<div class="flex flex-wrap gap-2.5">
@@ -188,14 +189,14 @@
 						<span class="rounded-full border bg-orange-500/10 px-3 py-1.5 text-xs font-bold text-orange-700">{risk}</span>
 					{/each}
 					{#if !(data.scenario.risks ?? []).length}
-						<span class="text-sm font-semibold text-muted-foreground">Tidak ada risiko tercatat.</span>
+						<span class="text-sm font-semibold text-muted-foreground">{t('Tidak ada risiko tercatat.')}</span>
 					{/if}
 				</div>
 				{#if recalculated}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Skenario dihitung ulang di backend.</p>
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Skenario dihitung ulang di backend.')}</p>
 				{/if}
 				{#if fxShock}
-					<p class="rounded-lg bg-orange-500/10 px-3 py-2 text-sm font-bold text-orange-700">FX shock applied. Landed estimate increased and margin compressed.</p>
+					<p class="rounded-lg bg-orange-500/10 px-3 py-2 text-sm font-bold text-orange-700">{t('Shock FX diterapkan. Estimasi landed naik dan margin menyusut.')}</p>
 				{/if}
 			</CardContent>
 		</Card>

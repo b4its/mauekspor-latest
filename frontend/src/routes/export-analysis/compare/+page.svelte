@@ -10,6 +10,7 @@
 	import type { CompareResult } from '$lib/api/export-analysis';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import type { Product } from '$lib/data/trade';
+	import { t } from '$lib/i18n.svelte';
 
 	let products = createRemoteList<Product>(listProducts, seedProducts);
 	let countries = $state<{ country_code: string; country_name: string }[]>([]);
@@ -38,7 +39,7 @@
 	async function runCompare() {
 		error = '';
 		if (!selectedProductId || selectedCodes.length < 2) {
-			error = 'Pilih 1 produk dan minimal 2 negara.';
+			error = t('Pilih 1 produk dan minimal 2 negara.');
 			return;
 		}
 		comparing = true;
@@ -47,7 +48,7 @@
 			results = res.data.results;
 			productName = res.data.product.name;
 		} catch {
-			error = 'Gagal menjalankan perbandingan.';
+			error = t('Gagal menjalankan perbandingan.');
 		} finally {
 			comparing = false;
 		}
@@ -66,13 +67,13 @@
 	<title>Compare Markets | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Compare Markets" eyebrow="Decision support">
+<AppShell title="Compare Markets" eyebrow={t('Decision support')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Decision support</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Bandingkan 2-5 negara untuk satu produk.</CardTitle>
+			<Badge variant="outline">{t('Decision support')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Bandingkan 2-5 negara untuk satu produk.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Pilih produk yang sudah di-enrich, pilih 2-5 negara tujuan, lalu bandingkan skor kesiapan, grade, dan isu kepatuhan.
+				{t('Pilih produk yang sudah di-enrich, pilih 2-5 negara tujuan, lalu bandingkan skor kesiapan, grade, dan isu kepatuhan.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -80,9 +81,9 @@
 	<Card>
 		<CardContent class="grid gap-4 p-6">
 			<div class="grid gap-2">
-				<label class="text-xs font-bold uppercase tracking-wide text-muted-foreground" for="cmp-product">1. Pilih produk</label>
+				<label class="text-xs font-bold uppercase tracking-wide text-muted-foreground" for="cmp-product">{t('1. Pilih produk')}</label>
 				<select id="cmp-product" class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={selectedProductId}>
-					<option value="">— Pilih produk —</option>
+					<option value="">{t('— Pilih produk —')}</option>
 					{#each products.items as product}
 						<option value={product.id}>{product.name} (HS {product.hs})</option>
 					{/each}
@@ -90,7 +91,7 @@
 			</div>
 			<div class="grid gap-2">
 				<label class="text-xs font-bold uppercase tracking-wide text-muted-foreground" for="cmp-countries">
-					2. Pilih negara (min 2, maks 5) — {selectedCodes.length} dipilih
+					{t('2. Pilih negara (min 2, maks 5)')} — {selectedCodes.length} {t('dipilih')}
 				</label>
 				<div class="flex flex-wrap gap-2">
 					{#each countries as country}
@@ -108,7 +109,7 @@
 				</div>
 			</div>
 			<Button onclick={runCompare} disabled={comparing || selectedCodes.length < 2 || !selectedProductId}>
-				{comparing ? 'Membandingkan...' : 'Bandingkan'}
+				{comparing ? t('Membandingkan...') : t('Bandingkan')}
 			</Button>
 			{#if error}
 				<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
@@ -121,12 +122,12 @@
 			<Table>
 				<TableHeader>
 					<TableRow>
-						<TableHead>Metric</TableHead>
+						<TableHead>{t('Metrik')}</TableHead>
 						{#each results as result}
 							<TableHead class="text-center">
 								{result.country}
 								{#if result.country === bestCountry}
-									<Badge variant="secondary" class="ml-1">Terbaik ⭐</Badge>
+									<Badge variant="secondary" class="ml-1">{t('Terbaik ⭐')}</Badge>
 								{/if}
 							</TableHead>
 						{/each}
@@ -134,13 +135,13 @@
 				</TableHeader>
 				<TableBody>
 					<TableRow>
-						<TableCell class="font-semibold text-muted-foreground">Produk</TableCell>
+						<TableCell class="font-semibold text-muted-foreground">{t('Produk')}</TableCell>
 						{#each results as _}
 							<TableCell class="text-center">{productName}</TableCell>
 						{/each}
 					</TableRow>
 					<TableRow>
-						<TableCell class="font-semibold text-muted-foreground">Score</TableCell>
+						<TableCell class="font-semibold text-muted-foreground">{t('Skor')}</TableCell>
 						{#each results as result}
 							<TableCell class="text-center">
 								<Badge variant={scoreTone(result.score)}>{result.score}</Badge>
@@ -148,19 +149,19 @@
 						{/each}
 					</TableRow>
 					<TableRow>
-						<TableCell class="font-semibold text-muted-foreground">Grade</TableCell>
+						<TableCell class="font-semibold text-muted-foreground">{t('Grade')}</TableCell>
 						{#each results as result}
 							<TableCell class="text-center">{result.grade}</TableCell>
 						{/each}
 					</TableRow>
 					<TableRow>
-						<TableCell class="font-semibold text-muted-foreground">Isu kritis</TableCell>
+						<TableCell class="font-semibold text-muted-foreground">{t('Isu kritis')}</TableCell>
 						{#each results as result}
 							<TableCell class="text-center">{result.critical_issues}</TableCell>
 						{/each}
 					</TableRow>
 					<TableRow>
-						<TableCell class="font-semibold text-muted-foreground">Rekomendasi</TableCell>
+						<TableCell class="font-semibold text-muted-foreground">{t('Rekomendasi')}</TableCell>
 						{#each results as result}
 							<TableCell class="max-w-[240px] text-xs leading-relaxed text-muted-foreground">{result.recommendation}</TableCell>
 						{/each}
@@ -169,7 +170,7 @@
 			</Table>
 			<div class="flex justify-end gap-2 border-t p-4">
 				<Button variant="outline" size="sm" onclick={() => downloadComparePdf({ product_id: selectedProductId, country_codes: selectedCodes })}>
-					Unduh PDF perbandingan
+					{t('Unduh PDF perbandingan')}
 				</Button>
 			</div>
 		</Card>

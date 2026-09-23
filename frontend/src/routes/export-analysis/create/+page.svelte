@@ -10,6 +10,7 @@
 	import { createExportAnalysis, listCountries } from '$lib/api/export-analysis';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import type { Product } from '$lib/data/trade';
+	import { t } from '$lib/i18n.svelte';
 
 	let products = createRemoteList<Product>(listProducts, seedProducts);
 	let countries = $state<{ country_code: string; country_name: string; region: string; regulationsCount?: number }[]>([]);
@@ -35,7 +36,7 @@
 	async function create() {
 		error = '';
 		if (!valid) {
-			error = 'Pilih produk dan negara tujuan untuk memulai analisis.';
+			error = t('Pilih produk dan negara tujuan untuk memulai analisis.');
 			return;
 		}
 		creating = true;
@@ -43,7 +44,7 @@
 			await createExportAnalysis({ productId, destination });
 			created = true;
 		} catch {
-			error = 'Gagal menjalankan analisis. Periksa apakah analisis untuk produk & negara ini sudah ada.';
+			error = t('Gagal menjalankan analisis. Periksa apakah analisis untuk produk & negara ini sudah ada.');
 		} finally {
 			creating = false;
 		}
@@ -54,30 +55,29 @@
 	<title>New Export Analysis | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Export Analysis" eyebrow="Start market analysis">
+<AppShell title="Export Analysis" eyebrow={t('Start market analysis')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
-		<Badge variant="secondary">New analysis</Badge>
+		<Badge variant="secondary">{t('Analisis baru')}</Badge>
 		<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-			Pick a product and a destination to begin.
+			{t('Pilih produk dan negara tujuan untuk memulai.')}
 		</CardTitle>
 		<CardContent class="mt-3 p-0 text-muted-foreground">
-			Analisis menjalankan compliance checker (bahan, spesifikasi, kemasan), membuat snapshot produk &
-			regulasi, lalu menghitung skor kesiapan — disimpan ke backend.
+			{t('Analisis menjalankan compliance checker (bahan, spesifikasi, kemasan), membuat snapshot produk & regulasi, lalu menghitung skor kesiapan — disimpan ke backend.')}
 		</CardContent>
 	</Card>
 
 	{#if created}
 		<Card class="mt-4">
 			<CardHeader>
-				<Badge variant="secondary" class="w-fit">Analysis created</Badge>
+				<Badge variant="secondary" class="w-fit">{t('Analisis dibuat')}</Badge>
 				<CardTitle class="text-2xl tracking-tight">{selected} to {selectedCountry}</CardTitle>
 			</CardHeader>
 			<CardContent class="flex flex-wrap items-center gap-2.5">
 				<p class="w-full text-sm leading-relaxed text-muted-foreground">
-					Analisis dibuat dan siap direview di backend.
+					{t('Analisis dibuat dan siap direview di backend.')}
 				</p>
-				<Button href="/export-analysis">View analyses</Button>
-				<Button variant="outline" href="/export-analysis/compare">Compare markets</Button>
+				<Button href="/export-analysis">{t('Lihat analisis')}</Button>
+				<Button variant="outline" href="/export-analysis/compare">{t('Bandingkan pasar')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
@@ -86,21 +86,21 @@
 			onsubmit={(event) => { event.preventDefault(); create(); }}
 		>
 			<div class="grid gap-2">
-				<Label for="ea-product">Product</Label>
+				<Label for="ea-product">{t('Produk')}</Label>
 				<NativeSelect id="ea-product" bind:value={productId} class="w-full">
-					<option value="">Select product...</option>
+					<option value="">{t('Pilih produk...')}</option>
 					{#each products.items as product}<option value={product.id}>{product.name} (HS {product.hs})</option>{/each}
 				</NativeSelect>
 				{#if notEnriched}
 					<p class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-700">
-						⚠️ Produk belum di-enrich (HS code belum pasti). Jalankan AI enrichment di halaman produk agar hasil analisis lebih akurat.
+						{t('Produk belum di-enrich (HS code belum pasti). Jalankan AI enrichment di halaman produk agar hasil analisis lebih akurat.')}
 					</p>
 				{/if}
 			</div>
 			<div class="grid gap-2">
-				<Label>Destination market</Label>
+				<Label>{t('Pasar tujuan')}</Label>
 				<NativeSelect bind:value={destination} class="w-full">
-					<option value="">Select destination...</option>
+					<option value="">{t('Pilih tujuan...')}</option>
 					{#each countries as country}<option value={country.country_code}>{country.country_name} ({country.country_code}) — {country.region}</option>{/each}
 				</NativeSelect>
 			</div>
@@ -108,8 +108,8 @@
 			{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive sm:col-span-2">{error}</p>{/if}
 
 			<div class="flex gap-2.5 sm:col-span-2">
-				<Button variant="outline" href="/export-analysis">Cancel</Button>
-				<Button type="submit" disabled={creating}>{creating ? 'Running...' : 'Run analysis'}</Button>
+				<Button variant="outline" href="/export-analysis">{t('Batal')}</Button>
+				<Button type="submit" disabled={creating}>{creating ? t('Menjalankan...') : t('Jalankan analisis')}</Button>
 			</div>
 		</form>
 	{/if}

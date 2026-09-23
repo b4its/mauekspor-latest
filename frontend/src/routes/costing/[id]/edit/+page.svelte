@@ -8,6 +8,7 @@
 	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { updateCostingScenario } from '$lib/api/costing';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.scenario));
@@ -28,7 +29,7 @@
 	async function save() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib dengan benar.';
+			error = t('Lengkapi kolom wajib dengan benar.');
 			return;
 		}
 		saving = true;
@@ -43,7 +44,7 @@
 			});
 			saved = true;
 		} catch {
-			error = 'Gagal menyimpan skenario ke backend.';
+			error = t('Gagal menyimpan skenario ke backend.');
 		} finally {
 			saving = false;
 		}
@@ -54,13 +55,13 @@
 	<title>Edit {data.scenario.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.scenario.id} eyebrow="Edit costing scenario">
+<AppShell title={data.scenario.id} eyebrow={t('Edit costing scenario')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Pricing model</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Update {data.scenario.title}.</CardTitle>
+			<Badge variant="outline">{t('Model harga')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Perbarui')} {data.scenario.title}.</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Adjust Incoterm, margin, and FX assumptions that drive landed cost.
+				{t('Sesuaikan Incoterm, margin, dan asumsi FX yang menggerakkan biaya landed.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -68,26 +69,26 @@
 	{#if saved}
 		<Card>
 			<CardContent class="grid gap-2 p-6">
-				<Badge variant="secondary" class="w-fit">Scenario saved</Badge>
+				<Badge variant="secondary" class="w-fit">{t('Skenario disimpan')}</Badge>
 				<h3 class="text-2xl font-bold tracking-tight">{title}</h3>
-				<p class="text-sm text-muted-foreground">{destination} · {incoterm} · margin {margin}%. Perubahan tersimpan & dihitung ulang di backend.</p>
-				<Button href={`/costing/${data.scenario.id}`} class="mt-2 w-fit">Back to scenario</Button>
+				<p class="text-sm text-muted-foreground">{destination} · {incoterm} · {t('margin target')} {margin}%. {t('Perubahan tersimpan & dihitung ulang di backend.')}</p>
+				<Button href={`/costing/${data.scenario.id}`} class="mt-2 w-fit">{t('Kembali ke skenario')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
 		<Card>
 			<form class="grid gap-4 p-6" onsubmit={(event) => { event.preventDefault(); save(); }}>
 				<div class="grid gap-2">
-					<Label for="cs-title">Scenario title</Label>
+					<Label for="cs-title">{t('Judul skenario')}</Label>
 					<Input id="cs-title" bind:value={title} />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label for="cs-dest">Destination</Label>
+						<Label for="cs-dest">{t('Tujuan')}</Label>
 						<Input id="cs-dest" bind:value={destination} />
 					</div>
 					<div class="grid gap-2">
-						<Label for="cs-inc">Incoterm</Label>
+						<Label for="cs-inc">{t('Incoterm')}</Label>
 						<NativeSelect id="cs-inc" bind:value={incoterm}>
 							{#each incoterms as option}<option>{option}</option>{/each}
 						</NativeSelect>
@@ -95,15 +96,15 @@
 				</div>
 				<div class="grid gap-4 sm:grid-cols-3">
 					<div class="grid gap-2">
-						<Label for="cs-cogs">COGS per unit (IDR)</Label>
+						<Label for="cs-cogs">{t('COGS per unit (IDR)')}</Label>
 						<Input id="cs-cogs" bind:value={cogs} inputmode="decimal" />
 					</div>
 					<div class="grid gap-2">
-						<Label for="cs-margin">Margin %</Label>
+						<Label for="cs-margin">{t('Margin %')}</Label>
 						<Input id="cs-margin" bind:value={margin} inputmode="decimal" />
 					</div>
 					<div class="grid gap-2">
-						<Label for="cs-fx">Exchange rate</Label>
+						<Label for="cs-fx">{t('Kurs')}</Label>
 						<Input id="cs-fx" bind:value={exchangeRate} inputmode="decimal" />
 					</div>
 				</div>
@@ -111,8 +112,8 @@
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-3">
-					<Button variant="outline" href={`/costing/${data.scenario.id}`}>Cancel</Button>
-					<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save scenario'}</Button>
+					<Button variant="outline" href={`/costing/${data.scenario.id}`}>{t('Batal')}</Button>
+					<Button type="submit" disabled={saving}>{saving ? t('Menyimpan...') : t('Simpan skenario')}</Button>
 				</div>
 			</form>
 		</Card>

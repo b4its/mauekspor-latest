@@ -6,6 +6,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { getRegulationRecommendations } from '$lib/api/export-analysis';
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let regs = $state<RegulationRecommendations | null>(null);
@@ -19,7 +20,7 @@
 		try {
 			regs = (await getRegulationRecommendations(data.analysis.id, lang)).data;
 		} catch {
-			error = 'Gagal memuat panduan regulasi.';
+			error = t('Gagal memuat panduan regulasi.');
 		} finally {
 			loading = false;
 		}
@@ -47,15 +48,14 @@
 			<div class="flex flex-wrap items-center gap-2">
 				<Badge variant={toneVariant(statusTone(data.analysis.status))}>{data.analysis.status}</Badge>
 				{#if regs?.fromCache}
-					<Badge variant="outline">From cache</Badge>
+					<Badge variant="outline">{t('From cache')}</Badge>
 				{/if}
 			</div>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Panduan regulasi untuk {data.analysis.productName} ke {data.analysis.destination}.
+				{t('Panduan regulasi untuk')} {data.analysis.productName} {t('ke')} {data.analysis.destination}.
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				10 bagian panduan kepatuhan (bahan terlarang, sertifikasi, pelabelan, bea cukai, pengujian, dll).
-				Data dibuat dari snapshot produk & regulasi negara tujuan.
+				{t('10 bagian panduan kepatuhan (bahan terlarang, sertifikasi, pelabelan, bea cukai, pengujian, dll). Data dibuat dari snapshot produk & regulasi negara tujuan.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-5 flex flex-wrap items-center gap-3 p-0">
@@ -73,7 +73,7 @@
 			>
 				English
 			</Button>
-			<Button variant="outline" size="sm" href={`/export-analysis/${data.analysis.id}`}>Back to analysis</Button>
+			<Button variant="outline" size="sm" href={`/export-analysis/${data.analysis.id}`}>{t('Kembali ke analisis')}</Button>
 		</CardContent>
 	</Card>
 
@@ -82,7 +82,7 @@
 	{/if}
 
 	{#if loading && !regs}
-		<p class="text-sm font-semibold text-muted-foreground">Memuat panduan regulasi...</p>
+		<p class="text-sm font-semibold text-muted-foreground">{t('Memuat panduan regulasi...')}</p>
 	{/if}
 
 	{#if regs}
@@ -90,7 +90,7 @@
 			{#each regs.sections as section, index}
 				<Card class="p-5">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant="secondary">Bagian {index + 1}</Badge>
+						<Badge variant="secondary">{t('Bagian')} {index + 1}</Badge>
 					</div>
 					<h3 class="mt-3 text-xl font-bold tracking-tight">{section.title}</h3>
 					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">{section.body}</p>

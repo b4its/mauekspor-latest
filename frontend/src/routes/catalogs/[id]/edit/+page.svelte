@@ -9,6 +9,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Alert } from '$lib/components/ui/alert/index.js';
 	import { updateCatalog } from '$lib/api/catalogs';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.catalog));
@@ -27,7 +28,7 @@
 	async function save() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib sebelum menyimpan.';
+			error = t('Lengkapi kolom wajib sebelum menyimpan.');
 			return;
 		}
 		saving = true;
@@ -42,7 +43,7 @@
 			});
 			saved = true;
 		} catch {
-			error = 'Gagal menyimpan katalog ke backend.';
+			error = t('Gagal menyimpan katalog ke backend.');
 		} finally {
 			saving = false;
 		}
@@ -53,13 +54,13 @@
 	<title>Edit {data.catalog.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.catalog.id} eyebrow="Edit catalog">
+<AppShell title={data.catalog.id} eyebrow={t('Edit catalog')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Catalog master data</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Update {data.catalog.title}.</CardTitle>
+			<Badge variant="secondary">{t('Data master katalog')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Perbarui')} {data.catalog.title}.</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Copy, pricing, and target market changes refresh the buyer-facing catalog.
+				{t('Perubahan copy, harga, dan pasar target memperbarui katalog yang menghadap pembeli.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -67,12 +68,12 @@
 	{#if saved}
 		<Card class="grid gap-4">
 			<CardContent class="grid gap-4 p-0">
-				<Badge variant="secondary">Catalog saved</Badge>
+				<Badge variant="secondary">{t('Katalog disimpan')}</Badge>
 				<h3 class="text-xl font-semibold tracking-tight">{title}</h3>
 				<p class="text-muted-foreground">
-					Perubahan katalog tersimpan di backend.
+					{t('Perubahan katalog tersimpan di backend.')}
 				</p>
-				<Button href={`/catalogs/${data.catalog.id}`}>Back to catalog</Button>
+				<Button href={`/catalogs/${data.catalog.id}`}>{t('Kembali ke katalog')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
@@ -84,31 +85,31 @@
 			}}
 		>
 			<div class="grid gap-2">
-				<Label for="c-title">Catalog title</Label>
+				<Label for="c-title">{t('Judul katalog')}</Label>
 				<Input id="c-title" bind:value={title} />
 			</div>
 			<div class="grid gap-2">
-				<Label for="c-market">Target market</Label>
+				<Label for="c-market">{t('Pasar target')}</Label>
 				<Input id="c-market" bind:value={targetMarket} />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label for="c-moq">MOQ</Label><Input id="c-moq" bind:value={moq} /></div>
-				<div class="grid gap-2"><Label for="c-lead">Lead time</Label><Input id="c-lead" bind:value={leadTime} /></div>
+				<div class="grid gap-2"><Label for="c-moq">{t('MOQ')}</Label><Input id="c-moq" bind:value={moq} /></div>
+				<div class="grid gap-2"><Label for="c-lead">{t('Waktu tunggu')}</Label><Input id="c-lead" bind:value={leadTime} /></div>
 			</div>
 			<div class="grid gap-2">
-				<Label for="c-price">Price range</Label>
+				<Label for="c-price">{t('Rentang harga')}</Label>
 				<Input id="c-price" bind:value={priceRange} />
 			</div>
 			<div class="grid gap-2">
-				<Label for="c-desc">Buyer-facing description</Label>
+				<Label for="c-desc">{t('Deskripsi untuk pembeli')}</Label>
 				<Textarea id="c-desc" bind:value={description} rows={3} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}
 
 			<div class="flex flex-wrap gap-2">
-				<Button variant="outline" href={`/catalogs/${data.catalog.id}`}>Cancel</Button>
-				<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save catalog'}</Button>
+				<Button variant="outline" href={`/catalogs/${data.catalog.id}`}>{t('Batal')}</Button>
+				<Button type="submit" disabled={saving}>{saving ? t('Menyimpan...') : t('Simpan katalog')}</Button>
 			</div>
 		</form>
 	{/if}
