@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
+	import { t } from '$lib/i18n.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent } from '$lib/components/ui/card/index.js';

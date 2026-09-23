@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
+	import { t } from '$lib/i18n.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
@@ -66,16 +67,16 @@
 			<CardContent class="grid gap-3 pt-4">
 				<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						Project <strong class="mt-1 block text-sm font-bold text-foreground">{data.project?.name ?? data.rfq.projectId}</strong>
+						{t('Proyek')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.project?.name ?? data.rfq.projectId}</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						Quantity <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.quantity}</strong>
+						{t('Quantity')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.quantity}</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						Incoterm <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.incoterm}</strong>
+						{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.incoterm}</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						Deadline <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.deadline}</strong>
+						{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.rfq.deadline}</strong>
 					</div>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
@@ -111,7 +112,7 @@
 				<CardTitle>Create quotation</CardTitle>
 			</CardHeader>
 			<CardContent class="grid gap-3 pt-4">
-				<p class="text-muted-foreground">{shortlisted ? `${shortlisted} is shortlisted for quotation.` : 'Shortlist a supplier match before creating quotation.'}</p>
+				<p class="text-muted-foreground">{shortlisted ? t('{} is shortlisted for quotation.').replace('{}', shortlisted) : t('Shortlist a supplier match before creating quotation.')}</p>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 				{/if}
