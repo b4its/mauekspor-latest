@@ -9,6 +9,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Alert } from '$lib/components/ui/alert/index.js';
 	import { updateProduct } from '$lib/api/products';
+	import { autocompleteHsCodes } from '$lib/api/hs-codes';
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.product));
@@ -18,8 +19,20 @@
 	let saved = $state(false);
 	let saving = $state(false);
 	let error = $state('');
+	let hsSuggestions = $state<string[]>([]);
 
 	let valid = $derived(/^\d{4}(\.\d{2})?$/.test(hsCode.trim()));
+
+	async function loadHsSuggestions() {
+		const q = hsCode.trim();
+		if (q.length < 2) return;
+		try {
+			const res = await autocompleteHsCodes(q, 8);
+			hsSuggestions = res.data.map((h) => `${h.hs_code} — ${h.description}`);
+		} catch {
+			hsSuggestions = [];
+		}
+	}
 
 	async function save() {
 		error = '';
@@ -83,9 +96,14 @@
 			}}
 		>
 			<div class="grid gap-2">
-				<Label>HS Code recommendation</Label>
-				<Input bind:value={hsCode} placeholder="0901.21" />
-				<small class="text-xs text-muted-foreground">8-digit validation ready; current value must match 4 or 6 digit format.</small>
+				<Label for="en-hs">HS Code recommendation</Label>
+				<Input id="en-hs" bind:value={hsCode} placeholder="0901.21" list="hs-options" oninput={loadHsSuggestions} />
+				<datalist id="hs-options">
+					{#each hsSuggestions as suggestion}
+						<option value={suggestion.split(' — ')[0]}>{suggestion}</option>
+					{/each}
+				</datalist>
+				<small class="text-xs text-muted-foreground">8-digit validation ready; ketik 2+ digit untuk saran HS dari dataset 6.941 kode.</small>
 			</div>
 			<div class="grid gap-2">
 				<Label>Generated SKU</Label>

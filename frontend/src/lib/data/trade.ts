@@ -601,12 +601,14 @@ export type ExportAnalysis = {
 	marketDemand: 'High' | 'Medium' | 'Low';
 	duties: string;
 	restrictions: string[];
-	recommendations: Array<{
-		type: 'Certificate' | 'Labeling' | 'Document';
-		title: string;
-		status: 'Recommended' | 'Required';
-		detail: string;
-	}>;
+	recommendations:
+		| string
+		| Array<{
+				type: 'Certificate' | 'Labeling' | 'Document';
+				title: string;
+				status: 'Recommended' | 'Required';
+				detail: string;
+		  }>;
 	summary: string;
 	countryCode?: string;
 	statusGrade?: 'Ready' | 'Warning' | 'Critical';

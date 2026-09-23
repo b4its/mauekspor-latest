@@ -4,16 +4,21 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { forwarders as seedForwarders } from '$lib/data/trade';
-	import { getMyForwarderProfile } from '$lib/api/forwarders';
-	import type { ForwarderProfile } from '$lib/api/forwarders';
+	import { getMyForwarderProfile, getForwarderStatistics } from '$lib/api/forwarders';
+	import type { ForwarderProfile, ForwarderStatistics } from '$lib/api/forwarders';
 
 	let profile = $state<ForwarderProfile | null>(null);
+	let stats = $state<ForwarderStatistics | null>(null);
 	let fallback = $derived(seedForwarders[0]);
 
 	$effect(() => {
 		getMyForwarderProfile()
 			.then((res) => (profile = res.data))
 			.catch(() => (profile = null));
+		// Statistik dari forwarder seed (untuk demo role Forwarder)
+		getForwarderStatistics(seedForwarders[0].id)
+			.then((res) => (stats = res.data))
+			.catch(() => {});
 	});
 </script>
 
@@ -79,6 +84,42 @@
 					{/each}
 				</CardContent>
 			</Card>
+
+			{#if stats}
+				<Card class="md:col-span-2">
+					<CardHeader>
+						<CardTitle>Rating statistics</CardTitle>
+						<CardDescription>Kinerja Anda menurut buyer/UMKM.</CardDescription>
+					</CardHeader>
+					<CardContent class="grid gap-4 sm:grid-cols-3">
+						<div class="rounded-lg border bg-muted/40 p-4 text-center">
+							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Rating rata-rata</span>
+							<strong class="mt-1 block text-3xl font-bold">{stats.averageRating} ⭐</strong>
+						</div>
+						<div class="rounded-lg border bg-muted/40 p-4 text-center">
+							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Total review</span>
+							<strong class="mt-1 block text-3xl font-bold">{stats.totalReviews}</strong>
+						</div>
+						<div class="rounded-lg border bg-muted/40 p-4 text-center">
+							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Kemitraan unik</span>
+							<strong class="mt-1 block text-3xl font-bold">{stats.uniquePartnerships}</strong>
+						</div>
+						{#if stats.ratingDistribution}
+							<div class="grid gap-1.5 sm:col-span-3">
+								{#each Object.entries(stats.ratingDistribution) as [star, percent]}
+									<div class="flex items-center gap-2 text-xs">
+										<span class="w-4 font-bold">{star}★</span>
+										<div class="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+											<div class="h-full bg-primary" style={`width:${percent}%`}></div>
+										</div>
+										<span class="w-8 text-right text-muted-foreground">{percent}%</span>
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</CardContent>
+				</Card>
+			{/if}
 		</div>
 	{/if}
 </AppShell>

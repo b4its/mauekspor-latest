@@ -310,6 +310,25 @@
 			</CardContent>
 		</Card>
 
+		{#if typeof data.analysis.recommendations === 'string' && (data.analysis.recommendations as string).length > 0}
+			<Card>
+				<CardHeader>
+					<Badge variant="secondary">Rekomendasi</Badge>
+					<CardTitle>Langkah perbaikan</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<ul class="grid gap-2">
+						{#each (data.analysis.recommendations as string).split('\n').filter((line: string) => line.trim()) as line}
+							<li class="flex items-start gap-2 rounded-lg border bg-muted/30 p-2.5 text-sm">
+								<span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary"></span>
+								<span class="leading-relaxed">{line.replace(/^\d+\.\s*/, '')}</span>
+							</li>
+						{/each}
+					</ul>
+				</CardContent>
+			</Card>
+		{/if}
+
 		{#if snapshot && Object.keys(snapshot).length > 0}
 			<Card>
 				<CardHeader>
