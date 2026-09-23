@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { businessProfiles as seedProfiles, exportAnalyses as seedAnalyses, projects as seedProjects, products as seedProducts, buyerRequests as seedRequests, forwarders as seedForwarders, complianceRequirements as seedCompliance } from '$lib/data/trade';
+	import { businessProfiles as seedProfiles, exportAnalyses as seedAnalyses, projects as seedProjects, products as seedProducts, buyerRequests as seedRequests, forwarders as seedForwarders, complianceRequirements as seedCompliance, educationalModules as seedModulesEdu } from '$lib/data/trade';
 	import { listBusinessProfiles, getDashboardSummary, type DashboardSummary } from '$lib/api/business-profile';
 	import { listExportAnalyses } from '$lib/api/export-analysis';
 	import { listTradeProjects } from '$lib/api/trade-projects';
@@ -11,6 +11,7 @@
 	import { listBuyerRequests } from '$lib/api/buyer-requests';
 	import { listForwarders } from '$lib/api/forwarders';
 	import { listComplianceRequirements } from '$lib/api/compliance';
+	import { listEducationalModulesV2 } from '$lib/api/educational';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
 
@@ -21,6 +22,7 @@
 	let buyerRequests = createRemoteList(listBuyerRequests, seedRequests);
 	let forwarders = createRemoteList(listForwarders, seedForwarders);
 	let compliance = createRemoteList(listComplianceRequirements, seedCompliance);
+	let eduModules = createRemoteList(listEducationalModulesV2, seedModulesEdu);
 
 	let hasProfile = $state(true);
 	let summaryCounts = $state<DashboardSummary['counts'] | null>(null);
@@ -33,6 +35,7 @@
 		buyerRequests.load();
 		forwarders.load();
 		compliance.load();
+		eduModules.load();
 		getDashboardSummary()
 			.then((res) => {
 				hasProfile = res.data.has_business_profile;
@@ -308,4 +311,32 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<Card class="mt-4">
+		<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
+			<div>
+				<CardTitle>Belajar ekspor</CardTitle>
+				<CardDescription>Modul edukasi teratas untuk memperdalam kesiapan ekspor Anda.</CardDescription>
+			</div>
+			<Button variant="outline" size="sm" href="/educational">Semua modul</Button>
+		</CardHeader>
+		<CardContent class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+			{#each eduModules.items.slice(0, 3) as module (module.id)}
+				<a href={`/educational/modules/${module.id}`} class="rounded-xl border bg-muted/30 p-4 no-underline transition-colors hover:border-ring/40">
+					<div class="flex items-center justify-between gap-2">
+						<Badge variant="secondary">{module.level}</Badge>
+						<span class="text-xs font-bold text-muted-foreground">{module.completion}% selesai</span>
+					</div>
+					<h3 class="mt-2 text-base font-bold">{module.title}</h3>
+					<p class="mt-1 line-clamp-2 text-xs text-muted-foreground">{module.summary}</p>
+					<div class="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+						<div class="h-full rounded-full bg-primary" style={`width:${module.completion ?? 0}%`}></div>
+					</div>
+				</a>
+			{/each}
+			{#if eduModules.items.length === 0}
+				<p class="text-sm font-semibold text-muted-foreground sm:col-span-2 lg:col-span-3">Belum ada modul edukasi.</p>
+			{/if}
+		</CardContent>
+	</Card>
 </AppShell>

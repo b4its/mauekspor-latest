@@ -12,8 +12,10 @@
 
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import ActivityIcon from '@lucide/svelte/icons/activity';
+	import BellIcon from '@lucide/svelte/icons/bell';
 	import ArrowRightLeftIcon from '@lucide/svelte/icons/arrow-right-left';
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
+	import { listNotifications } from '$lib/api/notifications';
 
 	let { title = 'Overview', eyebrow = 'Export-import command center', children } = $props();
 	let commandOpen = $state(false);
@@ -64,6 +66,13 @@
 		commands.filter((item) => item.label.toLowerCase().includes(commandQuery.trim().toLowerCase())).slice(0, 8)
 	);
 	let activityCount = $derived(activities.length);
+	let unreadCount = $state(0);
+
+	$effect(() => {
+		listNotifications()
+			.then((res) => (unreadCount = res.data.filter((n) => n.status === 'Unread').length))
+			.catch(() => (unreadCount = 0));
+	});
 </script>
 
 <svelte:window
@@ -104,6 +113,15 @@
 					<SearchIcon class="size-3.5" />
 					<span class="hidden sm:inline">Search</span>
 					<kbd class="ml-1 hidden rounded border border-border bg-secondary px-1 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-block">⌘K</kbd>
+				</Button>
+				<Button href="/notifications" variant="outline" size="sm" class="relative">
+					<BellIcon class="size-3.5" />
+					<span class="hidden sm:inline">Notifications</span>
+					{#if unreadCount > 0}
+						<span class="ml-0.5 rounded-full bg-red-600 px-1.5 text-[10px] font-semibold text-white">
+							{unreadCount}
+						</span>
+					{/if}
 				</Button>
 				<Button
 					variant="outline"

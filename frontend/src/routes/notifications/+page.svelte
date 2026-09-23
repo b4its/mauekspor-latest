@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { notifications as seedNotifications } from '$lib/data/trade';
-	import { listNotifications, markNotificationRead } from '$lib/api/notifications';
+	import { listNotifications, markNotificationRead, archiveNotification } from '$lib/api/notifications';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 
@@ -50,6 +50,28 @@
 			error = 'Gagal menandai notifikasi.';
 		} finally {
 			marking = false;
+		}
+	}
+
+	async function handleMarkRead(id: string) {
+		error = '';
+		try {
+			await markNotificationRead(id);
+			const item = notifications.items.find((n) => n.id === id);
+			if (item) item.status = 'Read';
+		} catch {
+			error = 'Gagal menandai notifikasi.';
+		}
+	}
+
+	async function handleArchive(id: string) {
+		error = '';
+		try {
+			await archiveNotification(id);
+			const item = notifications.items.find((n) => n.id === id);
+			if (item) item.status = 'Archived';
+		} catch {
+			error = 'Gagal mengarsipkan notifikasi.';
 		}
 	}
 </script>
@@ -108,7 +130,15 @@
 				<aside class="grid shrink-0 justify-items-start gap-2.5 md:min-w-[200px] md:justify-items-end">
 					<Badge variant={toneVariant(statusTone(item.severity))}>{item.severity}</Badge>
 					<small class="text-sm text-muted-foreground">{item.module} · {item.time}</small>
-					<Button variant="outline" size="sm" href={item.href}>Open</Button>
+					<div class="flex flex-wrap gap-2">
+						<Button variant="outline" size="sm" href={item.href}>Open</Button>
+						{#if item.status === 'Unread'}
+							<Button variant="outline" size="sm" onclick={() => handleMarkRead(item.id)}>Tandai dibaca</Button>
+						{/if}
+						{#if item.status !== 'Archived'}
+							<Button variant="ghost" size="sm" onclick={() => handleArchive(item.id)}>Arsip</Button>
+						{/if}
+					</div>
 				</aside>
 			</Card>
 		{:else}
