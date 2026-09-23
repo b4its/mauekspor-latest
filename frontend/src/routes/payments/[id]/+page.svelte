@@ -5,6 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { markPaymentReceived, sendPaymentReminder } from '$lib/api/payments';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 	let received = $state(false);
@@ -82,22 +83,22 @@
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Total <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.payment.amount)}</strong>
+					{t('Total')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.payment.amount)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Paid <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(paidAmount)}</strong>
+					{t('Paid')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(paidAmount)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Outstanding <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.payment.amount - paidAmount)}</strong>
+					{t('Outstanding')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(data.payment.amount - paidAmount)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Risk <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.risk}</strong>
+					{t('Risk')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.risk}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Order <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.orderId}</strong>
+					{t('Order')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.orderId}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Buyer <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.buyer}</strong>
+					{t('Buyer')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.buyer}</strong>
 				</div>
 			</CardContent>
 		</Card>
