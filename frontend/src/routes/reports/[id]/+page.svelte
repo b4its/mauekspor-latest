@@ -119,7 +119,7 @@
 					{/each}
 				</div>
 				{#if generated}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Laporan dibuat di backend.</p>
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Laporan dibuat di backend.')}</p>
 				{/if}
 				{#if scheduled}
 					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Laporan dijadwalkan di backend.')}</p>

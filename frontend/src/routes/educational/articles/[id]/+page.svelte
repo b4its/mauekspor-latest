@@ -50,7 +50,7 @@
 	<title>{data.article.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Educational" eyebrow="Article detail">
+<AppShell title="Educational" eyebrow={t('Article detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<div class="flex flex-wrap items-center gap-2.5">
@@ -67,11 +67,11 @@
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{data.article.summary}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-2.5 p-0">
-			<Badge>Read</Badge>
-			<span class="font-bold text-muted-foreground">{data.article.readMinutes} minutes</span>
+			<Badge>{t('Baca')}</Badge>
+			<span class="font-bold text-muted-foreground">{data.article.readMinutes} {t('menit')}</span>
 			{#each data.article.tags ?? [] as tag}<Badge variant="outline">{tag}</Badge>{/each}
 			{#if fileUrl}
-				<Button variant="outline" size="sm" href={fileUrl}>Download file</Button>
+				<Button variant="outline" size="sm" href={fileUrl}>{t('Unduh file')}</Button>
 			{/if}
 		</CardContent>
 	</Card>
@@ -100,6 +100,6 @@
 	</article>
 
 	<div class="mt-5">
-		<Button variant="outline" href="/educational">Back to educational</Button>
+		<Button variant="outline" href="/educational">{t('Kembali ke edukasi')}</Button>
 	</div>
 </AppShell>

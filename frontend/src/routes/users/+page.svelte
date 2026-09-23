@@ -136,7 +136,7 @@
 					<span><Badge variant={toneVariant(statusTone(user.status))}>{user.status}</Badge></span>
 					<span class="hidden text-muted-foreground md:block">{user.createdAt}</span>
 					<span class="grid justify-end">
-						<Button size="sm" variant="ghost" href={`/users/${user.id}`}>Open</Button>
+						<Button size="sm" variant="ghost" href={`/users/${user.id}`}>{t('Buka')}</Button>
 						<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() => removeUser(user.id, user.fullName)}>
 							{deleting === user.id ? '...' : t('Hapus')}
 						</Button>

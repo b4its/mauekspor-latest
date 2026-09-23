@@ -74,7 +74,7 @@
 <AppShell title="API Keys" eyebrow={t('Developer access controls')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge>Developer access</Badge>
+			<Badge>{t('Akses developer')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 				{t('Manage API credentials for logistics, finance, and reporting integrations.')}
 			</CardTitle>

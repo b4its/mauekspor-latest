@@ -43,8 +43,8 @@
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="flex-row flex-wrap items-start justify-between gap-3 p-0">
 			<div>
-				<Badge variant="outline">Project workspace</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Manage export-import execution in one place.</CardTitle>
+				<Badge variant="outline">{t('Workspace proyek')}</Badge>
+				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Kelola eksekusi ekspor-impor dalam satu tempat.')}</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 					Each project connects product, HS classification, compliance evidence, quotation,
 					documents, and shipment milestones.

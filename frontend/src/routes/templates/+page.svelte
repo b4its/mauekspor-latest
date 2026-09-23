@@ -57,7 +57,7 @@
 <AppShell title="Templates" eyebrow={t('Reusable export assets')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Template library</Badge>
+			<Badge variant="secondary">{t('Pustaka template')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 				{t('Standardize export documents, emails, workflows, and catalogs.')}
 			</CardTitle>

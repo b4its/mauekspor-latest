@@ -119,7 +119,7 @@
 		</Card>
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Active</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Active')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{activeCount}</strong>
 			</CardContent>
 		</Card>

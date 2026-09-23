@@ -39,7 +39,7 @@
 	async function create() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib: judul, produk, target market, dan MOQ.';
+			error = t('Lengkapi kolom wajib: judul, produk, target market, dan MOQ.');
 			return;
 		}
 		creating = true;
@@ -67,7 +67,7 @@
 			}
 			created = true;
 		} catch {
-			error = 'Gagal membuat katalog. Coba lagi.';
+			error = t('Gagal membuat katalog. Coba lagi.');
 		} finally {
 			creating = false;
 		}
@@ -76,7 +76,7 @@
 	async function getAiRecommendations() {
 		error = '';
 		if (!productId) {
-			error = 'Pilih produk dulu untuk mengambil rekomendasi AI.';
+			error = t('Pilih produk dulu untuk mengambil rekomendasi AI.');
 			return;
 		}
 		generating = true;
@@ -90,7 +90,7 @@
 				if (!tags) tags = ai.technical_specs.slice(0, 3).map((s) => s.value).join(', ');
 			}
 		} catch {
-			error = 'Gagal mengambil rekomendasi AI.';
+			error = t('Gagal mengambil rekomendasi AI.');
 		} finally {
 			generating = false;
 		}
@@ -101,16 +101,15 @@
 	<title>Create Catalog | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Catalogs" eyebrow="Create buyer-facing catalog">
+<AppShell title="Catalogs" eyebrow={t('Create buyer-facing catalog')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Catalog setup</Badge>
+			<Badge variant="secondary">{t('Penyiapan katalog')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Package a product for a target market.
+				{t('Kemas produk untuk pasar target.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				The catalog carries the buyer-facing copy, pricing, MOQ, and spec sheet that quotations
-				reuse. Gunakan tombol AI untuk mengisi deskripsi secara otomatis.
+				{t('Katalog memuat konten untuk pembeli, harga, MOQ, dan lembar spesifikasi yang dipakai ulang kutipan. Gunakan tombol AI untuk mengisi deskripsi secara otomatis.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -118,14 +117,14 @@
 	{#if created}
 		<Card class="grid gap-4">
 			<CardContent class="grid gap-4 p-0">
-				<Badge variant="secondary">Catalog draft created</Badge>
+				<Badge variant="secondary">{t('Draf katalog dibuat')}</Badge>
 				<h3 class="text-xl font-semibold tracking-tight">{title}</h3>
 				<p class="text-muted-foreground">
-					Katalog berhasil disimpan di backend{imageFile ? ' beserta gambar utama' : ''}.
+					{t('Katalog berhasil disimpan di backend')}{imageFile ? ` ${t('beserta gambar utama')}` : ''}.
 				</p>
 				<div class="flex flex-wrap gap-2">
-					<Button href={createdId ? `/catalogs/${createdId}` : '/catalogs'}>Buka katalog</Button>
-					<Button variant="outline" href="/catalogs">Back to catalogs</Button>
+					<Button href={createdId ? `/catalogs/${createdId}` : '/catalogs'}>{t('Buka katalog')}</Button>
+					<Button variant="outline" href="/catalogs">{t('Kembali ke katalog')}</Button>
 				</div>
 			</CardContent>
 		</Card>
@@ -139,18 +138,18 @@
 		>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div class="grid gap-2">
-					<Label for="cat-product">Product</Label>
+					<Label for="cat-product">{t('Produk')}</Label>
 					<NativeSelect id="cat-product" bind:value={productId}>
-						<option value="">Select product...</option>
+						<option value="">{t('Pilih produk...')}</option>
 						{#each products.items as product}
 							<option value={product.id}>{product.name} (HS {product.hs})</option>
 						{/each}
 					</NativeSelect>
 				</div>
 				<div class="grid gap-2">
-					<Label for="cat-project">Project</Label>
+					<Label for="cat-project">{t('Proyek')}</Label>
 					<NativeSelect id="cat-project" bind:value={projectId}>
-						<option value="">Optional...</option>
+						<option value="">{t('Opsional...')}</option>
 						{#each seedProjects as project}
 							<option value={project.id}>{project.name}</option>
 						{/each}
@@ -159,42 +158,42 @@
 			</div>
 			<div class="flex flex-wrap items-center justify-between gap-3">
 				<Button type="button" variant="outline" onclick={getAiRecommendations} disabled={generating}>
-					{generating ? 'Menghasilkan...' : 'Get AI Recommendations'}
+					{generating ? t('Menghasilkan...') : t('Dapatkan Rekomendasi AI')}
 				</Button>
 				{#if productId}
-					<span class="text-xs font-semibold text-muted-foreground">Deskripsi akan diisi otomatis dari produk.</span>
+					<span class="text-xs font-semibold text-muted-foreground">{t('Deskripsi akan diisi otomatis dari produk.')}</span>
 				{/if}
 			</div>
 			<div class="grid gap-2">
-				<Label for="cat-title">Catalog title</Label>
+				<Label for="cat-title">{t('Judul katalog')}</Label>
 				<Input id="cat-title" bind:value={title} placeholder="Premium Gayo Arabica Coffee Beans 250g" />
 			</div>
 			<div class="grid gap-2">
-				<Label for="cat-market">Target market</Label>
-				<Input id="cat-market" bind:value={targetMarket} placeholder="Japan specialty importers" />
+				<Label for="cat-market">{t('Pasar target')}</Label>
+				<Input id="cat-market" bind:value={targetMarket} placeholder={t('Importir khusus Jepang')} />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label for="cat-moq">MOQ</Label><Input id="cat-moq" bind:value={moq} placeholder="2,000 bags" /></div>
-				<div class="grid gap-2"><Label for="cat-lead">Lead time</Label><Input id="cat-lead" bind:value={leadTime} placeholder="21 days after deposit" /></div>
+				<div class="grid gap-2"><Label for="cat-moq">{t('MOQ')}</Label><Input id="cat-moq" bind:value={moq} placeholder="2,000 bags" /></div>
+				<div class="grid gap-2"><Label for="cat-lead">{t('Waktu tunggu')}</Label><Input id="cat-lead" bind:value={leadTime} placeholder={t('21 hari setelah deposit')} /></div>
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label for="cat-price">Price range</Label><Input id="cat-price" bind:value={priceRange} placeholder="FOB USD 20.80-21.40 per bag" /></div>
-				<div class="grid gap-2"><Label for="cat-tags">Tags (comma separated)</Label><Input id="cat-tags" bind:value={tags} placeholder="coffee, single-origin" /></div>
+				<div class="grid gap-2"><Label for="cat-price">{t('Rentang harga')}</Label><Input id="cat-price" bind:value={priceRange} placeholder="FOB USD 20.80-21.40 per bag" /></div>
+				<div class="grid gap-2"><Label for="cat-tags">{t('Tag (dipisahkan koma)')}</Label><Input id="cat-tags" bind:value={tags} placeholder="coffee, single-origin" /></div>
 			</div>
 			<div class="grid gap-2">
-				<Label for="cat-desc">Buyer-facing description</Label>
-				<Textarea id="cat-desc" bind:value={description} rows={3} placeholder="Deskripsi untuk buyer internasional..." />
+				<Label for="cat-desc">{t('Deskripsi untuk pembeli')}</Label>
+				<Textarea id="cat-desc" bind:value={description} rows={3} placeholder={t('Deskripsi untuk buyer internasional...')} />
 			</div>
 			<div class="grid gap-2">
-				<Label for="cat-img">Gambar utama (opsional)</Label>
+				<Label for="cat-img">{t('Gambar utama (opsional)')}</Label>
 				<input id="cat-img" type="file" accept="image/*" class="rounded-lg border bg-muted/30 px-3 py-2 text-sm" onchange={(e) => (imageFile = (e.currentTarget as HTMLInputElement).files?.[0] ?? null)} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}
 
 			<div class="flex flex-wrap gap-2">
-				<Button variant="outline" href="/catalogs">Cancel</Button>
-				<Button type="submit" disabled={creating}>{creating ? 'Creating...' : 'Create catalog draft'}</Button>
+				<Button variant="outline" href="/catalogs">{t('Batal')}</Button>
+				<Button type="submit" disabled={creating}>{creating ? t('Membuat...') : t('Buat draf katalog')}</Button>
 			</div>
 		</form>
 	{/if}

@@ -66,7 +66,7 @@
 				<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Critical')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{criticalCount}</strong></CardContent>
 			</Card>
 			<Card class="w-fit">
-				<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Verified</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{verifiedCount}</strong></CardContent>
+				<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Verified')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{verifiedCount}</strong></CardContent>
 			</Card>
 		</CardContent>
 	</Card>

@@ -75,7 +75,7 @@
 <AppShell title="Support" eyebrow={t('Help desk and product support')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Support desk</Badge>
+			<Badge variant="outline">{t('Meja dukungan')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Get help with export workflows, integrations, billing, and platform issues.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Track support tickets from creation to resolution while keeping each request tied to a clear category and owner.')}</CardDescription>
 		</CardHeader>

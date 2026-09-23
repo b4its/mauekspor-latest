@@ -82,7 +82,7 @@
 <AppShell title="Calendar" eyebrow={t('Trade milestone schedule')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Milestone calendar</Badge>
+			<Badge variant="outline">{t('Kalender milestone')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 				{t('Keep every export deadline visible before it becomes a blocker.')}
 			</CardTitle>

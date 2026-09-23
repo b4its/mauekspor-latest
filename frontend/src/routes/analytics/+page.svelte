@@ -89,7 +89,7 @@
 <AppShell title="Analytics" eyebrow={t('Executive trade intelligence')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Control tower</Badge>
+			<Badge variant="outline">{t('Menara kendali')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('One executive view across pipeline, readiness, cash, risk, and delivery.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Aggregate signals from projects, buyers, suppliers, compliance, payments, documents, and shipments to prioritize the next trade actions.')}</CardDescription>
 		</CardHeader>
