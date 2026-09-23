@@ -8,8 +8,13 @@
 	import { statusTone } from '$lib/utils/format';
 	import { listReports, generateReport } from '$lib/api/reports';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Executive', 'Compliance', 'Financial', 'Shipment'];
+
+	function trType(x: string) {
+		return t(x === 'All' ? 'Semua' : x === 'Executive' ? 'Eksekutif' : x === 'Compliance' ? 'Kepatuhan' : x === 'Financial' ? 'Keuangan' : 'Pengiriman');
+	}
 	let activeFilter = $state('All');
 	let query = $state('');
 	let generated = $state(false);
@@ -45,7 +50,7 @@
 			if (target) await generateReport(target.id);
 			generated = true;
 		} catch {
-			error = 'Gagal generate laporan.';
+			error = t('Gagal generate laporan.');
 		} finally {
 			generating = false;
 		}
@@ -56,16 +61,16 @@
 	<title>Reports | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Reports" eyebrow="Export intelligence reporting">
+<AppShell title="Reports" eyebrow={t('Pelaporan intelijen ekspor')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Report builder</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Generate trade reports from live export workspace signals.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Package executive, compliance, financial, and shipment insights for management, buyers, finance, and operations.</CardDescription>
+			<Badge variant="outline">{t('Pembuat laporan')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Buat laporan dagang dari sinyal ruang kerja ekspor secara langsung.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Kemas wawasan eksekutif, kepatuhan, keuangan, dan pengiriman untuk manajemen, buyer, finance, dan operasional.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleGenerate} disabled={generating}>{generated ? 'Report generated' : generating ? 'Generating...' : 'Generate report'}</Button>
-			<Badge>Ready {readyCount}</Badge>
+			<Button onclick={handleGenerate} disabled={generating}>{generated ? t('Laporan berhasil dibuat') : generating ? t('Membuat...') : t('Buat laporan')}</Button>
+			<Badge>{t('Siap')} {readyCount}</Badge>
 		</CardContent>
 	</Card>
 
@@ -75,18 +80,18 @@
 
 	{#if generated}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Report generated.</strong>
-			<span class="block text-sm text-muted-foreground">Laporan dibuat di backend.</span>
+			<strong class="block">{t('Laporan berhasil dibuat.')}</strong>
+			<span class="block text-sm text-muted-foreground">{t('Laporan dibuat di backend.')}</span>
 		</div>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">
 			{#each filters as filter}
-				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
+				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trType(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search report, owner, type..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Cari laporan, pemilik, jenis...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -100,15 +105,15 @@
 					<h3 class="mt-3 text-2xl font-bold tracking-tight">{report.title}</h3>
 					<p class="mt-1 text-sm text-muted-foreground">{report.period} · {report.owner}</p>
 					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Sections<strong class="mt-1 block text-sm font-bold text-foreground">{report.sections.length}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Insights<strong class="mt-1 block text-sm font-bold text-foreground">{report.insights.length}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Updated<strong class="mt-1 block text-sm font-bold text-foreground">{report.updatedAt}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Report ID<strong class="mt-1 block text-sm font-bold text-foreground">{report.id}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.sections.length}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Wawasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.insights.length}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Diperbarui')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.updatedAt}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ID Laporan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.id}</strong></div>
 					</div>
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No report matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada laporan yang cocok dengan pencarian.')}</div>
 		{/each}
 	</div>
 </AppShell>
