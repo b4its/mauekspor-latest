@@ -37,6 +37,13 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 		window.location.href = '/login';
 	}
 
+	function trGroup(g: string) {
+		const map: Record<string, string> = {
+			Navigation: 'Navigasi', 'Trade Project': 'Proyek Dagang', Product: 'Produk', Buyer: 'Pembeli', Supplier: 'Pemasok', Task: 'Tugas', Report: 'Laporan', Integration: 'Integrasi', Template: 'Template', Automation: 'Automasi', Knowledge: 'Pengetahuan', Calendar: 'Kalender', File: 'File', Message: 'Pesan', Billing: 'Tagihan', Support: 'Dukungan', 'API Key': 'Kunci API', 'Business Profile': 'Profil Bisnis', User: 'Pengguna', 'Buyer Request': 'Permintaan Pembeli', Forwarder: 'Forwarder', Educational: 'Edukasi', Chat: 'Chat', 'Export Analysis': 'Analisis Ekspor'
+		};
+		return t(map[g] ?? g);
+	}
+
 	let commands = $derived([
 		...navItems.map((item) => ({ label: item.label, href: item.href, group: 'Navigation' })),
 		...projects.map((project) => ({ label: project.name, href: `/trade-projects/${project.id}`, group: 'Trade Project' })),
@@ -232,14 +239,14 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	<Dialog.Root bind:open={commandOpen}>
 		<Dialog.Content class="sm:max-w-xl">
 			<Dialog.Header>
-				<Dialog.Title class="sr-only">Command palette</Dialog.Title>
-				<Dialog.Description class="sr-only">Search navigation, projects, and records.</Dialog.Description>
+				<Dialog.Title class="sr-only">{t('Palet perintah')}</Dialog.Title>
+				<Dialog.Description class="sr-only">{t('Cari navigasi, proyek, dan catatan.')}</Dialog.Description>
 			</Dialog.Header>
 			<div class="flex items-center gap-2 rounded-md border border-border bg-secondary px-2">
 				<SearchIcon class="size-4 shrink-0 text-muted-foreground" />
 				<Input
 					bind:value={commandQuery}
-					placeholder="Search navigation, projects, products..."
+					placeholder={t('Cari navigasi, proyek, produk...')}
 					class="border-0 bg-transparent focus-visible:ring-0 focus-visible:border-0"
 				/>
 			</div>
@@ -253,11 +260,11 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 						<span class="font-medium">{command.label}</span>
 						<span class="flex items-center gap-2 text-xs text-muted-foreground">
 							{#if command.sub}<span>{command.sub}</span>{/if}
-							<span>{command.group}</span>
+							<span>{trGroup(command.group)}</span>
 						</span>
 					</a>
 				{:else}
-					<p class="px-2.5 py-4 text-center text-sm text-muted-foreground">No command found.</p>
+					<p class="px-2.5 py-4 text-center text-sm text-muted-foreground">{t('Tidak ada perintah ditemukan.')}</p>
 				{/each}
 			</div>
 		</Dialog.Content>
@@ -266,8 +273,8 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	<Sheet.Root bind:open={activityOpen}>
 		<Sheet.Content side="right" class="gap-0 sm:max-w-sm">
 			<Sheet.Header>
-				<Sheet.Title>Activity Center</Sheet.Title>
-				<Sheet.Description>Operational signals across your export workspace.</Sheet.Description>
+				<Sheet.Title>{t('Pusat Aktivitas')}</Sheet.Title>
+				<Sheet.Description>{t('Sinyal operasional di seluruh workspace ekspor Anda.')}</Sheet.Description>
 			</Sheet.Header>
 			<div class="flex flex-col gap-2 px-4 pb-4">
 				{#each activities as activity}
@@ -296,7 +303,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 			<Sheet.Footer class="px-4 sm:justify-start">
 				<Button variant="outline" size="sm" onclick={() => (activityOpen = false)}>
 					<ArrowRightLeftIcon class="size-3.5" />
-					Close
+					{t('Tutup')}
 				</Button>
 			</Sheet.Footer>
 		</Sheet.Content>

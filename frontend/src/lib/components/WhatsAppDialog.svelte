@@ -2,6 +2,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { openWhatsApp, getWhatsAppTemplates } from '$lib/utils/whatsapp';
+	import { t } from '$lib/i18n.svelte';
 
 	let {
 		phone = '',
@@ -24,12 +25,12 @@
 
 <Dialog.Root bind:open>
 	<Dialog.Trigger>
-		<Button variant="outline" size="sm">Hubungi via WhatsApp</Button>
+		<Button variant="outline" size="sm">{t('Hubungi via WhatsApp')}</Button>
 	</Dialog.Trigger>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
-			<Dialog.Title>Kirim pesan WhatsApp</Dialog.Title>
-			<Dialog.Description>Pilih template pesan untuk {contactName} ({company}).</Dialog.Description>
+			<Dialog.Title>{t('Kirim pesan WhatsApp')}</Dialog.Title>
+			<Dialog.Description>{t('Pilih template pesan untuk')} {contactName} ({company}).</Dialog.Description>
 		</Dialog.Header>
 		<div class="grid gap-2 px-6 pb-4">
 			{#each templates as template}
@@ -44,9 +45,9 @@
 		</div>
 		<Dialog.Footer class="flex justify-between gap-2">
 			<Dialog.Close>
-				<Button variant="outline">Batal</Button>
+				<Button variant="outline">{t('Batal')}</Button>
 			</Dialog.Close>
-			<Button onclick={send} disabled={!phone}>Buka WhatsApp</Button>
+			<Button onclick={send} disabled={!phone}>{t('Buka WhatsApp')}</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

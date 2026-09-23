@@ -135,7 +135,7 @@
 	<Sidebar.Header>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
-				<Sidebar.MenuButton size="lg" tooltipContent="MauEkspor Dashboard">
+				<Sidebar.MenuButton size="lg" tooltipContent={t('MauEkspor Dashboard')}>
 					{#snippet child({ props }: { props: Record<string, unknown> })}
 						<a {...props} href="/dashboard">
 							<div
@@ -145,7 +145,7 @@
 							</div>
 							<div class="grid flex-1 text-left text-sm leading-tight">
 								<span class="truncate font-semibold text-sidebar-foreground">MauEkspor</span>
-								<span class="truncate text-xs text-sidebar-foreground/60">Trade OS</span>
+								<span class="truncate text-xs text-sidebar-foreground/60">{t('Trade OS')}</span>
 							</div>
 						</a>
 					{/snippet}
@@ -233,10 +233,10 @@
 		>
 			<Badge variant="outline" class="gap-1 border-primary/30 bg-primary/10 text-primary">
 				<SparklesIcon class="size-3" />
-				<span>AI copilot active</span>
+				<span>{t('AI copilot active')}</span>
 			</Badge>
 			<p class="mt-2 text-[13px] leading-snug text-sidebar-foreground/70">
-				Resolve label evidence for Japan before quotation approval.
+				{t('Resolve label evidence for Japan before quotation approval.')}
 			</p>
 		</div>
 
@@ -288,7 +288,7 @@
 								{#snippet child({ props })}
 									<a {...props} href="/compliance">
 										<ClipboardCheckIcon class="text-muted-foreground" />
-										Open checklist
+										{t('Open checklist')}
 									</a>
 								{/snippet}
 							</DropdownMenu.Item>
@@ -299,7 +299,7 @@
 								{#snippet child({ props })}
 									<a {...props} href="/users">
 										<BadgeCheckIcon class="text-muted-foreground" />
-										Account
+										{t('Account')}
 									</a>
 								{/snippet}
 							</DropdownMenu.Item>
@@ -307,7 +307,7 @@
 								{#snippet child({ props })}
 									<a {...props} href="/billing">
 										<CreditCardIcon class="text-muted-foreground" />
-										Billing
+										{t('Billing')}
 									</a>
 								{/snippet}
 							</DropdownMenu.Item>
@@ -315,7 +315,7 @@
 								{#snippet child({ props })}
 									<a {...props} href="/notifications">
 										<BellIcon class="text-muted-foreground" />
-										Notifications
+										{t('Notifications')}
 									</a>
 								{/snippet}
 							</DropdownMenu.Item>
@@ -325,7 +325,7 @@
 							{#snippet child({ props })}
 								<a {...props} href="/login">
 									<LogOutIcon class="text-muted-foreground" />
-									Log out
+									{t('Logout')}
 								</a>
 							{/snippet}
 						</DropdownMenu.Item>
