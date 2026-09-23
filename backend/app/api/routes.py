@@ -1,0 +1,1416 @@
+"""Semua endpoint API. Prefix /api/v1, respons # {"data": T, "meta": {}}."""
+
+import os
+import pathlib
+import time
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, File, Form
+from fastapi.responses import FileResponse
+
+from app import ai, db
+from app.core.security import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    create_refresh_token,
+    get_current_user,
+    decode_token,
+)
+from app.schemas import models as sc
+
+router = APIRouter(prefix="/api/v1")
+
+
+def _serialize(record):
+    out = {k: v for k, v in dict(record).items() if not k.startswith("__")}
+    out.pop("password", None)
+    return out
+
+
+def _list_query(table: str) -> dict:
+    return {"data": [_serialize(r) for r in db.all(table)], "meta": {}}
+
+
+def _one(record) -> dict:
+    db.save(record)
+    return {"data": _serialize(record), "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# HEALTH & ROOT
+# ----------------------------------------------------------------------------
+@router.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@router.get("")
+def api_root():
+    return {"data": {"app": "MauEkspor API", "version": "0.2.0", "docs": "/docs"}, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# AUTH
+# ----------------------------------------------------------------------------
+@router.post("/auth/login/")
+def login(payload: sc.LoginPayload, response: Response):
+    user = db.get_by("users", email=str(payload.email))
+    if not user or not verify_password(payload.password, user["password"]):
+        raise HTTPException(401, "Incorrect email or password")
+    access, refresh = _issue_tokens(user, response)
+    return {"data": _serialize(user), "meta": {"access_token": access, "refresh_token": refresh}}
+
+
+def _issue_tokens(user: dict, response: Response) -> tuple[str, str]:
+    access = create_access_token(user)
+    refresh = create_refresh_token(user)
+    db.insert("refresh_tokens", {
+        "id": db.gen_id("refresh_tokens", "RFT"),
+        "token": refresh,
+        "userId": user["id"],
+        "createdAt": "2026-08-07",
+        "expiresAt": None,
+        "revoked": False,
+    })
+    response.set_cookie("access_token", access, httponly=True, samesite="lax", max_age=3600)
+    response.set_cookie("refresh_token", refresh, httponly=True, samesite="lax", max_age=7 * 86400)
+    return access, refresh
+
+
+@router.post("/auth/register/")
+def register(payload: sc.RegisterPayload, response: Response):
+    if db.get_by("users", email=str(payload.email)):
+        raise HTTPException(409, "Email already registered")
+    user = db.insert("users", {
+        "id": db.gen_id("users", "U"),
+        "email": str(payload.email),
+        "fullName": payload.name,
+        "name": payload.name,
+        "role": payload.role,
+        "organization": payload.organization,
+        "password": hash_password(payload.password),
+        "status": "Active",
+        "createdAt": "2026-08-07",
+        "lastLogin": "new",
+    })
+    access, _ = _issue_tokens(user, response)
+    return {"data": _serialize(user), "meta": {"access_token": access}}
+
+
+@router.get("/auth/me/")
+def me(current_user: dict = Depends(get_current_user)):
+    return _one(current_user)
+
+
+@router.post("/auth/logout/")
+def logout(request: Request, response: Response):
+    token = request.cookies.get("refresh_token") or request.headers.get("X-Refresh-Token")
+    if token:
+        for rec in db.find("refresh_tokens", token=token):
+            rec["revoked"] = True
+            db.save(rec)
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return {"data": {"status": "logged_out"}, "meta": {}}
+
+
+@router.post("/auth/refresh/")
+def refresh(request: Request, response: Response):
+    token = request.cookies.get("refresh_token") or request.headers.get("X-Refresh-Token")
+    if not token:
+        raise HTTPException(401, "No refresh token")
+    payload = decode_token(token)
+    if payload.get("type") != "refresh":
+        raise HTTPException(401, "Not a refresh token")
+    session = db.get_by("refresh_tokens", token=token)
+    if not session or session.get("revoked"):
+        raise HTTPException(401, "Refresh token revoked or unknown")
+    user = db.get("users", payload["sub"])
+    if not user:
+        raise HTTPException(401, "User not found")
+    session["revoked"] = True
+    db.save(session)
+    access, new_refresh = _issue_tokens(user, response)
+    return {"data": _serialize(user), "meta": {"access_token": access, "refresh_token": new_refresh}}
+
+
+# ----------------------------------------------------------------------------
+# USERS
+# ----------------------------------------------------------------------------
+@router.get("/users/")
+def list_users():
+    return _list_query("users")
+
+
+@router.get("/users/{user_id}/")
+def get_user(user_id: str):
+    record = db.get("users", user_id)
+    if not record:
+        raise HTTPException(404, "User not found")
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# PRODUCTS
+# ----------------------------------------------------------------------------
+@router.get("/products/")
+def list_products():
+    return _list_query("products")
+
+
+@router.get("/products/{product_id}/")
+def get_product(product_id: str):
+    record = db.get("products", product_id)
+    if not record:
+        raise HTTPException(404, "Product not found")
+    return _one(record)
+
+
+@router.post("/products/")
+def create_product(payload: sc.CreateProductPayload):
+    data = payload.model_dump()
+    data.update({
+        "id": db.gen_id("products", "PRD"),
+        "status": "Needs HS Review",
+        "hs": "TBD",
+        "certificates": [],
+        "readiness": 40,
+        "updatedAt": "now",
+    })
+    return _one(db.insert("products", data))
+
+
+@router.post("/products/{product_id}/enrich/")
+def enrich_product(product_id: str):
+    record = db.get("products", product_id)
+    if not record:
+        raise HTTPException(404, "Product not found")
+    record["status"] = "Enriched"
+    if not record.get("hs") or record["hs"] == "TBD":
+        enriched = ai.ask_json(
+            "You are an Indonesia export HS code classifier. Return JSON with keys hsCode, confidence, reason.",
+            f"Product: {record.get('name', '')} ({record.get('category', '')} - {record.get('description', '')})",
+            kind="classify",
+        )
+        if enriched and enriched.get("hsCode"):
+            record["hs"] = enriched["hsCode"]
+        if enriched and enriched.get("confidence") is not None:
+            record.setdefault("hsConfidence", enriched["confidence"])
+    record["readiness"] = min(record.get("readiness", 0) + 10, 100)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# TRADE PROJECTS
+# ----------------------------------------------------------------------------
+@router.get("/trade-projects/")
+def list_projects():
+    return _list_query("projects")
+
+
+@router.get("/trade-projects/{project_id}/")
+def get_project(project_id: str):
+    record = db.get("projects", project_id)
+    if not record:
+        raise HTTPException(404, "Project not found")
+    return _one(record)
+
+
+@router.post("/trade-projects/")
+def create_project(payload: sc.CreateTradeProjectPayload):
+    data = payload.model_dump()
+    data.update({
+        "id": db.gen_id("projects", "EXP"),
+        "stage": "Scoping",
+        "readiness": 25,
+        "risk": "Low",
+        "hsCode": "TBD",
+        "port": "TBD",
+        "payment": "TBD",
+        "updatedAt": "now",
+    })
+    data.setdefault("value", data.get("targetValue") or 0)
+    return _one(db.insert("projects", data))
+
+
+# ----------------------------------------------------------------------------
+# BUSINESS PROFILES
+# ----------------------------------------------------------------------------
+@router.get("/business-profiles/")
+def list_profiles():
+    return _list_query("business_profiles")
+
+
+@router.get("/business-profiles/{profile_id}/")
+def get_profile(profile_id: str):
+    record = db.get("business_profiles", profile_id)
+    if not record:
+        raise HTTPException(404, "Business profile not found")
+    return _one(record)
+
+
+@router.post("/business-profiles/")
+def create_profile(payload: sc.CreateBusinessProfilePayload):
+    data = payload.model_dump()
+    data["id"] = db.gen_id("business_profiles", "BIZ")
+    data["updatedAt"] = "now"
+    return _one(db.insert("business_profiles", data))
+
+
+@router.patch("/business-profiles/{profile_id}/")
+def update_profile(profile_id: str, payload: dict):
+    record = db.update("business_profiles", profile_id, payload)
+    if not record:
+        raise HTTPException(404, "Business profile not found")
+    return _one(record)
+
+
+@router.post("/business-profiles/{profile_id}/certifications/")
+def update_certifications(profile_id: str, payload: sc.UpdateCertificationsPayload):
+    record = db.get("business_profiles", profile_id)
+    if not record:
+        raise HTTPException(404, "Business profile not found")
+    record["certifications"] = payload.certifications
+    record["readiness"] = min(40 + len(payload.certifications) * 8, 100)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# BUYERS
+# ----------------------------------------------------------------------------
+@router.get("/buyers/")
+def list_buyers():
+    return _list_query("buyers")
+
+
+@router.get("/buyers/{buyer_id}/")
+def get_buyer(buyer_id: str):
+    record = db.get("buyers", buyer_id)
+    if not record:
+        raise HTTPException(404, "Buyer not found")
+    return _one(record)
+
+
+@router.post("/buyers/")
+def create_buyer(payload: sc.CreateBuyerPayload):
+    data = payload.model_dump()
+    data.update({
+        "id": db.gen_id("buyers", "BUY"),
+        "status": "Lead",
+        "fitScore": 50,
+        "estimatedAnnualValue": 0,
+        "notes": [],
+        "signals": [],
+        "updatedAt": "now",
+        "paymentProfile": "TBD",
+        "lastContact": "New",
+        "nextStep": "Qualify the lead",
+        "contact": {"name": payload.name, "role": "Contact", "email": "", "phone": ""},
+    })
+    return _one(db.insert("buyers", data))
+
+
+@router.post("/buyers/{buyer_id}/qualify/")
+def qualify_buyer(buyer_id: str):
+    record = db.get("buyers", buyer_id)
+    if not record:
+        raise HTTPException(404, "Buyer not found")
+    record["status"] = "Qualified"
+    record["fitScore"] = max(record.get("fitScore", 50), 60)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.post("/buyers/{buyer_id}/contacts/")
+def log_buyer_contact(buyer_id: str, payload: dict):
+    record = db.get("buyers", buyer_id)
+    if not record:
+        raise HTTPException(404, "Buyer not found")
+    record.setdefault("notes", []).append(payload.get("note", ""))
+    record["lastContact"] = "now"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# BUYER REQUESTS
+# ----------------------------------------------------------------------------
+@router.get("/buyer-requests/")
+def list_buyer_requests():
+    return _list_query("buyer_requests")
+
+
+@router.get("/buyer-requests/{request_id}/")
+def get_buyer_request(request_id: str):
+    record = db.get("buyer_requests", request_id)
+    if not record:
+        raise HTTPException(404, "Buyer request not found")
+    return _one(record)
+
+
+@router.post("/buyer-requests/")
+def create_buyer_request(payload: sc.CreateBuyerRequestPayload):
+    data = payload.model_dump()
+    data["id"] = db.gen_id("buyer_requests", "BRQ")
+    data["status"] = "New"
+    return _one(db.insert("buyer_requests", data))
+
+
+@router.post("/buyer-requests/{request_id}/match/")
+def match_buyer_request(request_id: str):
+    record = db.get("buyer_requests", request_id)
+    if not record:
+        raise HTTPException(404, "Buyer request not found")
+    record["status"] = "Matched"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# FORWARDERS
+# ----------------------------------------------------------------------------
+@router.get("/forwarders/")
+def list_forwarders():
+    return _list_query("forwarders")
+
+
+@router.get("/forwarders/{forwarder_id}/")
+def get_forwarder(forwarder_id: str):
+    record = db.get("forwarders", forwarder_id)
+    if not record:
+        raise HTTPException(404, "Forwarder not found")
+    return _one(record)
+
+
+@router.post("/forwarders/")
+def create_forwarder(payload: sc.CreateForwarderPayload):
+    data = payload.model_dump()
+    data.update({
+        "id": db.gen_id("forwarders", "FWD"),
+        "status": "In Review",
+        "onTimeRate": 0,
+        "quoteSpeed": "TBD",
+        "lanes": [],
+        "updatedAt": "now",
+    })
+    return _one(db.insert("forwarders", data))
+
+
+@router.post("/forwarders/{forwarder_id}/request-quote/")
+def request_forwarder_quote(forwarder_id: str):
+    record = db.get("forwarders", forwarder_id)
+    if not record:
+        raise HTTPException(404, "Forwarder not found")
+    record["lastQuoteRequest"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# CATALOGS
+# ----------------------------------------------------------------------------
+@router.get("/catalogs/")
+def list_catalogs():
+    return _list_query("catalogs")
+
+
+@router.get("/catalogs/{catalog_id}/")
+def get_catalog(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    return _one(record)
+
+
+@router.post("/catalogs/")
+def create_catalog(payload: sc.CreateCatalogPayload):
+    data = payload.model_dump()
+    data.update({
+        "id": db.gen_id("catalogs", "CAT"),
+        "status": "Draft",
+        "readiness": 40,
+        "incoterms": ["EXW", "FOB"],
+        "description": "",
+        "highlights": [],
+        "specifications": [],
+        "images": 0,
+        "variants": [],
+        "updatedAt": "now",
+    })
+    return _one(db.insert("catalogs", data))
+
+
+@router.post("/catalogs/{catalog_id}/publish/")
+def publish_catalog(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    record["status"] = "Published"
+    record["readiness"] = max(record.get("readiness", 0), 95)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.post("/catalogs/{catalog_id}/generate-description/")
+def generate_catalog_description(catalog_id: str):
+    record = db.get("catalogs", catalog_id)
+    if not record:
+        raise HTTPException(404, "Catalog not found")
+    description = ai.complete(
+        "You write compelling B2B product copy for Indonesian export catalogs targeting overseas buyers. Reply in Indonesian, max 3 sentences.",
+        f"Product: {record.get('name', '')} - {record.get('description', '')}",
+        kind="catalog_description",
+    )
+    record["description"] = description or "AI-enhanced buyer copy generated for the target market."
+    record["status"] = "Needs Review"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# COSTING
+# ----------------------------------------------------------------------------
+@router.get("/costing/")
+def list_costing():
+    return _list_query("costing")
+
+
+@router.get("/costing/{costing_id}/")
+def get_costing(costing_id: str):
+    record = db.get("costing", costing_id)
+    if not record:
+        raise HTTPException(404, "Costing not found")
+    return _one(record)
+
+
+@router.post("/costing/")
+def create_costing(payload: sc.CreateCostingPayload):
+    data = payload.model_dump()
+    margin = payload.margin if payload.margin is not None else payload.targetMargin
+    data.update({
+        "id": db.gen_id("costing", "CST"),
+        "margin": margin,
+        "currency": "USD",
+        "status": "Draft",
+        "lines": [],
+        "risks": [],
+        "updatedAt": "now",
+    })
+    return _one(db.insert("costing", data))
+
+
+@router.post("/costing/{costing_id}/recalculate/")
+def recalculate_costing(costing_id: str):
+    record = db.get("costing", costing_id)
+    if not record:
+        raise HTTPException(404, "Costing not found")
+    record["status"] = "Ready"
+    record["confidence"] = max(record.get("confidence", 0), 80)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# MARKETS
+# ----------------------------------------------------------------------------
+@router.get("/markets/")
+def list_markets():
+    return _list_query("markets")
+
+
+@router.get("/markets/{market_id}/")
+def get_market(market_id: str):
+    record = db.get("markets", market_id)
+    if not record:
+        raise HTTPException(404, "Market not found")
+    return _one(record)
+
+
+@router.post("/markets/")
+def create_market(payload: sc.CreateMarketPayload):
+    data = payload.model_dump()
+    data.update({"id": db.gen_id("markets", "MKT"), "marketScore": 50, "status": "Needs Research", "updatedAt": "now"})
+    return _one(db.insert("markets", data))
+
+
+@router.post("/markets/{market_id}/refresh/")
+def refresh_market(market_id: str):
+    record = db.get("markets", market_id)
+    if not record:
+        raise HTTPException(404, "Market not found")
+    insight = ai.ask_json(
+        "You are a market intelligence analyst for Indonesian exports. Return JSON with score (0-100) and insight.",
+        f"Market: {record.get('destination', '')} for {record.get('products', '')}",
+        kind="market_insight",
+    )
+    if insight and isinstance(insight.get("score"), (int, float)):
+        record["marketScore"] = max(0, min(100, int(insight["score"])))
+    else:
+        record["marketScore"] = min(record.get("marketScore", 0) + 5, 100)
+    if insight and insight.get("insight"):
+        record.setdefault("insight", insight["insight"])
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# RFQ
+# ----------------------------------------------------------------------------
+@router.get("/rfqs/")
+def list_rfqs():
+    return _list_query("rfqs")
+
+
+@router.get("/rfqs/{rfq_id}/")
+def get_rfq(rfq_id: str):
+    record = db.get("rfqs", rfq_id)
+    if not record:
+        raise HTTPException(404, "RFQ not found")
+    return _one(record)
+
+
+@router.post("/rfqs/")
+def create_rfq(payload: sc.CreateRFQPayload):
+    data = payload.model_dump()
+    data.update({
+        "id": db.gen_id("rfqs", "RFQ"),
+        "status": "Open",
+        "matchScore": 0,
+        "requirements": [],
+        "matches": [],
+        "updatedAt": "now",
+    })
+    return _one(db.insert("rfqs", data))
+
+
+@router.post("/rfqs/{rfq_id}/shortlist/")
+def shortlist_rfq(rfq_id: str, payload: dict):
+    record = db.get("rfqs", rfq_id)
+    if not record:
+        raise HTTPException(404, "RFQ not found")
+    record.setdefault("matches", [])
+    record["matches"].append({"supplier": payload.get("supplier", ""), "score": 50, "reason": "Shortlisted"})
+    record["status"] = "Matching"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# QUOTATIONS
+# ----------------------------------------------------------------------------
+@router.get("/quotations/")
+def list_quotations():
+    return _list_query("quotations")
+
+
+@router.get("/quotations/{quotation_id}/")
+def get_quotation(quotation_id: str):
+    record = db.get("quotations", quotation_id)
+    if not record:
+        raise HTTPException(404, "Quotation not found")
+    return _one(record)
+
+
+@router.post("/quotations/")
+def create_quotation(payload: sc.CreateQuotationPayload):
+    data = payload.model_dump()
+    data.update({"id": db.gen_id("quotations", "Q"), "status": "Draft", "currency": "USD", "value": 0, "costLines": [], "updatedAt": "now"})
+    return _one(db.insert("quotations", data))
+
+
+@router.post("/quotations/{quotation_id}/accept/")
+def accept_quotation(quotation_id: str):
+    record = db.get("quotations", quotation_id)
+    if not record:
+        raise HTTPException(404, "Quotation not found")
+    record["status"] = "Accepted"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# ORDERS
+# ----------------------------------------------------------------------------
+@router.get("/orders/")
+def list_orders():
+    return _list_query("orders")
+
+
+@router.get("/orders/{order_id}/")
+def get_order(order_id: str):
+    record = db.get("orders", order_id)
+    if not record:
+        raise HTTPException(404, "Order not found")
+    return _one(record)
+
+
+@router.post("/orders/")
+def create_order(payload: sc.CreateOrderPayload):
+    data = payload.model_dump()
+    data.update({"id": db.gen_id("orders", "ORD"), "status": "Draft", "updatedAt": "now"})
+    return _one(db.insert("orders", data))
+
+
+@router.post("/orders/{order_id}/confirm/")
+def confirm_order(order_id: str):
+    record = db.get("orders", order_id)
+    if not record:
+        raise HTTPException(404, "Order not found")
+    record["status"] = "Confirmed"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# COMPLIANCE
+# ----------------------------------------------------------------------------
+@router.get("/compliance/requirements/")
+def list_compliance():
+    return _list_query("compliance_requirements")
+
+
+@router.get("/compliance/requirements/{req_id}/")
+def get_compliance(req_id: str):
+    record = db.get("compliance_requirements", req_id)
+    if not record:
+        raise HTTPException(404, "Compliance requirement not found")
+    return _one(record)
+
+
+@router.post("/compliance/requirements/{req_id}/evidence/")
+def upload_compliance_evidence(req_id: str, payload: dict):
+    record = db.get("compliance_requirements", req_id)
+    if not record:
+        raise HTTPException(404, "Compliance requirement not found")
+    record["currentEvidence"] = payload.get("description") or payload.get("note") or record.get("currentEvidence")
+    record["status"] = "Evidence Uploaded"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# DOCUMENTS
+# ----------------------------------------------------------------------------
+@router.get("/documents/")
+def list_documents():
+    return _list_query("documents")
+
+
+@router.get("/documents/{document_id}/")
+def get_document(document_id: str):
+    record = db.get("documents", document_id)
+    if not record:
+        raise HTTPException(404, "Document not found")
+    return _one(record)
+
+
+@router.post("/documents/generate/")
+def generate_document(payload: sc.GenerateDocumentPayload):
+    record = db.insert("documents", {
+        "id": db.gen_id("documents", "DOC"),
+        "projectId": payload.projectId,
+        "type": payload.type,
+        "status": "Draft",
+        "version": "v1.0",
+        "owner": "System",
+        "updatedAt": "now",
+        "validationScore": 0,
+        "fields": payload.data,
+        "checks": [],
+    })
+    return _one(record)
+
+
+@router.post("/documents/{document_id}/approve/")
+def approve_document(document_id: str):
+    record = db.get("documents", document_id)
+    if not record:
+        raise HTTPException(404, "Document not found")
+    record["status"] = "Approved"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# SHIPMENTS
+# ----------------------------------------------------------------------------
+@router.get("/shipments/")
+def list_shipments():
+    return _list_query("shipments")
+
+
+@router.get("/shipments/{shipment_id}/")
+def get_shipment(shipment_id: str):
+    record = db.get("shipments", shipment_id)
+    if not record:
+        raise HTTPException(404, "Shipment not found")
+    return _one(record)
+
+
+@router.post("/shipments/{shipment_id}/milestones/")
+def update_shipment_milestone(shipment_id: str, payload: dict):
+    record = db.get("shipments", shipment_id)
+    if not record:
+        raise HTTPException(404, "Shipment not found")
+    record.setdefault("milestones", [])
+    record["milestones"].append({"label": payload.get("milestone", "Updated"), "status": "Done"})
+    record["progress"] = min(record.get("progress", 0) + 15, 100)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.post("/shipments/{shipment_id}/exceptions/resolve/")
+def resolve_shipment_exception(shipment_id: str):
+    record = db.get("shipments", shipment_id)
+    if not record:
+        raise HTTPException(404, "Shipment not found")
+    record["status"] = "In Transit"
+    record.pop("exception", None)
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# PAYMENTS
+# ----------------------------------------------------------------------------
+@router.get("/payments/")
+def list_payments():
+    return _list_query("payments")
+
+
+@router.get("/payments/{payment_id}/")
+def get_payment(payment_id: str):
+    record = db.get("payments", payment_id)
+    if not record:
+        raise HTTPException(404, "Payment not found")
+    return _one(record)
+
+
+@router.post("/payments/{payment_id}/mark-received/")
+def mark_payment_received(payment_id: str, payload: dict):
+    record = db.get("payments", payment_id)
+    if not record:
+        raise HTTPException(404, "Payment not found")
+    amount = payload.get("amount") or record.get("paid") or record.get("amount", 0)
+    record["paid"] = amount
+    record["status"] = "Settled" if amount >= record.get("amount", amount) else "Deposit Paid"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.post("/payments/{payment_id}/send-reminder/")
+def send_payment_reminder(payment_id: str):
+    record = db.get("payments", payment_id)
+    if not record:
+        raise HTTPException(404, "Payment not found")
+    record["remindersSent"] = record.get("remindersSent", 0) + 1
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# TASKS
+# ----------------------------------------------------------------------------
+@router.get("/tasks/")
+def list_tasks():
+    return _list_query("tasks")
+
+
+@router.get("/tasks/{task_id}/")
+def get_task(task_id: str):
+    record = db.get("tasks", task_id)
+    if not record:
+        raise HTTPException(404, "Task not found")
+    return _one(record)
+
+
+@router.post("/tasks/{task_id}/complete/")
+def complete_task(task_id: str):
+    record = db.get("tasks", task_id)
+    if not record:
+        raise HTTPException(404, "Task not found")
+    record["status"] = "Done"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.post("/tasks/{task_id}/assign/")
+def assign_task(task_id: str, payload: dict):
+    record = db.get("tasks", task_id)
+    if not record:
+        raise HTTPException(404, "Task not found")
+    record["owner"] = payload.get("owner", record.get("owner"))
+    record["status"] = "In Progress"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# SUPPLIERS
+# ----------------------------------------------------------------------------
+@router.get("/suppliers/")
+def list_suppliers():
+    return _list_query("suppliers")
+
+
+@router.get("/suppliers/{supplier_id}/")
+def get_supplier(supplier_id: str):
+    record = db.get("suppliers", supplier_id)
+    if not record:
+        raise HTTPException(404, "Supplier not found")
+    return _one(record)
+
+
+@router.post("/suppliers/{supplier_id}/verify/")
+def verify_supplier(supplier_id: str):
+    record = db.get("suppliers", supplier_id)
+    if not record:
+        raise HTTPException(404, "Supplier not found")
+    record["status"] = "Verified"
+    record["complianceScore"] = max(record.get("complianceScore", 0), 90)
+    return _one(record)
+
+
+@router.post("/suppliers/{supplier_id}/request-evidence/")
+def request_supplier_evidence(supplier_id: str):
+    record = db.get("suppliers", supplier_id)
+    if not record:
+        raise HTTPException(404, "Supplier not found")
+    record["evidenceRequested"] = record.get("evidenceRequested", 0) + 1
+    record["status"] = "Needs Evidence"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# ANALYTICS
+# ----------------------------------------------------------------------------
+@router.get("/analytics/overview/")
+def analytics_overview():
+    projects = db.all("projects")
+    total = sum(p.get("value", 0) for p in projects)
+    return {"data": [
+        {"label": "Active projects", "value": str(len(projects)), "change": "+1 this month", "tone": "green"},
+        {"label": "Pipeline value", "value": f"${total:,}", "change": "+12%", "tone": "blue"},
+    ], "meta": {}}
+
+
+@router.post("/analytics/refresh/")
+def analytics_refresh():
+    return {"data": [{"label": "Refresh", "value": "Done", "change": "Now", "tone": "green"}], "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# NOTIFICATIONS / AUDIT / TEAM / TEMPLATES / AUTOMATIONS / INTEGRATIONS
+# ----------------------------------------------------------------------------
+@router.get("/notifications/")
+def list_notifications():
+    return _list_query("notifications")
+
+
+@router.post("/notifications/{notification_id}/read/")
+def mark_notification_read(notification_id: str):
+    record = db.get("notifications", notification_id)
+    if not record:
+        raise HTTPException(404, "Notification not found")
+    record["status"] = "Read"
+    return _one(record)
+
+
+@router.post("/notifications/{notification_id}/archive/")
+def archive_notification(notification_id: str):
+    record = db.get("notifications", notification_id)
+    if not record:
+        raise HTTPException(404, "Notification not found")
+    record["status"] = "Archived"
+    return _one(record)
+
+
+@router.get("/audit/")
+def list_audit():
+    return _list_query("audit_events")
+
+
+@router.post("/audit/export/")
+def export_audit():
+    return {"data": {"status": "queued"}, "meta": {}}
+
+
+@router.get("/team/")
+def list_team():
+    return _list_query("team_members")
+
+
+@router.post("/team/invite/")
+def invite_team(payload: dict):
+    email = payload.get("email", "")
+    name = email.split("@")[0] if email else ""
+    record = db.insert("team_members", {
+        "id": db.gen_id("team_members", "USR"),
+        "email": email,
+        "name": name,
+        "role": payload.get("role", "Operations"),
+        "status": "Invited",
+        "permissions": [],
+        "workload": 0,
+    })
+    return _one(record)
+
+
+@router.post("/team/{member_id}/role/")
+def update_team_member_role(member_id: str, payload: dict):
+    record = db.get("team_members", member_id)
+    if not record:
+        raise HTTPException(404, "Team member not found")
+    record["role"] = payload.get("role", record.get("role"))
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.get("/templates/")
+def list_templates():
+    return _list_query("templates")
+
+
+@router.post("/templates/")
+def create_template(payload: dict):
+    record = db.insert("templates", {
+        "id": db.gen_id("templates", "TPL"),
+        "title": payload.get("title", "Template"),
+        "category": payload.get("category", "Document"),
+        "status": "Draft",
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.post("/templates/{template_id}/use/")
+def use_template(template_id: str):
+    record = db.get("templates", template_id)
+    if not record:
+        raise HTTPException(404, "Template not found")
+    record["usedCount"] = record.get("usedCount", 0) + 1
+    return _one(record)
+
+
+@router.get("/automations/")
+def list_automations():
+    return _list_query("automations")
+
+
+@router.post("/automations/{automation_id}/activate/")
+def activate_automation(automation_id: str):
+    record = db.get("automations", automation_id)
+    if not record:
+        raise HTTPException(404, "Automation not found")
+    record["status"] = "Active"
+    return _one(record)
+
+
+@router.post("/automations/{automation_id}/run/")
+def run_automation(automation_id: str):
+    record = db.get("automations", automation_id)
+    if not record:
+        raise HTTPException(404, "Automation not found")
+    record["runs"] = record.get("runs", 0) + 1
+    record["lastRun"] = "now"
+    return _one(record)
+
+
+@router.get("/integrations/")
+def list_integrations():
+    return _list_query("integrations")
+
+
+@router.post("/integrations/{integration_id}/connect/")
+def connect_integration(integration_id: str):
+    record = db.get("integrations", integration_id)
+    if not record:
+        raise HTTPException(404, "Integration not found")
+    record["status"] = "Connected"
+    return _one(record)
+
+
+@router.post("/integrations/{integration_id}/sync/")
+def sync_integration(integration_id: str):
+    record = db.get("integrations", integration_id)
+    if not record:
+        raise HTTPException(404, "Integration not found")
+    record["lastSync"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# KNOWLEDGE / EDUCATIONAL / CALENDAR / FILES / MESSAGES / REPORTS / BILLING
+# ----------------------------------------------------------------------------
+@router.get("/knowledge/")
+def list_knowledge():
+    return _list_query("knowledge_articles")
+
+
+@router.post("/knowledge/{article_id}/publish/")
+def publish_knowledge(article_id: str):
+    record = db.get("knowledge_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    record["status"] = "Published"
+    return _one(record)
+
+
+@router.get("/educational/")
+def list_educational_modules():
+    return _list_query("educational_modules")
+
+
+@router.post("/educational/{module_id}/publish/")
+def publish_educational_module(module_id: str):
+    record = db.get("educational_modules", module_id)
+    if not record:
+        raise HTTPException(404, "Module not found")
+    record["status"] = "Published"
+    return _one(record)
+
+
+@router.get("/educational/articles/")
+def list_educational_articles():
+    return _list_query("educational_articles")
+
+
+@router.post("/educational/articles/{article_id}/publish/")
+def publish_educational_article(article_id: str):
+    record = db.get("educational_articles", article_id)
+    if not record:
+        raise HTTPException(404, "Article not found")
+    record["status"] = "Published"
+    return _one(record)
+
+
+@router.get("/calendar/")
+def list_calendar():
+    return _list_query("calendar_events")
+
+
+@router.post("/calendar/")
+def create_calendar(payload: sc.CreateCalendarEventPayload):
+    data = payload.model_dump()
+    data["id"] = db.gen_id("calendar_events", "CAL")
+    data["status"] = "Scheduled"
+    data["updatedAt"] = "now"
+    return _one(db.insert("calendar_events", data))
+
+
+@router.post("/calendar/{event_id}/done/")
+def mark_calendar_done(event_id: str):
+    record = db.get("calendar_events", event_id)
+    if not record:
+        raise HTTPException(404, "Calendar event not found")
+    record["status"] = "Done"
+    return _one(record)
+
+
+@router.get("/files/")
+def list_files():
+    return _list_query("files")
+
+
+@router.post("/files/")
+def upload_file(payload: dict):
+    record = db.insert("files", {
+        "id": db.gen_id("files", "FIL"),
+        "name": payload.get("name", "File"),
+        "type": payload.get("type", "Document"),
+        "projectId": payload.get("projectId", ""),
+        "status": "Needs Review",
+        "size": "-",
+        "tags": [],
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+UPLOAD_DIR = os.environ.get("MAUEKSPOR_UPLOAD_DIR", os.path.join(os.getcwd(), "uploads"))
+MAX_UPLOAD_MB = 25
+
+
+@router.post("/files/upload/")
+def upload_file_binary(
+    file: UploadFile = File(...),
+    type_: str = Form(default="Document"),
+    project_id: str = Form(default=""),
+    tags: str = Form(default=""),
+):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    content = file.file.read()
+    if len(content) == 0:
+        raise HTTPException(400, "File kosong")
+    if len(content) > MAX_UPLOAD_MB * 1024 * 1024:
+        raise HTTPException(413, "File terlalu besar (maks 25MB)")
+    safe_name = os.path.basename(file.filename or "file.bin")
+    stored_name = f"{int(time.time() * 1000)}-{safe_name}"
+    storage_path = os.path.join(UPLOAD_DIR, stored_name)
+    with open(storage_path, "wb") as out:
+        out.write(content)
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    record = db.insert("files", {
+        "id": db.gen_id("files", "FIL-UPL"),
+        "name": safe_name,
+        "type": type_,
+        "projectId": project_id,
+        "status": "Needs Review",
+        "size": f"{len(content) / 1024:.0f} KB",
+        "tags": tag_list,
+        "storageName": stored_name,
+        "contentType": file.content_type or "application/octet-stream",
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.get("/files/{file_id}/download/")
+def download_file(file_id: str):
+    record = db.get("files", file_id)
+    if not record or not record.get("storageName"):
+        raise HTTPException(404, "File not found or not stored")
+    storage_path = os.path.join(UPLOAD_DIR, record["storageName"])
+    if not os.path.isfile(storage_path):
+        raise HTTPException(404, "Stored file missing on disk")
+    return FileResponse(
+        storage_path,
+        media_type=record.get("contentType") or "application/octet-stream",
+        filename=record.get("name") or record["storageName"],
+    )
+
+
+@router.post("/files/{file_id}/verify/")
+def verify_file(file_id: str):
+    record = db.get("files", file_id)
+    if not record:
+        raise HTTPException(404, "File not found")
+    record["status"] = "Verified"
+    return _one(record)
+
+
+@router.get("/messages/")
+def list_messages():
+    return _list_query("messages")
+
+
+@router.post("/messages/{message_id}/send/")
+def send_message(message_id: str, payload: dict):
+    record = db.get("messages", message_id)
+    if not record:
+        raise HTTPException(404, "Message not found")
+    record["lastMessage"] = payload.get("body", "")
+    record["status"] = "Open"
+    record["time"] = "now"
+    return _one(record)
+
+
+@router.post("/messages/{message_id}/resolve/")
+def resolve_message(message_id: str):
+    record = db.get("messages", message_id)
+    if not record:
+        raise HTTPException(404, "Message not found")
+    record["status"] = "Resolved"
+    return _one(record)
+
+
+@router.get("/reports/")
+def list_reports():
+    return _list_query("reports")
+
+
+@router.get("/reports/{report_id}/")
+def get_report(report_id: str):
+    record = db.get("reports", report_id)
+    if not record:
+        raise HTTPException(404, "Report not found")
+    return _one(record)
+
+
+@router.post("/reports/{report_id}/generate/")
+def generate_report(report_id: str):
+    record = db.get("reports", report_id)
+    if not record:
+        raise HTTPException(404, "Report not found")
+    record["status"] = "Ready"
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+@router.post("/reports/{report_id}/schedule/")
+def schedule_report(report_id: str):
+    record = db.get("reports", report_id)
+    if not record:
+        raise HTTPException(404, "Report not found")
+    record["status"] = "Scheduled"
+    return _one(record)
+
+
+@router.get("/billing/")
+def list_billing():
+    return _list_query("billing_records")
+
+
+@router.post("/billing/change-plan/")
+def change_billing_plan(payload: dict):
+    records = db.all("billing_records")
+    record = records[0] if records else None
+    if record:
+        record["plan"] = payload.get("plan", record.get("plan"))
+    return _one(record) if record else {"data": None, "meta": {}}
+
+
+@router.post("/billing/{billing_id}/invoice/")
+def download_invoice(billing_id: str):
+    record = db.get("billing_records", billing_id)
+    if not record:
+        raise HTTPException(404, "Billing record not found")
+    record["invoiceDownloaded"] = record.get("invoiceDownloaded", 0) + 1
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# SUPPORT / API KEYS / CHAT
+# ----------------------------------------------------------------------------
+@router.get("/support/")
+def list_support():
+    return _list_query("support_tickets")
+
+
+@router.post("/support/")
+def create_support(payload: dict):
+    record = db.insert("support_tickets", {
+        "id": db.gen_id("support_tickets", "SUPPORT"),
+        "subject": payload.get("subject", "Ticket"),
+        "category": payload.get("category", "Question"),
+        "description": payload.get("description", ""),
+        "status": "Open",
+        "priority": "Medium",
+        "createdAt": "now",
+        "owner": "Unassigned",
+    })
+    return _one(record)
+
+
+@router.post("/support/{ticket_id}/resolve/")
+def resolve_support(ticket_id: str):
+    record = db.get("support_tickets", ticket_id)
+    if not record:
+        raise HTTPException(404, "Ticket not found")
+    record["status"] = "Resolved"
+    return _one(record)
+
+
+@router.get("/api-keys/")
+def list_api_keys():
+    return _list_query("api_keys")
+
+
+@router.post("/api-keys/")
+def create_api_key(payload: sc.CreateApiKeyPayload):
+    record = db.insert("api_keys", {
+        "id": db.gen_id("api_keys", "KEY"),
+        "name": payload.name,
+        "prefix": "mek_live_",
+        "scopes": payload.scopes,
+        "status": "Active",
+        "createdAt": "now",
+        "lastUsed": "never",
+        "owner": "Admin",
+    })
+    return _one(record)
+
+
+@router.post("/api-keys/{key_id}/revoke/")
+def revoke_api_key(key_id: str):
+    record = db.get("api_keys", key_id)
+    if not record:
+        raise HTTPException(404, "API key not found")
+    record["status"] = "Revoked"
+    return _one(record)
+
+
+@router.get("/chat/")
+def list_chat():
+    return _list_query("chat_conversations")
+
+
+@router.post("/chat/{chat_id}/messages/")
+def send_chat_message(chat_id: str, payload: dict):
+    record = db.get("chat_conversations", chat_id)
+    if not record:
+        raise HTTPException(404, "Chat not found")
+    record.setdefault("messages", []).append({"role": "User", "text": payload.get("text", "")})
+    history = "\n".join(f"{m.get('role', '')}: {m.get('text', '')}" for m in record["messages"][-8:])
+    reply = ai.complete(
+        "You are MauEkspor Copilot, a trade assistant for Indonesian exporters. Answer concisely in Indonesian, grounded in the workspace context given.",
+        f"Conversation so far:\n{history}",
+        kind="chat_reply",
+    )
+    if reply:
+        record["messages"].append({"role": "AI", "text": reply})
+    record["updatedAt"] = "now"
+    return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# EXPORT ANALYSIS
+# ----------------------------------------------------------------------------
+class CreateExportAnalysisPayload(sc.CreateExportAnalysisPayload):
+    pass
+
+
+@router.get("/export-analysis/")
+def list_analyses():
+    return _list_query("export_analyses")
+
+
+@router.get("/export-analysis/{analysis_id}/")
+def get_analysis(analysis_id: str):
+    record = db.get("export_analyses", analysis_id)
+    if not record:
+        raise HTTPException(404, "Export analysis not found")
+    return _one(record)
+
+
+@router.post("/export-analysis/")
+def create_analysis(payload: CreateExportAnalysisPayload):
+    product = db.get("products", payload.productId)
+    record = db.insert("export_analyses", {
+        "id": db.gen_id("export_analyses", "ANL"),
+        "productId": payload.productId,
+        "productName": product["name"] if product else payload.productId,
+        "destination": payload.destination,
+        "status": "In Progress",
+        "hsCode": product["hs"] if product else "TBD",
+        "confidence": 0,
+        "score": 0,
+        "marketDemand": "Medium",
+        "duties": "Pending",
+        "restrictions": [],
+        "recommendations": [],
+        "summary": "Analysis queued.",
+        "updatedAt": "now",
+    })
+    return _one(record)
+
+
+@router.post("/export-analysis/{analysis_id}/regulation-recommendations/")
+def run_regulation_check(analysis_id: str):
+    record = db.get("export_analyses", analysis_id)
+    if not record:
+        raise HTTPException(404, "Export analysis not found")
+    record["status"] = "Ready"
+    recommendations = ai.ask_json(
+        "You are a trade compliance analyst for Indonesian exports. Return JSON list in field recommendations: items with type, title, status (Required/Optional) and detail.",
+        f"Product {record.get('productName', '')} to {record.get('destination', '')} (HS {record.get('hsCode', 'TBD')}). Regulations: {record.get('restrictions', [])}",
+        kind="recommendations",
+    )
+    record["confidence"] = recommendations.get("confidence", 88) if recommendations else 88
+    record["score"] = recommendations.get("score", 80) if recommendations else 80
+    if recommendations and isinstance(recommendations.get("recommendations"), list):
+        record["recommendations"] = recommendations["recommendations"]
+    else:
+        record["recommendations"] = [
+            {"type": "Certificate", "title": "Certificate of Origin", "status": "Required", "detail": "Confirm rules-of-origin."},
+            {"type": "Document", "title": "Packing list", "status": "Required", "detail": "Match weights against invoice."},
+        ]
+    record["updatedAt"] = "now"
+    return _one(record)

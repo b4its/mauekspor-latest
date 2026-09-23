@@ -1,0 +1,37 @@
+services:
+  backend:
+    build: ./backend
+    container_name: mauekspor-backend
+    ports:
+      - "8000:8000"
+    environment:
+      MAUEKSPOR_SECRET_KEY: ${MAUEKSPOR_SECRET_KEY:-change-me-in-production}
+      MAUEKSPOR_DATABASE_URL: sqlite:///./data/mauekspor.db
+      MAUEKSPOR_UPLOAD_DIR: /app/uploads
+      MAUEKSPOR_CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
+      MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-mock}
+      MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-}
+      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-https://api.openai.com/v1}
+      MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-gpt-4o-mini}
+    volumes:
+      - backend-data:/app/data
+      - backend-uploads:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8000/api/v1
+    container_name: mauekspor-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      ORIGIN: http://localhost:3000
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+  backend-uploads:

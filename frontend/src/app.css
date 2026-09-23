@@ -1,0 +1,259 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&family=Lato:wght@400;700;900&family=Yellowtail&display=swap');
+@import "tailwindcss";
+@import "aos/dist/aos.css";
+
+/* Dark mode via .dark class on <html> (toggled from browser default) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Map shadcn CSS variables to Tailwind v4 color utilities */
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--radius-2xl: calc(var(--radius) + 8px);
+	--radius-3xl: calc(var(--radius) + 12px);
+	--font-mono-landing: "Roboto Mono", ui-monospace, monospace;
+	--font-display: "Lato", ui-sans-serif, sans-serif;
+	--font-script: "Yellowtail", cursive;
+}
+
+/* ---------- shadcn-svelte theme tokens: light (default) ---------- */
+:root {
+	font-family:
+		Inter,
+		ui-sans-serif,
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		"Segoe UI",
+		sans-serif;
+	color: var(--foreground);
+	background: var(--background);
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	color-scheme: light;
+
+	--background: #fafafa;
+	--foreground: #18181b;
+	--card: #ffffff;
+	--card-foreground: #18181b;
+	--popover: #ffffff;
+	--popover-foreground: #18181b;
+	--primary: #18181b;
+	--primary-foreground: #fafafa;
+	--secondary: #f4f4f5;
+	--secondary-foreground: #18181b;
+	--muted: #f4f4f5;
+	--muted-foreground: #71717a;
+	--accent: #f4f4f5;
+	--accent-foreground: #18181b;
+	--destructive: #e7000b;
+	--destructive-foreground: #fafafa;
+	--border: #e4e4e7;
+	--input: #e4e4e7;
+	--ring: #a1a1aa;
+	--radius: 0.65rem;
+	--sidebar: #fafafa;
+	--sidebar-foreground: var(--foreground);
+	--sidebar-primary: #2563eb;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: #f4f4f5;
+	--sidebar-accent-foreground: var(--accent-foreground);
+	--sidebar-border: var(--border);
+	--sidebar-ring: var(--ring);
+}
+
+/* ---------- Theme tokens: dark ---------- */
+html.dark {
+	color-scheme: dark;
+
+	--background: #09090b;
+	--foreground: #fafafa;
+	--card: #18181b;
+	--card-foreground: #fafafa;
+	--popover: #18181b;
+	--popover-foreground: #fafafa;
+	--primary: #e4e4e7;
+	--primary-foreground: #18181b;
+	--secondary: #27272a;
+	--secondary-foreground: #fafafa;
+	--muted: #27272a;
+	--muted-foreground: #a1a1aa;
+	--accent: #27272a;
+	--accent-foreground: #fafafa;
+	--destructive: #ff6467;
+	--destructive-foreground: #450a0a;
+	--border: rgba(255, 255, 255, 0.1);
+	--input: rgba(255, 255, 255, 0.15);
+	--ring: #71717a;
+	--radius: 0.65rem;
+	--sidebar: #131316;
+	--sidebar-foreground: var(--foreground);
+	--sidebar-primary: #3b82f6;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: #27272a;
+	--sidebar-accent-foreground: var(--accent-foreground);
+	--sidebar-border: var(--border);
+	--sidebar-ring: var(--ring);
+}
+
+@layer base {
+	* {
+		box-sizing: border-box;
+	}
+
+	html {
+		overflow-x: clip;
+	}
+
+	body {
+		margin: 0;
+		min-width: 320px;
+		min-height: 100vh;
+		overflow-x: clip;
+		background: var(--background);
+		transition: background-color 0.25s ease, color 0.25s ease;
+	}
+
+	button,
+	input,
+	select,
+	textarea {
+		font: inherit;
+	}
+
+	button {
+		cursor: pointer;
+	}
+
+	a {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	img,
+	svg,
+	video {
+		max-width: 100%;
+	}
+
+	table,
+	input,
+	select,
+	textarea {
+		max-width: 100%;
+	}
+}
+
+/* ---------- Professional polish ---------- */
+
+:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+	border-radius: 8px;
+}
+
+html.dark :focus-visible {
+	outline-color: var(--ring);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+	border-color: var(--ring) !important;
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 16%, transparent);
+}
+
+::selection {
+	color: var(--primary-foreground);
+	background: var(--primary);
+}
+
+html.dark code {
+	background: var(--muted) !important;
+}
+
+/* Progress bars follow the primary token */
+progress {
+	accent-color: var(--primary);
+}
+
+progress::-webkit-progress-value {
+	border-radius: 999px;
+	background: var(--primary) !important;
+}
+
+/* Custom scrollbar */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border) transparent;
+}
+
+::-webkit-scrollbar {
+	width: 9px;
+	height: 9px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	border-radius: 999px;
+	background: var(--border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+	}
+}
+
+/* ---------- Landing page typography scope ---------- */
+.landing-font {
+	font-family: var(--font-mono-landing);
+}
+
+.landing-font .font-display {
+	font-family: var(--font-display);
+}
+
+.landing-font .font-script {
+	font-family: var(--font-script);
+}
