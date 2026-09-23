@@ -7,6 +7,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { createBusinessProfile } from '$lib/api/business-profile';
+	import { t } from '$lib/i18n.svelte';
 
 	const certOptions = ['Halal', 'ISO 22000', 'HACCP', 'SVLK'];
 
@@ -27,7 +28,7 @@
 	async function create() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib dengan benar sebelum membuat profil.';
+			error = t('Lengkapi kolom wajib dengan benar sebelum membuat profil.');
 			return;
 		}
 		try {
@@ -40,7 +41,7 @@
 			});
 			created = true;
 		} catch {
-			error = 'Gagal membuat profil bisnis. Coba lagi.';
+			error = t('Gagal membuat profil bisnis. Coba lagi.');
 		}
 	}
 </script>
@@ -49,13 +50,13 @@
 	<title>Create Business Profile | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Business Profile" eyebrow="Create UMKM identity">
+<AppShell title="Business Profile" eyebrow={t('Buat identitas UMKM')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">New company</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Register the business behind your products.</CardTitle>
+			<Badge variant="secondary">{t('Perusahaan baru')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Daftarkan bisnis di balik produk Anda.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-								The profile is the identity anchor for certification evidence, catalogs, and quotations.
+								{t('Profil adalah jangkar identitas untuk bukti sertifikasi, katalog, dan kutipan harga.')}
 				
 			</CardDescription>
 		</CardHeader>
@@ -64,38 +65,38 @@
 	{#if created}
 		<Card class="grid gap-4">
 			<CardHeader class="p-0">
-				<Badge variant="secondary">Profile created</Badge>
+				<Badge variant="secondary">{t('Profil dibuat')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight">{companyName}</CardTitle>
 				<CardDescription class="mt-2 leading-relaxed">
-					{selectedCerts.length} certifications registered. Profil berhasil disimpan di backend.
+					{t('Sertifikasi terdaftar:')} {selectedCerts.length} {t('Profil berhasil disimpan di backend.')}
 				</CardDescription>
 			</CardHeader>
 			<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-				<Button href="/business-profile">View profile</Button>
+				<Button href="/business-profile">{t('Lihat profil')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
 		<Card>
 			<form class="grid gap-4 p-1 sm:grid-cols-2" onsubmit={(event) => { event.preventDefault(); create(); }}>
 				<div class="grid gap-2">
-					<Label>Company name</Label>
+					<Label>{t('Nama perusahaan')}</Label>
 					<Input bind:value={companyName} placeholder="PT Kopi Gayo Nusantara" />
 				</div>
 				<div class="grid gap-2">
-					<Label>Address</Label>
+					<Label>{t('Alamat')}</Label>
 					<Input bind:value={address} placeholder="Takengon, Aceh, Indonesia" />
 				</div>
 				<div class="grid gap-2">
-					<Label>Production capacity per month</Label>
-					<Input bind:value={productionCapacity} placeholder="12,000 retail bags / month" />
+					<Label>{t('Kapasitas produksi per bulan')}</Label>
+					<Input bind:value={productionCapacity} placeholder={t('12.000 kantong ritel / bulan')} />
 				</div>
 				<div class="grid gap-2">
-					<Label>Year established</Label>
+					<Label>{t('Tahun berdiri')}</Label>
 					<Input bind:value={yearEstablished} inputmode="numeric" placeholder="2018" />
 				</div>
 
 				<fieldset class="grid gap-2 rounded-lg border p-4 sm:col-span-2">
-					<legend class="px-1 text-sm font-semibold text-muted-foreground">Initial certifications</legend>
+					<legend class="px-1 text-sm font-semibold text-muted-foreground">{t('Sertifikasi awal')}</legend>
 					<div class="grid gap-3 sm:grid-cols-2">
 						{#each certOptions as cert}
 							<label class="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2.5">
@@ -109,8 +110,8 @@
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive sm:col-span-2">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-3 sm:col-span-2">
-					<Button variant="outline" href="/business-profile">Cancel</Button>
-					<Button type="submit">Create business profile</Button>
+					<Button variant="outline" href="/business-profile">{t('Batal')}</Button>
+					<Button type="submit">{t('Buat profil bisnis')}</Button>
 				</div>
 			</form>
 		</Card>

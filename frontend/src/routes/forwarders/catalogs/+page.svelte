@@ -8,6 +8,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import type { Catalog } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const forwarder = seedForwarders[0];
 	let query = $state('');
@@ -36,20 +37,19 @@
 	<title>Forwarder Catalogs | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Forwarder Catalogs" eyebrow="Freight quote inventory">
+<AppShell title="Forwarder Catalogs" eyebrow={t('Inventaris kuotasi freight')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(forwarder.status))}>{forwarder.name}</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Active export catalogs available for quotes.</CardTitle>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Katalog ekspor aktif yang tersedia untuk kuotasi.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Published catalogs represent the ready-to-quote inventory this forwarder can service across
-				its covered lanes.
+				{t('Katalog yang diterbitkan mewakili inventaris siap-kuotasi yang dapat dilayani forwarder ini di seluruh jalur yang dicakup.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
 
 	<div class="flex flex-wrap items-center justify-end gap-3">
-		<Input bind:value={query} type="search" placeholder="Search published catalog..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Cari katalog yang diterbitkan...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -58,19 +58,19 @@
 				<a href={`/catalogs/${catalog.id}`} class="grid h-full gap-3 p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(catalog.status))}>{catalog.status}</Badge>
-						<Badge variant="outline">{forwarder.lanes.length} lanes</Badge>
+						<Badge variant="outline">{forwarder.lanes.length} {t('jalur')}</Badge>
 					</div>
 					<h3 class="text-2xl font-bold tracking-tight">{catalog.title}</h3>
 					<p class="text-sm text-muted-foreground">{catalog.targetMarket}</p>
 					<div class="grid gap-2 sm:grid-cols-3">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">MOQ<strong class="mt-1 block text-sm font-bold text-foreground">{catalog.moq}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Lead time<strong class="mt-1 block text-sm font-bold text-foreground">{catalog.leadTime}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Price<strong class="mt-1 block text-sm font-bold text-foreground">{catalog.priceRange}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('MOQ')}<strong class="mt-1 block text-sm font-bold text-foreground">{catalog.moq}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Waktu tunggu')}<strong class="mt-1 block text-sm font-bold text-foreground">{catalog.leadTime}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Harga')}<strong class="mt-1 block text-sm font-bold text-foreground">{catalog.priceRange}</strong></div>
 					</div>
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No published catalog matched.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('Tidak ada katalog yang diterbitkan cocok.')}</div>
 		{/each}
 	</div>
 </AppShell>

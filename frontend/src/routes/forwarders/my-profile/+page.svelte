@@ -6,6 +6,7 @@
 	import { forwarders as seedForwarders } from '$lib/data/trade';
 	import { getMyForwarderProfile, getForwarderStatistics } from '$lib/api/forwarders';
 	import type { ForwarderProfile, ForwarderStatistics } from '$lib/api/forwarders';
+	import { t } from '$lib/i18n.svelte';
 
 	let profile = $state<ForwarderProfile | null>(null);
 	let stats = $state<ForwarderStatistics | null>(null);
@@ -26,18 +27,18 @@
 	<title>My Forwarder Profile | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Forwarder Profile" eyebrow="My freight partner identity">
+<AppShell title="Forwarder Profile" eyebrow={t('Identitas mitra freight saya')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant="secondary">Forwarder profile</Badge>
+				<Badge variant="secondary">{t('Profil forwarder')}</Badge>
 				<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
 					{profile?.companyName ?? fallback.name}
 				</CardTitle>
 				<CardDescription class="mt-2">{profile?.companyName ?? fallback.coverage}</CardDescription>
 			</div>
 			<div class="grid gap-2.5 md:min-w-[200px]">
-				<Button variant="outline" href="/forwarders/profile">Edit profile</Button>
+				<Button variant="outline" href="/forwarders/profile">{t('Edit profil')}</Button>
 			</div>
 		</div>
 	</Card>
@@ -45,39 +46,39 @@
 	{#if !profile}
 		<Card class="bg-gradient-to-br from-primary/10 to-background">
 			<CardContent class="grid gap-2 p-6">
-				<CardTitle>Belum ada profil forwarder.</CardTitle>
-				<p class="text-sm text-muted-foreground">Buat profil untuk menampilkan rute spesialisasi dan tipe layanan Anda.</p>
-				<Button href="/forwarders/profile" class="w-fit">Buat profil</Button>
+				<CardTitle>{t('Belum ada profil forwarder.')}</CardTitle>
+				<p class="text-sm text-muted-foreground">{t('Buat profil untuk menampilkan rute spesialisasi dan tipe layanan Anda.')}</p>
+				<Button href="/forwarders/profile" class="w-fit">{t('Buat profil')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2">
 			<Card class="md:col-span-2">
-				<CardHeader><CardTitle>Forwarder profile</CardTitle></CardHeader>
+				<CardHeader><CardTitle>{t('Profil forwarder')}</CardTitle></CardHeader>
 				<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						Rating <strong class="mt-1 block text-sm font-bold text-foreground">{profile.averageRating ?? 0} ⭐ ({profile.totalReviews ?? 0} review)</strong>
+						{t('Rating')} <strong class="mt-1 block text-sm font-bold text-foreground">{profile.averageRating ?? 0} ⭐ ({profile.totalReviews ?? 0} {t('ulasan')})</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						Contact email <strong class="mt-1 block text-sm font-bold text-foreground">{profile.contactInfo?.email ?? '—'}</strong>
+						{t('Email kontak')} <strong class="mt-1 block text-sm font-bold text-foreground">{profile.contactInfo?.email ?? '—'}</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						Contact phone <strong class="mt-1 block text-sm font-bold text-foreground">{profile.contactInfo?.phone ?? '—'}</strong>
+						{t('Telepon kontak')} <strong class="mt-1 block text-sm font-bold text-foreground">{profile.contactInfo?.phone ?? '—'}</strong>
 					</div>
 				</CardContent>
 			</Card>
 
 			<Card>
-				<CardHeader><CardTitle>Specialization routes</CardTitle></CardHeader>
+				<CardHeader><CardTitle>{t('Rute spesialisasi')}</CardTitle></CardHeader>
 				<CardContent class="grid gap-2.5">
 					{#each profile.specializationRoutes ?? [] as route}
-						<div class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3.5"><Badge variant="outline">Route</Badge><strong class="text-sm">{route}</strong></div>
+						<div class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3.5"><Badge variant="outline">{t('Route')}</Badge><strong class="text-sm">{route}</strong></div>
 					{/each}
 				</CardContent>
 			</Card>
 
 			<Card>
-				<CardHeader><CardTitle>Service types</CardTitle></CardHeader>
+				<CardHeader><CardTitle>{t('Tipe layanan')}</CardTitle></CardHeader>
 				<CardContent class="flex flex-wrap gap-2">
 					{#each profile.serviceTypes ?? [] as service}
 						<Badge variant="secondary">{service}</Badge>
@@ -88,20 +89,20 @@
 			{#if stats}
 				<Card class="md:col-span-2">
 					<CardHeader>
-						<CardTitle>Rating statistics</CardTitle>
-						<CardDescription>Kinerja Anda menurut buyer/UMKM.</CardDescription>
+						<CardTitle>{t('Statistik rating')}</CardTitle>
+						<CardDescription>{t('Kinerja Anda menurut buyer/UMKM.')}</CardDescription>
 					</CardHeader>
 					<CardContent class="grid gap-4 sm:grid-cols-3">
 						<div class="rounded-lg border bg-muted/40 p-4 text-center">
-							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Rating rata-rata</span>
+							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Rating rata-rata')}</span>
 							<strong class="mt-1 block text-3xl font-bold">{stats.averageRating} ⭐</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-4 text-center">
-							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Total review</span>
+							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Total review')}</span>
 							<strong class="mt-1 block text-3xl font-bold">{stats.totalReviews}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-4 text-center">
-							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Kemitraan unik</span>
+							<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Kemitraan unik')}</span>
 							<strong class="mt-1 block text-3xl font-bold">{stats.uniquePartnerships}</strong>
 						</div>
 						{#if stats.ratingDistribution}

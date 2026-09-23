@@ -7,6 +7,7 @@
 	import { businessProfiles as seedProfiles } from '$lib/data/trade';
 	import { listBusinessProfiles, updateCertifications } from '$lib/api/business-profile';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { t } from '$lib/i18n.svelte';
 
 	const certOptions = ['Halal', 'ISO 22000', 'HACCP', 'SVLK', 'Organic', 'Origin declaration', 'Nutrition facts'];
 
@@ -32,7 +33,7 @@
 			if (profile) await updateCertifications(profile.id, selected);
 			saved = true;
 		} catch {
-			error = 'Gagal menyimpan sertifikasi.';
+			error = t('Gagal menyimpan sertifikasi.');
 		} finally {
 			saving = false;
 		}
@@ -43,13 +44,13 @@
 	<title>Manage Certifications | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Certifications" eyebrow="Manage business certification claims">
+<AppShell title="Certifications" eyebrow={t('Manage business certification claims')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Evidence-backed</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Toggle the certifications your business can prove.</CardTitle>
+			<Badge variant="secondary">{t('Berbasis bukti')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Aktifkan sertifikasi yang dapat dibuktikan bisnis Anda.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Certification claims flow into product catalogs and market analyses and disimpan di backend.
+				{t('Klaim sertifikasi mengalir ke katalog produk dan analisis pasar dan disimpan di backend.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -61,12 +62,12 @@
 	{#if saved}
 		<Card class="grid gap-4">
 			<CardHeader class="p-0">
-				<Badge variant="secondary">Saved</Badge>
-				<CardTitle class="mt-3 text-3xl font-bold tracking-tight">{selected.length} certifications active</CardTitle>
-				<CardDescription class="mt-2 leading-relaxed">{selected.join(' · ') || 'No certifications selected.'}</CardDescription>
+				<Badge variant="secondary">{t('Tersimpan')}</Badge>
+				<CardTitle class="mt-3 text-3xl font-bold tracking-tight">{selected.length} {t('sertifikasi aktif')}</CardTitle>
+				<CardDescription class="mt-2 leading-relaxed">{selected.join(' · ') || t('Tidak ada sertifikasi dipilih.')}</CardDescription>
 			</CardHeader>
 			<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-				<Button href="/business-profile">Back to profile</Button>
+				<Button href="/business-profile">{t('Kembali ke profil')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
@@ -79,8 +80,8 @@
 			{/each}
 		</div>
 		<div class="flex flex-wrap gap-3">
-			<Button variant="outline" href="/business-profile">Cancel</Button>
-			<Button onclick={handleSave} disabled={saving}>{saved ? 'Saved' : saving ? 'Saving...' : 'Save certifications'}</Button>
+			<Button variant="outline" href="/business-profile">{t('Batal')}</Button>
+			<Button onclick={handleSave} disabled={saving}>{saved ? t('Tersimpan') : saving ? t('Menyimpan...') : t('Simpan sertifikasi')}</Button>
 		</div>
 	{/if}
 </AppShell>
