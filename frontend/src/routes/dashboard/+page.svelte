@@ -99,25 +99,25 @@
 			label: t('Tambahkan produk'),
 			href: '/products/new',
 			done: products.items.length > 0,
-			detail: products.items.length > 0 ? `${products.items.length} produk terdaftar` : 'Buat master data produk'
+			detail: products.items.length > 0 ? `${products.items.length} ${t('produk terdaftar')}` : t('Buat master data produk')
 		},
 		{
 			label: t('Jalankan AI enrichment'),
 			href: '/products',
 			done: products.items.some((p) => p.status === 'Enriched'),
-			detail: products.items.some((p) => p.status === 'Enriched') ? 'HS code & SKU tersedia' : t('Enrich produk untuk HS & SKU')
+			detail: products.items.some((p) => p.status === 'Enriched') ? t('HS code & SKU tersedia') : t('Enrich produk untuk HS & SKU')
 		},
 		{
 			label: t('Buat export analysis'),
 			href: '/export-analysis/create',
 			done: exportAnalyses.items.length > 0,
-			detail: exportAnalyses.items.length > 0 ? `${exportAnalyses.items.length} analisis pasar` : 'Analisis kepatuhan & pasar tujuan'
+			detail: exportAnalyses.items.length > 0 ? `${exportAnalyses.items.length} ${t('analisis pasar')}` : t('Analisis kepatuhan & pasar tujuan')
 		},
 		{
 			label: t('Publikasikan katalog'),
 			href: '/catalogs',
 			done: summaryCounts ? (summaryCounts.catalogs ?? 0) > 0 : false,
-			detail: summaryCounts && (summaryCounts.catalogs ?? 0) > 0 ? `${summaryCounts.catalogs} katalog dibuat` : 'Bangun katalog buyer-facing'
+			detail: summaryCounts && (summaryCounts.catalogs ?? 0) > 0 ? `${summaryCounts.catalogs} ${t('katalog dibuat')}` : t('Bangun katalog buyer-facing')
 		}
 	]);
 	let checklistDone = $derived(checklist.filter((s) => s.done).length);
@@ -148,30 +148,29 @@
 	<title>Dashboard | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Dashboard" eyebrow="Export workspace home">
+<AppShell title="Dashboard" eyebrow={t('Export workspace home')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-5 sm:p-6 md:p-8">
 		<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start">
 			<div>
-				<Badge variant="secondary">Welcome back</Badge>
+				<Badge variant="secondary">{t('Selamat datang kembali')}</Badge>
 				<CardTitle class="mt-3 text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
-					Export readiness at a glance.
+					{t('Export readiness at a glance.')}
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-					Products, market analysis, costing, buyer requests, and forwarder coverage summarized from
-					your live workspace data.
+					{t('Produk, analisis pasar, costing, permintaan pembeli, dan cakupan forwarder dirangkum dari data workspace langsung Anda.')}
 				</CardDescription>
 				<div class="mt-6 flex flex-wrap gap-3">
-					<Button href="/products">Manage products</Button>
-					<Button href="/export-analysis" variant="outline">Run market analysis</Button>
+					<Button href="/products">{t('Kelola produk')}</Button>
+					<Button href="/export-analysis" variant="outline">{t('Jalankan analisis pasar')}</Button>
 				</div>
 			</div>
 			{#if !hasProfile || (profile && profile.status !== 'Complete')}
 				<Card class="border-destructive/30 bg-destructive/5 p-4">
-					<Badge variant="outline" class="w-fit border-destructive/30 text-destructive">Lengkapi Profil Bisnis!</Badge>
+					<Badge variant="outline" class="w-fit border-destructive/30 text-destructive">{t('Lengkapi Profil Bisnis!')}</Badge>
 					<p class="mt-3 leading-relaxed text-muted-foreground">
-						Lengkapi profil bisnis dan sertifikasi sebelum memulai analisis ekspor baru.
+						{t('Lengkapi profil bisnis dan sertifikasi sebelum memulai analisis ekspor baru.')}
 					</p>
-					<Button href="/business-profile" variant="ghost" class="mt-2.5 w-fit">Complete profile</Button>
+					<Button href="/business-profile" variant="ghost" class="mt-2.5 w-fit">{t('Lengkapi profil')}</Button>
 				</Card>
 			{/if}
 		</div>
@@ -181,54 +180,54 @@
 		<a href="/products" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
 				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Products</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Produk')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{products.items.length}</strong>
-					<small class="text-sm text-muted-foreground">{products.items.filter((p) => p.status === 'Enriched').length} enriched</small>
+					<small class="text-sm text-muted-foreground">{products.items.filter((p) => p.status === 'Enriched').length} {t('ter-enrich')}</small>
 				</CardContent>
 			</Card>
 		</a>
 		<a href="/export-analysis" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
 				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Market analyses</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Analisis pasar')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{exportAnalyses.items.length}</strong>
-					<small class="text-sm text-muted-foreground">avg {avgConfidence}% confidence</small>
+					<small class="text-sm text-muted-foreground">{t('rata-rata')} {avgConfidence}% {t('keyakinan')}</small>
 				</CardContent>
 			</Card>
 		</a>
 		<a href="/costing" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
 				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pipeline value</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Nilai pipeline')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(pipelineValue)}</strong>
-					<small class="text-sm text-muted-foreground">{projects.items.length} active projects</small>
+					<small class="text-sm text-muted-foreground">{projects.items.length} {t('proyek aktif')}</small>
 				</CardContent>
 			</Card>
 		</a>
 		<a href="/buyer-requests" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
 				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Buyer requests</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Permintaan pembeli')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{buyerRequests.items.length}</strong>
-					<small class="text-sm text-muted-foreground">{buyerRequests.items.filter((r) => r.status === 'New').length} new</small>
+					<small class="text-sm text-muted-foreground">{buyerRequests.items.filter((r) => r.status === 'New').length} {t('baru')}</small>
 				</CardContent>
 			</Card>
 		</a>
 		<a href="/forwarders" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
 				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Forwarders</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Forwarder')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{forwarders.items.length}</strong>
-					<small class="text-sm text-muted-foreground">{forwarders.items.filter((f) => f.status === 'Verified').length} verified</small>
+					<small class="text-sm text-muted-foreground">{forwarders.items.filter((f) => f.status === 'Verified').length} {t('terverifikasi')}</small>
 				</CardContent>
 			</Card>
 		</a>
 		<a href="/compliance" class="rounded-lg p-1 transition-all hover:border-ring/40 hover:shadow-md">
 			<Card>
 				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Risk review</span>
+					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Tinjauan risiko')}</span>
 					<strong class="mt-2 block text-3xl font-bold tracking-tight">{openRisks}</strong>
-					<small class="text-sm text-muted-foreground">need human review</small>
+					<small class="text-sm text-muted-foreground">{t('perlu tinjauan manusia')}</small>
 				</CardContent>
 			</Card>
 		</a>
@@ -238,10 +237,10 @@
 		<Card>
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Active export projects</CardTitle>
-					<CardDescription>{projects.items.length} projects across Japan, EU, Singapore</CardDescription>
+					<CardTitle>{t('Proyek ekspor aktif')}</CardTitle>
+					<CardDescription>{projects.items.length} {t('proyek di Jepang, EU, Singapura')}</CardDescription>
 				</div>
-				<Button href="/trade-projects" variant="outline">View all</Button>
+				<Button href="/trade-projects" variant="outline">{t('Lihat semua')}</Button>
 			</CardHeader>
 			<CardContent class="grid gap-2">
 				{#each projects.items as project}
@@ -262,10 +261,10 @@
 		<Card>
 			<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 				<div>
-					<CardTitle>Latest market analyses</CardTitle>
-					<CardDescription>{exportAnalyses.items.length} analyses across target markets</CardDescription>
+					<CardTitle>{t('Analisis pasar terbaru')}</CardTitle>
+					<CardDescription>{exportAnalyses.items.length} {t('analisis di pasar tujuan')}</CardDescription>
 				</div>
-				<Button href="/export-analysis" variant="outline">Run analysis</Button>
+				<Button href="/export-analysis" variant="outline">{t('Jalankan analisis')}</Button>
 			</CardHeader>
 			<CardContent class="grid gap-2">
 				{#each exportAnalyses.items as analysis}
@@ -317,15 +316,15 @@
 	<div class="grid gap-4 lg:grid-cols-3">
 		<Card>
 			<CardHeader>
-				<CardTitle>Pipeline by stage</CardTitle>
-				<CardDescription>Distribusi nilai proyek per tahap.</CardDescription>
+				<CardTitle>{t('Pipeline per tahap')}</CardTitle>
+				<CardDescription>{t('Distribusi nilai proyek per tahap.')}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				{#each pipelineByStage as [stage, data] (stage)}
 					<div>
 						<div class="flex items-center justify-between text-xs font-bold">
 							<span>{stage}</span>
-							<span class="text-muted-foreground">{data.count} proyek · {currency.format(data.value)}</span>
+							<span class="text-muted-foreground">{data.count} {t('proyek')} · {currency.format(data.value)}</span>
 						</div>
 						<div class="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted">
 							<div class="h-full rounded-full bg-[#0b3d91] dark:bg-sky-500" style={`width:${(data.value / maxStageValue) * 100}%`}></div>
@@ -333,22 +332,22 @@
 					</div>
 				{/each}
 				{#if pipelineByStage.length === 0}
-					<p class="text-sm font-semibold text-muted-foreground">Belum ada proyek dagang.</p>
+					<p class="text-sm font-semibold text-muted-foreground">{t('Belum ada proyek dagang.')}</p>
 				{/if}
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader>
-				<CardTitle>Compliance by severity</CardTitle>
-				<CardDescription>Distribusi requirement kepatuhan.</CardDescription>
+				<CardTitle>{t('Kepatuhan per tingkat')}</CardTitle>
+				<CardDescription>{t('Distribusi requirement kepatuhan.')}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				{#each complianceBySeverity as [severity, count] (severity)}
 					<div>
 						<div class="flex items-center justify-between text-xs font-bold">
 							<span class="capitalize">{severity}</span>
-							<span class="text-muted-foreground">{count} item</span>
+							<span class="text-muted-foreground">{count} {t('item')}</span>
 						</div>
 						<div class="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted">
 							<div class={`h-full rounded-full ${severityColor(severity)}`} style={`width:${(count / complianceTotal) * 100}%`}></div>
@@ -356,15 +355,15 @@
 					</div>
 				{/each}
 				{#if complianceBySeverity.length === 0}
-					<p class="text-sm font-semibold text-muted-foreground">Belum ada requirement kepatuhan.</p>
+					<p class="text-sm font-semibold text-muted-foreground">{t('Belum ada requirement kepatuhan.')}</p>
 				{/if}
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader class="flex-row items-center justify-between gap-3">
-				<CardTitle>Market opportunity</CardTitle>
-				<Button variant="outline" size="sm" href="/marketing">AI Marketing</Button>
+				<CardTitle>{t('Peluang pasar')}</CardTitle>
+				<Button variant="outline" size="sm" href="/marketing">{t('Pemasaran AI')}</Button>
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				{#each marketScores as analysis (analysis.id)}
@@ -379,7 +378,7 @@
 					</div>
 				{/each}
 				{#if marketScores.length === 0}
-					<p class="text-sm font-semibold text-muted-foreground">Belum ada analisis pasar. Jalankan di Export Analysis.</p>
+					<p class="text-sm font-semibold text-muted-foreground">{t('Belum ada analisis pasar. Jalankan di Export Analysis.')}</p>
 				{/if}
 			</CardContent>
 		</Card>
@@ -388,17 +387,17 @@
 	<Card class="mt-4">
 		<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
 			<div>
-				<CardTitle>Belajar ekspor</CardTitle>
-				<CardDescription>Modul edukasi teratas untuk memperdalam kesiapan ekspor Anda.</CardDescription>
+				<CardTitle>{t('Belajar ekspor')}</CardTitle>
+				<CardDescription>{t('Modul edukasi teratas untuk memperdalam kesiapan ekspor Anda.')}</CardDescription>
 			</div>
-			<Button variant="outline" size="sm" href="/educational">Semua modul</Button>
+			<Button variant="outline" size="sm" href="/educational">{t('Semua modul')}</Button>
 		</CardHeader>
 		<CardContent class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
 			{#each eduModules.items.slice(0, 3) as module (module.id)}
 				<a href={`/educational/modules/${module.id}`} class="rounded-xl border bg-muted/30 p-4 no-underline transition-colors hover:border-ring/40">
 					<div class="flex items-center justify-between gap-2">
 						<Badge variant="secondary">{module.level}</Badge>
-						<span class="text-xs font-bold text-muted-foreground">{module.completion}% selesai</span>
+						<span class="text-xs font-bold text-muted-foreground">{module.completion}% {t('selesai')}</span>
 					</div>
 					<h3 class="mt-2 text-base font-bold">{module.title}</h3>
 					<p class="mt-1 line-clamp-2 text-xs text-muted-foreground">{module.summary}</p>
@@ -408,7 +407,7 @@
 				</a>
 			{/each}
 			{#if eduModules.items.length === 0}
-				<p class="text-sm font-semibold text-muted-foreground sm:col-span-2 lg:col-span-3">Belum ada modul edukasi.</p>
+				<p class="text-sm font-semibold text-muted-foreground sm:col-span-2 lg:col-span-3">{t('Belum ada modul edukasi.')}</p>
 			{/if}
 		</CardContent>
 	</Card>
