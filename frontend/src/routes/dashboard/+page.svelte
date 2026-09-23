@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { businessProfiles as seedProfiles, exportAnalyses as seedAnalyses, projects as seedProjects, products as seedProducts, buyerRequests as seedRequests, forwarders as seedForwarders } from '$lib/data/trade';
-	import { listBusinessProfiles } from '$lib/api/business-profile';
+	import { listBusinessProfiles, getDashboardSummary, type DashboardSummary } from '$lib/api/business-profile';
 	import { listExportAnalyses } from '$lib/api/export-analysis';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { listProducts } from '$lib/api/products';
@@ -20,6 +20,9 @@
 	let buyerRequests = createRemoteList(listBuyerRequests, seedRequests);
 	let forwarders = createRemoteList(listForwarders, seedForwarders);
 
+	let hasProfile = $state(true);
+	let summaryCounts = $state<DashboardSummary['counts'] | null>(null);
+
 	$effect(() => {
 		profiles.load();
 		projects.load();
@@ -27,6 +30,12 @@
 		exportAnalyses.load();
 		buyerRequests.load();
 		forwarders.load();
+		getDashboardSummary()
+			.then((res) => {
+				hasProfile = res.data.has_business_profile;
+				summaryCounts = res.data.counts;
+			})
+			.catch(() => {});
 	});
 
 	let profile = $derived(profiles.items[0]);
@@ -68,11 +77,11 @@
 					<Button href="/export-analysis" variant="outline">Run market analysis</Button>
 				</div>
 			</div>
-			{#if profile && profile.status !== 'Complete'}
+			{#if !hasProfile || (profile && profile.status !== 'Complete')}
 				<Card class="border-destructive/30 bg-destructive/5 p-4">
-					<Badge variant="outline" class="w-fit border-destructive/30 text-destructive">Profile incomplete</Badge>
+					<Badge variant="outline" class="w-fit border-destructive/30 text-destructive">Lengkapi Profil Bisnis!</Badge>
 					<p class="mt-3 leading-relaxed text-muted-foreground">
-						Complete your business profile and certifications before starting a new export analysis.
+						Lengkapi profil bisnis dan sertifikasi sebelum memulai analisis ekspor baru.
 					</p>
 					<Button href="/business-profile" variant="ghost" class="mt-2.5 w-fit">Complete profile</Button>
 				</Card>

@@ -12,7 +12,11 @@
 		listVariantTypes,
 		generateCatalogAiDescription,
 		addCatalogImage,
-		deleteCatalogImage
+		deleteCatalogImage,
+		addVariantType,
+		addVariantOption,
+		deleteVariantType,
+		deleteVariantOption
 	} from '$lib/api/catalogs';
 	import { uploadFileBinary, fileDownloadUrl } from '$lib/api/files';
 	import type { CatalogImage, VariantType, CatalogAIDescription } from '$lib/api/catalogs';
@@ -27,6 +31,60 @@
 	let loadingAi = $state(false);
 	let newImageUrl = $state('');
 	let uploading = $state(false);
+	let newVariantType = $state('');
+	let newVariantOption = $state<Record<string, string>>({});
+	let variantError = $state('');
+
+	async function reloadVariants() {
+		variantTypes = (await listVariantTypes(data.catalog.id)).data.data;
+	}
+
+	async function handleAddVariantType() {
+		variantError = '';
+		if (newVariantType.trim().length < 2) {
+			variantError = 'Nama tipe varian minimal 2 karakter.';
+			return;
+		}
+		try {
+			await addVariantType(data.catalog.id, { type_code: 'custom', type_name: newVariantType.trim() });
+			newVariantType = '';
+			await reloadVariants();
+		} catch {
+			variantError = 'Gagal menambah tipe varian.';
+		}
+	}
+
+	async function handleAddVariantOption(typeId: string) {
+		variantError = '';
+		const name = (newVariantOption[typeId] ?? '').trim();
+		if (!name) return;
+		try {
+			await addVariantOption(data.catalog.id, typeId, name);
+			newVariantOption[typeId] = '';
+			await reloadVariants();
+		} catch {
+			variantError = 'Gagal menambah opsi varian.';
+		}
+	}
+
+	async function handleRemoveVariantType(typeId: string) {
+		if (!confirm('Hapus tipe varian beserta opsinya?')) return;
+		try {
+			await deleteVariantType(data.catalog.id, typeId);
+			await reloadVariants();
+		} catch {
+			variantError = 'Gagal menghapus tipe varian.';
+		}
+	}
+
+	async function handleRemoveVariantOption(typeId: string, optionId: string) {
+		try {
+			await deleteVariantOption(data.catalog.id, typeId, optionId);
+			await reloadVariants();
+		} catch {
+			variantError = 'Gagal menghapus opsi varian.';
+		}
+	}
 
 	$effect(() => {
 		published = data.catalog.status === 'Published';
@@ -257,21 +315,61 @@
 
 		{#if variantTypes.length > 0}
 			<Card>
-				<CardHeader><CardTitle>Variants</CardTitle></CardHeader>
+				<CardHeader class="flex-row items-center justify-between gap-3">
+					<CardTitle>Variants</CardTitle>
+					<Badge variant="secondary">{variantTypes.length}</Badge>
+				</CardHeader>
 				<CardContent class="grid gap-2.5">
 					{#each variantTypes as vt}
 						<div class="rounded-lg border bg-muted/30 p-3.5">
-							<strong class="text-sm">{vt.typeName}</strong>
+							<div class="flex items-center justify-between gap-2">
+								<strong class="text-sm">{vt.typeName}</strong>
+								<button class="text-xs font-bold text-destructive hover:underline" onclick={() => handleRemoveVariantType(vt.id)}>Hapus tipe</button>
+							</div>
 							<div class="mt-1.5 flex flex-wrap gap-1.5">
 								{#each vt.options ?? [] as option}
-									<span class="rounded-full border bg-background/60 px-2.5 py-1 text-xs font-bold">{option.optionName}</span>
+									<span class="inline-flex items-center gap-1 rounded-full border bg-background/60 px-2.5 py-1 text-xs font-bold">
+										{option.optionName}
+										<button class="text-muted-foreground hover:text-destructive" onclick={() => handleRemoveVariantOption(vt.id, option.id)}>✕</button>
+									</span>
 								{/each}
+							</div>
+							<div class="mt-2 flex gap-2">
+								<input
+									type="text"
+									placeholder={`Tambah opsi untuk ${vt.typeName}...`}
+									class="h-9 flex-1 rounded-md border bg-background px-3 text-sm"
+									value={newVariantOption[vt.id] ?? ''}
+									oninput={(e) => (newVariantOption = { ...newVariantOption, [vt.id]: (e.currentTarget as HTMLInputElement).value })}
+								/>
+								<Button size="sm" variant="outline" onclick={() => handleAddVariantOption(vt.id)}>+</Button>
 							</div>
 						</div>
 					{/each}
 				</CardContent>
 			</Card>
 		{/if}
+
+		<Card>
+			<CardHeader>
+				<CardTitle>Manage Variants</CardTitle>
+				<CardDescription>Tambah tipe varian (warna, ukuran, rasa, dll) dan opsinya.</CardDescription>
+			</CardHeader>
+			<CardContent class="grid gap-3">
+				{#if variantError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{variantError}</p>
+				{/if}
+				<div class="flex gap-2">
+					<input
+						type="text"
+						placeholder="Nama tipe varian (mis. Ukuran)"
+						class="h-10 flex-1 rounded-md border bg-background px-3 text-sm"
+						bind:value={newVariantType}
+					/>
+					<Button variant="outline" size="sm" onclick={handleAddVariantType} disabled={!newVariantType.trim()}>Tambah tipe</Button>
+				</div>
+			</CardContent>
+		</Card>
 
 		{#if aiDesc}
 			<Card class="md:col-span-2">
