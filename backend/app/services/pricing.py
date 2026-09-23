@@ -26,10 +26,28 @@ RATE_STALE_HOURS = 24
 # ---------------------------------------------------------------------------
 # Exchange rate
 # ---------------------------------------------------------------------------
-def get_exchange_rate() -> dict[str, Any]:
-    """Rate base→display terbaru; auto-fetch bila basi >24 jam; fallback."""
+def get_exchange_rate(*, refresh: bool = False) -> dict[str, Any]:
+    """Rate base→display terbaru.
+
+    Default READ-ONLY: mengembalikan record tersimpan apa adanya (tanpa network
+    atau tulis DB). Endpoint GET tidak boleh memicu outbound fetch + write
+    (sebelumnya GET /costing/exchange-rate/ melakukannya). Gunakan `refresh=True`
+    (atau endpoint refresh eksplisit) untuk auto-fetch + persist.
+    """
     rates = db.all("exchange_rates")
     record = rates[0] if rates else None
+    if not refresh:
+        if record:
+            return record
+        # Belum ada record: kembalikan nilai fallback tanpa menulis.
+        return {
+            "id": None,
+            "rate": FALLBACK_RATE,
+            "source": "fallback",
+            "updatedAt": datetime.now(timezone.utc).isoformat(),
+            "baseCurrency": BASE_CURRENCY,
+            "targetCurrency": DISPLAY_CURRENCY,
+        }
     now = datetime.now(timezone.utc)
     stale = True
     if record:

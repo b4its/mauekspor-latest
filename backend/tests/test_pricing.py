@@ -17,7 +17,7 @@ def fresh_store():
 # ---------- Exchange rate ----------
 def test_get_exchange_rate_fallback_saat_fetch_gagal(monkeypatch):
     monkeypatch.setattr(pricing, "fetch_live_exchange_rate", lambda: None)
-    rec = pricing.get_exchange_rate()
+    rec = pricing.get_exchange_rate(refresh=True)
     assert rec["rate"] == pricing.FALLBACK_RATE
     assert rec["source"] == "fallback"
 
@@ -35,7 +35,7 @@ def test_get_exchange_rate_fresh_tidak_fetch(monkeypatch):
         "updatedAt": datetime.now(timezone.utc).isoformat(),
         "baseCurrency": pricing.BASE_CURRENCY, "targetCurrency": pricing.DISPLAY_CURRENCY,
     })
-    rec = pricing.get_exchange_rate()
+    rec = pricing.get_exchange_rate(refresh=True)
     assert rec["rate"] == 15800.0
     assert called["n"] == 0  # tidak fetch karena masih fresh
 
@@ -45,7 +45,7 @@ def test_get_exchange_rate_stale_memicu_fetch(monkeypatch):
     old = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
     db.insert("exchange_rates", {"id": "FX-1", "rate": 15800.0, "source": "manual", "updatedAt": old,
         "baseCurrency": pricing.BASE_CURRENCY, "targetCurrency": pricing.DISPLAY_CURRENCY})
-    rec = pricing.get_exchange_rate()
+    rec = pricing.get_exchange_rate(refresh=True)
     assert rec["rate"] == 16100.0
     assert rec["source"] == "auto_fetched"
 
@@ -53,7 +53,7 @@ def test_get_exchange_rate_stale_memicu_fetch(monkeypatch):
 def test_get_exchange_rate_updatedAt_invalid_dianggap_stale(monkeypatch):
     monkeypatch.setattr(pricing, "fetch_live_exchange_rate", lambda: None)
     db.insert("exchange_rates", {"id": "FX-1", "rate": 15800.0, "source": "manual", "updatedAt": "bukan-tanggal"})
-    rec = pricing.get_exchange_rate()
+    rec = pricing.get_exchange_rate(refresh=True)
     assert rec["source"] == "fallback"
 
 

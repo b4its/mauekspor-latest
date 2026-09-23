@@ -42,6 +42,10 @@ def _serialize(record):
     return out
 
 
+# Batas atas `limit` untuk semua list endpoint (anti unbounded scan / DoS).
+_MAX_LIMIT = 500
+
+
 def _list_query(table: str) -> dict:
     return {"data": [_serialize(r) for r in db.all(table)], "meta": {}}
 
@@ -58,7 +62,11 @@ def _filtered_query(
     """List dengan filter opsional: search (LIKE pada field), status, dan pagination.
 
     Bila `limit` <= 0, kembalikan semua (perilaku default lama agar kontrak frontend tetap).
+    `limit`/`offset` di-clamp: negatif → 0, dan limit dibatasi `_MAX_LIMIT` agar
+    query string tidak bisa meminta irisan tak wajar.
     """
+    limit = min(max(int(limit or 0), 0), _MAX_LIMIT)
+    offset = max(int(offset or 0), 0)
     items = db.all(table)
     if search:
         q = search.lower()
@@ -120,8 +128,9 @@ def _profile_payload(data: dict) -> dict:
     return merged
 
 
-def _profile_one(record) -> dict:
-    db.save(record)
+def _profile_one(record, *, persist: bool = True) -> dict:
+    if persist:
+        db.save(record)
     out = _serialize(record)
     for k, alias in _PROFILE_CAMEL.items():
         if k in record and alias not in out:
@@ -1048,7 +1057,7 @@ def get_my_buyer_profile(current_user: dict = Depends(get_current_user)):
     record = db.get_by("buyer_profiles", userId=current_user["id"])
     if not record:
         raise HTTPException(404, "Buyer profile not found")
-    return _profile_one(record)
+    return _profile_one(record, persist=False)
 
 
 @router.put("/buyers/profile/{profile_id}/")
@@ -1405,7 +1414,7 @@ def get_my_forwarder_profile(current_user: dict = Depends(get_current_user)):
     record = db.get_by("forwarder_profiles", userId=current_user["id"])
     if not record:
         raise HTTPException(404, "Forwarder profile not found")
-    return _profile_one(record)
+    return _profile_one(record, persist=False)
 
 
 @router.put("/forwarders/profile/{profile_id}/")
@@ -1975,7 +1984,8 @@ def generate_catalog_ai_description(catalog_id: str, payload: dict):
 @router.get("/costing/exchange-rate/")
 def get_exchange_rate_endpoint():
     from app.services.pricing import get_exchange_rate, BASE_CURRENCY, DISPLAY_CURRENCY
-    rec = get_exchange_rate()
+    # Read-only: tidak memicu outbound fetch / tulis DB pada GET.
+    rec = dict(get_exchange_rate())
     rec.setdefault("baseCurrency", BASE_CURRENCY)
     rec.setdefault("targetCurrency", DISPLAY_CURRENCY)
     return _one(rec)

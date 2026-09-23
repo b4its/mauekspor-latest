@@ -149,6 +149,17 @@ def _is_self_service_mutation(path: str) -> bool:
     return path.split("?", 1)[0].startswith(_SELF_SERVICE_PREFIXES)
 
 
+# Path GET yang tetap boleh diakses anonim (katalog publik & endpoint publik lain).
+_ANON_READ_PREFIXES = (
+    "/api/v1/catalogs/public/",
+    "/api/v1/catalogs/public",
+)
+
+
+def _is_anon_read(path: str) -> bool:
+    return path.split("?", 1)[0].startswith(_ANON_READ_PREFIXES)
+
+
 def _module_of(path: str) -> str:
     parts = path.strip("/").split("/")
     return parts[2] if len(parts) > 2 else ""
@@ -415,8 +426,14 @@ async def require_auth_for_mutations(request, call_next):
                 status_code=403,
                 content=_error_body(403, f"Role {user.get('role', '')} cannot modify this resource"),
             )
-    elif not can_read_module((user or {}).get("role", ""), module):
-        return JSONResponse(status_code=403, content=_error_body(403, "Admin access required"))
+    elif not can_read_module((user or {}).get("role", ""), module) and not _is_anon_read(
+        request.url.path
+    ):
+        # 403 untuk modul admin-only, 401 untuk modul yang butuh login.
+        from app.core.permissions import ADMIN_ONLY_MODULES as _ADMIN_ONLY
+        if module in _ADMIN_ONLY:
+            return JSONResponse(status_code=403, content=_error_body(403, "Admin access required"))
+        return JSONResponse(status_code=401, content=_error_body(401, "Authentication required"))
     return await call_next(request)
 
 
