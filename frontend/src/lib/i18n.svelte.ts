@@ -6,6 +6,23 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Asisten dagang AI': { id: 'Asisten dagang AI', en: 'AI trade assistant' },
+	'Sesi': { id: 'Sesi', en: 'Sessions' },
+	'+ Baru': { id: '+ Baru', en: '+ New' },
+	'Memuat sesi...': { id: 'Memuat sesi...', en: 'Loading sessions...' },
+	'pesan': { id: 'pesan', en: 'messages' },
+	'Belum ada sesi. Buat sesi baru untuk mulai.': { id: 'Belum ada sesi. Buat sesi baru untuk mulai.', en: 'No sessions yet. Create a new session to start.' },
+	'Asisten AI ekspor-impor': { id: 'Asisten AI ekspor-impor', en: 'AI export-import assistant' },
+	'Asisten AI': { id: 'Asisten AI', en: 'AI assistant' },
+	'Mulai percakapan dengan Copilot': { id: 'Mulai percakapan dengan Copilot', en: 'Start a conversation with Copilot' },
+	'Anda': { id: 'Anda', en: 'You' },
+	'Asisten': { id: 'Asisten', en: 'Assistant' },
+	'Tidak dapat memuat sesi chat dari server.': { id: 'Tidak dapat memuat sesi chat dari server.', en: 'Could not load chat sessions from the server.' },
+	'Gagal membuat sesi baru.': { id: 'Gagal membuat sesi baru.', en: 'Failed to create a new session.' },
+	'Hapus sesi ini?': { id: 'Hapus sesi ini?', en: 'Delete this session?' },
+	'Gagal menghapus sesi.': { id: 'Gagal menghapus sesi.', en: 'Failed to delete session.' },
+	'Tanya tentang kepatuhan, freight, pricing...': { id: 'Tanya tentang kepatuhan, freight, pricing...', en: 'Ask about compliance, freight, pricing...' },
+	'Kirim': { id: 'Kirim', en: 'Send' },
 	'Platform belajar ekspor': { id: 'Platform belajar ekspor', en: 'Export learning platform' },
 	'Jalur belajar': { id: 'Jalur belajar', en: 'Learning path' },
 	'Belajar proses ekspor sambil Anda mengirim.': { id: 'Belajar proses ekspor sambil Anda mengirim.', en: 'Learn the export process as you ship.' },
