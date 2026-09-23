@@ -4,6 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	let { data } = $props();
 
@@ -19,7 +20,7 @@
 	<title>{data.user.fullName} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.user.id} eyebrow="User detail">
+<AppShell title={data.user.id} eyebrow={t('User detail')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -34,27 +35,27 @@
 	</Card>
 
 	<Card>
-		<CardHeader><CardTitle>Account details</CardTitle></CardHeader>
+		<CardHeader><CardTitle>{t('Detail akun')}</CardTitle></CardHeader>
 		<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-				Email <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.email}</strong>
+				{t('Email')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.email}</strong>
 			</div>
 			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-				Role <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.role}</strong>
+				{t('Role')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.role}</strong>
 			</div>
 			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-				Status <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.status}</strong>
+				{t('Status')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.status}</strong>
 			</div>
 			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-				Created <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.createdAt}</strong>
+				{t('Created')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.createdAt}</strong>
 			</div>
 			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-				Last login <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.lastLogin}</strong>
+				{t('Login terakhir')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.lastLogin}</strong>
 			</div>
 		</CardContent>
 	</Card>
 
 	<div class="mt-4">
-		<Button variant="outline" href="/users">Back to users</Button>
+		<Button variant="outline" href="/users">{t('Kembali ke pengguna')}</Button>
 	</div>
 </AppShell>

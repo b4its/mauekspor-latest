@@ -8,6 +8,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Alert } from '$lib/components/ui/alert/index.js';
 	import { createProduct } from '$lib/api/products';
+	import { t } from '$lib/i18n.svelte';
 
 	let name = $state('');
 	let category = $state('Food & Beverage');
@@ -30,7 +31,7 @@
 	async function create() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib: nama produk, kategori, dan asal.';
+			error = t('Lengkapi kolom wajib: nama produk, kategori, dan asal.');
 			return;
 		}
 		creating = true;
@@ -48,7 +49,7 @@
 			createdId = res.data.id;
 			created = true;
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Gagal membuat produk.';
+			error = err instanceof Error ? err.message : t('Gagal membuat produk.');
 		} finally {
 			creating = false;
 		}
@@ -59,16 +60,15 @@
 	<title>New Product | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Products" eyebrow="Add export product">
+<AppShell title="Products" eyebrow={t('Add export product')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge>Product creation</Badge>
+			<Badge>{t('Pembuatan produk')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Capture the product data every export step needs.
+				{t('Tangkap data produk yang dibutuhkan setiap langkah ekspor.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Structured specs here drive HS classification, compliance checks, catalogs, and costing.
-				Endpoint prepared in <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">createProduct()</code>.
+				{t('Spesifikasi terstruktur di sini menggerakkan klasifikasi HS, pemeriksaan kepatuhan, katalog, dan costing. Endpoint disiapkan di createProduct().')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -76,14 +76,13 @@
 	{#if created}
 		<Card class="grid gap-4">
 			<CardContent class="grid gap-4 p-0">
-				<Badge>Product created</Badge>
+				<Badge>{t('Produk dibuat')}</Badge>
 				<h3 class="text-xl font-semibold tracking-tight">{name}</h3>
 				<p class="text-muted-foreground">
-					Produk berhasil disimpan ke backend
+					{t('Produk berhasil disimpan ke backend dan siap digunakan di HS classification, compliance, dan katalog.')}
 					{#if createdId}<code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{createdId}</code>{/if}
-					dan siap digunakan di HS classification, compliance, dan katalog.
 				</p>
-				<Button href="/products">Back to products</Button>
+				<Button href="/products">{t('Kembali ke produk')}</Button>
 			</CardContent>
 		</Card>
 	{:else}
@@ -95,12 +94,12 @@
 			}}
 		>
 			<div class="grid gap-2">
-				<Label>Name</Label>
+				<Label>{t('Nama')}</Label>
 				<Input bind:value={name} placeholder="Gayo Arabica Coffee Beans" />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div class="grid gap-2">
-					<Label>Category</Label>
+					<Label>{t('Kategori')}</Label>
 					<NativeSelect bind:value={category}>
 						{#each categories as option}
 							<option>{option}</option>
@@ -108,32 +107,32 @@
 					</NativeSelect>
 				</div>
 				<div class="grid gap-2">
-					<Label>Origin</Label>
+					<Label>{t('Asal')}</Label>
 					<Input bind:value={origin} placeholder="Aceh, Indonesia" />
 				</div>
 			</div>
 			<div class="grid gap-2">
-				<Label>Packaging</Label>
-				<Input bind:value={packaging} placeholder="250g valve bag, 24 bags per carton" />
+				<Label>{t('Kemasan')}</Label>
+				<Input bind:value={packaging} placeholder={t('Kantong valve 250g, 24 kantong per karton')} />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label>Net weight</Label><Input bind:value={netWeight} placeholder="250g" /></div>
-				<div class="grid gap-2"><Label>Gross weight</Label><Input bind:value={grossWeight} placeholder="280g" /></div>
+				<div class="grid gap-2"><Label>{t('Berat bersih')}</Label><Input bind:value={netWeight} placeholder="250g" /></div>
+				<div class="grid gap-2"><Label>{t('Berat kotor')}</Label><Input bind:value={grossWeight} placeholder="280g" /></div>
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label>MOQ</Label><Input bind:value={moq} placeholder="2,000 bags" /></div>
-				<div class="grid gap-2"><Label>Lead time</Label><Input bind:value={leadTime} placeholder="21 days" /></div>
+				<div class="grid gap-2"><Label>{t('MOQ')}</Label><Input bind:value={moq} placeholder={t('2.000 kantong')} /></div>
+				<div class="grid gap-2"><Label>{t('Waktu tunggu')}</Label><Input bind:value={leadTime} placeholder={t('21 hari')} /></div>
 			</div>
 			<div class="grid gap-2">
-				<Label>Certificates (comma separated)</Label>
-				<Input bind:value={certificates} placeholder="Halal, Organic in progress" />
+				<Label>{t('Sertifikat (dipisahkan koma)')}</Label>
+				<Input bind:value={certificates} placeholder={t('Halal, Organik sedang berjalan')} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}
 
 			<div class="flex flex-wrap gap-2">
-				<Button variant="outline" href="/products">Cancel</Button>
-				<Button type="submit" disabled={creating}>{creating ? 'Creating...' : 'Create product'}</Button>
+				<Button variant="outline" href="/products">{t('Batal')}</Button>
+				<Button type="submit" disabled={creating}>{creating ? t('Membuat...') : t('Buat produk')}</Button>
 			</div>
 		</form>
 	{/if}
