@@ -5,8 +5,9 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { requestForwarderQuote, getForwarderStatistics, createForwarderReview } from '$lib/api/forwarders';
-	import type { ForwarderStatistics } from '$lib/api/forwarders';
+import { requestForwarderQuote, getForwarderStatistics, createForwarderReview } from '$lib/api/forwarders';
+import type { ForwarderStatistics } from '$lib/api/forwarders';
+import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 
 	let { data } = $props();
 	let quoteRequested = $state(false);
@@ -74,6 +75,11 @@
 				<CardDescription class="mt-2">{data.forwarder.coverage} - {data.forwarder.mode}</CardDescription>
 			</div>
 			<div class="grid gap-2.5 md:min-w-[200px]">
+				<WhatsAppDialog
+					phone={data.forwarder.contact ?? ''}
+					contactName={data.forwarder.name}
+					company={data.forwarder.name}
+				/>
 				<Button disabled={quoteRequested || requesting} onclick={handleQuote}>
 					{quoteRequested ? 'Quote requested' : requesting ? 'Requesting...' : 'Request quote'}
 				</Button>

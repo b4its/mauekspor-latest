@@ -292,3 +292,41 @@ def _wrap_pdf(text_bytes: bytes) -> bytes:
         f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n".encode()
     )
     return bytes(out)
+
+
+def build_analysis_pdf(analysis: dict[str, Any]) -> bytes:
+    """Buat PDF ringkasan export analysis (mirip build_costing_pdf)."""
+    issues = analysis.get("complianceIssues") or []
+    issue_lines = []
+    for issue in issues:
+        issue_lines.append(
+            f"- [{issue.get('severity', 'minor')}] {issue.get('type', '')}: "
+            f"{issue.get('required_value', '')}"
+        )
+    if not issue_lines:
+        issue_lines.append("- Tidak ada isu kepatuhan ditemukan.")
+    recommendations = analysis.get("recommendations") or ""
+    if isinstance(recommendations, list):
+        recommendations = "\n".join(f"- {r}" for r in recommendations)
+    text = "\n".join([
+        "MAUEKSPOR - EXPORT ANALYSIS REPORT",
+        "=" * 60,
+        f"Product     : {analysis.get('productName', '')}",
+        f"Destination : {analysis.get('destination', '')}",
+        f"HS Code     : {analysis.get('hsCode', '')}",
+        f"Status      : {analysis.get('status', '')}",
+        f"Score       : {analysis.get('score', 0)} / 100",
+        f"Grade       : {analysis.get('statusGrade', '-')}",
+        f"Confidence  : {analysis.get('confidence', 0)}%",
+        "",
+        "COMPLIANCE ISSUES",
+        "-" * 60,
+        *issue_lines,
+        "",
+        "RECOMMENDATIONS",
+        "-" * 60,
+        str(recommendations),
+        "",
+        f"Generated: {datetime.now(timezone.utc).isoformat()}",
+    ])
+    return _wrap_pdf(text.encode("utf-8", errors="replace"))

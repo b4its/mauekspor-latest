@@ -210,8 +210,17 @@ def refresh(request: Request, response: Response):
 # USERS
 # ----------------------------------------------------------------------------
 @router.get("/users/")
-def list_users():
-    return _list_query("users")
+def list_users(search: str = "", role: str = "", limit: int = 0, offset: int = 0):
+    items = db.all("users")
+    if search:
+        q = search.lower()
+        items = [r for r in items if q in str(r.get("email", "")).lower() or q in str(r.get("fullName", "")).lower()]
+    if role:
+        items = [r for r in items if str(r.get("role", "")).lower() == role.lower()]
+    total = len(items)
+    if limit > 0:
+        items = items[offset:offset + limit]
+    return {"data": [_serialize(r) for r in items], "meta": {"total": total, "limit": limit, "offset": offset, "count": len(items)}}
 
 
 @router.get("/users/{user_id}/")
@@ -2813,6 +2822,21 @@ def get_regulation_recommendations(analysis_id: str, language: str = "id"):
     }
     db.insert("regulation_recommendations", data)
     return _one(data)
+
+
+@router.get("/export-analysis/{analysis_id}/pdf/")
+def export_analysis_pdf(analysis_id: str):
+    record = db.get("export_analyses", analysis_id)
+    if not record:
+        raise HTTPException(404, "Export analysis not found")
+    from app.services.pricing import build_analysis_pdf
+    pdf_bytes = build_analysis_pdf(record)
+    from fastapi.responses import Response
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="analysis-{analysis_id}.pdf"'},
+    )
 
 
 @router.post("/export-analysis/{analysis_id}/regulation-recommendations/")

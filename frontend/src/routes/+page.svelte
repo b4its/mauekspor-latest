@@ -32,6 +32,7 @@
 
 	const navLinks = [
 		{ label: 'Fitur', href: '#features' },
+		{ label: 'Peran', href: '#roles' },
 		{ label: 'Alur Kerja', href: '#workflow' },
 		{ label: 'Cerita', href: '#testimonials' }
 	];
@@ -48,7 +49,15 @@
 	const steps = [
 		{ n: '01', icon: BoxesIcon, title: 'Capture', text: 'Complete business profile and structured product data.' },
 		{ n: '02', icon: GlobeIcon, title: 'Analyze', text: 'Run market analysis for HS, duties, and regulations.' },
-		{ n: '03', icon: ShipIcon, title: 'Execute', text: 'Quote, cost, order, document, ship, and get paid.' }
+		{ n: '03', icon: ShipIcon, title: 'Execute', text: 'Quote, book freight, prepare documents, and track payment.' }
+	];
+
+	const roles = [
+		{ icon: FactoryIcon, title: 'Exporter / UMKM', text: 'Siapkan produk, analisis pasar & kepatuhan, bangun katalog, dan kelola pipeline penawaran hingga pengiriman.' },
+		{ icon: PackageSearchIcon, title: 'Buyer', text: 'Kirim kebutuhan (RFQ), lihat katalog UMKM yang cocok, dan hubungi langsung via WhatsApp.' },
+		{ icon: ShipIcon, title: 'Forwarder', text: 'Jaga profil, dapatkan review, dan muncul di rekomendasi rute untuk mendapatkan kuotasi baru.' },
+		{ icon: ShieldCheckIcon, title: 'Customs Broker', text: 'Pantau kepatuhan, bukti dokumen, dan status kepabeanan dalam satu workspace.' },
+		{ icon: ReceiptTextIcon, title: 'Finance', text: 'Lacak pembayaran, milestone deposit, dan tagihan di sepanjang siklus order.' }
 	];
 
 	const testimonials = [
@@ -241,6 +250,33 @@
 						</CardHeader>
 						<CardContent>
 							<p class="leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">{feature.text}</p>
+						</CardContent>
+					</Card>
+				{/each}
+			</div>
+		</section>
+
+		<section id="roles" class="grid gap-6 py-8">
+			<div class="max-w-2xl" data-aos="fade-up">
+				<Badge variant="outline" class="border-[#0b3d91]/20 text-[#0b3d91] dark:text-white">Dibuat untuk</Badge>
+				<h2 class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">Satu workspace untuk semua peran dagang.</h2>
+				<p class="mt-3 leading-relaxed text-[#0b1d3a]/70 dark:text-white/70">
+					Dari eksportir hingga finance, setiap peran mendapat tampilan yang relevan dengan akses sesuai perannya.
+				</p>
+			</div>
+			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+				{#each roles as role, index}
+					<Card
+						class="border-[#0b3d91]/10 transition-transform hover:-translate-y-1 dark:border-white/10"
+						data-aos="fade-up"
+						data-aos-delay={index * 80}
+					>
+						<CardHeader>
+							<role.icon class="size-6 text-[#0b3d91] dark:text-white" />
+							<CardTitle class="mt-3 text-base">{role.title}</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<p class="text-[13px] leading-relaxed text-muted-foreground">{role.text}</p>
 						</CardContent>
 					</Card>
 				{/each}

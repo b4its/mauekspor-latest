@@ -5,6 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { qualifyBuyer, logBuyerContact } from '$lib/api/buyers';
+	import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 
 	let { data } = $props();
 	let qualified = $state(false);
@@ -70,6 +71,11 @@
 					<CardDescription>{data.buyer.nextStep}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
+					<WhatsAppDialog
+						phone={data.buyer.contact?.phone ?? ''}
+						contactName={data.buyer.contact?.name ?? data.buyer.name}
+						company={data.buyer.name}
+					/>
 					<Button variant="outline" onclick={handleLogContact}>{logged ? 'Logged' : 'Log contact'}</Button>
 					<Button onclick={handleQualify}>{qualified ? 'Qualified' : 'Qualify buyer'}</Button>
 				</div>

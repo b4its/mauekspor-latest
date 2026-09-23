@@ -87,6 +87,11 @@ export function getRegulationRecommendations(id: string, language = 'id') {
 	return apiFetch<RegulationRecommendations>(`/export-analysis/${id}/regulation-recommendations/?language=${language}`);
 }
 
+export function analysisPdfUrl(id: string) {
+	const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
+	return `${base}/export-analysis/${id}/pdf/`;
+}
+
 // ---------- Countries ----------
 export function listCountries() {
 	return apiFetch<Country[]>('/countries/');

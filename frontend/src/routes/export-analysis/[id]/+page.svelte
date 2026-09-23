@@ -6,7 +6,7 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { reanalyzeExportAnalysis, deleteExportAnalysis, getRegulationRecommendations } from '$lib/api/export-analysis';
+	import { reanalyzeExportAnalysis, deleteExportAnalysis, getRegulationRecommendations, analysisPdfUrl } from '$lib/api/export-analysis';
 	import { updateProduct, getProduct } from '$lib/api/products';
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
 
@@ -181,6 +181,7 @@
 					<CardDescription class="mt-1.5 max-w-2xl leading-relaxed">{data.analysis.summary}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
+					<Button variant="outline" href={analysisPdfUrl(data.analysis.id)}>Download PDF</Button>
 					<Button variant="outline" href={`/export-analysis/${data.analysis.id}/regulation-recommendations`}>View recommendations</Button>
 					<Button variant="outline" onclick={handleRegs}>10-section guidance</Button>
 					<Button variant="outline" disabled={rerunning} onclick={handleRerun}>

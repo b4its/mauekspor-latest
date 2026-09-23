@@ -6,30 +6,44 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { userAccounts as seedUsers } from '$lib/data/trade';
 	import { listUsers, deleteUser } from '$lib/api/users';
-	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import type { UserAccount } from '$lib/data/trade';
 
 	const roleFilters = ['All', 'Admin', 'UMKM', 'Buyer', 'Forwarder'];
+	const PAGE_SIZE = 8;
 	let roleFilter = $state('All');
 	let query = $state('');
 	let deleting = $state('');
 	let error = $state('');
+	let users = $state<UserAccount[]>(seedUsers);
+	let loading = $state(true);
+	let total = $state(seedUsers.length);
+	let page = $state(1);
 
-	let users = createRemoteList(listUsers, seedUsers);
+	async function loadUsers() {
+		loading = true;
+		try {
+			const res = await listUsers({
+				search: query || undefined,
+				role: roleFilter === 'All' ? undefined : roleFilter,
+				limit: PAGE_SIZE,
+				offset: (page - 1) * PAGE_SIZE
+			});
+			users = res.data;
+			total = Number(res.meta?.total ?? res.data.length);
+		} catch {
+			users = seedUsers;
+			total = seedUsers.length;
+		} finally {
+			loading = false;
+		}
+	}
+
 	$effect(() => {
-		users.load();
+		loadUsers();
 	});
 
-	let filteredUsers = $derived(
-		users.items.filter((user) => {
-			const matchesRole = roleFilter === 'All' || user.role === roleFilter;
-			const matchesQuery = [user.email, user.fullName, user.role, user.status]
-				.join(' ')
-				.toLowerCase()
-				.includes(query.trim().toLowerCase());
-			return matchesRole && matchesQuery;
-		})
-	);
+	const totalPages = $derived(Math.max(1, Math.ceil(total / PAGE_SIZE)));
 
 	async function removeUser(id: string, name: string) {
 		if (!confirm(`Hapus akun "${name}" beserta data terkaitnya?`)) return;
@@ -37,8 +51,7 @@
 		deleting = id;
 		try {
 			await deleteUser(id);
-			const idx = users.items.findIndex((u) => u.id === id);
-			if (idx >= 0) users.items.splice(idx, 1);
+			await loadUsers();
 		} catch {
 			error = 'Gagal menghapus akun.';
 		} finally {
@@ -72,8 +85,10 @@
 			</div>
 			<Card>
 				<CardContent class="p-5">
+				<div class="grid gap-2.5 md:min-w-[200px]">
 					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total users</span>
-					<strong class="mt-2 block text-3xl font-bold tracking-tight">{users.items.length}</strong>
+					<strong class="mt-2 block text-3xl font-bold tracking-tight">{total}</strong>
+				</div>
 				</CardContent>
 			</Card>
 		</div>
@@ -85,40 +100,62 @@
 				<Button
 					variant={roleFilter === filter ? 'default' : 'outline'}
 					size="sm"
-					onclick={() => (roleFilter = filter)}
+					onclick={() => {
+						roleFilter = filter;
+						page = 1;
+					}}
 				>
 					{filter}
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search email or name..." class="max-w-xs" />
+		<Input
+			bind:value={query}
+			type="search"
+			placeholder="Search email or name..."
+			class="max-w-xs"
+			oninput={() => (page = 1)}
+		/>
 	</div>
 
 	<Card class="p-2">
 		<div class="grid grid-cols-2 gap-1 p-3 text-xs font-bold text-muted-foreground md:grid-cols-4 lg:grid-cols-5">
 			<span>User</span><span>Role</span><span>Status</span><span>Created</span><span class="hidden lg:block"></span>
 		</div>
-		{#each filteredUsers as user}
-			<div class="grid grid-cols-2 items-center gap-3 rounded-lg border-b p-3 text-sm transition-colors last:border-b-0 hover:bg-muted/40 md:grid-cols-4 lg:grid-cols-5">
-				<a href={`/users/${user.id}`} class="grid min-w-0 gap-1">
-					<strong class="block truncate">{user.fullName}</strong>
-					<small class="block truncate text-xs text-muted-foreground">{user.email}</small>
-				</a>
-				<span><Badge variant="secondary">{user.role}</Badge></span>
-				<span><Badge variant={toneVariant(statusTone(user.status))}>{user.status}</Badge></span>
-				<span class="hidden text-muted-foreground md:block">{user.createdAt}</span>
-				<span class="grid justify-end">
-					<Button size="sm" variant="ghost" href={`/users/${user.id}`}>Open</Button>
-					<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() => removeUser(user.id, user.fullName)}>
-						{deleting === user.id ? '...' : 'Hapus'}
-					</Button>
-				</span>
-			</div>
+		{#if loading}
+			<div class="p-6 text-center font-semibold text-muted-foreground">Memuat...</div>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No user matched your filter.</div>
-		{/each}
+			{#each users as user}
+				<div class="grid grid-cols-2 items-center gap-3 rounded-lg border-b p-3 text-sm transition-colors last:border-b-0 hover:bg-muted/40 md:grid-cols-4 lg:grid-cols-5">
+					<a href={`/users/${user.id}`} class="grid min-w-0 gap-1">
+						<strong class="block truncate">{user.fullName}</strong>
+						<small class="block truncate text-xs text-muted-foreground">{user.email}</small>
+					</a>
+					<span><Badge variant="secondary">{user.role}</Badge></span>
+					<span><Badge variant={toneVariant(statusTone(user.status))}>{user.status}</Badge></span>
+					<span class="hidden text-muted-foreground md:block">{user.createdAt}</span>
+					<span class="grid justify-end">
+						<Button size="sm" variant="ghost" href={`/users/${user.id}`}>Open</Button>
+						<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() => removeUser(user.id, user.fullName)}>
+							{deleting === user.id ? '...' : 'Hapus'}
+						</Button>
+					</span>
+				</div>
+			{:else}
+				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No user matched your filter.</div>
+			{/each}
+		{/if}
 		{#if error}
 			<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		{/if}
+		{#if totalPages > 1}
+			<div class="flex items-center justify-between gap-3 border-t p-3">
+				<span class="text-xs font-semibold text-muted-foreground">Halaman {page} dari {totalPages} · {total} pengguna</span>
+				<div class="flex gap-2">
+					<Button size="sm" variant="outline" disabled={page <= 1} onclick={() => (page -= 1)}>Sebelumnya</Button>
+					<Button size="sm" variant="outline" disabled={page >= totalPages} onclick={() => (page += 1)}>Berikutnya</Button>
+				</div>
+			</div>
 		{/if}
 	</Card>
 </AppShell>
