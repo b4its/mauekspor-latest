@@ -10,6 +10,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { assignTask } from '$lib/api/tasks';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Open', 'In Progress', 'Blocked', 'Done'];
 	let activeFilter = $state('All');
@@ -53,7 +54,7 @@
 			if (target) await assignTask(target.id, target.owner ?? 'ops');
 			created = true;
 		} catch {
-			error = 'Gagal membuat tugas.';
+			error = t('Gagal membuat tugas.');
 		} finally {
 			creating = false;
 		}
@@ -64,16 +65,16 @@
 	<title>Tasks | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Tasks" eyebrow="Operational work queue">
+<AppShell title="Tasks" eyebrow={t('Operational work queue')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="outline">Next actions</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Prioritize the work that unblocks export execution.</CardTitle>
-			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Convert compliance gaps, supplier evidence, payments, documents, and shipment exceptions into accountable operational tasks.</CardDescription>
+			<Badge variant="outline">{t('Next actions')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Prioritize the work that unblocks export execution.')}</CardTitle>
+			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Convert compliance gaps, supplier evidence, payments, documents, and shipment exceptions into accountable operational tasks.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? 'Task created' : creating ? 'Creating...' : 'Create task'}</Button>
-			<Badge variant="destructive">Blocked {blocked}</Badge>
+			<Button onclick={handleCreate} disabled={creating}>{created ? t('Task created') : creating ? t('Creating...') : t('Create task')}</Button>
+			<Badge variant="destructive">{t('Blocked')} {blocked}</Badge>
 		</CardContent>
 	</Card>
 
@@ -82,7 +83,7 @@
 	{/if}
 
 	{#if created}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4"><strong class="block">Task created.</strong><span class="block text-sm text-muted-foreground">Tugas dibuat di backend.</span></div>
+		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4"><strong class="block">{t('Task created.')}</strong><span class="block text-sm text-muted-foreground">{t('Tugas dibuat di backend.')}</span></div>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
@@ -91,18 +92,18 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search task, module, owner..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search task, module, owner...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card>
-			<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total tasks</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{workTasks.items.length}</strong></CardContent>
+			<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Total tasks')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{workTasks.items.length}</strong></CardContent>
 		</Card>
 		<Card>
-			<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Critical</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{critical}</strong></CardContent>
+			<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Critical')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{critical}</strong></CardContent>
 		</Card>
 		<Card>
-			<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Blocked</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{blocked}</strong></CardContent>
+			<CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Blocked')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{blocked}</strong></CardContent>
 		</Card>
 	</div>
 
@@ -114,15 +115,15 @@
 					<h3 class="mt-4 text-2xl font-bold tracking-tight">{task.title}</h3>
 					<p class="mt-2 text-sm text-muted-foreground">{task.module} · {projectName(task.projectId)}</p>
 					<div class="mt-4 grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Owner <strong class="mt-1 block text-sm font-bold text-foreground">{task.owner}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Due <strong class="mt-1 block text-sm font-bold text-foreground">{task.due}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Checklist <strong class="mt-1 block text-sm font-bold text-foreground">{task.checklist.filter((item) => item.done).length}/{task.checklist.length}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Priority <strong class="mt-1 block text-sm font-bold text-foreground">{task.priority}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.owner}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.due}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Checklist')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.checklist.filter((item) => item.done).length}/{task.checklist.length}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Priority')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.priority}</strong></div>
 					</div>
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No task matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No task matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>

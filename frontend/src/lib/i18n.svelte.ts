@@ -444,7 +444,56 @@ const dictionary: Record<string, Entry> = {
 	'Due': { id: 'Jatuh tempo', en: 'Due' },
 	'Confidence': { id: 'Tingkat keyakinan', en: 'Confidence' },
 	'Source: {item.source}': { id: 'Sumber: {item.source}', en: 'Source: {item.source}' },
-	'No compliance requirement matched your search.': { id: 'Tidak ada persyaratan kepatuhan yang cocok.', en: 'No compliance requirement matched your search.' }
+	'No compliance requirement matched your search.': { id: 'Tidak ada persyaratan kepatuhan yang cocok.', en: 'No compliance requirement matched your search.' },
+
+	// --- Documents ---
+	'Trade document center': { id: 'Pusat dokumen perdagangan', en: 'Trade document center' },
+	'Document control': { id: 'Kontrol dokumen', en: 'Document control' },
+	'Generate, validate, approve, and version trade documents.': {
+		id: 'Buat, validasi, setujui, dan versikan dokumen perdagangan.',
+		en: 'Generate, validate, approve, and version trade documents.'
+	},
+	'Keep invoice, packing list, certificate of origin, lab reports, insurance, and shipment documents consistent with product, quotation, and shipment data.': {
+		id: 'Jaga invoice, packing list, sertifikat asal, laporan lab, asuransi, dan dokumen pengiriman konsisten dengan data produk, quotation, dan pengiriman.',
+		en: 'Keep invoice, packing list, certificate of origin, lab reports, insurance, and shipment documents consistent with product, quotation, and shipment data.'
+	},
+	'Generate document': { id: 'Buat dokumen', en: 'Generate document' },
+	'Generating...': { id: 'Membuat...', en: 'Generating...' },
+	'Document generated': { id: 'Dokumen dibuat', en: 'Document generated' },
+	'Avg validation': { id: 'Rata-rata validasi', en: 'Avg validation' },
+	'Generated draft ready.': { id: 'Draf hasil generate siap.', en: 'Generated draft ready.' },
+	'Dokumen berhasil dibuat di backend.': { id: 'Dokumen berhasil dibuat di backend.', en: 'Document created in backend.' },
+	'Search document, owner, project...': { id: 'Cari dokumen, pemilik, proyek...', en: 'Search document, owner, project...' },
+	'Total documents': { id: 'Total dokumen', en: 'Total documents' },
+	'Need attention': { id: 'Perlu perhatian', en: 'Need attention' },
+	'Validation score': { id: 'Skor validasi', en: 'Validation score' },
+	'Version': { id: 'Versi', en: 'Version' },
+	'ID': { id: 'ID', en: 'ID' },
+	'No document matched your search.': { id: 'Tidak ada dokumen yang cocok.', en: 'No document matched your search.' },
+	'Gagal generate dokumen.': { id: 'Gagal generate dokumen.', en: 'Failed to generate document.' },
+
+	// --- Tasks ---
+	'Operational work queue': { id: 'Antrean kerja operasional', en: 'Operational work queue' },
+	'Next actions': { id: 'Aksi berikutnya', en: 'Next actions' },
+	'Prioritize the work that unblocks export execution.': {
+		id: 'Prioritaskan pekerjaan yang membuka hambatan eksekusi ekspor.',
+		en: 'Prioritize the work that unblocks export execution.'
+	},
+	'Convert compliance gaps, supplier evidence, payments, documents, and shipment exceptions into accountable operational tasks.': {
+		id: 'Ubah celah kepatuhan, bukti pemasok, pembayaran, dokumen, dan pengecualian pengiriman menjadi tugas operasional yang dapat dipertanggungjawabkan.',
+		en: 'Convert compliance gaps, supplier evidence, payments, documents, and shipment exceptions into accountable operational tasks.'
+	},
+	'Create task': { id: 'Buat tugas', en: 'Create task' },
+	'Task created': { id: 'Tugas dibuat', en: 'Task created' },
+	'Blocked': { id: 'Terhambat', en: 'Blocked' },
+	'Task created.': { id: 'Tugas dibuat.', en: 'Task created.' },
+	'Tugas dibuat di backend.': { id: 'Tugas dibuat di backend.', en: 'Task created in backend.' },
+	'Search task, module, owner...': { id: 'Cari tugas, modul, pemilik...', en: 'Search task, module, owner...' },
+	'Total tasks': { id: 'Total tugas', en: 'Total tasks' },
+	'Checklist': { id: 'Ceklis', en: 'Checklist' },
+	'Priority': { id: 'Prioritas', en: 'Priority' },
+	'No task matched your search.': { id: 'Tidak ada tugas yang cocok.', en: 'No task matched your search.' },
+	'Gagal membuat tugas.': { id: 'Gagal membuat tugas.', en: 'Failed to create task.' }
 };
 
 let initial: Locale = 'id';
