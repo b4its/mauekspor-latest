@@ -7,6 +7,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { getSettings, updateSettings } from '$lib/api/settings';
 	import type { WorkspaceSettings } from '$lib/api/settings';
+	import { t } from '$lib/i18n.svelte';
 
 	let settings = $state<WorkspaceSettings | null>(null);
 	let companyName = $state('');
@@ -38,7 +39,7 @@
 			await updateSettings({ companyName, country, entityType, nib, taxId });
 			saved = true;
 		} catch {
-			error = 'Gagal menyimpan pengaturan.';
+			error = t('Gagal menyimpan pengaturan.');
 		} finally {
 			saving = false;
 		}
@@ -49,19 +50,18 @@
 	<title>Settings | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Settings" eyebrow="Organization and access control">
+<AppShell title="Settings" eyebrow={t('Organisasi dan kontrol akses')}>
 	<div class="grid gap-4 lg:grid-cols-[1.2fr_minmax(360px,0.8fr)]">
 		<Card class="bg-gradient-to-br from-background to-secondary/30">
-			<CardHeader><Badge>Verified exporter profile</Badge></CardHeader>
+			<CardHeader><Badge>{t('Profil eksportir terverifikasi')}</Badge></CardHeader>
 			<CardContent class="grid gap-4">
-				<CardTitle class="text-3xl font-bold tracking-tight md:text-4xl">{companyName || 'Perusahaan Anda'}</CardTitle>
+				<CardTitle class="text-3xl font-bold tracking-tight md:text-4xl">{companyName || t('Perusahaan Anda')}</CardTitle>
 				<CardDescription class="leading-relaxed">
-					Organization settings will hold legal identity, tax data, NIB, production sites,
-					verification documents, team permissions, and security policies.
+					{t('Pengaturan organisasi akan memuat identitas legal, data pajak, NIB, lokasi produksi, dokumen verifikasi, izin tim, dan kebijakan keamanan.')}
 				</CardDescription>
 
 				{#if saved}
-					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">Pengaturan tersimpan di backend.</p>
+					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Pengaturan tersimpan di backend.')}</p>
 				{/if}
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
@@ -70,47 +70,47 @@
 				<form class="grid gap-3" onsubmit={(event) => { event.preventDefault(); save(); }}>
 					<div class="grid gap-4 sm:grid-cols-2">
 						<div class="grid gap-2">
-							<Label for="s-name">Company name</Label>
+							<Label for="s-name">{t('Nama perusahaan')}</Label>
 							<Input id="s-name" bind:value={companyName} />
 						</div>
 						<div class="grid gap-2">
-							<Label for="s-country">Country</Label>
+							<Label for="s-country">{t('Negara')}</Label>
 							<Input id="s-country" bind:value={country} />
 						</div>
 					</div>
 					<div class="grid gap-4 sm:grid-cols-2">
 						<div class="grid gap-2">
-							<Label for="s-type">Entity type</Label>
-							<Input id="s-type" bind:value={entityType} placeholder="Manufacturer exporter" />
+							<Label for="s-type">{t('Jenis entitas')}</Label>
+							<Input id="s-type" bind:value={entityType} placeholder={t('Eksportir produsen')} />
 						</div>
 						<div class="grid gap-2">
-							<Label for="s-nib">NIB</Label>
-							<Input id="s-nib" bind:value={nib} placeholder="Nomor Induk Berusaha" />
+							<Label for="s-nib">{t('NIB')}</Label>
+							<Input id="s-nib" bind:value={nib} placeholder={t('Nomor Induk Berusaha')} />
 						</div>
 					</div>
 					<div class="grid gap-2">
-						<Label for="s-tax">Tax ID (NPWP)</Label>
+						<Label for="s-tax">{t('NPWP')}</Label>
 						<Input id="s-tax" bind:value={taxId} placeholder="00.000.000.0-000.000" />
 					</div>
-					<Button type="submit" disabled={saving} class="w-fit">{saving ? 'Saving...' : 'Save settings'}</Button>
+					<Button type="submit" disabled={saving} class="w-fit">{saving ? t('Menyimpan...') : t('Simpan pengaturan')}</Button>
 				</form>
 			</CardContent>
 		</Card>
 
 		<Card>
-			<CardHeader><CardTitle>Organization info</CardTitle></CardHeader>
+			<CardHeader><CardTitle>{t('Informasi organisasi')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Country <strong class="mt-1 block text-sm font-bold text-foreground">{country || 'Indonesia'}</strong>
+					{t('Negara')} <strong class="mt-1 block text-sm font-bold text-foreground">{country || 'Indonesia'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Entity type <strong class="mt-1 block text-sm font-bold text-foreground">{entityType || '—'}</strong>
+					{t('Jenis entitas')} <strong class="mt-1 block text-sm font-bold text-foreground">{entityType || '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					NIB <strong class="mt-1 block text-sm font-bold text-foreground">{nib || 'Belum diisi'}</strong>
+					{t('NIB')} <strong class="mt-1 block text-sm font-bold text-foreground">{nib || t('Belum diisi')}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					Security <strong class="mt-1 block text-sm font-bold text-foreground">{settings?.security?.sessionType ?? 'Cookie session'}</strong>
+					{t('Keamanan')} <strong class="mt-1 block text-sm font-bold text-foreground">{settings?.security?.sessionType ?? t('Sesi cookie')}</strong>
 				</div>
 			</CardContent>
 		</Card>
