@@ -6,6 +6,18 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Perkenalan': { id: 'Perkenalan', en: 'Introduction' },
+	'Halo {name}, saya dari {company}. Kami tertarik untuk berdiskusi peluang kerja sama.': { id: 'Halo {name}, saya dari {company}. Kami tertarik untuk berdiskusi peluang kerja sama.', en: 'Hello {name}, I\'m from {company}. We are interested in discussing collaboration opportunities.' },
+	'Minta penawaran': { id: 'Minta penawaran', en: 'Request quote' },
+	'Halo {name}, bisakah kami mendapatkan penawaran terbaru untuk {company}?': { id: 'Halo {name}, bisakah kami mendapatkan penawaran terbaru untuk {company}?', en: 'Hello {name}, could we get the latest quote for {company}?' },
+	'Tindak lanjut pengiriman': { id: 'Tindak lanjut pengiriman', en: 'Shipment follow-up' },
+	'Halo {name}, kami ingin menindaklanjuti status pengiriman untuk {company}.': { id: 'Halo {name}, kami ingin menindaklanjuti status pengiriman untuk {company}.', en: 'Hello {name}, we would like to follow up on the shipment status for {company}.' },
+	'Dokumen': { id: 'Dokumen', en: 'Documents' },
+	'Halo {name}, dokumen untuk {company} sudah kami siapkan. Mohon dicek.': { id: 'Halo {name}, dokumen untuk {company} sudah kami siapkan. Mohon dicek.', en: 'Hello {name}, the documents for {company} are ready. Please check.' },
+	'Jadwal meeting': { id: 'Jadwal meeting', en: 'Schedule meeting' },
+	'Halo {name}, apakah Anda tersedia untuk meeting singkat minggu ini terkait {company}?': { id: 'Halo {name}, apakah Anda tersedia untuk meeting singkat minggu ini terkait {company}?', en: 'Hello {name}, are you available for a short meeting this week about {company}?' },
+	'Umpan balik': { id: 'Umpan balik', en: 'Feedback' },
+	'Halo {name}, mohon masukan untuk kerja sama {company} sejauh ini.': { id: 'Halo {name}, mohon masukan untuk kerja sama {company} sejauh ini.', en: 'Hello {name}, please share your feedback on our collaboration with {company} so far.' },
 	'Lainnya': { id: 'Lainnya', en: 'More' },
 	'Buka/Tutup Sidebar': { id: 'Buka/Tutup Sidebar', en: 'Toggle Sidebar' },
 	'Sidebar': { id: 'Sidebar', en: 'Sidebar' },
@@ -971,7 +983,6 @@ const dictionary: Record<string, Entry> = {
 	'Tinjauan': { id: 'Tinjauan', en: 'Review' },
 	'File berhasil diunggah.': { id: 'File berhasil diunggah.', en: 'File uploaded.' },
 	'tersimpan di backend.': { id: 'tersimpan di backend.', en: 'stored in the backend.' },
-	'Dokumen': { id: 'Dokumen', en: 'Document' },
 	'Sertifikat': { id: 'Sertifikat', en: 'Certificate' },
 	'Gambar': { id: 'Gambar', en: 'Image' },
 	'Laporan': { id: 'Laporan', en: 'Report' },

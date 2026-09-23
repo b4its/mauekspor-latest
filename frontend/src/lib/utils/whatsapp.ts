@@ -3,6 +3,8 @@
  * Membuka chat WhatsApp (wa.me) dengan pesan template.
  */
 
+import { t } from '$lib/i18n.svelte';
+
 const DEFAULT_TEMPLATES: { label: string; text: string }[] = [
 	{
 		label: 'Perkenalan',
@@ -39,5 +41,8 @@ export function openWhatsApp(phone: string, message: string): void {
 }
 
 export function getWhatsAppTemplates() {
-	return DEFAULT_TEMPLATES;
+	return DEFAULT_TEMPLATES.map((template) => ({
+		label: t(template.label),
+		text: t(template.text)
+	}));
 }
