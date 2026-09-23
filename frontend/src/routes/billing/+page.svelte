@@ -56,7 +56,7 @@
 </script>
 
 <svelte:head>
-	<title>{t('Penagihan')} | MauEkspor</title>
+	<title>{t('Billing')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Billing" eyebrow={t('Subscription and usage')}>

@@ -99,7 +99,7 @@
 </script>
 
 <svelte:head>
-	<title>{t('Obrolan')} | MauEkspor</title>
+	<title>{t('Chat')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Chat" eyebrow={t('Asisten dagang AI')}>

@@ -93,7 +93,7 @@ products.load();
 </script>
 
 <svelte:head>
-	<title>{t('Pemasaran')} | MauEkspor</title>
+	<title>{t('Marketing')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Marketing" eyebrow={t('Intelijen pasar AI & penetapan harga')}>
@@ -262,16 +262,16 @@ products.load();
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
 								{t('Negara tujuan')}
 								<select class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={country}>
-									<option value="JP">Japan</option>
-									<option value="US">United States</option>
-									<option value="DE">Germany</option>
-									<option value="SG">Singapore</option>
-									<option value="AU">Australia</option>
-									<option value="CN">China</option>
-									<option value="KR">South Korea</option>
-									<option value="GB">United Kingdom</option>
-									<option value="NL">Netherlands</option>
-									<option value="AE">UAE</option>
+									<option value="JP">{t('Jepang')}</option>
+									<option value="US">{t('Amerika Serikat')}</option>
+									<option value="DE">{t('Jerman')}</option>
+									<option value="SG">{t('Singapura')}</option>
+									<option value="AU">{t('Australia')}</option>
+									<option value="CN">{t('Tiongkok')}</option>
+									<option value="KR">{t('Korea Selatan')}</option>
+									<option value="GB">{t('Inggris')}</option>
+									<option value="NL">{t('Belanda')}</option>
+									<option value="AE">{t('UEA')}</option>
 								</select>
 							</label>
 						</div>

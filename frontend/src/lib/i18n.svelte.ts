@@ -6,6 +6,18 @@ export type Locale = 'id' | 'en';
 type Entry = { id: string; en: string };
 
 const dictionary: Record<string, Entry> = {
+	'Runs': { id: 'Run', en: 'Runs' },
+	'terverifikasi': { id: 'terverifikasi', en: 'verified' },
+	'Jepang': { id: 'Jepang', en: 'Japan' },
+	'Amerika Serikat': { id: 'Amerika Serikat', en: 'United States' },
+	'Jerman': { id: 'Jerman', en: 'Germany' },
+	'Singapura': { id: 'Singapura', en: 'Singapore' },
+	'Australia': { id: 'Australia', en: 'Australia' },
+	'Tiongkok': { id: 'Tiongkok', en: 'China' },
+	'Korea Selatan': { id: 'Korea Selatan', en: 'South Korea' },
+	'Inggris': { id: 'Inggris', en: 'United Kingdom' },
+	'Belanda': { id: 'Belanda', en: 'Netherlands' },
+	'UEA': { id: 'UEA', en: 'UAE' },
 	'Modul Admin': { id: 'Modul Admin', en: 'Admin Modules' },
 	'Log Audit': { id: 'Log Audit', en: 'Audit Log' },
 	'Bandingkan Pasar': { id: 'Bandingkan Pasar', en: 'Compare Markets' },

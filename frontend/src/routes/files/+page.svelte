@@ -81,7 +81,7 @@
 </script>
 
 <svelte:head>
-	<title>{t('Berkas')} | MauEkspor</title>
+	<title>{t('Files')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Files" eyebrow={t('Pustaka bukti dan aset')}>

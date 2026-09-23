@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>{t('Tim')} | MauEkspor</title>
+	<title>{t('Team')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Team" eyebrow={t('Roles and workspace access')}>

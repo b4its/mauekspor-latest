@@ -90,7 +90,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 </script>
 
 <svelte:head>
-	<title>{t('Kalkulasi Biaya')} | MauEkspor</title>
+	<title>{t('Costing')} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title="Costing" eyebrow={t('Incoterm pricing and landed cost')}>
