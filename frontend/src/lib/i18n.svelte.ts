@@ -423,7 +423,6 @@ const dictionary: Record<string, Entry> = {
 	'Tracked payments': { id: 'Pembayaran terpantau', en: 'Tracked payments' },
 	'Total': { id: 'Total', en: 'Total' },
 	'Paid': { id: 'Terbayar', en: 'Paid' },
-	'Due': { id: 'Jatuh tempo', en: 'Due' },
 	'Method': { id: 'Metode', en: 'Method' },
 	'No payment matched your search.': { id: 'Tidak ada pembayaran yang cocok.', en: 'No payment matched your search.' },
 	'Gagal mengirim pengingat pembayaran.': { id: 'Gagal mengirim pengingat pembayaran.', en: 'Failed to send payment reminder.' },
