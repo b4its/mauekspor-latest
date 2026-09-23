@@ -446,6 +446,18 @@ def test_costing_compare_and_xlsx_exports():
         # ids kosong -> 422
         assert c.post("/api/v1/costing/compare/", json={"ids": []}).status_code == 422
 
+        # Automations: run menaikkan runs + membuat notifikasi
+        auto = next(a for a in c.get("/api/v1/automations/").json()["data"] if a["id"] == "AUT-LABEL-BLOCKER")
+        before = auto["runs"]
+        r = c.post("/api/v1/automations/AUT-LABEL-BLOCKER/run/")
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["runs"] == before + 1
+        notif = c.get("/api/v1/notifications/").json()["data"]
+        assert any(n.get("type") == "automation" and n.get("status") == "Unread" for n in notif)
+        r = c.post("/api/v1/automations/AUT-LABEL-BLOCKER/activate/")
+        assert r.status_code == 200
+        assert r.json()["data"]["status"] == "Active"
+
         # Compare analysis -> JSON & PDF (data nyata dari compliance service)
         products = c.get("/api/v1/products/").json()["data"]
         prod = products[0]

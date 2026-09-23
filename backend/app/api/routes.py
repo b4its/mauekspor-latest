@@ -2511,6 +2511,18 @@ def run_automation(automation_id: str):
         raise HTTPException(404, "Automation not found")
     record["runs"] = record.get("runs", 0) + 1
     record["lastRun"] = "now"
+    db.save(record)
+    # Notifikasi realtime agar badge SSE ikut ter-update
+    db.insert("notifications", {
+        "id": db.gen_id("notifications", "NTF"),
+        "title": f"Automation '{record.get('name', automation_id)}' dijalankan",
+        "description": f"{record.get('trigger', '')} -> {record.get('action', '')}",
+        "category": "Automations",
+        "status": "Unread",
+        "type": "automation",
+        "createdAt": "now",
+        "ownerId": record.get("ownerId", "U-001"),
+    })
     return _one(record)
 
 

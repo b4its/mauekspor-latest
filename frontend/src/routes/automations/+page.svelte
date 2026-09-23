@@ -4,27 +4,38 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { automationRules } from '$lib/data/trade';
+	import { automationRules as seedRules } from '$lib/data/trade';
 	import { statusTone } from '$lib/utils/format';
-	import { runAutomation, activateAutomation } from '$lib/api/automations';
+	import { listAutomations, runAutomation, activateAutomation } from '$lib/api/automations';
+	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Compliance', 'Documents', 'Payments', 'Shipments', 'Reports'];
 	let activeFilter = $state('All');
 	let query = $state('');
-	let activated = $state(false);
-	let run = $state(false);
+	let rules = createRemoteList(listAutomations, seedRules);
 	let error = $state('');
-	let runRuleId = $state('');
-	let activeRuleId = $state('');
+	let message = $state('');
+	let busyId = $state('');
+	let justRan = $state('');
+	let justActivated = $state('');
+
+	$effect(() => {
+		rules.load();
+	});
+
 	let filteredRules = $derived(
-		automationRules.filter(
+		rules.items.filter(
 			(rule) =>
 				(activeFilter === 'All' || rule.module === activeFilter) &&
-				[rule.name, rule.module, rule.status, rule.trigger, rule.action, rule.description].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				[rule.name, rule.module, rule.status, rule.trigger, rule.action, rule.description]
+					.join(' ')
+					.toLowerCase()
+					.includes(query.trim().toLowerCase())
 		)
 	);
-	let activeCount = $derived(automationRules.filter((rule) => rule.status === 'Active').length + (activated ? 1 : 0));
-	let totalRuns = $derived(automationRules.reduce((sum, rule) => sum + rule.runs, 0) + (run ? 1 : 0));
+	let activeCount = $derived(rules.items.filter((rule) => rule.status === 'Active').length);
+	let totalRuns = $derived(rules.items.reduce((sum, rule) => sum + rule.runs, 0));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -33,25 +44,40 @@
 		return 'secondary';
 	}
 
-	async function handleRun() {
+	async function handleRun(ruleId: string) {
 		error = '';
+		message = '';
+		busyId = ruleId;
 		try {
-			await runAutomation(automationRules[0]?.id ?? 'a-001');
-			run = true;
-			runRuleId = automationRules[0]?.id ?? 'a-001';
+			const res = await runAutomation(ruleId);
+			justRan = ruleId;
+			justActivated = '';
+			// Update rule lokal dengan hasil backend (mutasi index $state)
+			const idx = rules.items.findIndex((r) => r.id === ruleId);
+			if (idx >= 0) rules.items[idx] = { ...rules.items[idx], ...res.data, lastRun: res.data.lastRun ?? 'now' };
+			message = `Rule "${res.data.name}" dijalankan — total ${res.data.runs} kali.`;
 		} catch {
 			error = 'Gagal menjalankan rule.';
+		} finally {
+			busyId = '';
 		}
 	}
 
 	async function handleActivate(ruleId: string) {
 		error = '';
+		message = '';
+		busyId = ruleId;
 		try {
-			await activateAutomation(ruleId);
-			activeRuleId = ruleId;
-			activated = true;
+			const res = await activateAutomation(ruleId);
+			justActivated = ruleId;
+			justRan = '';
+			const idx = rules.items.findIndex((r) => r.id === ruleId);
+			if (idx >= 0) rules.items[idx] = { ...rules.items[idx], ...res.data, status: res.data.status ?? 'Active' };
+			message = `Rule "${res.data.name}" kini Active.`;
 		} catch {
 			error = 'Gagal mengaktifkan rule.';
+		} finally {
+			busyId = '';
 		}
 	}
 </script>
@@ -60,7 +86,7 @@
 	<title>Automations | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Automations" eyebrow="Workflow rules">
+<AppShell title={t('Automations')} eyebrow="Workflow rules">
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">Rules engine</Badge>
@@ -68,7 +94,6 @@
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">Create rules for compliance blockers, document validation, payment reminders, shipment exceptions, and recurring reports.</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleRun}>{run ? 'Rule run' : 'Run rule'}</Button>
 			<Badge variant="secondary">Active {activeCount}</Badge>
 		</CardContent>
 	</Card>
@@ -76,12 +101,8 @@
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
-
-	{#if run}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Automation executed.</strong>
-			<span class="block text-sm text-muted-foreground">Rule dijalankan di backend.</span>
-		</div>
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
@@ -94,7 +115,7 @@
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Rules</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{automationRules.length}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Rules</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{rules.items.length}</strong></CardContent></Card>
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Active</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{activeCount}</strong></CardContent></Card>
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total runs</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{totalRuns}</strong></CardContent></Card>
 	</div>
@@ -103,7 +124,7 @@
 		{#each filteredRules as rule}
 			<Card class="grid gap-4">
 				<div class="flex items-center justify-between gap-3">
-					<Badge variant={toneVariant(statusTone(activated && rule.status === 'Draft' ? 'Active' : rule.status))}>{activated ? 'Active' : rule.status}</Badge>
+					<Badge variant={toneVariant(statusTone(justActivated === rule.id ? 'Active' : rule.status))}>{justActivated === rule.id ? 'Active' : rule.status}</Badge>
 					<strong class="text-sm font-bold text-muted-foreground">{rule.module}</strong>
 				</div>
 				<h3 class="text-2xl font-bold tracking-tight">{rule.name}</h3>
@@ -113,10 +134,17 @@
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Then<strong class="mt-1 block text-sm font-bold text-foreground">{rule.action}</strong></div>
 				</div>
 				<div class="grid grid-cols-2 gap-2">
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Runs<strong class="mt-1 block text-sm font-bold text-foreground">{rule.runs + (run ? 1 : 0)}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Last run<strong class="mt-1 block text-sm font-bold text-foreground">{run ? 'Just now' : rule.lastRun}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Runs<strong class="mt-1 block text-sm font-bold text-foreground">{rule.runs}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Last run<strong class="mt-1 block text-sm font-bold text-foreground">{rule.lastRun}</strong></div>
 				</div>
-				<Button variant="outline" onclick={() => handleActivate(rule.id)}>{activeRuleId === rule.id ? 'Active' : 'Activate'}</Button>
+				<div class="grid grid-cols-2 gap-2">
+					<Button variant="outline" disabled={busyId === rule.id} onclick={() => handleRun(rule.id)}>
+						{busyId === rule.id ? '...' : 'Run'}
+					</Button>
+					<Button variant={rule.status === 'Active' || justActivated === rule.id ? 'secondary' : 'outline'} disabled={busyId === rule.id} onclick={() => handleActivate(rule.id)}>
+						{rule.status === 'Active' || justActivated === rule.id ? 'Active' : 'Activate'}
+					</Button>
+				</div>
 			</Card>
 		{:else}
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No automation matched your search.</div>
