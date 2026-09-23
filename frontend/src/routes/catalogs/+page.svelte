@@ -9,6 +9,7 @@
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Published', 'Draft', 'Needs Review'];
 	let activeFilter = $state('All');
@@ -24,7 +25,7 @@
 	});
 
 	async function removeCatalog(id: string, title: string) {
-		if (!confirm(`Hapus katalog "${title}"?`)) return;
+		if (!confirm(`${t('Hapus katalog "')}${title}"?`)) return;
 		error = '';
 		deleting = id;
 		try {
@@ -32,7 +33,7 @@
 			const idx = catalogs.items.findIndex((c) => c.id === id);
 			if (idx >= 0) catalogs.items.splice(idx, 1);
 		} catch {
-			error = 'Gagal menghapus katalog.';
+			error = t('Gagal menghapus katalog.');
 		} finally {
 			deleting = '';
 		}
@@ -69,20 +70,20 @@
 	<title>Catalogs | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Catalogs" eyebrow="Buyer-facing export catalog">
+<AppShell title="Catalogs" eyebrow={t('Buyer-facing export catalog')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant="secondary">Commercial presentation</Badge>
+			<Badge variant="secondary">{t('Commercial presentation')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Turn verified product data into buyer-ready export catalogs.
+				{t('Turn verified product data into buyer-ready export catalogs.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Package product specifications, MOQ, lead time, Incoterms, certificates, images, and AI-assisted B2B descriptions for buyer discovery and RFQ conversion.
+				{t('Package product specifications, MOQ, lead time, Incoterms, certificates, images, and AI-assisted B2B descriptions for buyer discovery and RFQ conversion.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button href="/catalogs/create">Create catalog</Button>
-			<Badge variant="secondary">Published {publishedCount}</Badge>
+			<Button href="/catalogs/create">{t('Create catalog')}</Button>
+			<Badge variant="secondary">{t('Published')} {publishedCount}</Badge>
 		</CardContent>
 	</Card>
 
@@ -98,25 +99,25 @@
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search catalog, market, product..." class="max-w-xs" />
+		<Input bind:value={query} type="search" placeholder={t('Search catalog, market, product...')} class="max-w-xs" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Catalogs</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Catalogs')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{catalogs.items.length}</strong>
 			</CardContent>
 		</Card>
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Published</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Published')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{publishedCount}</strong>
 			</CardContent>
 		</Card>
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Readiness</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Readiness')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{avgReadiness}%</strong>
 			</CardContent>
 		</Card>
@@ -134,20 +135,20 @@
 					<p class="mt-1 text-sm text-muted-foreground">{productName(catalog.productId)}</p>
 					<div class="mt-4 grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Market <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.targetMarket}</strong>
+							{t('Market')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.targetMarket}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							MOQ <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.moq}</strong>
+							{t('MOQ')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.moq}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Lead time <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.leadTime}</strong>
+							{t('Lead time')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.leadTime}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Images <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.images}</strong>
+							{t('Images')} <strong class="mt-1 block text-sm font-bold text-foreground">{catalog.images}</strong>
 						</div>
 					</div>
 					<div class="mt-3 flex items-center justify-end gap-2">
-						<Button size="sm" variant="outline" href={`/catalogs/${catalog.id}/edit`}>Edit</Button>
+						<Button size="sm" variant="outline" href={`/catalogs/${catalog.id}/edit`}>{t('Edit')}</Button>
 						<Button size="sm" variant="destructive" disabled={deleting === catalog.id} onclick={(e) => { e.preventDefault(); removeCatalog(catalog.id, catalog.title); }}>
 							{deleting === catalog.id ? '...' : 'Hapus'}
 						</Button>
@@ -156,7 +157,7 @@
 			</Card>
 		{:else}
 			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
-				No catalog matched your search.
+				{t('No catalog matched your search.')}
 			</div>
 		{/each}
 	</div>

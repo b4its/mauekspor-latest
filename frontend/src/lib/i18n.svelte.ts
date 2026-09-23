@@ -182,7 +182,6 @@ const dictionary: Record<string, Entry> = {
 	},
 	'Publish article': { id: 'Terbitkan artikel', en: 'Publish article' },
 	'Article published': { id: 'Artikel diterbitkan', en: 'Article published' },
-	'Published': { id: 'Diterbitkan', en: 'Published' },
 	'Article published.': { id: 'Artikel diterbitkan.', en: 'Article published.' },
 	'Search article, step, category...': { id: 'Cari artikel, langkah, kategori...', en: 'Search article, step, category...' },
 	'Gagal mempublikasikan artikel.': { id: 'Gagal mempublikasikan artikel.', en: 'Failed to publish article.' },
@@ -345,7 +344,6 @@ const dictionary: Record<string, Entry> = {
 	'Order tersimpan di backend.': { id: 'Order tersimpan di backend.', en: 'Order saved in backend.' },
 	'Search order, buyer, supplier...': { id: 'Cari pesanan, pembeli, pemasok...', en: 'Search order, buyer, supplier...' },
 	'Total value': { id: 'Total nilai', en: 'Total value' },
-	'Readiness': { id: 'Kesiapan', en: 'Readiness' },
 	'Value': { id: 'Nilai', en: 'Value' },
 	'Incoterm': { id: 'Incoterm', en: 'Incoterm' },
 	'Delivery': { id: 'Pengiriman', en: 'Delivery' },
@@ -541,7 +539,29 @@ const dictionary: Record<string, Entry> = {
 	'Quantity': { id: 'Jumlah', en: 'Quantity' },
 	'Deadline': { id: 'Tenggat', en: 'Deadline' },
 	'No RFQ matched your search.': { id: 'Tidak ada RFQ yang cocok.', en: 'No RFQ matched your search.' },
-	'Gagal membuat RFQ.': { id: 'Gagal membuat RFQ.', en: 'Failed to create RFQ.' }
+	'Gagal membuat RFQ.': { id: 'Gagal membuat RFQ.', en: 'Failed to create RFQ.' },
+
+	// --- Catalogs ---
+	'Buyer-facing export catalog': { id: 'Katalog ekspor untuk pembeli', en: 'Buyer-facing export catalog' },
+	'Commercial presentation': { id: 'Presentasi komersial', en: 'Commercial presentation' },
+	'Turn verified product data into buyer-ready export catalogs.': {
+		id: 'Ubah data produk terverifikasi menjadi katalog ekspor siap-pembeli.',
+		en: 'Turn verified product data into buyer-ready export catalogs.'
+	},
+	'Package product specifications, MOQ, lead time, Incoterms, certificates, images, and AI-assisted B2B descriptions for buyer discovery and RFQ conversion.': {
+		id: 'Kemas spesifikasi produk, MOQ, lead time, Incoterms, sertifikat, gambar, dan deskripsi B2B berbantuan AI untuk penemuan pembeli dan konversi RFQ.',
+		en: 'Package product specifications, MOQ, lead time, Incoterms, certificates, images, and AI-assisted B2B descriptions for buyer discovery and RFQ conversion.'
+	},
+	'Create catalog': { id: 'Buat katalog', en: 'Create catalog' },
+	'Published': { id: 'Diterbitkan', en: 'Published' },
+	'Readiness': { id: 'Kesiapan', en: 'Readiness' },
+	'Search catalog, market, product...': { id: 'Cari katalog, pasar, produk...', en: 'Search catalog, market, product...' },
+	'Market': { id: 'Pasar', en: 'Market' },
+	'MOQ': { id: 'MOQ', en: 'MOQ' },
+	'Images': { id: 'Gambar', en: 'Images' },
+	'No catalog matched your search.': { id: 'Tidak ada katalog yang cocok.', en: 'No catalog matched your search.' },
+	'Gagal menghapus katalog.': { id: 'Gagal menghapus katalog.', en: 'Failed to delete catalog.' },
+	'Hapus katalog "': { id: 'Hapus katalog "', en: 'Delete catalog "' }
 };
 
 let initial: Locale = 'id';
