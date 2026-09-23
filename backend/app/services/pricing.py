@@ -178,7 +178,7 @@ def ai_pricing_recommendation(product_name: str, exw: float, fob: float, cif: fl
         "risk_level": "Medium",
         "market_position": "Competitive",
         "price_adjustment_suggestion": "Pertahankan margin target dan pantau kurs.",
-        "competitive_insights": "Bandingkan dengan rate freight aktual sebelum mengunci quote.",
+        "competitive_insights": "Compare against actual freight rates before locking the quote.",
         "_raw": text or "",
     }
 

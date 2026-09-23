@@ -634,7 +634,7 @@ def enrich_product(product_id: str):
 def batch_delete_products(payload: sc.BatchActionPayload):
     """Hapus beberapa produk sekaligus berdasarkan daftar ids."""
     if not payload.ids:
-        raise HTTPException(422, "ids wajib diisi")
+        raise HTTPException(422, "ids are required")
     deleted = []
     for pid in payload.ids:
         record = db.get("products", pid)
@@ -1694,7 +1694,7 @@ def compare_costings(payload: sc.BatchActionPayload):
     Kirim daftar costing ids -> tabel perbandingan + rekomendasi terbaik.
     """
     if not payload.ids:
-        raise HTTPException(422, "ids wajib diisi")
+        raise HTTPException(422, "ids are required")
     items = []
     for cid in payload.ids:
         record = db.get("costing", cid)
