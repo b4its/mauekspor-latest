@@ -370,7 +370,35 @@ const dictionary: Record<string, Entry> = {
 	'Search quotation, buyer, incoterm...': { id: 'Cari quotation, pembeli, incoterm...', en: 'Search quotation, buyer, incoterm...' },
 	'Valid until': { id: 'Berlaku hingga', en: 'Valid until' },
 	'No quotation matched your search.': { id: 'Tidak ada quotation yang cocok.', en: 'No quotation matched your search.' },
-	'Gagal membuat quotation.': { id: 'Gagal membuat quotation.', en: 'Failed to create quotation.' }
+	'Gagal membuat quotation.': { id: 'Gagal membuat quotation.', en: 'Failed to create quotation.' },
+
+	// --- Shipments ---
+	'Logistics milestone tracking': { id: 'Pelacakan tonggak logistik', en: 'Logistics milestone tracking' },
+	'Forwarder operations': { id: 'Operasi forwarder', en: 'Forwarder operations' },
+	'Track bookings, customs, cargo movement, and delivery exceptions.': {
+		id: 'Pantau booking, bea cukai, pergerakan kargo, dan pengecualian pengiriman.',
+		en: 'Track bookings, customs, cargo movement, and delivery exceptions.'
+	},
+	'Coordinate cargo readiness, pickup, warehouse receipt, customs clearance, vessel departure, arrival, destination processing, and issue ownership.': {
+		id: 'Koordinasi kesiapan kargo, pickup, tanda terima gudang, bea cukai, keberangkatan kapal, kedatangan, pemrosesan tujuan, dan kepemilikan masalah.',
+		en: 'Coordinate cargo readiness, pickup, warehouse receipt, customs clearance, vessel departure, arrival, destination processing, and issue ownership.'
+	},
+	'Request freight quote': { id: 'Minta kuotasi freight', en: 'Request freight quote' },
+	'Requesting quote...': { id: 'Meminta kuotasi...', en: 'Requesting quote...' },
+	'Freight RFQ drafted': { id: 'RFQ freight dibuat', en: 'Freight RFQ drafted' },
+	'Avg progress': { id: 'Rata-rata progres', en: 'Avg progress' },
+	'Freight RFQ draft ready.': { id: 'Draf RFQ freight siap.', en: 'Freight RFQ draft ready.' },
+	'Kuotasi diminta ke backend.': { id: 'Kuotasi diminta ke backend.', en: 'Freight quote requested in backend.' },
+	'Search route, forwarder, booking...': { id: 'Cari rute, forwarder, booking...', en: 'Search route, forwarder, booking...' },
+	'Active shipments': { id: 'Pengiriman aktif', en: 'Active shipments' },
+	'Exceptions': { id: 'Pengecualian', en: 'Exceptions' },
+	'Average progress': { id: 'Rata-rata progres', en: 'Average progress' },
+	'Forwarder': { id: 'Forwarder', en: 'Forwarder' },
+	'Mode': { id: 'Moda', en: 'Mode' },
+	'Booking': { id: 'Booking', en: 'Booking' },
+	'ETA': { id: 'ETA', en: 'ETA' },
+	'No shipment matched your search.': { id: 'Tidak ada pengiriman yang cocok.', en: 'No shipment matched your search.' },
+	'Gagal meminta kuotasi pengiriman.': { id: 'Gagal meminta kuotasi pengiriman.', en: 'Failed to request freight quote.' }
 };
 
 let initial: Locale = 'id';

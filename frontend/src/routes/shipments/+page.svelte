@@ -10,6 +10,7 @@
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Booking Requested', 'Customs Submitted', 'Loaded', 'Exception'];
 	let activeFilter = $state('All');
@@ -58,7 +59,7 @@
 			if (target) await updateShipmentMilestone(target.id, 'Booking Requested');
 			quoteRequested = true;
 		} catch {
-			error = 'Gagal meminta kuotasi pengiriman.';
+			error = t('Gagal meminta kuotasi pengiriman.');
 		} finally {
 			requesting = false;
 		}
@@ -69,21 +70,20 @@
 	<title>Shipments | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Shipments" eyebrow="Logistics milestone tracking">
+<AppShell title="Shipments" eyebrow={t('Logistics milestone tracking')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge>Forwarder operations</Badge>
-			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Track bookings, customs, cargo movement, and delivery exceptions.</CardTitle>
+			<Badge>{t('Forwarder operations')}</Badge>
+			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">{t('Track bookings, customs, cargo movement, and delivery exceptions.')}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Coordinate cargo readiness, pickup, warehouse receipt, customs clearance, vessel departure,
-				arrival, destination processing, and issue ownership.
+				{t('Coordinate cargo readiness, pickup, warehouse receipt, customs clearance, vessel departure, arrival, destination processing, and issue ownership.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={handleQuote} disabled={requesting}>
-				{quoteRequested ? 'Freight RFQ drafted' : requesting ? 'Requesting quote...' : 'Request freight quote'}
+				{quoteRequested ? t('Freight RFQ drafted') : requesting ? t('Requesting quote...') : t('Request freight quote')}
 			</Button>
-			<Badge variant="secondary">Avg progress {averageProgress}%</Badge>
+			<Badge variant="secondary">{t('Avg progress')} {averageProgress}%</Badge>
 		</CardContent>
 	</Card>
 
@@ -93,8 +93,8 @@
 
 	{#if quoteRequested}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Freight RFQ draft ready.</strong>
-			<span class="block text-sm text-muted-foreground">Kuotasi diminta ke backend.</span>
+			<strong class="block">{t('Freight RFQ draft ready.')}</strong>
+			<span class="block text-sm text-muted-foreground">{t('Kuotasi diminta ke backend.')}</span>
 		</div>
 	{/if}
 
@@ -104,13 +104,13 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search route, forwarder, booking..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search route, forwarder, booking...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Active shipments</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{shipments.items.length}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Exceptions</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{exceptionCount}</strong></CardContent></Card>
-		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Average progress</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{averageProgress}%</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Active shipments')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{shipments.items.length}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Exceptions')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{exceptionCount}</strong></CardContent></Card>
+		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Average progress')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{averageProgress}%</strong></CardContent></Card>
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -125,10 +125,10 @@
 					<p class="text-sm text-muted-foreground">{projectName(shipment.projectId)}</p>
 					<Progress value={shipment.progress} />
 					<div class="grid grid-cols-2 gap-2">
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Forwarder<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.forwarder}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Mode<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.mode}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">Booking<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.bookingNo}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">ETA<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.eta}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Forwarder')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.forwarder}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Mode')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.mode}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Booking')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.bookingNo}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ETA')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.eta}</strong></div>
 					</div>
 					{#if shipment.exception}
 						<div class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{shipment.exception}</div>
@@ -136,7 +136,7 @@
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No shipment matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No shipment matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>
