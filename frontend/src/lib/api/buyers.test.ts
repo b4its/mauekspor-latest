@@ -7,7 +7,8 @@ import {
 	logBuyerContact,
 	createBuyerProfile,
 	getMyBuyerProfile,
-	updateBuyerProfile
+	updateBuyerProfile,
+	listBuyerPortal
 } from './buyers';
 import {
 	listForwarders,
@@ -95,6 +96,29 @@ describe('buyers API contract', () => {
 		const fetchMock = mockApi();
 		await updateBuyerProfile('BP-1', { businessType: 'Importer' });
 		expect((fetchMock.mock.calls[0][1] as RequestInit).method).toBe('PUT');
+	});
+
+	it('listBuyerPortal -> GET /buyers/portal/ tanpa filter', async () => {
+		const fetchMock = mockApi();
+		await listBuyerPortal();
+		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/buyers\/portal\/$/);
+	});
+
+	it('listBuyerPortal -> menyertakan query country, search, buyer_id', async () => {
+		const fetchMock = mockApi();
+		await listBuyerPortal({ country: 'JP', search: 'kopi', buyerId: 'BUY-1' });
+		const url = String(fetchMock.mock.calls[0][0]);
+		expect(url).toContain('country=JP');
+		expect(url).toContain('search=kopi');
+		expect(url).toContain('buyer_id=BUY-1');
+	});
+
+	it('listBuyerPortal -> menormalkan meta & data yang hilang', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { meta: { detectedCountry: 'Japan' } }));
+		vi.stubGlobal('fetch', fetchMock);
+		const res = await listBuyerPortal({ country: 'JP' });
+		expect(res.data).toEqual([]);
+		expect(res.meta.detectedCountry).toBe('Japan');
 	});
 });
 
