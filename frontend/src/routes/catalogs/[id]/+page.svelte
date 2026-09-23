@@ -16,10 +16,27 @@
 		addVariantType,
 		addVariantOption,
 		deleteVariantType,
-		deleteVariantOption
+		deleteVariantOption,
+		createCatalogPricing,
+		createCatalogMarketIntelligence
 	} from '$lib/api/catalogs';
 	import { uploadFileBinary, fileDownloadUrl } from '$lib/api/files';
 	import type { CatalogImage, VariantType, CatalogAIDescription } from '$lib/api/catalogs';
+
+	type CatalogPricing = {
+		exwPriceUsd?: number;
+		fobPriceUsd?: number;
+		cifPriceUsd?: number;
+		pricingInsight?: string;
+		exchangeRateUsed?: number;
+		pricingBreakdown?: Record<string, unknown>;
+	};
+
+	type CatalogMI = {
+		recommendedCountries?: { country: string; code: string; score: number; reason?: string }[];
+		overallRecommendation?: string;
+		marketTrends?: string[];
+	};
 
 	let { data } = $props();
 	let published = $state(false);
@@ -34,6 +51,38 @@
 	let newVariantType = $state('');
 	let newVariantOption = $state<Record<string, string>>({});
 	let variantError = $state('');
+	let pricing = $state<CatalogPricing | null>(null);
+	let marketIntel = $state<CatalogMI | null>(null);
+	let aiLoading = $state(false);
+	let aiError = $state('');
+
+	async function handlePricing() {
+		aiError = '';
+		aiLoading = true;
+		try {
+			pricing = (await createCatalogPricing(data.catalog.id, {
+				cogs_per_unit_idr: 28500,
+				target_margin_percent: 22,
+				target_country_code: 'JP'
+			})).data as CatalogPricing;
+		} catch {
+			aiError = 'Gagal menghitung pricing untuk katalog.';
+		} finally {
+			aiLoading = false;
+		}
+	}
+
+	async function handleMarketIntel() {
+		aiError = '';
+		aiLoading = true;
+		try {
+			marketIntel = (await createCatalogMarketIntelligence(data.catalog.id)).data as CatalogMI;
+		} catch {
+			aiError = 'Gagal memuat market intelligence untuk katalog.';
+		} finally {
+			aiLoading = false;
+		}
+	}
 
 	async function reloadVariants() {
 		variantTypes = (await listVariantTypes(data.catalog.id)).data.data;
@@ -410,6 +459,62 @@
 				{#each data.catalog.incoterms ?? [] as item}
 					<span class="rounded-full border bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">{item}</span>
 				{/each}
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
+				<div>
+					<CardTitle>AI Marketing</CardTitle>
+					<CardDescription>Pricing EXW/FOB/CIF & market intelligence untuk katalog ini.</CardDescription>
+				</div>
+				<div class="flex flex-wrap gap-2">
+					<Button variant="outline" size="sm" onclick={handlePricing} disabled={aiLoading}>Pricing</Button>
+					<Button variant="outline" size="sm" onclick={handleMarketIntel} disabled={aiLoading}>Market Intelligence</Button>
+				</div>
+			</CardHeader>
+			<CardContent class="grid gap-3">
+				{#if aiError}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{aiError}</p>
+				{/if}
+				{#if aiLoading}
+					<p class="text-xs font-semibold text-muted-foreground">Menganalisis...</p>
+				{/if}
+				{#if pricing}
+					<div class="grid gap-2 sm:grid-cols-3">
+						<div class="rounded-lg border bg-muted/40 p-3 text-center">
+							<span class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">EXW</span>
+							<strong class="mt-1 block text-lg font-bold">${pricing.exwPriceUsd?.toFixed(2)}</strong>
+						</div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-center">
+							<span class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">FOB</span>
+							<strong class="mt-1 block text-lg font-bold">${pricing.fobPriceUsd?.toFixed(2)}</strong>
+						</div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-center">
+							<span class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">CIF</span>
+							<strong class="mt-1 block text-lg font-bold">${pricing.cifPriceUsd?.toFixed(2)}</strong>
+						</div>
+					</div>
+					{#if pricing.pricingInsight}
+						<p class="rounded-lg border bg-primary/10 p-3 text-xs leading-relaxed">{pricing.pricingInsight}</p>
+					{/if}
+				{/if}
+				{#if marketIntel}
+					<div class="grid gap-2">
+						{#if (marketIntel.recommendedCountries ?? []).length > 0}
+							{#each marketIntel.recommendedCountries as rec}
+								<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-2.5 text-xs">
+									<span><b>{rec.country}</b> ({rec.code})</span>
+									<span class="text-muted-foreground">{rec.reason ?? ''}</span>
+									<Badge variant={rec.score >= 80 ? 'default' : 'outline'}>{rec.score}</Badge>
+								</div>
+							{/each}
+						{/if}
+						{#if marketIntel.overallRecommendation}
+							<p class="rounded-lg border bg-primary/10 p-3 text-xs leading-relaxed">{marketIntel.overallRecommendation}</p>
+						{/if}
+					</div>
+				{/if}
 			</CardContent>
 		</Card>
 

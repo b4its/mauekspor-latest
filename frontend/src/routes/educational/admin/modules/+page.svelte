@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { educationalModules as seedModules } from '$lib/data/trade';
-	import { listEducationalModules, publishEducationalModule, createEducationalModule, deleteEducationalModule } from '$lib/api/educational';
+	import { listEducationalModules, publishEducationalModule, createEducationalModule, deleteEducationalModule, updateEducationalModule } from '$lib/api/educational';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 
@@ -67,6 +67,26 @@
 		}
 	}
 
+	async function moveModule(index: number, dir: -1 | 1) {
+		const target = index + dir;
+		if (target < 0 || target >= modules.items.length) return;
+		const a = modules.items[index];
+		const b = modules.items[target];
+		const aOrder = a.orderIndex ?? index;
+		const bOrder = b.orderIndex ?? target;
+		try {
+			await updateEducationalModule(a.id, { title: a.title, description: a.description ?? '', order_index: bOrder });
+			await updateEducationalModule(b.id, { title: b.title, description: b.description ?? '', order_index: aOrder });
+			// Tukar posisi dalam array secara in-place (items adalah getter read-only)
+			const arr = modules.items;
+			[arr[index], arr[target]] = [arr[target], arr[index]];
+			arr[index].orderIndex = bOrder;
+			arr[target].orderIndex = aOrder;
+		} catch {
+			error = 'Gagal mengubah urutan modul.';
+		}
+	}
+
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
 		if (tone === 'red') return 'destructive';
@@ -105,15 +125,17 @@
 				<Input placeholder="Judul modul baru..." bind:value={newTitle} class="flex-1" />
 				<Button type="submit" disabled={creating}>{creating ? 'Membuat...' : 'Buat modul'}</Button>
 			</form>
-			{#each modules.items as module}
+			{#each modules.items as module, index (module.id)}
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-					<div>
+					<div class="min-w-0">
 						<strong class="block text-sm font-bold">{module.title}</strong>
-						<span class="mt-1 block text-xs font-semibold text-muted-foreground">{module.level} - {module.lessons} lessons - {module.completion}% complete</span>
+						<span class="mt-1 block text-xs font-semibold text-muted-foreground">{module.level} - {module.lessons} lessons - {module.completion}% complete · urutan {index + 1}</span>
 					</div>
 					<div class="grid justify-items-end gap-2">
 						<Badge variant={toneVariant(statusTone(module.status))}>{module.status}</Badge>
-						<div class="flex gap-2">
+						<div class="flex flex-wrap justify-end gap-2">
+							<Button size="sm" variant="outline" disabled={index === 0} onclick={() => moveModule(index, -1)}>↑</Button>
+							<Button size="sm" variant="outline" disabled={index === modules.items.length - 1} onclick={() => moveModule(index, 1)}>↓</Button>
 							<Button size="sm" variant="outline" href={`/educational/modules/${module.id}`}>Detail</Button>
 							<Button size="sm" variant={module.status === 'Published' ? 'outline' : 'default'} disabled={module.status === 'Published' || publishing === module.id} onclick={() => publishModule(module.id)}>{publishing === module.id ? 'Publishing...' : 'Publish'}</Button>
 							<Button size="sm" variant="destructive" disabled={deleting === module.id} onclick={() => removeModule(module.id)}>{deleting === module.id ? '...' : 'Hapus'}</Button>

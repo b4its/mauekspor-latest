@@ -3,13 +3,14 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { businessProfiles as seedProfiles, exportAnalyses as seedAnalyses, projects as seedProjects, products as seedProducts, buyerRequests as seedRequests, forwarders as seedForwarders } from '$lib/data/trade';
+	import { businessProfiles as seedProfiles, exportAnalyses as seedAnalyses, projects as seedProjects, products as seedProducts, buyerRequests as seedRequests, forwarders as seedForwarders, complianceRequirements as seedCompliance } from '$lib/data/trade';
 	import { listBusinessProfiles, getDashboardSummary, type DashboardSummary } from '$lib/api/business-profile';
 	import { listExportAnalyses } from '$lib/api/export-analysis';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { listProducts } from '$lib/api/products';
 	import { listBuyerRequests } from '$lib/api/buyer-requests';
 	import { listForwarders } from '$lib/api/forwarders';
+	import { listComplianceRequirements } from '$lib/api/compliance';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone } from '$lib/utils/format';
 
@@ -19,6 +20,7 @@
 	let exportAnalyses = createRemoteList(listExportAnalyses, seedAnalyses);
 	let buyerRequests = createRemoteList(listBuyerRequests, seedRequests);
 	let forwarders = createRemoteList(listForwarders, seedForwarders);
+	let compliance = createRemoteList(listComplianceRequirements, seedCompliance);
 
 	let hasProfile = $state(true);
 	let summaryCounts = $state<DashboardSummary['counts'] | null>(null);
@@ -30,6 +32,7 @@
 		exportAnalyses.load();
 		buyerRequests.load();
 		forwarders.load();
+		compliance.load();
 		getDashboardSummary()
 			.then((res) => {
 				hasProfile = res.data.has_business_profile;
@@ -46,6 +49,45 @@
 			? Math.round(exportAnalyses.items.reduce((sum, item) => sum + item.confidence, 0) / exportAnalyses.items.length)
 			: 0
 	);
+
+	// ---------- Chart data ----------
+	let pipelineByStage = $derived(
+		Object.entries(
+			projects.items.reduce<Record<string, { count: number; value: number }>>((acc, p) => {
+				const stage = p.stage || 'Unknown';
+				acc[stage] = acc[stage] ?? { count: 0, value: 0 };
+				acc[stage].count += 1;
+				acc[stage].value += p.value ?? 0;
+				return acc;
+			}, {})
+		)
+	);
+	let maxStageValue = $derived(Math.max(1, ...pipelineByStage.map(([, s]) => s.value)));
+
+	let complianceBySeverity = $derived(
+		Object.entries(
+			compliance.items.reduce<Record<string, number>>((acc, r) => {
+				const sev = (r.severity as string) || 'Minor';
+				acc[sev] = (acc[sev] ?? 0) + 1;
+				return acc;
+			}, {})
+		)
+	);
+	let complianceTotal = $derived(Math.max(1, compliance.items.length));
+
+	let marketScores = $derived(exportAnalyses.items.slice(0, 5));
+
+	function scoreColor(score: number) {
+		if (score >= 80) return 'bg-emerald-500';
+		if (score >= 50) return 'bg-amber-500';
+		return 'bg-red-500';
+	}
+
+	function severityColor(sev: string) {
+		if (sev === 'Critical') return 'bg-red-500';
+		if (sev === 'Major') return 'bg-amber-500';
+		return 'bg-emerald-500';
+	}
 
 	function badgeVariant(status: string): 'default' | 'secondary' | 'outline' | 'destructive' {
 		const tone = statusTone(status);
@@ -192,6 +234,77 @@
 						</div>
 					</a>
 				{/each}
+			</CardContent>
+		</Card>
+	</div>
+
+	<div class="grid gap-4 lg:grid-cols-3">
+		<Card>
+			<CardHeader>
+				<CardTitle>Pipeline by stage</CardTitle>
+				<CardDescription>Distribusi nilai proyek per tahap.</CardDescription>
+			</CardHeader>
+			<CardContent class="grid gap-3">
+				{#each pipelineByStage as [stage, data] (stage)}
+					<div>
+						<div class="flex items-center justify-between text-xs font-bold">
+							<span>{stage}</span>
+							<span class="text-muted-foreground">{data.count} proyek · {currency.format(data.value)}</span>
+						</div>
+						<div class="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted">
+							<div class="h-full rounded-full bg-[#0b3d91] dark:bg-sky-500" style={`width:${(data.value / maxStageValue) * 100}%`}></div>
+						</div>
+					</div>
+				{/each}
+				{#if pipelineByStage.length === 0}
+					<p class="text-sm font-semibold text-muted-foreground">Belum ada proyek dagang.</p>
+				{/if}
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader>
+				<CardTitle>Compliance by severity</CardTitle>
+				<CardDescription>Distribusi requirement kepatuhan.</CardDescription>
+			</CardHeader>
+			<CardContent class="grid gap-3">
+				{#each complianceBySeverity as [severity, count] (severity)}
+					<div>
+						<div class="flex items-center justify-between text-xs font-bold">
+							<span class="capitalize">{severity}</span>
+							<span class="text-muted-foreground">{count} item</span>
+						</div>
+						<div class="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted">
+							<div class={`h-full rounded-full ${severityColor(severity)}`} style={`width:${(count / complianceTotal) * 100}%`}></div>
+						</div>
+					</div>
+				{/each}
+				{#if complianceBySeverity.length === 0}
+					<p class="text-sm font-semibold text-muted-foreground">Belum ada requirement kepatuhan.</p>
+				{/if}
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader class="flex-row items-center justify-between gap-3">
+				<CardTitle>Market opportunity</CardTitle>
+				<Button variant="outline" size="sm" href="/marketing">AI Marketing</Button>
+			</CardHeader>
+			<CardContent class="grid gap-3">
+				{#each marketScores as analysis (analysis.id)}
+					<div>
+						<div class="flex items-center justify-between text-xs font-bold">
+							<span>{analysis.destination}</span>
+							<span class="text-muted-foreground">{analysis.productName} · {analysis.score}</span>
+						</div>
+						<div class="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted">
+							<div class={`h-full rounded-full ${scoreColor(analysis.score)}`} style={`width:${analysis.score}%`}></div>
+						</div>
+					</div>
+				{/each}
+				{#if marketScores.length === 0}
+					<p class="text-sm font-semibold text-muted-foreground">Belum ada analisis pasar. Jalankan di Export Analysis.</p>
+				{/if}
 			</CardContent>
 		</Card>
 	</div>
