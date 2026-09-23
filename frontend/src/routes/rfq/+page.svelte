@@ -8,6 +8,7 @@
 	import { listRFQs, createRFQ } from '$lib/api/rfq';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Matching', 'Quoted', 'Accepted'];
 	let activeFilter = $state('All');
@@ -56,7 +57,7 @@
 			});
 			created = true;
 		} catch {
-			error = 'Gagal membuat RFQ.';
+			error = t('Gagal membuat RFQ.');
 		} finally {
 			creating = false;
 		}
@@ -67,20 +68,20 @@
 	<title>RFQ | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="RFQ" eyebrow="Buyer demand workspace">
+<AppShell title="RFQ" eyebrow={t('Buyer demand workspace')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge>Smart matching</Badge>
+			<Badge>{t('Smart matching')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Match buyer requirements with verified exporter capabilities.
+				{t('Match buyer requirements with verified exporter capabilities.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Manage RFQs, destination terms, required certificates, deadlines, and transparent supplier matching explanations.
+				{t('Manage RFQs, destination terms, required certificates, deadlines, and transparent supplier matching explanations.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleCreate} disabled={creating}>{created ? 'RFQ draft created' : creating ? 'Creating...' : 'Create RFQ'}</Button>
-			<Badge variant="secondary">Avg match {averageMatch}%</Badge>
+			<Button onclick={handleCreate} disabled={creating}>{created ? t('RFQ draft created') : creating ? t('Creating...') : t('Create RFQ')}</Button>
+			<Badge variant="secondary">{t('Avg match')} {averageMatch}%</Badge>
 		</CardContent>
 	</Card>
 
@@ -90,10 +91,9 @@
 
 	{#if created}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">RFQ draft ready.</strong>
+			<strong class="block">{t('RFQ draft ready.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				RFQ tersimpan di backend.
-			</span>
+				{t('RFQ tersimpan di backend.')}</span>
 		</div>
 	{/if}
 
@@ -103,7 +103,7 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search buyer, product, destination..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search buyer, product, destination...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -118,22 +118,22 @@
 					<p class="mt-1 text-sm text-muted-foreground">{rfq.buyer} - {rfq.destination}</p>
 					<div class="mt-4 grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							RFQ <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.id}</strong>
+							{t('RFQ')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.id}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Quantity <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.quantity}</strong>
+							{t('Quantity')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.quantity}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Incoterm <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.incoterm}</strong>
+							{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.incoterm}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Deadline <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.deadline}</strong>
+							{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.deadline}</strong>
 						</div>
 					</div>
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No RFQ matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No RFQ matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>

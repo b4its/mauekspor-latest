@@ -493,7 +493,55 @@ const dictionary: Record<string, Entry> = {
 	'Checklist': { id: 'Ceklis', en: 'Checklist' },
 	'Priority': { id: 'Prioritas', en: 'Priority' },
 	'No task matched your search.': { id: 'Tidak ada tugas yang cocok.', en: 'No task matched your search.' },
-	'Gagal membuat tugas.': { id: 'Gagal membuat tugas.', en: 'Failed to create task.' }
+	'Gagal membuat tugas.': { id: 'Gagal membuat tugas.', en: 'Failed to create task.' },
+
+	// --- Markets ---
+	'Market intelligence and country selection': { id: 'Intelijen pasar dan pemilihan negara', en: 'Market intelligence and country selection' },
+	'Country opportunity radar': { id: 'Radar peluang negara', en: 'Country opportunity radar' },
+	'Prioritize export markets before committing compliance and logistics cost.': {
+		id: 'Prioritaskan pasar ekspor sebelum mengeluarkan biaya kepatuhan dan logistik.',
+		en: 'Prioritize export markets before committing compliance and logistics cost.'
+	},
+	'Compare market attractiveness, compliance complexity, logistics feasibility, margin potential, and source-backed risks by product.': {
+		id: 'Bandingkan daya tarik pasar, kompleksitas kepatuhan, kelayakan logistik, potensi margin, dan risiko berbasis sumber per produk.',
+		en: 'Compare market attractiveness, compliance complexity, logistics feasibility, margin potential, and source-backed risks by product.'
+	},
+	'Generate insight': { id: 'Generate insight', en: 'Generate insight' },
+	'Insight generated': { id: 'Insight dibuat', en: 'Insight generated' },
+	'Avg score': { id: 'Rata-rata skor', en: 'Avg score' },
+	'Market insight draft ready.': { id: 'Draf insight pasar siap.', en: 'Market insight draft ready.' },
+	'Insight dibuat di backend.': { id: 'Insight dibuat di backend.', en: 'Insight created in backend.' },
+	'Search country, product, strategy...': { id: 'Cari negara, produk, strategi...', en: 'Search country, product, strategy...' },
+	'Markets tracked': { id: 'Pasar terpantau', en: 'Markets tracked' },
+	'Recommended': { id: 'Direkomendasikan', en: 'Recommended' },
+	'Average score': { id: 'Rata-rata skor', en: 'Average score' },
+	'Logistics': { id: 'Logistik', en: 'Logistics' },
+	'Margin': { id: 'Margin', en: 'Margin' },
+	'Growth': { id: 'Pertumbuhan', en: 'Growth' },
+	'No market insight matched your search.': { id: 'Tidak ada insight pasar yang cocok.', en: 'No market insight matched your search.' },
+	'Gagal generate insight pasar.': { id: 'Gagal generate insight pasar.', en: 'Failed to generate market insight.' },
+
+	// --- RFQ ---
+	'Buyer demand workspace': { id: 'Ruang kerja permintaan pembeli', en: 'Buyer demand workspace' },
+	'Smart matching': { id: 'Pencocokan cerdas', en: 'Smart matching' },
+	'Match buyer requirements with verified exporter capabilities.': {
+		id: 'Cocokkan kebutuhan pembeli dengan kapabilitas eksportir terverifikasi.',
+		en: 'Match buyer requirements with verified exporter capabilities.'
+	},
+	'Manage RFQs, destination terms, required certificates, deadlines, and transparent supplier matching explanations.': {
+		id: 'Kelola RFQ, ketentuan tujuan, sertifikat yang diperlukan, tenggat, dan penjelasan pencocokan pemasok yang transparan.',
+		en: 'Manage RFQs, destination terms, required certificates, deadlines, and transparent supplier matching explanations.'
+	},
+	'Create RFQ': { id: 'Buat RFQ', en: 'Create RFQ' },
+	'RFQ draft created': { id: 'Draf RFQ dibuat', en: 'RFQ draft created' },
+	'Avg match': { id: 'Rata-rata kecocokan', en: 'Avg match' },
+	'RFQ draft ready.': { id: 'Draf RFQ siap.', en: 'RFQ draft ready.' },
+	'RFQ tersimpan di backend.': { id: 'RFQ tersimpan di backend.', en: 'RFQ saved in backend.' },
+	'Search buyer, product, destination...': { id: 'Cari pembeli, produk, tujuan...', en: 'Search buyer, product, destination...' },
+	'Quantity': { id: 'Jumlah', en: 'Quantity' },
+	'Deadline': { id: 'Tenggat', en: 'Deadline' },
+	'No RFQ matched your search.': { id: 'Tidak ada RFQ yang cocok.', en: 'No RFQ matched your search.' },
+	'Gagal membuat RFQ.': { id: 'Gagal membuat RFQ.', en: 'Failed to create RFQ.' }
 };
 
 let initial: Locale = 'id';

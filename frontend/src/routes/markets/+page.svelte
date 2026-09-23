@@ -9,6 +9,7 @@
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
+	import { t } from '$lib/i18n.svelte';
 
 	const filters = ['All', 'Recommended', 'Watchlist', 'Needs Research'];
 	let activeFilter = $state('All');
@@ -62,7 +63,7 @@
 			});
 			generated = true;
 		} catch {
-			error = 'Gagal generate insight pasar.';
+			error = t('Gagal generate insight pasar.');
 		} finally {
 			generating = false;
 		}
@@ -73,20 +74,20 @@
 	<title>Markets | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Markets" eyebrow="Market intelligence and country selection">
+<AppShell title="Markets" eyebrow={t('Market intelligence and country selection')}>
 	<Card class="bg-gradient-to-br from-background to-secondary/40 shadow-sm p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge>Country opportunity radar</Badge>
+			<Badge>{t('Country opportunity radar')}</Badge>
 			<CardTitle class="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-				Prioritize export markets before committing compliance and logistics cost.
+				{t('Prioritize export markets before committing compliance and logistics cost.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Compare market attractiveness, compliance complexity, logistics feasibility, margin potential, and source-backed risks by product.
+				{t('Compare market attractiveness, compliance complexity, logistics feasibility, margin potential, and source-backed risks by product.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleGenerate} disabled={generating}>{generated ? 'Insight generated' : generating ? 'Generating...' : 'Generate insight'}</Button>
-			<Badge variant="secondary">Avg score {averageScore}%</Badge>
+			<Button onclick={handleGenerate} disabled={generating}>{generated ? t('Insight generated') : generating ? t('Generating...') : t('Generate insight')}</Button>
+			<Badge variant="secondary">{t('Avg score')} {averageScore}%</Badge>
 		</CardContent>
 	</Card>
 
@@ -96,10 +97,9 @@
 
 	{#if generated}
 		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">Market insight draft ready.</strong>
+			<strong class="block">{t('Market insight draft ready.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				Insight dibuat di backend.
-			</span>
+				{t('Insight dibuat di backend.')}</span>
 		</div>
 	{/if}
 
@@ -109,25 +109,25 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search country, product, strategy..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" placeholder={t('Search country, product, strategy...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Markets tracked</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Markets tracked')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{marketInsights.items.length}</strong>
 			</CardContent>
 		</Card>
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recommended</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Recommended')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{recommendedCount}</strong>
 			</CardContent>
 		</Card>
 		<Card>
 			<CardContent class="p-5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Average score</span>
+				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Average score')}</span>
 				<strong class="mt-2 block text-3xl font-bold tracking-tight">{averageScore}%</strong>
 			</CardContent>
 		</Card>
@@ -145,22 +145,22 @@
 					<p class="mt-1 text-sm text-muted-foreground">{productName(market.productId)}</p>
 					<div class="mt-4 grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Compliance <strong class="mt-1 block text-sm font-bold text-foreground">{market.complianceComplexity}</strong>
+							{t('Compliance')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.complianceComplexity}</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Logistics <strong class="mt-1 block text-sm font-bold text-foreground">{market.logisticsFeasibility}%</strong>
+							{t('Logistics')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.logisticsFeasibility}%</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Margin <strong class="mt-1 block text-sm font-bold text-foreground">{market.estimatedMargin}%</strong>
+							{t('Margin')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.estimatedMargin}%</strong>
 						</div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-							Growth <strong class="mt-1 block text-sm font-bold text-foreground">{market.growth}</strong>
+							{t('Growth')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.growth}</strong>
 						</div>
 					</div>
 				</a>
 			</Card>
 		{:else}
-			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">No market insight matched your search.</div>
+			<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No market insight matched your search.')}</div>
 		{/each}
 	</div>
 </AppShell>
