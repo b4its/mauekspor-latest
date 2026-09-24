@@ -27,10 +27,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let query = $state('');
 	let synced = $state(false);
 	let syncing = $state(false);
-	let connected = $state(false);
 	let error = $state('');
 	let message = $state('');
-	let connectedId = $state('');
 	let busyId = $state('');
 	let showForm = $state(false);
 	let saving = $state(false);
@@ -53,7 +51,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				[item.name, item.category, item.status, item.description, ...(item.scopes ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
-	let connectedCount = $derived(items.items.filter((item) => item.status === 'Connected').length + (connected ? 1 : 0));
+	let connectedCount = $derived(items.items.filter((item) => item.status === 'Connected').length);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -66,9 +64,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		syncing = true;
 		try {
-			const connected = items.items.find((item) => item.status === 'Connected') ?? items.items[0];
-			if (connected) await syncIntegration(connected.id);
+			const connectedItem = items.items.find((item) => item.status === 'Connected') ?? items.items[0];
+			if (connectedItem) {
+				const res = await syncIntegration(connectedItem.id);
+				if (res.data) items.upsert(res.data);
+			}
 			synced = true;
+			message = t('Integrasi tersinkronisasi.');
 		} catch {
 			error = t('Gagal sinkronisasi.');
 		} finally {
@@ -78,11 +80,20 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	async function handleConnect(itemId: string) {
 		error = '';
+		busyId = itemId;
 		try {
-			await connectIntegration(itemId);
-			connectedId = itemId;
+			const res = await connectIntegration(itemId);
+			if (res.data) {
+				items.upsert(res.data);
+			} else {
+				const cur = items.items.find((i) => i.id === itemId);
+				if (cur) items.upsert({ ...cur, status: 'Connected', lastSync: 'now' });
+			}
+			message = t('Integrasi terhubung.');
 		} catch {
 			error = t('Gagal menghubungkan integrasi.');
+		} finally {
+			busyId = '';
 		}
 	}
 
@@ -125,13 +136,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				scopes: fScopes.split(',').map((s) => s.trim()).filter(Boolean)
 			};
 			if (editingId) {
-				await updateIntegration(editingId, payload);
+				const res = await updateIntegration(editingId, payload);
+				if (res.data) items.upsert(res.data);
 				message = `Integrasi "${payload.name}" diperbarui.`;
 			} else {
-				await createIntegration(payload);
+				const res = await createIntegration(payload);
+				if (res.data) items.upsert(res.data);
 				message = `Integrasi "${payload.name}" dibuat.`;
 			}
-			await items.load();
 			showForm = false;
 			resetForm();
 		} catch {
@@ -145,10 +157,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		busyId = itemId;
 		try {
-			await disconnectIntegration(itemId);
-			connectedId = '';
-			const idx = items.items.findIndex((i) => i.id === itemId);
-			if (idx >= 0) items.items[idx] = { ...items.items[idx], status: 'Disconnected' };
+			const res = await disconnectIntegration(itemId);
+			if (res.data) {
+				items.upsert(res.data);
+			} else {
+				const cur = items.items.find((i) => i.id === itemId);
+				if (cur) items.upsert({ ...cur, status: 'Disconnected' });
+			}
 			message = t('Integrasi diputus.');
 		} catch {
 			error = t('Gagal memutus integrasi.');
@@ -158,12 +173,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(item: { id: string; name: string }) {
+		if (!confirm(`Hapus integrasi "${item.name}"?`)) return;
 		error = '';
 		busyId = item.id;
 		try {
 			await deleteIntegration(item.id);
-			const idx = items.items.findIndex((i) => i.id === item.id);
-			if (idx >= 0) items.items.splice(idx, 1);
+			items.remove(item.id);
 			message = `Integrasi "${item.name}" dihapus.`;
 		} catch {
 			error = t('Gagal menghapus integrasi.');
@@ -175,6 +190,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredIntegrations ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredIntegrations?.length ?? 0, paginationPageSize));
+
+	$effect(() => {
+		activeFilter;
+		query;
+		paginationPage = 1;
+	});
 
 </script>
 
@@ -288,7 +309,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			{#each pagedItems as item}
 				<Card class="gap-4">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone((connected || connectedId === item.id) && item.status === 'Needs Auth' ? 'Connected' : item.status))}>{(connected || connectedId === item.id) && item.status === 'Needs Auth' ? t('Terhubung') : trStatus(item.status)}</Badge>
+						<Badge variant={toneVariant(statusTone(item.status))}>{trStatus(item.status)}</Badge>
 						<strong class="text-sm font-bold text-muted-foreground">{trCat(item.category)}</strong>
 					</div>
 					<CardHeader class="p-0">
@@ -298,7 +319,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					<CardContent class="grid gap-3 p-0">
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Sinkronisasi terakhir')} <strong class="mt-1 block text-sm font-bold text-foreground">{connected && item.status === 'Needs Auth' ? t('Baru saja') : item.lastSync}</strong>
+								{t('Sinkronisasi terakhir')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.lastSync}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 								{t('Lingkup')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.scopes.length}</strong>
@@ -310,9 +331,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							{/each}
 						</div>
 					</CardContent>
-					<Button variant="outline" onclick={() => handleConnect(item.id)}>{(connected || connectedId === item.id) && item.status === 'Needs Auth' ? t('Terhubung') : item.status === 'Connected' ? t('Hubungkan ulang') : t('Hubungkan')}</Button>
-					{#if item.status === 'Connected' || connectedId === item.id}
-						<Button variant="outline" disabled={busyId === item.id} onclick={() => handleDisconnect(item.id)}>{t('Putuskan')}</Button>
+					{#if item.status === 'Connected'}
+						<Button variant="outline" disabled={busyId === item.id} onclick={() => handleDisconnect(item.id)}>{busyId === item.id ? '...' : t('Putuskan')}</Button>
+					{:else}
+						<Button variant="outline" disabled={busyId === item.id} onclick={() => handleConnect(item.id)}>{busyId === item.id ? '...' : t('Hubungkan')}</Button>
 					{/if}
 					<div class="grid grid-cols-2 gap-2">
 						<Button variant="outline" disabled={busyId === item.id} onclick={() => openEdit(item)}>{t('Edit')}</Button>

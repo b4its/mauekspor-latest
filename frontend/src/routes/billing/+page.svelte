@@ -15,6 +15,8 @@
 	let downloaded = $state(false);
 	let busy = $state(false);
 	let error = $state('');
+	let message = $state('');
+	let showPlanSelector = $state(false);
 	let billings = createRemoteList(getBilling, seedBillingRecords);
 	let billing = $derived(billings.items[0] ?? seedBillingRecords[0]);
 
@@ -29,12 +31,19 @@
 		billings.load();
 	});
 
-	async function handleChangePlan() {
+	async function handleChangePlan(targetPlan: 'Starter' | 'Growth' | 'Enterprise') {
 		error = '';
 		busy = true;
 		try {
-			await changePlan(billing.plan === 'Starter' ? 'Growth' : 'Starter');
+			const res = await changePlan(targetPlan);
+			if (res.data) {
+				billings.upsert(res.data);
+			} else {
+				await billings.load();
+			}
 			changed = true;
+			message = `Plan berhasil diubah ke ${targetPlan}.`;
+			showPlanSelector = false;
 		} catch {
 			error = t('Gagal mengubah plan.');
 		} finally {
@@ -46,8 +55,12 @@
 		error = '';
 		busy = true;
 		try {
-			await downloadInvoice(billing.id);
+			const res = await downloadInvoice(billing.id);
+			if (res.data) {
+				billings.upsert(res.data);
+			}
 			downloaded = true;
+			message = 'Invoice berhasil diunduh.';
 		} catch {
 			error = t('Gagal mengunduh invoice.');
 		} finally {
@@ -72,13 +85,53 @@
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={handleChangePlan} disabled={busy}>{changed ? t('Plan updated') : t('Change plan')}</Button>
-			<Button variant="outline" onclick={handleDownload} disabled={busy}>{downloaded ? t('Invoice ready') : t('Download invoice')}</Button>
+			<Button onclick={() => (showPlanSelector = !showPlanSelector)} disabled={busy}>
+				{showPlanSelector ? t('Batal') : changed ? t('Plan updated') : t('Change plan')}
+			</Button>
+			<Button variant="outline" onclick={handleDownload} disabled={busy}>
+				{downloaded ? t('Invoice ready') : t('Download invoice')}
+			</Button>
 		</CardContent>
+
+		{#if showPlanSelector}
+			<div class="mt-6 grid gap-4 rounded-xl border bg-muted/20 p-4 sm:grid-cols-3">
+				{#each [
+					{ name: 'Starter' as const, price: '$99/mo', desc: '50 projects, 500 AI credits, 3 team seats' },
+					{ name: 'Growth' as const, price: '$249/mo', desc: 'Unlimited projects, 2000 AI credits, 10 team seats' },
+					{ name: 'Enterprise' as const, price: '$599/mo', desc: 'Dedicated infra, unlimited AI, custom forwarder rates' }
+				] as plan}
+					<div class="flex flex-col justify-between rounded-lg border bg-background p-4 shadow-sm">
+						<div>
+							<div class="flex items-center justify-between">
+								<strong class="text-base font-bold">{plan.name}</strong>
+								{#if billing.plan === plan.name}
+									<Badge variant="default">{t('Aktif')}</Badge>
+								{/if}
+							</div>
+							<span class="mt-1 block text-lg font-black">{plan.price}</span>
+							<p class="mt-2 text-xs text-muted-foreground">{plan.desc}</p>
+						</div>
+						<Button
+							size="sm"
+							class="mt-4"
+							variant={billing.plan === plan.name ? 'secondary' : 'default'}
+							disabled={busy || billing.plan === plan.name}
+							onclick={() => handleChangePlan(plan.name)}
+						>
+							{billing.plan === plan.name ? t('Plan aktif') : t('Pilih plan')}
+						</Button>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</Card>
 
 	{#if error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+	{/if}
+
+	{#if message}
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if billings.error}
