@@ -103,13 +103,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				status: fStatus
 			};
 			if (editingId) {
-				await updateAutomation(editingId, payload);
+				const res = await updateAutomation(editingId, payload);
+				if (res.data) rules.upsert(res.data);
 				message = `Rule "${payload.name}" diperbarui.`;
 			} else {
-				await createAutomation(payload);
+				const res = await createAutomation(payload);
+				if (res.data) rules.upsert(res.data);
 				message = `Rule "${payload.name}" dibuat.`;
 			}
-			await rules.load();
 			showForm = false;
 			resetForm();
 		} catch {
@@ -127,9 +128,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			const res = await pauseAutomation(ruleId);
 			justActivated = '';
 			justRan = '';
-			const idx = rules.items.findIndex((r) => r.id === ruleId);
-			if (idx >= 0) rules.items[idx] = { ...rules.items[idx], ...res.data, status: 'Paused' };
-			message = `Rule "${res.data.name}" dijeda.`;
+			if (res.data) rules.upsert({ ...res.data, status: 'Paused' });
+			else {
+				const r = rules.items.find((x) => x.id === ruleId);
+				if (r) rules.upsert({ ...r, status: 'Paused' });
+			}
+			message = `Rule "${res.data?.name ?? ruleId}" dijeda.`;
 		} catch {
 			error = t('Gagal menjeda rule.');
 		} finally {
@@ -138,13 +142,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(rule: { id: string; name: string }) {
+		if (!confirm(`Hapus aturan automasi "${rule.name}"?`)) return;
 		error = '';
 		message = '';
 		busyId = rule.id;
 		try {
 			await deleteAutomation(rule.id);
-			const idx = rules.items.findIndex((r) => r.id === rule.id);
-			if (idx >= 0) rules.items.splice(idx, 1);
+			rules.remove(rule.id);
 			message = `Rule "${rule.name}" dihapus.`;
 		} catch {
 			error = t('Gagal menghapus rule.');
@@ -161,9 +165,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			const res = await runAutomation(ruleId);
 			justRan = ruleId;
 			justActivated = '';
-			// Update rule lokal dengan hasil backend (mutasi index $state)
-			const idx = rules.items.findIndex((r) => r.id === ruleId);
-			if (idx >= 0) rules.items[idx] = { ...rules.items[idx], ...res.data, lastRun: res.data.lastRun ?? 'now' };
+			if (res.data) rules.upsert({ ...res.data, lastRun: res.data.lastRun ?? 'now' });
 			message = `Rule "${res.data.name}" dijalankan — total ${res.data.runs} kali.`;
 		} catch {
 			error = t('Gagal menjalankan rule.');
@@ -180,8 +182,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			const res = await activateAutomation(ruleId);
 			justActivated = ruleId;
 			justRan = '';
-			const idx = rules.items.findIndex((r) => r.id === ruleId);
-			if (idx >= 0) rules.items[idx] = { ...rules.items[idx], ...res.data, status: res.data.status ?? 'Active' };
+			if (res.data) rules.upsert({ ...res.data, status: res.data.status ?? 'Active' });
 			message = `Rule "${res.data.name}" kini Active.`;
 		} catch {
 			error = t('Gagal mengaktifkan rule.');
