@@ -64,10 +64,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		busyId = supplierId;
 		try {
 			const res = await requestSupplierEvidence(supplierId);
-			const idx = suppliers.items.findIndex((s) => s.id === supplierId);
-			if (idx >= 0) suppliers.items[idx] = { ...suppliers.items[idx], status: 'Needs Evidence' };
+			if (res.data) {
+				suppliers.upsert(res.data);
+			} else {
+				suppliers.upsert({ ...(suppliers.items.find((s) => s.id === supplierId) as (typeof suppliers.items)[number]), status: 'Needs Evidence' });
+			}
 			message = `Permintaan bukti dikirim ke ${name}.`;
-			void res;
 		} catch {
 			error = t('Gagal meminta bukti kepatuhan.');
 		} finally {
@@ -94,7 +96,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		saving = true;
 		try {
-			await createSupplier({
+			const res = await createSupplier({
 				name: fName.trim(),
 				location: fLocation.trim(),
 				category: fCategory.trim() || 'Supplier',
@@ -102,7 +104,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				leadTime: fLeadTime.trim(),
 				contact: fContact.trim()
 			});
-			await suppliers.load();
+			if (res.data) {
+				suppliers.upsert(res.data);
+			} else {
+				await suppliers.load();
+			}
 			message = `Supplier "${fName.trim()}" ditambahkan.`;
 			showForm = false;
 		} catch {
