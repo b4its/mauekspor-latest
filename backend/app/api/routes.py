@@ -4951,11 +4951,16 @@ def admin_create_country(payload: sc.CreateCountryPayload, current_user: dict = 
     if current_user.get("role") != "Admin":
         raise HTTPException(403, "Admin access required")
     from app.data.countries import get_country
-    if get_country(payload.country_code):
+    code = payload.country_code.strip().upper()
+    if not code:
+        raise HTTPException(422, "country_code is required")
+    if get_country(code) or any(
+        str(r.get("country_code", "")).upper() == code for r in db.all("countries")
+    ):
         raise HTTPException(409, "Country already exists")
     record = db.insert("countries", {
         "id": db.gen_id("countries", "CTY"),
-        "country_code": payload.country_code.upper(),
+        "country_code": code,
         "country_name": payload.country_name,
         "region": payload.region,
         "createdAt": "now",
@@ -4991,6 +4996,18 @@ def admin_delete_country(country_code: str, current_user: dict = Depends(get_cur
     return {"data": {"status": "deleted"}, "meta": {}}
 
 
+def _regulation_out(r: dict) -> dict:
+    """Bentuk kanonik respons regulasi admin (snake_case, konsisten dengan list)."""
+    return {
+        "id": r.get("id"),
+        "country_code": str(r.get("countryCode", r.get("country_code", ""))).upper(),
+        "rule_category": r.get("ruleCategory", r.get("rule_category", "")),
+        "forbidden_keywords": r.get("forbiddenKeywords", r.get("forbidden_keywords", "")),
+        "required_specs": r.get("requiredSpecs", r.get("required_specs", "")),
+        "description_rule": r.get("descriptionRule", r.get("description_rule", "")),
+    }
+
+
 @router.get("/admin/countries/{country_code}/regulations/")
 def admin_list_regulations(country_code: str, rule_category: str = "", current_user: dict = Depends(get_current_user)):
     if current_user.get("role") != "Admin":
@@ -5002,16 +5019,9 @@ def admin_list_regulations(country_code: str, rule_category: str = "", current_u
         items.append({**r, "id": f"static-{i}"})
     for r in db.all("regulations"):
         if str(r.get("countryCode", "")) == code:
-            items.append({
-                "id": r.get("id"),
-                "country_code": code,
-                "rule_category": r.get("ruleCategory", ""),
-                "forbidden_keywords": r.get("forbiddenKeywords", ""),
-                "required_specs": r.get("requiredSpecs", ""),
-                "description_rule": r.get("descriptionRule", ""),
-            })
+            items.append(_regulation_out(r))
     if rule_category:
-        items = [r for r in items if r["rule_category"].lower() == rule_category.lower()]
+        items = [r for r in items if str(r.get("rule_category", "")).lower() == rule_category.lower()]
     return {"data": items, "meta": {}}
 
 
@@ -5035,7 +5045,7 @@ def admin_create_regulation(country_code: str, payload: sc.CreateRegulationPaylo
         "descriptionRule": payload.description_rule,
         "createdAt": "now",
     })
-    return _one(record)
+    return _one(_regulation_out(record))
 
 
 @router.put("/admin/regulations/{regulation_id}/")
@@ -5050,7 +5060,8 @@ def admin_update_regulation(regulation_id: str, payload: sc.UpdateRegulationPayl
     record["requiredSpecs"] = payload.required_specs
     record["descriptionRule"] = payload.description_rule
     record["updatedAt"] = "now"
-    return _save_one(record)
+    db.save(record)
+    return _one(_regulation_out(record))
 
 
 @router.delete("/admin/regulations/{regulation_id}/delete/")

@@ -191,6 +191,7 @@ _MOCK_OUTPUTS: dict[str, Any] = {
         "Fokus utama: selesaikan compliance blocker critical."
     ),
     "pricing_insight": "Harga kompetitif untuk pasar target; pantau kurs dan freight.",
+    "test": "AI test successful — koneksi AI berjalan normal (mode demo).",
 }
 
 

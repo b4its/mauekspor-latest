@@ -138,7 +138,7 @@ def test_regulasi_admin_negara_baru_bisa_dibuat():
             "required_specs": "", "description_rule": "Regulasi uji.",
         }, headers=headers)
         assert res.status_code == 200
-        assert res.json()["data"]["countryCode"] == "YY"
+        assert res.json()["data"]["country_code"] == "YY"
 
         # Detail negara baru ikut menampilkan regulasi + regulations_count
         detail = c.get("/api/v1/countries/YY/")
