@@ -27,9 +27,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		publishing = id;
 		try {
-			await publishEducationalModule(id);
-			const module = modules.items.find((item) => item.id === id);
-			if (module) module.status = 'Published';
+			const res = await publishEducationalModule(id);
+			if (res.data) {
+				modules.upsert(res.data);
+			} else {
+				const module = modules.items.find((item) => item.id === id);
+				if (module) modules.upsert({ ...module, status: 'Published' });
+			}
 		} catch {
 			error = t('Gagal mempublikasikan modul.');
 		} finally {
@@ -45,8 +49,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		creating = true;
 		try {
-			const created = (await createEducationalModule({ title: newTitle, description: '', order_index: modules.items.length + 1 })).data;
-			modules.items.unshift(created);
+			const res = await createEducationalModule({ title: newTitle, description: '', order_index: modules.items.length + 1 });
+			if (res.data) {
+				modules.upsert(res.data);
+			} else {
+				await modules.load();
+			}
 			newTitle = '';
 		} catch {
 			error = t('Gagal membuat modul.');
@@ -61,8 +69,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		deleting = id;
 		try {
 			await deleteEducationalModule(id);
-			const idx = modules.items.findIndex((m) => m.id === id);
-			if (idx >= 0) modules.items.splice(idx, 1);
+			modules.remove(id);
 		} catch {
 			error = t('Gagal menghapus modul.');
 		} finally {
@@ -78,13 +85,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		const aOrder = a.orderIndex ?? index;
 		const bOrder = b.orderIndex ?? target;
 		try {
-			await updateEducationalModule(a.id, { title: a.title, description: a.description ?? '', order_index: bOrder });
-			await updateEducationalModule(b.id, { title: b.title, description: b.description ?? '', order_index: aOrder });
-			// Tukar posisi dalam array secara in-place (items adalah getter read-only)
-			const arr = modules.items;
-			[arr[index], arr[target]] = [arr[target], arr[index]];
-			arr[index].orderIndex = bOrder;
-			arr[target].orderIndex = aOrder;
+			const resA = await updateEducationalModule(a.id, { title: a.title, description: a.description ?? '', order_index: bOrder });
+			const resB = await updateEducationalModule(b.id, { title: b.title, description: b.description ?? '', order_index: aOrder });
+			if (resA.data) modules.upsert(resA.data);
+			if (resB.data) modules.upsert(resB.data);
+			if (!resA.data || !resB.data) {
+				await modules.load();
+			}
 		} catch {
 			error = t('Gagal mengubah urutan modul.');
 		}

@@ -27,9 +27,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		modulePublishing = id;
 		try {
-			await publishEducationalModule(id);
-			const module = modules.items.find((item) => item.id === id);
-			if (module) module.status = 'Published';
+			const res = await publishEducationalModule(id);
+			if (res.data) {
+				modules.upsert(res.data);
+			} else {
+				const module = modules.items.find((item) => item.id === id);
+				if (module) modules.upsert({ ...module, status: 'Published' });
+			}
 		} catch {
 			error = t('Gagal mempublikasikan modul.');
 		} finally {
@@ -41,9 +45,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		articlePublishing = id;
 		try {
-			await publishEducationalArticle(id);
-			const article = articles.items.find((item) => item.id === id);
-			if (article) article.status = 'Published';
+			const res = await publishEducationalArticle(id);
+			if (res.data) {
+				articles.upsert(res.data);
+			} else {
+				const article = articles.items.find((item) => item.id === id);
+				if (article) articles.upsert({ ...article, status: 'Published' });
+			}
 		} catch {
 			error = t('Gagal mempublikasikan artikel.');
 		} finally {

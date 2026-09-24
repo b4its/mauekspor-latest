@@ -35,9 +35,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		publishing = id;
 		try {
-			await publishEducationalArticle(id);
-			const article = articles.items.find((item) => item.id === id);
-			if (article) article.status = 'Published';
+			const res = await publishEducationalArticle(id);
+			if (res.data) {
+				articles.upsert(res.data);
+			} else {
+				const article = articles.items.find((item) => item.id === id);
+				if (article) articles.upsert({ ...article, status: 'Published' });
+			}
 		} catch {
 			error = t('Gagal mempublikasikan artikel.');
 		} finally {
@@ -53,8 +57,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		creating = true;
 		try {
-			const created = (await createEducationalArticle({ title: newTitle, content: newContent, order_index: articles.items.length + 1 })).data;
-			articles.items.unshift(created);
+			const res = await createEducationalArticle({ title: newTitle, content: newContent, order_index: articles.items.length + 1 });
+			if (res.data) {
+				articles.upsert(res.data);
+			} else {
+				await articles.load();
+			}
 			newTitle = '';
 			newContent = '';
 		} catch {
@@ -70,8 +78,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		deleting = id;
 		try {
 			await deleteEducationalArticle(id);
-			const idx = articles.items.findIndex((a) => a.id === id);
-			if (idx >= 0) articles.items.splice(idx, 1);
+			articles.remove(id);
 		} catch {
 			error = t('Gagal menghapus artikel.');
 		} finally {
@@ -87,9 +94,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		savingEdit = true;
 		try {
-			const updated = (await updateEducationalArticle(id, { title: editTitle.trim(), content: editContent })).data;
-			const idx = articles.items.findIndex((a) => a.id === id);
-			if (idx >= 0) articles.items[idx] = updated;
+			const res = await updateEducationalArticle(id, { title: editTitle.trim(), content: editContent });
+			if (res.data) {
+				articles.upsert(res.data);
+			} else {
+				await articles.load();
+			}
 			editingId = '';
 		} catch {
 			editError = t('Gagal menyimpan artikel.');
@@ -105,9 +115,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		uploadingId = id;
 		try {
-			const updated = (await uploadEducationalFile(id, file)).data;
-			const idx = articles.items.findIndex((a) => a.id === id);
-			if (idx >= 0) articles.items[idx] = updated;
+			const res = await uploadEducationalFile(id, file);
+			if (res.data) {
+				articles.upsert(res.data);
+			} else {
+				await articles.load();
+			}
 		} catch {
 			error = t('Gagal mengunggah file artikel.');
 		} finally {
