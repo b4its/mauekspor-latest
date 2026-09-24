@@ -35,7 +35,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		deletingId = id;
 		try {
 			await deleteBuyerRequest(id);
-			await requests.load();
+			requests.remove(id);
 		} catch {
 			alert(t('Gagal menghapus permintaan buyer.'));
 		} finally {
