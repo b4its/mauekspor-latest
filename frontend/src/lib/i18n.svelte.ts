@@ -893,6 +893,8 @@ const dictionary: Record<string, Entry> = {
 	'Dokumen disetujui di backend.': { id: 'Dokumen disetujui di backend.', en: 'Document approved in the backend.' },
 	'Gagal regenerate dokumen.': { id: 'Gagal regenerate dokumen.', en: 'Failed to regenerate document.' },
 	'Gagal menyetujui dokumen.': { id: 'Gagal menyetujui dokumen.', en: 'Failed to approve document.' },
+	'Gagal menghapus dokumen.': { id: 'Gagal menghapus dokumen.', en: 'Failed to delete document.' },
+	'Project wajib dipilih.': { id: 'Project wajib dipilih.', en: 'Project must be selected.' },
 	'Compliance requirement detail': { id: 'Detail persyaratan kepatuhan', en: 'Compliance requirement detail' },
 	'AI confidence': { id: 'Keyakinan AI', en: 'AI confidence' },
 	'Requirement Context': { id: 'Konteks Persyaratan', en: 'Requirement Context' },

@@ -37,8 +37,10 @@
 	async function regenerate() {
 		error = '';
 		try {
-			await generateTradeDocument({ projectId: data.document.projectId, type: data.document.type });
+			const res = await generateTradeDocument({ projectId: data.document.projectId, type: data.document.type });
 			regenerated = true;
+			if (res.data?.status) savedStatus = res.data.status;
+			message = t('Dokumen diregenerasi di backend.');
 		} catch {
 			error = t('Gagal regenerate dokumen.');
 		}
@@ -48,8 +50,10 @@
 		error = '';
 		approving = true;
 		try {
-			await approveTradeDocument(data.document.id);
+			const res = await approveTradeDocument(data.document.id);
 			approved = true;
+			if (res.data?.status) savedStatus = res.data.status;
+			message = t('Dokumen disetujui di backend.');
 		} catch {
 			error = t('Gagal menyetujui dokumen.');
 		} finally {

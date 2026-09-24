@@ -6,7 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, tradeDocuments as seedDocuments } from '$lib/data/trade';
 	import type { TradeDocument } from '$lib/data/trade';
-	import { listTradeDocuments, generateTradeDocument } from '$lib/api/documents';
+	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument } from '$lib/api/documents';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
@@ -60,6 +60,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		showForm = true;
 	}
 
+	let actionId = $state('');
+
 	async function generateDocument() {
 		formError = '';
 		if (!fProjectId) {
@@ -68,17 +70,54 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		generating = true;
 		try {
-			await generateTradeDocument({
+			const res = await generateTradeDocument({
 				projectId: fProjectId,
 				type: fType as TradeDocument['type']
 			});
-			await tradeDocuments.load();
+			if (res.data) {
+				tradeDocuments.upsert(res.data);
+			} else {
+				await tradeDocuments.load();
+			}
 			message = `Dokumen ${fType} dibuat.`;
 			showForm = false;
 		} catch {
 			formError = t('Gagal generate dokumen.');
 		} finally {
 			generating = false;
+		}
+	}
+
+	async function handleApprove(doc: TradeDocument) {
+		error = '';
+		actionId = doc.id;
+		try {
+			const res = await approveTradeDocument(doc.id);
+			if (res.data) {
+				tradeDocuments.upsert(res.data);
+			} else {
+				await tradeDocuments.load();
+			}
+			message = `Dokumen ${doc.id} disetujui.`;
+		} catch {
+			error = t('Gagal menyetujui dokumen.');
+		} finally {
+			actionId = '';
+		}
+	}
+
+	async function handleDelete(doc: TradeDocument) {
+		if (!confirm(`Hapus dokumen "${doc.type}" (${doc.id})?`)) return;
+		error = '';
+		actionId = doc.id;
+		try {
+			await deleteTradeDocument(doc.id);
+			tradeDocuments.remove(doc.id);
+			message = `Dokumen ${doc.id} dihapus.`;
+		} catch {
+			error = t('Gagal menghapus dokumen.');
+		} finally {
+			actionId = '';
 		}
 	}
 
@@ -214,14 +253,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as document}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-					<a href={`/documents/${document.id}`} class="block h-full p-5 no-underline">
+				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+					<div class="p-5">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(document.status))}>{document.status}</Badge>
 							<strong class="text-3xl font-bold tracking-tight">{document.validationScore}%</strong>
 						</div>
-						<h3 class="mt-4 text-xl font-bold tracking-tight">{document.type}</h3>
-						<p class="mt-1 text-sm text-muted-foreground">{projectName(document.projectId)}</p>
+						<a href={`/documents/${document.id}`} class="mt-4 block no-underline hover:underline">
+							<h3 class="text-xl font-bold tracking-tight text-foreground">{document.type}</h3>
+							<p class="mt-1 text-sm text-muted-foreground">{projectName(document.projectId)}</p>
+						</a>
 						<div class="mt-4 grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 								{t('ID')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.id}</strong>
@@ -236,7 +277,34 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.updatedAt}</strong>
 							</div>
 						</div>
-					</a>
+					</div>
+					<div class="flex items-center justify-between border-t bg-muted/10 px-5 py-3">
+						<a href={`/documents/${document.id}`} class="text-xs font-semibold text-primary hover:underline">
+							{t('Lihat detail')} &rarr;
+						</a>
+						<div class="flex items-center gap-1.5">
+							{#if document.status !== 'Approved'}
+								<Button
+									variant="outline"
+									size="sm"
+									class="h-7 text-xs"
+									disabled={actionId === document.id}
+									onclick={() => handleApprove(document)}
+								>
+									{actionId === document.id ? '...' : t('Setujui')}
+								</Button>
+							{/if}
+							<Button
+								variant="ghost"
+								size="sm"
+								class="h-7 text-xs text-destructive hover:bg-destructive/10"
+								disabled={actionId === document.id}
+								onclick={() => handleDelete(document)}
+							>
+								{t('Hapus')}
+							</Button>
+						</div>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No document matched your search.')}</div>
