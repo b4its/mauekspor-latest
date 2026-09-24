@@ -64,6 +64,27 @@ export function createRemoteList<T extends { id: string }>(fetcher: Fetcher<T>, 
 		}
 	}
 
+	function remove(id: string) {
+		const idx = items.findIndex((item) => item.id === id);
+		if (idx >= 0) {
+			items.splice(idx, 1);
+		}
+	}
+
+	function upsert(item: T) {
+		const idx = items.findIndex((i) => i.id === item.id);
+		if (idx >= 0) {
+			items[idx] = item;
+		} else {
+			items.unshift(item);
+		}
+	}
+
+	function setItems(newItems: T[]) {
+		items.length = 0;
+		items.push(...newItems);
+	}
+
 	return {
 		get items() {
 			return items;
@@ -74,7 +95,10 @@ export function createRemoteList<T extends { id: string }>(fetcher: Fetcher<T>, 
 		get error() {
 			return error;
 		},
-		load
+		load,
+		remove,
+		upsert,
+		setItems
 	};
 }
 

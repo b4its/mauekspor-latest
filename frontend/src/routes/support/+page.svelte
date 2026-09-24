@@ -64,14 +64,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		try {
 			if (editingId) {
 				const res = await updateSupportTicket(editingId, { subject: fSubject.trim(), category: fCategory, description: fDescription.trim(), priority: fPriority });
-				const idx = tickets.items.findIndex((tk) => tk.id === editingId);
-				if (idx >= 0) tickets.items[idx] = { ...tickets.items[idx], ...res.data };
+				tickets.upsert(res.data);
 				message = `Tiket "${fSubject.trim()}" diperbarui.`;
 			} else {
-				await createSupportTicket({ subject: fSubject.trim(), category: fCategory, description: fDescription.trim() });
+				const res = await createSupportTicket({ subject: fSubject.trim(), category: fCategory, description: fDescription.trim() });
 				created = true;
 				message = `Tiket "${fSubject.trim()}" dibuat.`;
-				await tickets.load();
+				if (res.data) tickets.upsert(res.data);
+				else await tickets.load();
 			}
 			showForm = false;
 			editingId = '';
@@ -107,10 +107,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	async function handleResolve(ticketId: string) {
 		error = '';
 		try {
-			await resolveSupportTicket(ticketId);
+			const res = await resolveSupportTicket(ticketId);
 			resolvedId = ticketId;
-			const idx = tickets.items.findIndex((tk) => tk.id === ticketId);
-			if (idx >= 0) tickets.items[idx] = { ...tickets.items[idx], status: 'Resolved' };
+			if (res.data) {
+				tickets.upsert(res.data);
+			} else {
+				const target = tickets.items.find((tk) => tk.id === ticketId);
+				if (target) tickets.upsert({ ...target, status: 'Resolved' });
+			}
 		} catch {
 			error = t('Gagal menyelesaikan tiket.');
 		}
@@ -121,8 +125,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		busyId = ticket.id;
 		try {
 			await deleteSupportTicket(ticket.id);
-			const idx = tickets.items.findIndex((tk) => tk.id === ticket.id);
-			if (idx >= 0) tickets.items.splice(idx, 1);
+			tickets.remove(ticket.id);
 			message = `Tiket "${ticket.subject}" dihapus.`;
 		} catch {
 			error = t('Gagal menghapus tiket.');

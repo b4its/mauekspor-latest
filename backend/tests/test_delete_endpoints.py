@@ -136,3 +136,27 @@ def test_delete_chat_session():
         r = c.delete(f"/api/v1/chat/sessions/{sid}/", headers=_auth(token))
         assert r.status_code == 200, r.text
         assert db.get("chat_sessions", sid) is None
+
+
+def test_delete_api_key():
+    with TestClient(app) as c:
+        admin_tok = _login(c, ADMIN)
+        exporter_tok = _login(c, EXPORTER)
+        # Create key
+        res = c.post("/api/v1/api-keys/", json={"name": "Temp Key", "scopes": ["read"]}, headers=_auth(admin_tok))
+        assert res.status_code == 200, res.text
+        key_id = res.json()["data"]["id"]
+
+        # Exporter cannot delete admin api-key (403)
+        res_exp = c.delete(f"/api/v1/api-keys/{key_id}/", headers=_auth(exporter_tok))
+        assert res_exp.status_code == 403
+
+        # Admin deletes
+        r = c.delete(f"/api/v1/api-keys/{key_id}/", headers=_auth(admin_tok))
+        assert r.status_code == 200, r.text
+        assert db.get("api_keys", key_id) is None
+
+        # 404 on missing
+        r404 = c.delete("/api/v1/api-keys/KEY-NONE/", headers=_auth(admin_tok))
+        assert r404.status_code == 404
+

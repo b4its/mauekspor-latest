@@ -2404,7 +2404,16 @@ const dictionary: Record<string, Entry> = {
 	'Nilai Kesiapan Ekspor (0-100)': { id: 'Nilai Kesiapan Ekspor (0-100)', en: 'Export Readiness Score (0-100)' },
 	'Tidak ada data desa yang cocok dengan kriteria pencarian.': { id: 'Tidak ada data desa yang cocok dengan kriteria pencarian.', en: 'No village data matched your search criteria.' },
 	'Village Potential': { id: 'Potensi Desa', en: 'Village Potential' },
-	'Komoditas Desa': { id: 'Komoditas Desa', en: 'Village Commodity' }
+	'Komoditas Desa': { id: 'Komoditas Desa', en: 'Village Commodity' },
+	'Salin': { id: 'Salin', en: 'Copy' },
+	'Disalin': { id: 'Disalin', en: 'Copied' },
+	'Hapus Kunci': { id: 'Hapus Kunci', en: 'Delete Key' },
+	'Kunci API dihapus.': { id: 'Kunci API dihapus.', en: 'API key deleted.' },
+	'Nama Kunci API': { id: 'Nama Kunci API', en: 'API Key Name' },
+	'Pilih Lingkup Akses (Scopes)': { id: 'Pilih Lingkup Akses (Scopes)', en: 'Select Access Scopes' },
+	'Kunci API Baru': { id: 'Kunci API Baru', en: 'New API Key' },
+	'Simpan & Buat': { id: 'Simpan & Buat', en: 'Save & Create' },
+	'Hapus Kunci API ini?': { id: 'Hapus Kunci API ini?', en: 'Delete this API Key?' }
 };
 
 let initial: Locale = 'id';

@@ -4300,6 +4300,16 @@ def revoke_api_key(key_id: str):
     return _save_one(record)
 
 
+@router.delete("/api-keys/{key_id}/")
+def delete_api_key(key_id: str):
+    record = db.get("api_keys", key_id)
+    if not record:
+        raise HTTPException(404, "API key not found")
+    db.delete("api_keys", key_id)
+    return {"data": {"deleted": True}}
+
+
+
 # ----------------------------------------------------------------------------
 # CHAT SESSIONS & SUGGESTIONS (AI Copilot)
 # ----------------------------------------------------------------------------

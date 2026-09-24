@@ -49,6 +49,31 @@ describe('createRemoteList', () => {
 		await list.load();
 		expect(fetcher).toHaveBeenCalledTimes(2);
 	});
+
+	it('remove() menghapus item berdasarkan id', () => {
+		const list = createRemoteList(async () => ({ data: [] }), seed);
+		expect(list.items).toHaveLength(2);
+		list.remove('a');
+		expect(list.items).toHaveLength(1);
+		expect(list.items[0].id).toBe('b');
+	});
+
+	it('upsert() memperbarui item yang ada atau menambahkan item baru di depan', () => {
+		const list = createRemoteList(async () => ({ data: [] }), seed);
+		list.upsert({ id: 'a', name: 'Updated A' });
+		expect(list.items.find((i) => i.id === 'a')?.name).toBe('Updated A');
+
+		list.upsert({ id: 'z', name: 'New Z' });
+		expect(list.items).toHaveLength(3);
+		expect(list.items[0].id).toBe('z');
+	});
+
+	it('setItems() menimpa seluruh isi items', () => {
+		const list = createRemoteList(async () => ({ data: [] }), seed);
+		list.setItems([{ id: 'new-1', name: 'New Item' }]);
+		expect(list.items).toHaveLength(1);
+		expect(list.items[0].id).toBe('new-1');
+	});
 });
 
 describe('loadById', () => {

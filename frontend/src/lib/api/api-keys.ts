@@ -12,3 +12,8 @@ export function createApiKey(name: string, scopes: string[]) {
 export function revokeApiKey(id: string) {
 	return apiFetch<ApiKey>(`/api-keys/${id}/revoke/`, { method: 'POST' });
 }
+
+export function deleteApiKey(id: string) {
+	return apiFetch<{ deleted: boolean }>(`/api-keys/${id}/`, { method: 'DELETE' });
+}
+
