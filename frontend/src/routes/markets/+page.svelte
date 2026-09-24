@@ -75,12 +75,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		saving = true;
 		try {
-			await createMarketInsight({
+			const res = await createMarketInsight({
 				country: fCountry.trim(),
 				productId: fProductId,
 				entryStrategy: fEntryStrategy.trim()
 			});
-			await marketInsights.load();
+			if (res.data) {
+				marketInsights.upsert(res.data);
+			} else {
+				await marketInsights.load();
+			}
 			message = `Insight pasar untuk "${fCountry.trim()}" dibuat.`;
 			showForm = false;
 		} catch {
