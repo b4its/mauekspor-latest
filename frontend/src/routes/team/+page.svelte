@@ -57,10 +57,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		inviting = true;
 		try {
-			await inviteTeamMember(inviteEmail.trim(), inviteRole);
+			const res = await inviteTeamMember(inviteEmail.trim(), inviteRole);
 			invited = true;
 			message = `Undangan dikirim ke ${inviteEmail.trim()}.`;
-			await teamMembers.load();
+			if (res.data) teamMembers.upsert(res.data);
+			else await teamMembers.load();
 			showInvite = false;
 			inviteEmail = '';
 		} catch {
@@ -76,8 +77,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		updatingRole = member.id;
 		try {
 			const res = await updateTeamMemberRole(member.id, role);
-			const idx = teamMembers.items.findIndex((m) => m.id === member.id);
-			if (idx >= 0) teamMembers.items[idx] = { ...teamMembers.items[idx], ...res.data };
+			if (res.data) teamMembers.upsert(res.data);
 			message = `Peran ${member.name} diubah ke ${role}.`;
 		} catch {
 			error = t('Gagal memperbarui peran.');
@@ -92,8 +92,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		try {
 			const next = member.status === 'Active' ? 'Suspended' : 'Active';
 			const res = await updateTeamMember(member.id, { status: next });
-			const idx = teamMembers.items.findIndex((m) => m.id === member.id);
-			if (idx >= 0) teamMembers.items[idx] = { ...teamMembers.items[idx], ...res.data };
+			if (res.data) teamMembers.upsert(res.data);
 			message = `${member.name} kini ${next}.`;
 		} catch {
 			error = t('Gagal memperbarui status.');
@@ -103,12 +102,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleRemove(member: TeamMember) {
+		if (!confirm(`Hapus ${member.name} dari tim?`)) return;
 		error = '';
 		busyId = member.id;
 		try {
 			await removeTeamMember(member.id);
-			const idx = teamMembers.items.findIndex((m) => m.id === member.id);
-			if (idx >= 0) teamMembers.items.splice(idx, 1);
+			teamMembers.remove(member.id);
 			message = `${member.name} dihapus dari tim.`;
 		} catch {
 			error = t('Gagal menghapus anggota.');
