@@ -33,8 +33,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		deleting = id;
 		try {
 			await deleteCatalog(id);
-			const idx = catalogs.items.findIndex((c) => c.id === id);
-			if (idx >= 0) catalogs.items.splice(idx, 1);
+			catalogs.remove(id);
 		} catch {
 			error = t('Gagal menghapus katalog.');
 		} finally {
