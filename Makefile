@@ -3,7 +3,7 @@
 # Auto-installation dengan Docker - support akses dari device lain
 # ================================================================
 
-.PHONY: help install dev-up dev-down dev-restart dev-status dev-logs \
+.PHONY: help install dev-env dev-up dev-down dev-restart dev-status dev-logs \
         dev-logs-backend dev-logs-frontend dev-shell-backend dev-network \
         dev-clean dev-rebuild dev-db-reset
 
@@ -50,11 +50,44 @@ help:
 _host-ip:
 	@bash -c 'IP=$$(ip route get 1.1.1.1 2>/dev/null | grep -oP "src \K\S+"); [ -z "$$IP" ] && IP=$$(ip addr show 2>/dev/null | grep -E "inet .* scope global" | head -1 | awk "{print \$$2}" | cut -d/ -f1); [ -z "$$IP" ] && IP="127.0.0.1"; echo "$$IP"'
 
+$(ENV_FILE):
+	@echo "📝 Configuration file $(ENV_FILE) not found. Generating default from template..."
+	@mkdir -p backend/app/uploads scripts/bin
+	@HOST_IP=$$(make -s _host-ip); \
+	if [ -f .env.local.example ]; then \
+		sed "s/HOST_IP=127.0.0.1/HOST_IP=$$HOST_IP/g" .env.local.example > $(ENV_FILE); \
+	else \
+		echo "HOST_IP=$$HOST_IP" > $(ENV_FILE); \
+		echo "POSTGRES_USER=mauekspor" >> $(ENV_FILE); \
+		echo "POSTGRES_PASSWORD=mauekspor" >> $(ENV_FILE); \
+		echo "POSTGRES_DB=mauekspor" >> $(ENV_FILE); \
+		echo "BACKEND_PORT=8016" >> $(ENV_FILE); \
+		echo "FRONTEND_PORT=5188" >> $(ENV_FILE); \
+		echo "DB_PORT=5447" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_SECRET_KEY=dev-secret-key-change-in-production" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_DATABASE_URL=postgresql://mauekspor:mauekspor@localhost:5447/mauekspor" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_UPLOAD_DIR=/app/uploads" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_AI_MODE=remote" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_AI_API_KEY=your-ai-api-key-here" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_AI_BASE_URL=http://localhost:20128/v1" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_AI_MODEL=qd/dmodel" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_CORS_ORIGINS='[\"http://localhost\",\"http://127.0.0.1\",\"http://0.0.0.0\",\"http://$$HOST_IP\",\"http://$$HOST_IP:5188\",\"http://$$HOST_IP:8016\"]'" >> $(ENV_FILE); \
+		echo "VITE_API_BASE_URL=/api/v1" >> $(ENV_FILE); \
+		echo "BACKEND_ORIGIN=http://localhost:8016" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_ENABLE_CSRF=0" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_COOKIE_SECURE=0" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_DISABLE_RATE_LIMIT=1" >> $(ENV_FILE); \
+	fi
+	@echo "✅ Generated $(ENV_FILE)"
+
+dev-env: $(ENV_FILE)
+
 install:
 	@bash ./install.sh
 
-dev-up:
-	@bash ./scripts/fix-firewall.sh
+dev-up: $(ENV_FILE)
+	@bash ./scripts/fix-firewall.sh || true
+	@mkdir -p backend/app/uploads
 	@echo ""
 	@echo "🚀 Starting MauEkspor development stack..."
 	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) up -d --build
@@ -63,19 +96,19 @@ dev-up:
 	@sleep 20
 	@make dev-status
 
-dev-down:
+dev-down: $(ENV_FILE)
 	@echo ""
 	@echo "🛑 Stopping MauEkspor development stack..."
 	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down
 	@echo "✅ Services stopped"
 
-dev-restart:
+dev-restart: $(ENV_FILE)
 	@echo ""
 	@echo "🔄 Restarting services..."
 	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) restart
 	@echo "✅ Services restarted"
 
-dev-status:
+dev-status: $(ENV_FILE)
 	@echo ""
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  📊 Services Status"
@@ -99,7 +132,7 @@ dev-network:
 	echo "  Backend API:   http://$$HOST_IP:8016/api/v1"; \
 	echo "  Swagger Docs:  http://$$HOST_IP:8016/docs"
 
-dev-logs:
+dev-logs: $(ENV_FILE)
 	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) logs -f
 
 dev-logs-backend:
@@ -117,13 +150,13 @@ dev-shell-backend:
 dev-shell-frontend:
 	@docker exec -it mauekspor-dev-frontend /bin/sh
 
-dev-clean:
+dev-clean: $(ENV_FILE)
 	@echo ""
 	@echo "🧹 Cleaning up all development resources..."
 	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down -v --remove-orphans
 	@echo "✅ Cleanup complete"
 
-dev-rebuild:
+dev-rebuild: $(ENV_FILE)
 	@echo ""
 	@echo "🔨 Rebuilding from scratch..."
 	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down -v --remove-orphans
@@ -131,7 +164,7 @@ dev-rebuild:
 	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) up -d
 	@echo "✅ Rebuild complete"
 
-dev-db-reset:
+dev-db-reset: $(ENV_FILE)
 	@echo ""
 	@echo "🗑️  Resetting database - ALL DATA WILL BE LOST!"
 	@read -p "Are you sure? (y/N): " confirm; \
