@@ -55,8 +55,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		busyId = reportId;
 		try {
-			await generateReport(reportId);
-			await reports.load();
+			const res = await generateReport(reportId);
+			if (res.data) {
+				reports.upsert(res.data);
+			} else {
+				await reports.load();
+			}
 			message = `Laporan "${title}" dibuat.`;
 		} catch {
 			error = t('Gagal generate laporan.');
@@ -81,12 +85,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		saving = true;
 		try {
-			await createReport({
+			const res = await createReport({
 				title: fTitle.trim(),
 				type: fType,
 				period: fPeriod.trim()
 			});
-			await reports.load();
+			if (res.data) {
+				reports.upsert(res.data);
+			} else {
+				await reports.load();
+			}
 			message = `Laporan "${fTitle.trim()}" ditambahkan.`;
 			showForm = false;
 		} catch {
