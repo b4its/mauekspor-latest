@@ -253,7 +253,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				</div>
 				<a href={`/products/${product.id}`} class="block h-full p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(product.status))}>{product.status}</Badge>
+						<div class="flex items-center gap-2">
+							<Badge variant={toneVariant(statusTone(product.status))}>{product.status}</Badge>
+							{#if product.is_village_priority}
+								<Badge variant="outline" class="gap-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+									🌾 {t('Komoditas Desa')}
+								</Badge>
+							{/if}
+						</div>
 						<strong class="text-3xl font-bold tracking-tight">{product.readiness}%</strong>
 					</div>
 					<h3 class="mt-4 text-xl font-bold tracking-tight">{product.name}</h3>

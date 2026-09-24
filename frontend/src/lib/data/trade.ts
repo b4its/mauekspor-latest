@@ -57,6 +57,9 @@ export type Product = {
 	material_composition?: string;
 	quality_specs?: Record<string, unknown>;
 	updatedAt?: string;
+	is_village_priority?: boolean;
+	commodity_group?: string;
+	village_id?: string;
 };
 
 export type ActivityItem = {
@@ -656,6 +659,7 @@ export const navItems = [
 	{ label: 'Users', href: '/users' },
 	{ label: 'Trade Projects', href: '/trade-projects' },
 	{ label: 'Products', href: '/products' },
+	{ label: 'Village Potential', href: '/villages' },
 	{ label: 'Export Analysis', href: '/export-analysis' },
 	{ label: 'Compliance', href: '/compliance' },
 	{ label: 'Markets', href: '/markets' },
@@ -719,6 +723,7 @@ export const navGroups: NavGroup[] = [
 			{ label: 'Business Profile', href: '/business-profile' },
 			{ label: 'Trade Projects', href: '/trade-projects' },
 			{ label: 'Products', href: '/products' },
+			{ label: 'Village Potential', href: '/villages' },
 			{ label: 'Export Analysis', href: '/export-analysis' },
 			{ label: 'Markets', href: '/markets' },
 			{ label: 'Countries', href: '/countries' },

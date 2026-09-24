@@ -58,6 +58,7 @@
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
+	import MapPinIcon from '@lucide/svelte/icons/map-pin';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 
 	const sidebar = useSidebar();
@@ -88,6 +89,7 @@
 		Users: UsersIcon,
 		'Trade Projects': RouteIcon,
 		Products: PackageIcon,
+		'Village Potential': MapPinIcon,
 		'Export Analysis': ChartLineIcon,
 		Compliance: ShieldCheckIcon,
 		Markets: GlobeIcon,
