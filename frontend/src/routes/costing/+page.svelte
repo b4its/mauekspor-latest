@@ -34,7 +34,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		deletingId = id;
 		try {
 			await deleteCostingScenario(id);
-			await costingScenarios.load();
+			costingScenarios.remove(id);
 		} catch {
 			alert(t('Gagal menghapus skenario costing.'));
 		} finally {

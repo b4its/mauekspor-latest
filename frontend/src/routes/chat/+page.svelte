@@ -124,7 +124,10 @@
 		try {
 			const fresh = (await getChatSession(id)).data;
 			const idx = sessions.findIndex((s) => s.id === id);
-			if (idx >= 0) sessions[idx] = fresh;
+			if (idx >= 0) {
+				sessions[idx] = fresh;
+				sessions = [...sessions];
+			}
 		} catch { error = t('Tidak dapat memuat sesi.'); }
 	}
 
@@ -157,7 +160,10 @@
 		try {
 			const updated = (await renameChatSession(target.id, renameTitle.trim())).data;
 			const idx = sessions.findIndex((s) => s.id === target.id);
-			if (idx >= 0) sessions[idx] = updated;
+			if (idx >= 0) {
+				sessions[idx] = updated;
+				sessions = [...sessions];
+			}
 			renameDialogOpen = false; renameTarget = null;
 		} catch { error = t('Gagal mengganti nama sesi.'); }
 	}
@@ -197,7 +203,10 @@
 		try {
 			const updated = (await sendSessionMessage(active!.id, text)).data;
 			const idx = sessions.findIndex((s) => s.id === active!.id);
-			if (idx >= 0) sessions[idx] = updated;
+			if (idx >= 0) {
+				sessions[idx] = updated;
+				sessions = [...sessions];
+			}
 			activeId = updated.id;
 			// Set typing effect untuk pesan AI terbaru
 			const aiMsgCount = updated.messages.filter((m: { role: string }) => m.role === 'ai').length;

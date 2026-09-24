@@ -36,7 +36,15 @@
 		error = '';
 		saving = true;
 		try {
-			await updateSettings({ companyName, country, entityType, nib, taxId });
+			const res = await updateSettings({ companyName, country, entityType, nib, taxId });
+			if (res.data) {
+				settings = res.data;
+				companyName = res.data.companyName ?? companyName;
+				country = res.data.country ?? country;
+				entityType = res.data.entityType ?? entityType;
+				nib = res.data.nib ?? nib;
+				taxId = res.data.taxId ?? taxId;
+			}
 			saved = true;
 		} catch {
 			error = t('Gagal menyimpan pengaturan.');
