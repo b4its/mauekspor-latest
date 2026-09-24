@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { projects, shipments as seedShipments } from '$lib/data/trade';
-	import { listShipments, createShipment } from '$lib/api/shipments';
+	import { listShipments, createShipment, updateShipmentMilestone, deleteShipment } from '$lib/api/shipments';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
@@ -69,6 +69,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		showForm = true;
 	}
 
+	let actionId = $state('');
+
 	async function handleCreate() {
 		formError = '';
 		if (!fForwarder.trim()) {
@@ -77,19 +79,56 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		saving = true;
 		try {
-			await createShipment({
+			const res = await createShipment({
 				forwarder: fForwarder.trim(),
 				route: fRoute.trim(),
 				mode: fMode,
 				eta: fEta.trim()
 			});
-			await shipments.load();
+			if (res.data) {
+				shipments.upsert(res.data);
+			} else {
+				await shipments.load();
+			}
 			message = `Pengiriman "${fForwarder.trim()}" dibuat.`;
 			showForm = false;
 		} catch {
 			formError = t('Gagal membuat pengiriman.');
 		} finally {
 			saving = false;
+		}
+	}
+
+	async function handleAdvance(shipment: { id: string; status: string; progress: number }) {
+		error = '';
+		actionId = shipment.id;
+		try {
+			const res = await updateShipmentMilestone(shipment.id, 'Milestone Update');
+			if (res.data) {
+				shipments.upsert(res.data);
+			} else {
+				await shipments.load();
+			}
+			message = `Milestone pengiriman ${shipment.id} diperbarui.`;
+		} catch {
+			error = t('Gagal memajukan milestone.');
+		} finally {
+			actionId = '';
+		}
+	}
+
+	async function handleDelete(shipment: { id: string; route: string }) {
+		if (!confirm(`Hapus pengiriman "${shipment.route}" (${shipment.id})?`)) return;
+		error = '';
+		actionId = shipment.id;
+		try {
+			await deleteShipment(shipment.id);
+			shipments.remove(shipment.id);
+			message = `Pengiriman ${shipment.id} dihapus.`;
+		} catch {
+			error = t('Gagal menghapus pengiriman.');
+		} finally {
+			actionId = '';
 		}
 	}
 	let paginationPage = $state(1);
@@ -204,14 +243,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as shipment}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-					<a href={`/shipments/${shipment.id}`} class="grid h-full gap-3 p-5 no-underline">
+				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+					<div class="grid gap-3 p-5">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(shipment.status))}>{shipment.status}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{shipment.progress}%</strong>
 						</div>
-						<h3 class="text-2xl font-bold tracking-tight">{shipment.route}</h3>
-						<p class="text-sm text-muted-foreground">{projectName(shipment.projectId)}</p>
+						<a href={`/shipments/${shipment.id}`} class="block no-underline hover:underline">
+							<h3 class="text-2xl font-bold tracking-tight text-foreground">{shipment.route}</h3>
+							<p class="text-sm text-muted-foreground">{projectName(shipment.projectId)}</p>
+						</a>
 						<Progress value={shipment.progress} />
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Forwarder')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.forwarder}</strong></div>
@@ -222,7 +263,34 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						{#if shipment.exception}
 							<div class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{shipment.exception}</div>
 						{/if}
-					</a>
+					</div>
+					<div class="flex items-center justify-between border-t bg-muted/10 px-5 py-3">
+						<a href={`/shipments/${shipment.id}`} class="text-xs font-semibold text-primary hover:underline">
+							{t('Lihat detail')} &rarr;
+						</a>
+						<div class="flex items-center gap-1.5">
+							{#if shipment.progress < 100}
+								<Button
+									variant="outline"
+									size="sm"
+									class="h-7 text-xs"
+									disabled={actionId === shipment.id}
+									onclick={() => handleAdvance(shipment)}
+								>
+									{actionId === shipment.id ? '...' : t('Maju milestone')}
+								</Button>
+							{/if}
+							<Button
+								variant="ghost"
+								size="sm"
+								class="h-7 text-xs text-destructive hover:bg-destructive/10"
+								disabled={actionId === shipment.id}
+								onclick={() => handleDelete(shipment)}
+							>
+								{t('Hapus')}
+							</Button>
+						</div>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No shipment matched your search.')}</div>

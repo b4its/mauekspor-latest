@@ -41,12 +41,14 @@
 		}
 		resolving = true;
 		try {
-			await resolveShipmentException({
+			const res = await resolveShipmentException({
 				shipmentId: data.shipment.id,
 				note: exceptionNote.trim(),
 				owner: 'Operations'
 			});
 			resolved = true;
+			if (res.data?.status) savedStatus = res.data.status;
+			message = t('Exception diselesaikan di backend.');
 		} catch {
 			error = t('Gagal menyelesaikan exception.');
 		} finally {
@@ -57,8 +59,10 @@
 	async function handleAdvance() {
 		error = '';
 		try {
-			await updateShipmentMilestone(data.shipment.id, 'In Transit');
+			const res = await updateShipmentMilestone(data.shipment.id, 'In Transit');
 			advanced = true;
+			if (res.data?.status) savedStatus = res.data.status;
+			message = t('Milestone diperbarui di backend.');
 		} catch {
 			error = t('Gagal memajukan milestone.');
 		}
