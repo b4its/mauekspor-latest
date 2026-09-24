@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { notifications as seedNotifications } from '$lib/data/trade';
-	import { listNotifications, markNotificationRead, archiveNotification } from '$lib/api/notifications';
+	import { listNotifications, markNotificationRead, archiveNotification, deleteNotification } from '$lib/api/notifications';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
@@ -52,6 +52,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
+	let deletingId = $state('');
+
 	async function handleMarkAll() {
 		error = '';
 		marking = true;
@@ -59,6 +61,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			const unreadItems = notifications.items.filter((item) => item.status === 'Unread');
 			for (const item of unreadItems) {
 				await markNotificationRead(item.id);
+				notifications.upsert({ ...item, status: 'Read' });
 			}
 			marked = true;
 		} catch {
@@ -71,9 +74,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	async function handleMarkRead(id: string) {
 		error = '';
 		try {
-			await markNotificationRead(id);
-			const item = notifications.items.find((n) => n.id === id);
-			if (item) item.status = 'Read';
+			const res = await markNotificationRead(id);
+			if (res.data) notifications.upsert(res.data);
+			else {
+				const item = notifications.items.find((n) => n.id === id);
+				if (item) notifications.upsert({ ...item, status: 'Read' });
+			}
 		} catch {
 			error = t('Gagal menandai notifikasi.');
 		}
@@ -82,11 +88,27 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	async function handleArchive(id: string) {
 		error = '';
 		try {
-			await archiveNotification(id);
-			const item = notifications.items.find((n) => n.id === id);
-			if (item) item.status = 'Archived';
+			const res = await archiveNotification(id);
+			if (res.data) notifications.upsert(res.data);
+			else {
+				const item = notifications.items.find((n) => n.id === id);
+				if (item) notifications.upsert({ ...item, status: 'Archived' });
+			}
 		} catch {
 			error = t('Gagal mengarsipkan notifikasi.');
+		}
+	}
+
+	async function handleDelete(id: string) {
+		error = '';
+		deletingId = id;
+		try {
+			await deleteNotification(id);
+			notifications.remove(id);
+		} catch {
+			error = t('Gagal menghapus notifikasi.');
+		} finally {
+			deletingId = '';
 		}
 	}
 	let paginationPage = $state(1);
@@ -175,7 +197,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			{#each pagedItems as item}
 				<Card class="flex flex-col items-start justify-between gap-4 p-5 md:flex-row md:items-center">
 					<div class="min-w-0">
-						<Badge variant={toneVariant(statusTone(marked && item.status === 'Unread' ? 'Read' : item.status))}>{marked && item.status === 'Unread' ? t('Dibaca') : trStatus(item.status)}</Badge>
+						<Badge variant={toneVariant(statusTone(item.status))}>{trStatus(item.status)}</Badge>
 						<strong class="mt-2.5 block text-xl font-bold tracking-tight">{item.title}</strong>
 						<p class="mt-2 leading-relaxed text-muted-foreground">{item.description}</p>
 					</div>
@@ -190,6 +212,9 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							{#if item.status !== 'Archived'}
 								<Button variant="ghost" size="sm" onclick={() => handleArchive(item.id)}>{t('Arsip')}</Button>
 							{/if}
+							<Button variant="ghost" size="sm" class="text-destructive hover:bg-destructive/10" disabled={deletingId === item.id} onclick={() => handleDelete(item.id)}>
+								{deletingId === item.id ? t('Menghapus...') : t('Hapus notifikasi')}
+							</Button>
 						</div>
 					</aside>
 				</Card>

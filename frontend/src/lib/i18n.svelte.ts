@@ -2413,7 +2413,9 @@ const dictionary: Record<string, Entry> = {
 	'Pilih Lingkup Akses (Scopes)': { id: 'Pilih Lingkup Akses (Scopes)', en: 'Select Access Scopes' },
 	'Kunci API Baru': { id: 'Kunci API Baru', en: 'New API Key' },
 	'Simpan & Buat': { id: 'Simpan & Buat', en: 'Save & Create' },
-	'Hapus Kunci API ini?': { id: 'Hapus Kunci API ini?', en: 'Delete this API Key?' }
+	'Hapus Kunci API ini?': { id: 'Hapus Kunci API ini?', en: 'Delete this API Key?' },
+	'Hapus notifikasi': { id: 'Hapus notifikasi', en: 'Delete notification' },
+	'Notifikasi dihapus.': { id: 'Notifikasi dihapus.', en: 'Notification deleted.' }
 };
 
 let initial: Locale = 'id';
