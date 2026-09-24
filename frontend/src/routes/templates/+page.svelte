@@ -53,9 +53,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	async function handleUse(templateId: string) {
 		error = '';
 		try {
-			await useTemplate(templateId);
+			const res = await useTemplate(templateId);
 			used = true;
 			usedId = templateId;
+			if (res.data) templates.upsert(res.data);
+			message = 'Template berhasil diterapkan.';
 		} catch {
 			error = t('Gagal menerapkan template.');
 		}
@@ -70,13 +72,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		createSaving = true;
 		try {
 			if (editingId) {
-				await updateTemplate(editingId, { title: newTitle.trim(), category: newCategory, description: newDescription.trim() });
+				const res = await updateTemplate(editingId, { title: newTitle.trim(), category: newCategory, description: newDescription.trim() });
+				if (res.data) templates.upsert(res.data);
 				message = `Template "${newTitle.trim()}" diperbarui.`;
 			} else {
-				await createTemplate({ title: newTitle.trim(), category: newCategory, description: newDescription.trim() });
+				const res = await createTemplate({ title: newTitle.trim(), category: newCategory, description: newDescription.trim() });
+				if (res.data) templates.upsert(res.data);
 				message = `Template "${newTitle.trim()}" dibuat.`;
 			}
-			await templates.load();
 			showCreate = false;
 			editingId = '';
 			newTitle = '';
@@ -107,12 +110,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(template: { id: string; title: string }) {
+		if (!confirm(`Hapus template "${template.title}"?`)) return;
 		error = '';
 		busyId = template.id;
 		try {
 			await deleteTemplate(template.id);
-			const idx = templates.items.findIndex((item) => item.id === template.id);
-			if (idx >= 0) templates.items.splice(idx, 1);
+			templates.remove(template.id);
 			message = `Template "${template.title}" dihapus.`;
 		} catch {
 			error = t('Gagal menghapus template.');
