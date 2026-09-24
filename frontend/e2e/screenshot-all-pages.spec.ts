@@ -53,6 +53,7 @@ const ALL_PAGES: Array<{ route: string; name: string }> = [
   { route: '/hs-codes',             name: '41-hs-codes'           },
   { route: '/users',                name: '42-users'              },
   { route: '/admin',                name: '43-admin'              },
+  { route: '/admin/countries',      name: '44-admin-countries'    },
 ];
 
 // ─── Screenshot helper ───────────────────────────────────────────────────────
