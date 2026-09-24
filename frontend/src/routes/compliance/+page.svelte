@@ -4,8 +4,8 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { complianceRequirements as seedRequirements, projects as seedProjects } from '$lib/data/trade';
-	import { listComplianceRequirements, createComplianceRequirement } from '$lib/api/compliance';
+	import { complianceRequirements as seedRequirements, projects as seedProjects, type ComplianceRequirement } from '$lib/data/trade';
+	import { listComplianceRequirements, createComplianceRequirement, updateComplianceRequirement, deleteComplianceRequirement } from '$lib/api/compliance';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -72,6 +72,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		showForm = true;
 	}
 
+	let busyId = $state('');
+
 	async function handleCreate() {
 		formError = '';
 		if (!fTitle.trim()) {
@@ -80,21 +82,52 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		saving = true;
 		try {
-			await createComplianceRequirement({
+			const res = await createComplianceRequirement({
 				title: fTitle.trim(),
-				category: fCategory.trim(),
+				category: fCategory.trim() || 'Document',
 				severity: fSeverity,
-				owner: fOwner.trim(),
-				source: fSource.trim(),
+				owner: fOwner.trim() || 'Compliance Lead',
+				source: fSource.trim() || 'Customs Authority',
 				requiredEvidence: fRequiredEvidence.trim()
 			});
-			await complianceRequirements.load();
+			if (res.data) complianceRequirements.upsert(res.data);
+			else await complianceRequirements.load();
 			message = `Persyaratan "${fTitle.trim()}" ditambahkan.`;
 			showForm = false;
 		} catch {
 			formError = t('Gagal membuat persyaratan kepatuhan.');
 		} finally {
 			saving = false;
+		}
+	}
+
+	async function handleVerify(item: ComplianceRequirement) {
+		error = '';
+		busyId = item.id;
+		try {
+			const res = await updateComplianceRequirement(item.id, { status: 'Verified' });
+			if (res.data) complianceRequirements.upsert(res.data);
+			else complianceRequirements.upsert({ ...item, status: 'Verified' });
+			message = `Persyaratan "${item.title}" diverifikasi.`;
+		} catch {
+			error = t('Gagal memverifikasi persyaratan.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleDelete(item: ComplianceRequirement) {
+		if (!confirm(`Hapus persyaratan kepatuhan "${item.title}"?`)) return;
+		error = '';
+		busyId = item.id;
+		try {
+			await deleteComplianceRequirement(item.id);
+			complianceRequirements.remove(item.id);
+			message = `Persyaratan "${item.title}" dihapus.`;
+		} catch {
+			error = 'Gagal menghapus persyaratan kepatuhan.';
+		} finally {
+			busyId = '';
 		}
 	}
 	let paginationPage = $state(1);
@@ -210,8 +243,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as item}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-					<a href={`/compliance/${item.id}`} class="block h-full p-5 no-underline">
+				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/compliance/${item.id}`} class="block p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(item.status))}>{item.status}</Badge>
 							<span class={item.severity.toLowerCase() === 'critical' ? 'rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive' : item.severity.toLowerCase() === 'major' ? 'rounded-full bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-600' : 'rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary'}>{item.severity}</span>
@@ -226,6 +259,27 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						</div>
 						<p class="mt-4 text-xs font-semibold text-muted-foreground">{t('Source:')} {item.source}</p>
 					</a>
+					<div class="px-5 pb-4 pt-1 flex items-center justify-end gap-2 border-t">
+						{#if item.status !== 'Verified'}
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={busyId === item.id}
+								onclick={() => handleVerify(item)}
+							>
+								{busyId === item.id ? t('Menyimpan...') : t('Verifikasi')}
+							</Button>
+						{/if}
+						<Button
+							variant="ghost"
+							size="sm"
+							class="text-destructive hover:bg-destructive/10"
+							disabled={busyId === item.id}
+							onclick={() => handleDelete(item)}
+						>
+							{t('Hapus')}
+						</Button>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No compliance requirement matched your search.')}</div>

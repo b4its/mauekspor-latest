@@ -2415,7 +2415,9 @@ const dictionary: Record<string, Entry> = {
 	'Simpan & Buat': { id: 'Simpan & Buat', en: 'Save & Create' },
 	'Hapus Kunci API ini?': { id: 'Hapus Kunci API ini?', en: 'Delete this API Key?' },
 	'Hapus notifikasi': { id: 'Hapus notifikasi', en: 'Delete notification' },
-	'Notifikasi dihapus.': { id: 'Notifikasi dihapus.', en: 'Notification deleted.' }
+	'Notifikasi dihapus.': { id: 'Notifikasi dihapus.', en: 'Notification deleted.' },
+	'Verifikasi': { id: 'Verifikasi', en: 'Verify' },
+	'Gagal memverifikasi persyaratan.': { id: 'Gagal memverifikasi persyaratan.', en: 'Failed to verify requirement.' }
 };
 
 let initial: Locale = 'id';
