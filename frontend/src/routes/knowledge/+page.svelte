@@ -39,7 +39,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				[article.title, article.category, article.status, article.summary, ...(article.steps ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
 		)
 	);
-	let publishedCount = $derived(articles.items.filter((article) => article.status === 'Published').length + (published ? 1 : 0));
+	let publishedCount = $derived(articles.items.filter((article) => article.status === 'Published').length);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -56,14 +56,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		const target = id ? articles.items.find((article) => article.id === id) : (articles.items.find((article) => article.status === 'Draft') ?? articles.items[0]);
 		if (!target) return;
+		busyId = target.id;
 		try {
-			await publishKnowledgeArticle(target.id);
-			published = true;
-			publishedId = target.id;
-			const idx = articles.items.findIndex((a) => a.id === target.id);
-			if (idx >= 0) articles.items[idx] = { ...articles.items[idx], status: 'Published' };
+			const res = await publishKnowledgeArticle(target.id);
+			if (res.data) articles.upsert(res.data);
+			else articles.upsert({ ...target, status: 'Published' });
+			message = `Artikel "${target.title}" dipublikasikan.`;
 		} catch {
 			error = t('Gagal mempublikasikan artikel.');
+		} finally {
+			busyId = '';
 		}
 	}
 
@@ -109,13 +111,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				readTime: fReadTime.trim() || '5 min'
 			};
 			if (editingId) {
-				await updateKnowledgeArticle(editingId, payload);
+				const res = await updateKnowledgeArticle(editingId, payload);
+				if (res.data) articles.upsert(res.data);
 				message = `Artikel "${payload.title}" diperbarui.`;
 			} else {
-				await createKnowledgeArticle(payload);
+				const res = await createKnowledgeArticle(payload);
+				if (res.data) articles.upsert(res.data);
 				message = `Artikel "${payload.title}" dibuat.`;
 			}
-			await articles.load();
 			showForm = false;
 			resetForm();
 		} catch {
@@ -126,12 +129,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(article: { id: string; title: string }) {
+		if (!confirm(`Hapus artikel "${article.title}"?`)) return;
 		error = '';
 		busyId = article.id;
 		try {
 			await deleteKnowledgeArticle(article.id);
-			const idx = articles.items.findIndex((a) => a.id === article.id);
-			if (idx >= 0) articles.items.splice(idx, 1);
+			articles.remove(article.id);
 			message = `Artikel "${article.title}" dihapus.`;
 		} catch {
 			error = t('Gagal menghapus artikel.');
@@ -252,7 +255,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			{#each pagedItems as article}
 				<Card class="grid gap-4">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(published && article.id === publishedId ? 'Published' : article.status))}>{published && article.id === publishedId ? 'Published' : article.status}</Badge>
+						<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>
 						<strong class="text-sm font-bold text-muted-foreground">{article.readTime}</strong>
 					</div>
 					<h3 class="text-2xl font-bold tracking-tight">{article.title}</h3>
