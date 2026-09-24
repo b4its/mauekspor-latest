@@ -195,12 +195,21 @@
 			};
 
 			if (isEdit && editingId) {
-				await updateVillage(editingId, payload);
+				const res = await updateVillage(editingId, payload);
+				if (res.data) {
+					villages.upsert(res.data);
+				} else {
+					await villages.load();
+				}
 			} else {
-				await createVillage(payload);
+				const res = await createVillage(payload);
+				if (res.data) {
+					villages.upsert(res.data);
+				} else {
+					await villages.load();
+				}
 			}
 
-			await villages.load();
 			formOpen = false;
 			successMessage = t('Desa berhasil disimpan.');
 			setTimeout(() => {
@@ -224,7 +233,7 @@
 		error = '';
 		try {
 			await deleteVillage(deleteTarget.id);
-			await villages.load();
+			villages.remove(deleteTarget.id);
 			deleteOpen = false;
 			deleteTarget = null;
 			successMessage = t('Desa berhasil dihapus.');
