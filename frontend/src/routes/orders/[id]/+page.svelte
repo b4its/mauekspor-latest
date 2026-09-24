@@ -47,6 +47,7 @@
 		try {
 			await generateTradeDocument({ projectId: data.project?.id ?? data.order.projectId, type: 'Commercial Invoice' });
 			docsStarted = true;
+			message = 'Dokumen Commercial Invoice berhasil disiapkan.';
 		} catch {
 			error = t('Gagal menyiapkan dokumen.');
 		} finally {
@@ -57,8 +58,13 @@
 	async function handleConfirm() {
 		error = '';
 		try {
-			await confirmOrder(data.order.id);
+			const res = await confirmOrder(data.order.id);
 			confirmed = true;
+			if (res.data) {
+				savedBuyer = res.data.buyer;
+				savedSupplier = res.data.supplier;
+			}
+			message = t('Order berhasil dikonfirmasi.');
 		} catch {
 			error = t('Gagal mengonfirmasi order.');
 		}

@@ -41,10 +41,15 @@
 	async function handleReceived() {
 		error = '';
 		try {
-			await markPaymentReceived(data.payment.id);
+			const res = await markPaymentReceived(data.payment.id);
 			received = true;
+			if (res.data) {
+				savedStatus = res.data.status;
+				savedAmount = res.data.amount;
+			}
+			message = t('Pembayaran ditandai diterima.');
 		} catch {
-			error = 'Gagal menandai pembayaran diterima.';
+			error = t('Gagal menandai pembayaran diterima.');
 		}
 	}
 
@@ -53,8 +58,9 @@
 		try {
 			await sendPaymentReminder(data.payment.id);
 			reminded = true;
+			message = t('Pengingat pembayaran berhasil dikirim.');
 		} catch {
-			error = 'Gagal mengirim pengingat.';
+			error = t('Gagal mengirim pengingat.');
 		}
 	}
 

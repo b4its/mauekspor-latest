@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { payments as seedPayments } from '$lib/data/trade';
-	import { listPayments, sendPaymentReminder, createPayment } from '$lib/api/payments';
+	import { listPayments, sendPaymentReminder, createPayment, markPaymentReceived, deletePayment } from '$lib/api/payments';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
@@ -59,10 +59,44 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		busyId = paymentId;
 		try {
-			await sendPaymentReminder(paymentId);
+			const res = await sendPaymentReminder(paymentId);
+			if (res.data) payments.upsert(res.data);
 			message = t('Pengingat dikirim ke ') + buyer + '.';
 		} catch {
 			error = t('Gagal mengirim pengingat pembayaran.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleReceived(payment: { id: string; buyer: string }) {
+		error = '';
+		busyId = payment.id;
+		try {
+			const res = await markPaymentReceived(payment.id);
+			if (res.data) {
+				payments.upsert(res.data);
+			} else {
+				await payments.load();
+			}
+			message = `Pembayaran ${payment.id} ditandai lunas.`;
+		} catch {
+			error = t('Gagal menandai pembayaran diterima.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleDelete(payment: { id: string; buyer: string }) {
+		if (!confirm(`Hapus pembayaran ${payment.id} untuk "${payment.buyer}"?`)) return;
+		error = '';
+		busyId = payment.id;
+		try {
+			await deletePayment(payment.id);
+			payments.remove(payment.id);
+			message = `Pembayaran ${payment.id} dihapus.`;
+		} catch {
+			error = t('Gagal menghapus pembayaran.');
 		} finally {
 			busyId = '';
 		}
@@ -87,7 +121,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		saving = true;
 		try {
-			await createPayment({
+			const res = await createPayment({
 				buyer: fBuyer.trim(),
 				amount: Number(fAmount) || 0,
 				currency: fCurrency,
@@ -95,7 +129,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				dueDate: fDueDate.trim(),
 				method: fMethod.trim()
 			});
-			await payments.load();
+			if (res.data) {
+				payments.upsert(res.data);
+			} else {
+				await payments.load();
+			}
 			message = `Pembayaran untuk "${fBuyer.trim()}" dibuat.`;
 			showForm = false;
 		} catch {
@@ -236,8 +274,41 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Method')}<strong class="mt-1 block text-sm font-bold text-foreground">{payment.method}</strong></div>
 						</div>
 					</a>
-					<div class="flex flex-wrap gap-2 px-5 pb-5">
-						<Button variant="outline" size="sm" disabled={busyId === payment.id} onclick={() => handleReminder(payment.id, payment.buyer)}>{t('Kirim pengingat')}</Button>
+					<div class="flex flex-wrap items-center justify-between border-t bg-muted/10 px-5 py-3">
+						<a href={`/payments/${payment.id}`} class="text-xs font-semibold text-primary hover:underline">
+							{t('Lihat detail')} &rarr;
+						</a>
+						<div class="flex items-center gap-1.5">
+							{#if payment.status !== 'Settled'}
+								<Button
+									variant="outline"
+									size="sm"
+									class="h-7 text-xs"
+									disabled={busyId === payment.id}
+									onclick={() => handleReceived(payment)}
+								>
+									{busyId === payment.id ? '...' : t('Tandai diterima')}
+								</Button>
+							{/if}
+							<Button
+								variant="outline"
+								size="sm"
+								class="h-7 text-xs"
+								disabled={busyId === payment.id}
+								onclick={() => handleReminder(payment.id, payment.buyer)}
+							>
+								{t('Kirim pengingat')}
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								class="h-7 text-xs text-destructive hover:bg-destructive/10"
+								disabled={busyId === payment.id}
+								onclick={() => handleDelete(payment)}
+							>
+								{t('Hapus')}
+							</Button>
+						</div>
 					</div>
 				</Card>
 			{:else}

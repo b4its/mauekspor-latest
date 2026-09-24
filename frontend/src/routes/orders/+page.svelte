@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { orders as seedOrders } from '$lib/data/trade';
-	import { listOrders, createOrder } from '$lib/api/orders';
+	import { listOrders, createOrder, confirmOrder, deleteOrder } from '$lib/api/orders';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
@@ -57,6 +57,41 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
+	let busyId = $state('');
+
+	async function handleConfirm(order: { id: string }) {
+		error = '';
+		busyId = order.id;
+		try {
+			const res = await confirmOrder(order.id);
+			if (res.data) {
+				orders.upsert(res.data);
+			} else {
+				await orders.load();
+			}
+			message = `Order ${order.id} dikonfirmasi.`;
+		} catch {
+			error = t('Gagal mengonfirmasi order.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleDelete(order: { id: string }) {
+		if (!confirm(`Hapus order ${order.id}?`)) return;
+		error = '';
+		busyId = order.id;
+		try {
+			await deleteOrder(order.id);
+			orders.remove(order.id);
+			message = `Order ${order.id} dihapus.`;
+		} catch {
+			error = t('Gagal menghapus order.');
+		} finally {
+			busyId = '';
+		}
+	}
+
 	function openCreate() {
 		formError = '';
 		showForm = true;
@@ -80,7 +115,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				paymentTerms: fPaymentTerms.trim(),
 				deliveryWindow: fDeliveryWindow.trim()
 			});
-			await orders.load();
+			if (res.data) {
+				orders.upsert(res.data);
+			} else {
+				await orders.load();
+			}
 			message = `Order "${res.data.id}" dibuat.`;
 			showForm = false;
 			fBuyer = '';
@@ -226,14 +265,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as order}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-					<a href={`/orders/${order.id}`} class="grid h-full gap-3 p-5 no-underline">
+				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+					<div class="grid gap-3 p-5">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(order.status))}>{order.status}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{order.readiness}%</strong>
 						</div>
-						<h3 class="text-2xl font-bold tracking-tight">{order.id}</h3>
-						<p class="text-sm text-muted-foreground">{order.supplier} to {order.buyer}</p>
+						<a href={`/orders/${order.id}`} class="block no-underline hover:underline">
+							<h3 class="text-2xl font-bold tracking-tight text-foreground">{order.id}</h3>
+							<p class="text-sm text-muted-foreground">{order.supplier} to {order.buyer}</p>
+						</a>
 						<Progress value={order.readiness} />
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(order.value)}</strong></div>
@@ -241,7 +282,34 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Payment')}<strong class="mt-1 block text-sm font-bold text-foreground">{order.paymentTerms}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Delivery')}<strong class="mt-1 block text-sm font-bold text-foreground">{order.deliveryWindow}</strong></div>
 						</div>
-					</a>
+					</div>
+					<div class="flex items-center justify-between border-t bg-muted/10 px-5 py-3">
+						<a href={`/orders/${order.id}`} class="text-xs font-semibold text-primary hover:underline">
+							{t('Lihat detail')} &rarr;
+						</a>
+						<div class="flex items-center gap-1.5">
+							{#if order.status !== 'Confirmed'}
+								<Button
+									variant="outline"
+									size="sm"
+									class="h-7 text-xs"
+									disabled={busyId === order.id}
+									onclick={() => handleConfirm(order)}
+								>
+									{busyId === order.id ? '...' : t('Konfirmasi')}
+								</Button>
+							{/if}
+							<Button
+								variant="ghost"
+								size="sm"
+								class="h-7 text-xs text-destructive hover:bg-destructive/10"
+								disabled={busyId === order.id}
+								onclick={() => handleDelete(order)}
+							>
+								{t('Hapus')}
+							</Button>
+						</div>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No order matched your search.')}</div>
