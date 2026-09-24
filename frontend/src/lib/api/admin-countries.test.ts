@@ -22,7 +22,7 @@ function jsonResponse(status: number, data: unknown) {
 	} as unknown as Response;
 }
 
-function mockApi(data: unknown = {}) {
+function mockApi<T = unknown>(data: T = {} as T) {
 	const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { data }));
 	vi.stubGlobal('fetch', fetchMock);
 	return fetchMock;

@@ -43,8 +43,9 @@ export function deleteAdminCountry(countryCode: string) {
 }
 
 export function listAdminRegulations(countryCode: string, ruleCategory = '') {
-	const q = ruleCategory ? `?rule_category=${encodeURIComponent(ruleCategory)}` : '';
-	return apiFetch<AdminRegulation[]>(`/admin/countries/${countryCode}/regulations/${q}`);
+	return apiFetch<AdminRegulation[]>(
+		`/admin/countries/${countryCode}/regulations/${ruleCategory ? `?rule_category=${encodeURIComponent(ruleCategory)}` : ''}`
+	);
 }
 
 export function createAdminRegulation(countryCode: string, payload: RegulationPayload) {
@@ -65,7 +66,7 @@ export function deleteAdminRegulation(regulationId: string) {
 	return apiFetch<{ status: string }>(`/admin/regulations/${regulationId}/delete/`, { method: 'DELETE' });
 }
 
-export function importAdminRegulations(file: File): Promise<{ imported: number }> {
+export function importAdminRegulations(file: File) {
 	const form = new FormData();
 	form.append('file', file);
 	return apiFetch<{ imported: number }>('/admin/regulations/import/', { method: 'POST', body: form });
