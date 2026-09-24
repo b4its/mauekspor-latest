@@ -91,6 +91,7 @@
 		Compliance: ShieldCheckIcon,
 		Markets: GlobeIcon,
 		Countries: GlobeIcon,
+		'Countries & Regulations': GlobeIcon,
 		Catalogs: FolderOpenIcon,
 		Buyers: ContactIcon,
 		'Buyer Portal': StoreIcon,

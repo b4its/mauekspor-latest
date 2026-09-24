@@ -691,6 +691,7 @@ export const navItems = [
 	{ label: 'Billing', href: '/billing' },
 	{ label: 'Support', href: '/support' },
 	{ label: 'API Keys', href: '/api-keys' },
+	{ label: 'Countries & Regulations', href: '/admin/countries' },
 	{ label: 'Settings', href: '/settings' }
 ];
 
@@ -779,6 +780,7 @@ export const navGroups: NavGroup[] = [
 			{ label: 'Billing', href: '/billing' },
 			{ label: 'Support', href: '/support' },
 			{ label: 'API Keys', href: '/api-keys' },
+			{ label: 'Countries & Regulations', href: '/admin/countries' },
 			{ label: 'Settings', href: '/settings' }
 		]
 	}
