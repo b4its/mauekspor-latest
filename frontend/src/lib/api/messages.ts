@@ -17,6 +17,10 @@ export function updateMessageThread(threadId: string, payload: Partial<MessageTh
 	return apiFetch<MessageThread>(`/messages/${threadId}/`, { method: 'PATCH', body: JSON.stringify(payload) });
 }
 
+export function createMessageThread(payload: Partial<MessageThread>) {
+	return apiFetch<MessageThread>('/messages/', { method: 'POST', body: JSON.stringify(payload) });
+}
+
 export function deleteMessageThread(threadId: string) {
 	return apiFetch<{ status: string; id: string }>(`/messages/${threadId}/`, { method: 'DELETE' });
 }
