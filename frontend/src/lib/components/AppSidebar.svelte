@@ -50,6 +50,7 @@
 	import LifeBuoyIcon from '@lucide/svelte/icons/life-buoy';
 	import KeyIcon from '@lucide/svelte/icons/key';
 	import Settings2Icon from '@lucide/svelte/icons/settings-2';
+	import DatabaseIcon from '@lucide/svelte/icons/database';
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
 	import BriefcaseIcon from '@lucide/svelte/icons/briefcase';
 	import UsersIcon from '@lucide/svelte/icons/users';
@@ -124,6 +125,7 @@
 		Billing: CreditCardIcon,
 		Support: LifeBuoyIcon,
 		'API Keys': KeyIcon,
+		'Admin Panel': DatabaseIcon,
 		Settings: Settings2Icon
 	};
 
