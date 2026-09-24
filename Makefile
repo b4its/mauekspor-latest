@@ -5,7 +5,7 @@
 
 .PHONY: help install dev-env dev-up dev-down dev-restart dev-status dev-logs \
         dev-logs-backend dev-logs-frontend dev-shell-backend dev-network \
-        dev-clean dev-rebuild dev-db-reset
+        dev-clean dev-rebuild dev-db-reset test test-backend test-frontend check build
 
 SHELL := /bin/bash
 COMPOSE_FILE := docker-compose.dev.yml
@@ -38,6 +38,13 @@ help:
 	@echo "  make dev-clean        # Remove containers, volumes, images"
 	@echo "  make dev-rebuild      # Clean rebuild from scratch"
 	@echo "  make dev-db-reset     # Reset database (HAPUS SEMUA DATA!)"
+	@echo ""
+	@echo "🧪 TESTING & QUALITY:"
+	@echo "  make test             # Run all tests (backend + frontend)"
+	@echo "  make test-backend     # Run pytest on backend"
+	@echo "  make test-frontend    # Run vitest on frontend"
+	@echo "  make check            # Run frontend typecheck (svelte-check)"
+	@echo "  make build            # Build frontend production bundle"
 	@echo ""
 	@echo "🌐 URLs:"
 	@echo "  Local:    http://localhost:5188"
@@ -177,3 +184,22 @@ dev-db-reset: $(ENV_FILE)
 	else \
 		echo "❌ Cancelled"; \
 	fi
+
+test: test-backend test-frontend
+
+test-backend:
+	@echo "🐍 Running backend tests with pytest..."
+	@cd backend && .venv/bin/pytest -c pytest.ini
+
+test-frontend:
+	@echo "⚡ Running frontend tests with vitest..."
+	@pnpm --dir frontend run test
+
+check:
+	@echo "🔎 Running frontend type checks..."
+	@pnpm --dir frontend run check
+
+build:
+	@echo "📦 Building frontend for production..."
+	@pnpm --dir frontend run build
+
