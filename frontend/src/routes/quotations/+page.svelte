@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { quotations as seedQuotations } from '$lib/data/trade';
-	import { listQuotations, createQuotation } from '$lib/api/quotations';
+	import { listQuotations, createQuotation, acceptQuotation, deleteQuotation } from '$lib/api/quotations';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
@@ -53,6 +53,41 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return 'secondary';
 	}
 
+	let busyId = $state('');
+
+	async function handleAccept(quote: { id: string }) {
+		error = '';
+		busyId = quote.id;
+		try {
+			const res = await acceptQuotation(quote.id);
+			if (res.data) {
+				quotations.upsert(res.data);
+			} else {
+				await quotations.load();
+			}
+			message = `Quotation ${quote.id} diterima.`;
+		} catch {
+			error = t('Gagal menerima quotation.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleDelete(quote: { id: string }) {
+		if (!confirm(`Hapus quotation ${quote.id}?`)) return;
+		error = '';
+		busyId = quote.id;
+		try {
+			await deleteQuotation(quote.id);
+			quotations.remove(quote.id);
+			message = `Quotation ${quote.id} dihapus.`;
+		} catch {
+			error = t('Gagal menghapus quotation.');
+		} finally {
+			busyId = '';
+		}
+	}
+
 	function openCreate() {
 		formError = '';
 		fBuyer = '';
@@ -73,7 +108,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		creating = true;
 		try {
-			await createQuotation({
+			const res = await createQuotation({
 				buyer: fBuyer.trim(),
 				supplier: fSupplier.trim(),
 				value: Number(fValue) || 0,
@@ -82,7 +117,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				validUntil: fValidUntil,
 				margin: Number(fMargin) || 0
 			});
-			await quotations.load();
+			if (res.data) {
+				quotations.upsert(res.data);
+			} else {
+				await quotations.load();
+			}
 			message = `Quotation "${fBuyer.trim()}" dibuat.`;
 			showForm = false;
 			fBuyer = '';
@@ -219,21 +258,50 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as quote}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-					<a href={`/quotations/${quote.id}`} class="grid h-full gap-4 p-5 no-underline">
+				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+					<div class="grid gap-4 p-5">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(quote.status))}>{quote.status}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{quote.margin}%</strong>
 						</div>
-						<h3 class="text-2xl font-bold tracking-tight">{quote.id}</h3>
-						<p class="text-sm text-muted-foreground">{quote.supplier} to {quote.buyer}</p>
+						<a href={`/quotations/${quote.id}`} class="block no-underline hover:underline">
+							<h3 class="text-2xl font-bold tracking-tight text-foreground">{quote.id}</h3>
+							<p class="text-sm text-muted-foreground">{quote.supplier} to {quote.buyer}</p>
+						</a>
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(quote.value)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.incoterm}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('RFQ')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.rfqId}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Valid until')}<strong class="mt-1 block text-sm font-bold text-foreground">{quote.validUntil}</strong></div>
 						</div>
-					</a>
+					</div>
+					<div class="flex items-center justify-between border-t bg-muted/10 px-5 py-3">
+						<a href={`/quotations/${quote.id}`} class="text-xs font-semibold text-primary hover:underline">
+							{t('Lihat detail')} &rarr;
+						</a>
+						<div class="flex items-center gap-1.5">
+							{#if quote.status !== 'Accepted'}
+								<Button
+									variant="outline"
+									size="sm"
+									class="h-7 text-xs"
+									disabled={busyId === quote.id}
+									onclick={() => handleAccept(quote)}
+								>
+									{busyId === quote.id ? '...' : t('Terima')}
+								</Button>
+							{/if}
+							<Button
+								variant="ghost"
+								size="sm"
+								class="h-7 text-xs text-destructive hover:bg-destructive/10"
+								disabled={busyId === quote.id}
+								onclick={() => handleDelete(quote)}
+							>
+								{t('Hapus')}
+							</Button>
+						</div>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No quotation matched your search.')}</div>
