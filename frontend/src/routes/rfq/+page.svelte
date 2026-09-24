@@ -72,7 +72,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		creating = true;
 		try {
-			await createRFQ({
+			const res = await createRFQ({
 				buyer: fBuyer.trim(),
 				product: fProduct.trim(),
 				destination: fDestination.trim(),
@@ -80,7 +80,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				incoterm: fIncoterm,
 				deadline: fDeadline
 			});
-			await rfqs.load();
+			if (res.data) {
+				rfqs.upsert(res.data);
+			} else {
+				await rfqs.load();
+			}
 			message = `RFQ "${fProduct.trim() || fBuyer.trim()}" dibuat.`;
 			showForm = false;
 			fBuyer = '';
