@@ -69,7 +69,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		creating = true;
 		try {
-			await createTradeProject({
+			const res = await createTradeProject({
 				name: fName.trim(),
 				country: fCountry.trim(),
 				projectType: fProjectType.trim(),
@@ -78,7 +78,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				incoterm: fIncoterm,
 				targetValue: Number(fTargetValue) || 0
 			});
-			await projects.load();
+			if (res.data) {
+				projects.upsert(res.data);
+			} else {
+				await projects.load();
+			}
 			message = `Proyek "${fName.trim()}" dibuat.`;
 			showForm = false;
 			fName = '';
