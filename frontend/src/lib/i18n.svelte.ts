@@ -1946,6 +1946,7 @@ const dictionary: Record<string, Entry> = {
 	'Exporting...': { id: 'Mengekspor...', en: 'Exporting...' },
 	'Audit exported': { id: 'Audit diekspor', en: 'Audit exported' },
 	'Download CSV': { id: 'Unduh CSV', en: 'Download CSV' },
+	'Download Excel': { id: 'Unduh Excel', en: 'Download Excel' },
 	'Events': { id: 'Event', en: 'Events' },
 	'Audit export prepared.': { id: 'Ekspor audit disiapkan.', en: 'Audit export prepared.' },
 	'Export dijalankan di backend.': { id: 'Export dijalankan di backend.', en: 'Export ran in backend.' },

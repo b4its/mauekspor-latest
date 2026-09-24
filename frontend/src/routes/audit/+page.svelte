@@ -38,10 +38,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	const csvUrl = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/audit/export.csv`;
+	const xlsxUrl = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/audit/export.xlsx`;
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredEvents ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredEvents?.length ?? 0, paginationPageSize));
+
+	$effect(() => {
+		activeFilter;
+		query;
+		paginationPage = 1;
+	});
 
 </script>
 
@@ -58,6 +65,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" href={csvUrl}>{t('Download CSV')}</Button>
+			<Button variant="outline" href={xlsxUrl}>{t('Download Excel')}</Button>
+			<Button variant="ghost" onclick={() => events.load()}>{t('Segarkan')}</Button>
 			<Badge variant="outline">{t('Events')} {events.items.length}</Badge>
 		</CardContent>
 	</Card>
