@@ -106,7 +106,7 @@
 		error = '';
 		actionLoading = true;
 		try {
-			await createMessageThread({
+			const res = await createMessageThread({
 				subject: composeSubject.trim(),
 				party: composeParty.trim(),
 				channel: composeChannel,
@@ -116,7 +116,11 @@
 				status: 'Open',
 				time: 'now'
 			});
-			await threads.load();
+			if (res.data) {
+				threads.upsert(res.data);
+			} else {
+				await threads.load();
+			}
 			composeOpen = false;
 			successMessage = t('Thread berhasil dibuat.');
 			setTimeout(() => {
@@ -144,8 +148,12 @@
 		error = '';
 		actionLoading = true;
 		try {
-			await sendMessage(replyTarget.id, replyBody.trim());
-			await threads.load();
+			const res = await sendMessage(replyTarget.id, replyBody.trim());
+			if (res.data) {
+				threads.upsert(res.data);
+			} else {
+				await threads.load();
+			}
 			replyOpen = false;
 			replyTarget = null;
 			successMessage = t('Pesan berhasil dikirim.');
@@ -162,12 +170,15 @@
 	async function handleToggleResolve(thread: MessageThread) {
 		error = '';
 		try {
-			if (thread.status === 'Resolved') {
-				await updateMessageThread(thread.id, { status: 'Open' });
+			const res =
+				thread.status === 'Resolved'
+					? await updateMessageThread(thread.id, { status: 'Open' })
+					: await resolveMessageThread(thread.id);
+			if (res.data) {
+				threads.upsert(res.data);
 			} else {
-				await resolveMessageThread(thread.id);
+				await threads.load();
 			}
-			await threads.load();
 		} catch {
 			error = t('Gagal memperbarui status thread.');
 		}
@@ -184,7 +195,7 @@
 		error = '';
 		try {
 			await deleteMessageThread(deleteTarget.id);
-			await threads.load();
+			threads.remove(deleteTarget.id);
 			deleteOpen = false;
 			deleteTarget = null;
 			successMessage = t('Thread berhasil dihapus.');
