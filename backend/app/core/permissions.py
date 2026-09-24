@@ -90,6 +90,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "support",
         "suppliers",
         "messages",
+        "villages",
         # "settings" sengaja TIDAK disertakan — settings read/write khusus Admin
     },
     "Forwarder": {
@@ -130,6 +131,7 @@ MUTATE_MODULES: dict[str, set[str] | str] = {
         "messages",
         "notifications",
         "analytics",
+        "villages",
     },
 }
 

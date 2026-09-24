@@ -4042,6 +4042,18 @@ def list_messages():
     return _list_query("messages")
 
 
+@router.post("/messages/")
+def create_message_thread(payload: dict):
+    if "id" not in payload or not payload["id"]:
+        payload["id"] = db.gen_id("messages", "MSG")
+    if "status" not in payload:
+        payload["status"] = "Open"
+    if "time" not in payload:
+        payload["time"] = "now"
+    record = db.insert("messages", payload)
+    return _one(record)
+
+
 @router.post("/messages/{message_id}/send/")
 def send_message(message_id: str, payload: dict):
     record = db.get("messages", message_id)
@@ -4851,6 +4863,69 @@ def create_hs_code(payload: sc.CreateHSCodePayload):
         "createdAt": "now",
     })
     return _one(record)
+
+
+# ----------------------------------------------------------------------------
+# DESA & KOMODITAS UNGGULAN
+# ----------------------------------------------------------------------------
+@router.get("/villages/")
+def list_villages(search: str = "", province: str = "", readiness: str = ""):
+    """Daftar potensi desa unggulan ekspor beserta komoditas dan tingkat kesiapan."""
+    items = db.all("villages")
+    if province:
+        items = [v for v in items if v.get("province", "").lower() == province.lower()]
+    if readiness:
+        items = [v for v in items if v.get("status", "").lower() == readiness.lower()]
+    if search:
+        q = search.lower()
+        items = [v for v in items if q in json.dumps(v, ensure_ascii=False).lower()]
+    return {"data": [_serialize(dict(v)) for v in items], "meta": {"total": len(items)}}
+
+
+@router.get("/villages/{village_id}/")
+def get_village(village_id: str):
+    record = db.get("villages", village_id)
+    if not record:
+        raise HTTPException(404, "Village not found")
+    data = _serialize(dict(record))
+    products = [p for p in db.all("products") if p.get("villageId") == village_id]
+    data["products"] = [_serialize(dict(p)) for p in products]
+    return _one(data)
+
+
+@router.post("/villages/")
+def create_village(payload: dict):
+    if "id" not in payload or not payload["id"]:
+        payload["id"] = db.gen_id("villages", "DES")
+    if "status" not in payload:
+        readiness = int(payload.get("readiness", 70) or 70)
+        payload["status"] = "Siap Ekspor" if readiness >= 80 else "Butuh Pendampingan"
+    if "createdAt" not in payload:
+        payload["createdAt"] = "2026-08-01"
+    record = db.insert("villages", payload)
+    return _one(record)
+
+
+@router.put("/villages/{village_id}/")
+def update_village(village_id: str, payload: dict):
+    record = db.get("villages", village_id)
+    if not record:
+        raise HTTPException(404, "Village not found")
+    record.update(payload)
+    if "readiness" in payload and "status" not in payload:
+        readiness = int(record.get("readiness", 70) or 70)
+        record["status"] = "Siap Ekspor" if readiness >= 80 else "Butuh Pendampingan"
+    db.save(record)
+    return _save_one(record)
+
+
+@router.delete("/villages/{village_id}/")
+def delete_village(village_id: str):
+    record = db.get("villages", village_id)
+    if not record:
+        raise HTTPException(404, "Village not found")
+    db.delete("villages", village_id)
+    return {"data": {"status": "deleted", "id": village_id}, "meta": {}}
 
 
 # ----------------------------------------------------------------------------
