@@ -53,7 +53,11 @@
 		deleting = id;
 		try {
 			await deleteUser(id);
-			await loadUsers();
+			users = users.filter((user) => user.id !== id);
+			total = Math.max(0, total - 1);
+			if (users.length === 0 && page > 1) {
+				page -= 1;
+			}
 		} catch {
 			error = t('Gagal menghapus akun.');
 		} finally {
