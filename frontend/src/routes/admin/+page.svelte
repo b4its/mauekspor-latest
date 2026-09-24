@@ -13,8 +13,12 @@
 		createAdminRecord,
 		updateAdminRecord,
 		deleteAdminRecord,
+		getAiStatus,
+		testAi,
 		type AdminTable,
-		type AdminRecord
+		type AdminRecord,
+		type AiStatus,
+		type AiTestResult
 	} from '$lib/api/admin';
 	import { t } from '$lib/i18n.svelte';
 	import { getStatus, getUser } from '$lib/stores/session.svelte';
@@ -27,6 +31,9 @@
 	import ShieldAlertIcon from '@lucide/svelte/icons/shield-alert';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import XIcon from '@lucide/svelte/icons/x';
+	import GlobeIcon from '@lucide/svelte/icons/globe';
+	import BotIcon from '@lucide/svelte/icons/bot';
+	import CheckCircle2Icon from '@lucide/svelte/icons/check-circle-2';
 
 	let tables = $state<AdminTable[]>([]);
 	let tablesLoading = $state(true);
@@ -52,6 +59,40 @@
 
 	let totalPages = $derived(Math.max(1, Math.ceil(total / pageSize)));
 	let isAdmin = $derived(getStatus() === 'authenticated' && getUser()?.role === 'Admin');
+
+	// AI Diagnostics state
+	let aiStatus = $state<AiStatus | null>(null);
+	let aiLoading = $state(false);
+	let aiTesting = $state(false);
+	let aiTestResult = $state<AiTestResult | null>(null);
+
+	async function loadAiStatus() {
+		aiLoading = true;
+		try {
+			const res = await getAiStatus();
+			aiStatus = res.data;
+		} catch {
+			// ignore
+		} finally {
+			aiLoading = false;
+		}
+	}
+
+	async function handleTestAi() {
+		aiTesting = true;
+		aiTestResult = null;
+		try {
+			const res = await testAi();
+			aiTestResult = res.data;
+		} catch (err) {
+			aiTestResult = {
+				success: false,
+				error: err instanceof Error ? err.message : 'Error'
+			};
+		} finally {
+			aiTesting = false;
+		}
+	}
 
 	async function loadTables() {
 		tablesLoading = true;
@@ -87,6 +128,7 @@
 
 	$effect(() => {
 		loadTables();
+		loadAiStatus();
 	});
 
 	$effect(() => {
@@ -190,6 +232,49 @@
 			<Button href="/dashboard" variant="outline">{t('Kembali ke Dashboard')}</Button>
 		</div>
 	{:else}
+		<!-- AI Diagnostics & Sub-Module Shortcuts -->
+		<div class="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-4">
+			<div class="flex items-center gap-3">
+				<div class="rounded-lg bg-primary/10 p-2 text-primary">
+					<BotIcon class="size-5" />
+				</div>
+				<div>
+					<div class="flex items-center gap-2">
+						<h3 class="text-sm font-bold text-foreground">{t('Diagnostik AI Copilot')}</h3>
+						{#if aiStatus}
+							<Badge variant={aiStatus.health === 'healthy' ? 'default' : 'destructive'} class="text-[10px]">
+								{aiStatus.health}
+							</Badge>
+							<Badge variant="outline" class="text-[10px]">
+								{t('Mode AI')}: {aiStatus.mode}
+							</Badge>
+						{/if}
+					</div>
+					<p class="text-xs text-muted-foreground">{t('Periksa status layanan AI dan uji responsivitas model.')}</p>
+				</div>
+			</div>
+			<div class="flex flex-wrap items-center gap-2">
+				{#if aiTestResult}
+					<div class="flex items-center gap-1.5 text-xs font-semibold {aiTestResult.success ? 'text-emerald-700 dark:text-emerald-400' : 'text-destructive'}">
+						{#if aiTestResult.success}
+							<CheckCircle2Icon class="size-3.5" />
+							<span>{aiTestResult.response || 'Success'}</span>
+						{:else}
+							<span>{aiTestResult.error || 'Failed'}</span>
+						{/if}
+					</div>
+				{/if}
+				<Button size="sm" variant="outline" disabled={aiTesting} onclick={handleTestAi}>
+					<RefreshCwIcon class="size-3.5 {aiTesting ? 'animate-spin' : ''}" />
+					{aiTesting ? t('Menguji AI...') : t('Tes AI')}
+				</Button>
+				<Button href="/admin/countries" size="sm" variant="default">
+					<GlobeIcon class="size-3.5" />
+					{t('Kelola Negara & Regulasi')}
+				</Button>
+			</div>
+		</div>
+
 		<div class="grid gap-4 lg:grid-cols-[280px_1fr]">
 			<!-- Table list -->
 			<Card class="h-fit">

@@ -41,3 +41,27 @@ export function updateAdminRecord(table: string, id: string, payload: Record<str
 export function deleteAdminRecord(table: string, id: string) {
 	return apiFetch<{ status: string }>(`/admin/data/${table}/${id}/`, { method: 'DELETE' });
 }
+
+export type AiStatus = {
+	mode: string;
+	health: string;
+	using_remote: boolean;
+	using_mock: boolean;
+	configured_provider?: string;
+};
+
+export type AiTestResult = {
+	response?: string;
+	ai_mode?: string;
+	ai_health?: string;
+	success: boolean;
+	error?: string;
+};
+
+export function getAiStatus() {
+	return apiFetch<AiStatus>('/ai/status/');
+}
+
+export function testAi() {
+	return apiFetch<AiTestResult>('/ai/test/', { method: 'POST' });
+}
