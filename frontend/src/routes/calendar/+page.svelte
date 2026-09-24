@@ -74,14 +74,15 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 				projectId: fProjectId || (projects.items[0]?.id ?? '')
 			};
 			if (editingId) {
-				await updateCalendarEvent(editingId, payload);
+				const res = await updateCalendarEvent(editingId, payload);
+				if (res.data) events.upsert(res.data);
 				message = `Event "${payload.title}" diperbarui.`;
 			} else {
-				await createCalendarEvent(payload as Parameters<typeof createCalendarEvent>[0]);
+				const res = await createCalendarEvent(payload as Parameters<typeof createCalendarEvent>[0]);
 				created = true;
+				if (res.data) events.upsert(res.data);
 				message = `Event "${payload.title}" dibuat.`;
 			}
-			await events.load();
 			showForm = false;
 			editingId = '';
 			fTitle = '';
@@ -115,12 +116,12 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	}
 
 	async function handleDelete(event: { id: string; title: string }) {
+		if (!confirm(`Hapus event "${event.title}"?`)) return;
 		error = '';
 		busyId = event.id;
 		try {
 			await deleteCalendarEvent(event.id);
-			const idx = events.items.findIndex((e) => e.id === event.id);
-			if (idx >= 0) events.items.splice(idx, 1);
+			events.remove(event.id);
 			message = `Event "${event.title}" dihapus.`;
 		} catch {
 			error = t('Gagal menghapus event.');
@@ -131,13 +132,19 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 
 	async function handleDone(eventId: string) {
 		error = '';
+		busyId = eventId;
 		try {
-			await markCalendarEventDone(eventId);
-			doneEventId = eventId;
-			const idx = events.items.findIndex((e) => e.id === eventId);
-			if (idx >= 0) events.items[idx] = { ...events.items[idx], status: 'Done' };
+			const res = await markCalendarEventDone(eventId);
+			if (res.data) events.upsert(res.data);
+			else {
+				const ev = events.items.find((e) => e.id === eventId);
+				if (ev) events.upsert({ ...ev, status: 'Done' });
+			}
+			message = 'Event ditandai selesai.';
 		} catch {
 			error = t('Gagal menandai event selesai.');
+		} finally {
+			busyId = '';
 		}
 	}
 </script>
@@ -256,13 +263,15 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 							<span class="text-xs text-muted-foreground">{event.time}</span>
 						</div>
 						<div class="min-w-0 flex-1">
-							<Badge variant={toneVariant(statusTone(done || doneEventId === event.id ? 'Done' : event.status))}>{done || doneEventId === event.id ? 'Done' : event.status}</Badge>
+							<Badge variant={toneVariant(statusTone(event.status))}>{event.status}</Badge>
 							<h3 class="mt-2 text-lg font-bold tracking-tight">{event.title}</h3>
 							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
 							<small class="block text-xs text-muted-foreground">{event.type} · {projectName(event.projectId)} · {event.owner}</small>
 						</div>
 						<div class="flex flex-col gap-2">
-							<Button variant="outline" disabled={busyId === event.id} onclick={() => handleDone(event.id)}>{t('Mark done')}</Button>
+							{#if event.status !== 'Done'}
+								<Button variant="outline" disabled={busyId === event.id} onclick={() => handleDone(event.id)}>{t('Mark done')}</Button>
+							{/if}
 							<Button variant="outline" disabled={busyId === event.id} onclick={() => openEdit(event)}>{t('Edit')}</Button>
 							<Button variant="outline" class="text-destructive" disabled={busyId === event.id} onclick={() => handleDelete(event)}>{t('Hapus')}</Button>
 						</div>
