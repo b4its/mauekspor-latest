@@ -4,8 +4,8 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { projects as seedProjects, workTasks as seedTasks } from '$lib/data/trade';
-	import { listTasks, createTask } from '$lib/api/tasks';
+	import { projects as seedProjects, workTasks as seedTasks, type WorkTask } from '$lib/data/trade';
+	import { listTasks, createTask, completeTask, deleteTask } from '$lib/api/tasks';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -65,6 +65,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		showForm = true;
 	}
 
+	let busyId = $state('');
+
 	async function handleCreate() {
 		formError = '';
 		if (!fTitle.trim()) {
@@ -73,20 +75,51 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		creating = true;
 		try {
-			await createTask({
+			const res = await createTask({
 				title: fTitle.trim(),
-				module: fModule.trim(),
-				owner: fOwner.trim(),
+				module: fModule.trim() || 'General',
+				owner: fOwner.trim() || 'Operations',
 				priority: fPriority,
-				dueDate: fDueDate.trim()
+				dueDate: fDueDate.trim() || new Date().toISOString().slice(0, 10)
 			});
-			await workTasks.load();
+			if (res.data) workTasks.upsert(res.data);
+			else await workTasks.load();
 			message = `Tugas "${fTitle.trim()}" dibuat.`;
 			showForm = false;
 		} catch {
 			formError = t('Gagal membuat tugas.');
 		} finally {
 			creating = false;
+		}
+	}
+
+	async function handleCompleteTask(task: WorkTask) {
+		error = '';
+		busyId = task.id;
+		try {
+			const res = await completeTask(task.id);
+			if (res.data) workTasks.upsert(res.data);
+			else workTasks.upsert({ ...task, status: 'Done' });
+			message = `Tugas "${task.title}" ditandai selesai.`;
+		} catch {
+			error = t('Gagal menyelesaikan tugas.');
+		} finally {
+			busyId = '';
+		}
+	}
+
+	async function handleDeleteTask(task: WorkTask) {
+		if (!confirm(`Hapus tugas "${task.title}"?`)) return;
+		error = '';
+		busyId = task.id;
+		try {
+			await deleteTask(task.id);
+			workTasks.remove(task.id);
+			message = `Tugas "${task.title}" dihapus.`;
+		} catch {
+			error = 'Gagal menghapus tugas.';
+		} finally {
+			busyId = '';
 		}
 	}
 	let paginationPage = $state(1);
@@ -208,8 +241,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as task}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-					<a href={`/tasks/${task.id}`} class="block h-full p-5 no-underline">
+				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+					<a href={`/tasks/${task.id}`} class="block p-5 no-underline">
 						<div class="flex items-center justify-between gap-3"><Badge variant={toneVariant(statusTone(task.status))}>{task.status}</Badge><strong class="text-sm font-bold">{task.priority}</strong></div>
 						<h3 class="mt-4 text-2xl font-bold tracking-tight">{task.title}</h3>
 						<p class="mt-2 text-sm text-muted-foreground">{task.module} · {projectName(task.projectId)}</p>
@@ -220,6 +253,27 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Priority')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.priority}</strong></div>
 						</div>
 					</a>
+					<div class="px-5 pb-4 pt-1 flex items-center justify-end gap-2 border-t">
+						{#if task.status !== 'Done'}
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={busyId === task.id}
+								onclick={() => handleCompleteTask(task)}
+							>
+								{busyId === task.id ? t('Menyimpan...') : t('Mark done')}
+							</Button>
+						{/if}
+						<Button
+							variant="ghost"
+							size="sm"
+							class="text-destructive hover:bg-destructive/10"
+							disabled={busyId === task.id}
+							onclick={() => handleDeleteTask(task)}
+						>
+							{t('Hapus')}
+						</Button>
+					</div>
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">{t('No task matched your search.')}</div>
