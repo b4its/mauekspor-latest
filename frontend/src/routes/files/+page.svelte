@@ -27,9 +27,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let query = $state('');
 	let uploaded = $state('');
 	let uploading = $state(false);
-	let verified = $state(false);
 	let error = $state('');
-	let verifiedId = $state('');
 
 	let files = createRemoteList(listFiles, fileAssets);
 	let projects = createRemoteList(listTradeProjects, seedProjects);
@@ -64,9 +62,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		error = '';
 		uploading = true;
 		try {
-			await uploadFileBinary(file, 'Evidence', projects.items[0]?.id ?? '', ['evidence']);
+			const res = await uploadFileBinary(file, 'Evidence', projects.items[0]?.id ?? '', ['evidence']);
 			uploaded = file.name;
-			await files.load();
+			if (res.data) {
+				files.upsert(res.data);
+			} else {
+				await files.load();
+			}
+			message = `File "${file.name}" berhasil diunggah.`;
 		} catch {
 			error = t('Gagal mengunggah file.');
 		} finally {
@@ -77,13 +80,20 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	async function handleVerify(fileId: string) {
 		error = '';
+		busyId = fileId;
 		try {
-			await verifyFileAsset(fileId);
-			verifiedId = fileId;
-			const idx = files.items.findIndex((f) => f.id === fileId);
-			if (idx >= 0) files.items[idx] = { ...files.items[idx], status: 'Verified' };
+			const res = await verifyFileAsset(fileId);
+			if (res.data) {
+				files.upsert(res.data);
+			} else {
+				const cur = files.items.find((f) => f.id === fileId);
+				if (cur) files.upsert({ ...cur, status: 'Verified' });
+			}
+			message = 'File terverifikasi.';
 		} catch {
 			error = t('Gagal memverifikasi file.');
+		} finally {
+			busyId = '';
 		}
 	}
 
@@ -107,8 +117,9 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		busyId = fileId;
 		try {
 			const res = await updateFileAsset(fileId, { name: renameValue.trim() });
-			const idx = files.items.findIndex((f) => f.id === fileId);
-			if (idx >= 0) files.items[idx] = { ...files.items[idx], ...res.data };
+			if (res.data) {
+				files.upsert(res.data);
+			}
 			message = t('Nama file diperbarui.');
 			showRename = '';
 		} catch {
@@ -119,12 +130,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(file: { id: string; name: string }) {
+		if (!confirm(`Hapus file "${file.name}"?`)) return;
 		error = '';
 		busyId = file.id;
 		try {
 			await deleteFileAsset(file.id);
-			const idx = files.items.findIndex((f) => f.id === file.id);
-			if (idx >= 0) files.items.splice(idx, 1);
+			files.remove(file.id);
 			message = `File "${file.name}" dihapus.`;
 		} catch {
 			error = t('Gagal menghapus file.');
@@ -229,7 +240,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			{#each pagedItems as file}
 				<Card class="gap-4">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(verified || verifiedId === file.id ? 'Verified' : file.status))}>{verified || verifiedId === file.id ? t('Terverifikasi') : trStatus(file.status)}</Badge>
+						<Badge variant={toneVariant(statusTone(file.status))}>{trStatus(file.status)}</Badge>
 						<strong class="text-sm font-bold text-muted-foreground">{trType(file.type)}</strong>
 					</div>
 					<CardHeader class="p-0">
@@ -255,7 +266,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					{#if file.storageName}
 						<a href={fileDownloadUrl(file.id)} target="_blank" rel="noopener" class="text-sm font-bold text-primary no-underline hover:underline">{t('Unduh')}</a>
 					{/if}
-					<Button variant="outline" onclick={() => handleVerify(file.id)}>{verifiedId === file.id ? t('Terverifikasi') : t('Verifikasi file')}</Button>
+					{#if file.status !== 'Verified'}
+						<Button variant="outline" size="sm" disabled={busyId === file.id} onclick={() => handleVerify(file.id)}>
+							{busyId === file.id ? '...' : t('Verifikasi file')}
+						</Button>
+					{/if}
 				</div>
 				{#if showRename === file.id}
 					<div class="flex flex-wrap items-center gap-2">
