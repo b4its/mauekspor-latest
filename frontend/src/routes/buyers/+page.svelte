@@ -64,7 +64,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 		creating = true;
 		try {
-			await createBuyer({
+			const res = await createBuyer({
 				name: fName.trim(),
 				country: fCountry.trim(),
 				segment: fSegment.trim(),
@@ -73,7 +73,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					.map((item) => item.trim())
 					.filter(Boolean)
 			});
-			await buyers.load();
+			if (res.data) {
+				buyers.upsert(res.data);
+			} else {
+				await buyers.load();
+			}
 			message = `Buyer "${fName.trim()}" ditambahkan.`;
 			showForm = false;
 			fName = '';
