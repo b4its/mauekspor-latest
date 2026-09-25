@@ -292,3 +292,76 @@ def test_regulation_check_does_not_clobber_readiness_score():
         res = c.post(f"/api/v1/export-analysis/{aid}/regulation-recommendations/")
         assert res.status_code == 200, res.text
         assert res.json()["data"].get("score") == before
+
+
+def test_create_buyer_request_persists_matching_fields():
+    """Form create mengirim product_category/hs_code_target/spec_requirements/keyword_tags."""
+    with TestClient(app) as c:
+        _login(c)
+        payload = {
+            "subject": "QA inbound request",
+            "destination": "Japan",
+            "quantity": "1,000 kg",
+            "buyerId": "BUY-HIKARI-JP",
+            "productId": "PRD-COF-001",
+            "deadline": "2026-12-01",
+            "requirements": ["Halal"],
+            "product_category": "Food & Beverage",
+            "hs_code_target": "0901.21",
+            "spec_requirements": "moisture < 12%",
+            "keyword_tags": ["arabica", "specialty"],
+        }
+        res = c.post("/api/v1/buyer-requests/", json=payload)
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["product_category"] == "Food & Beverage"
+        assert data["hs_code_target"] == "0901.21"
+        assert data["spec_requirements"] == "moisture < 12%"
+        assert data["keyword_tags"] == ["arabica", "specialty"]
+
+
+def test_update_order_persists_supplier_and_payment_terms():
+    with TestClient(app) as c:
+        _login(c)
+        oid = c.get("/api/v1/orders/").json()["data"][0]["id"]
+        res = c.patch(f"/api/v1/orders/{oid}/", json={"supplier": "QA Supplier", "paymentTerms": "Net 30"})
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["supplier"] == "QA Supplier"
+        assert data["paymentTerms"] == "Net 30"
+
+
+def test_update_quotation_persists_margin():
+    with TestClient(app) as c:
+        _login(c)
+        qid = c.get("/api/v1/quotations/").json()["data"][0]["id"]
+        res = c.patch(f"/api/v1/quotations/{qid}/", json={"margin": 37})
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["margin"] == 37
+
+
+def test_create_calendar_event_persists_time():
+    with TestClient(app) as c:
+        _login(c)
+        res = c.post("/api/v1/calendar/", json={"title": "QA meeting", "date": "2026-12-01", "time": "09:30", "type": "Review"})
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["time"] == "09:30"
+
+
+def test_create_template_persists_fields():
+    with TestClient(app) as c:
+        _login(c)
+        res = c.post("/api/v1/templates/", json={"title": "QA Template", "category": "Document", "fields": ["buyer", "value"]})
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["fields"] == ["buyer", "value"]
+
+
+def test_set_display_currency_persists_in_settings():
+    with TestClient(app) as c:
+        _login(c)
+        res = c.post("/api/v1/settings/display-currency/", json={"currency": "USD"})
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["displayCurrency"] == "USD"
+        assert c.get("/api/v1/settings/").json()["data"].get("displayCurrency") == "USD"
+        # balikkan ke IDR agar tidak mengganggu test lain
+        c.post("/api/v1/settings/display-currency/", json={"currency": "IDR"})
