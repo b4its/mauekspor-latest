@@ -176,7 +176,12 @@ def _capability_match(catalog: dict, product: dict | None, request: dict) -> flo
 def _volume_match(target_volume: float, catalog: dict, product: dict | None) -> float:
     if target_volume <= 0:
         return 50
-    stock = float((catalog or {}).get("availableStock") or (product or {}).get("stock") or 0)
+    stock = float(
+        (catalog or {}).get("availableStock")
+        or (catalog or {}).get("available_stock")
+        or (product or {}).get("stock")
+        or 0
+    )
     if stock <= 0:
         return 40
     if stock >= target_volume:
