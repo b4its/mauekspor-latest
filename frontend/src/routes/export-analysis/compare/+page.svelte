@@ -165,18 +165,18 @@
 <AppShell title={t('Bandingkan Pasar')} eyebrow={t('Decision support')}>
 	<div class="space-y-6">
 		<!-- Panel Hero -->
-		<Card class="panel-hero border-none bg-gradient-to-br from-[#0b1d3a] to-[#1e3a5f] p-6 text-white md:p-8 shadow-xl">
+		<Card class="panel-hero p-6 md:p-8">
 			<CardHeader class="p-0">
 				<div class="flex items-center gap-2">
-					<Badge variant="outline" class="border-white/30 bg-white/10 text-white font-medium">
-						<SparklesIcon class="mr-1.5 size-3.5 inline-block text-amber-300" />
-						{t('Decision support')}
+					<Badge variant="outline">
+						<SparklesIcon class="mr-1.5 size-3.5 inline-block text-amber-500 dark:text-amber-300" />
+						{t('Dukungan keputusan')}
 					</Badge>
 				</div>
-				<CardTitle class="mt-3 font-display text-3xl font-black tracking-tight text-white md:text-4xl">
+				<CardTitle class="mt-3 font-display text-3xl font-black tracking-tight text-[#0b1d3a] md:text-4xl dark:text-white">
 					{t('Bandingkan 2-5 negara untuk satu produk.')}
 				</CardTitle>
-				<CardDescription class="mt-2 max-w-2xl leading-relaxed text-slate-200">
+				<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 					{t('Pilih produk yang sudah di-enrich, pilih 2-5 negara tujuan, lalu bandingkan skor kesiapan, grade, dan isu kepatuhan.')}
 				</CardDescription>
 			</CardHeader>
