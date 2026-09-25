@@ -24,7 +24,7 @@
 			data.product = (await enrichProduct(data.product.id)).data;
 			enriched = true;
 		} catch {
-			enrichError = 'Gagal menjalankan enrichment.';
+			enrichError = t('Gagal menjalankan enrichment.');
 		} finally {
 			enriching = false;
 		}

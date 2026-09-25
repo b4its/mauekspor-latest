@@ -39,7 +39,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			const reload = await listProducts();
 			products = reload.data;
 		} catch {
-			error = 'Gagal menjalankan batch enrich.';
+			error = t('Gagal menjalankan batch enrich.');
 		} finally {
 			batching = '';
 		}
@@ -64,7 +64,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			await deleteProduct(id);
 			products = products.filter((p) => p.id !== id);
 		} catch {
-			error = 'Gagal menghapus produk.';
+			error = t('Gagal menghapus produk.');
 		} finally {
 			deleting = '';
 		}
@@ -101,7 +101,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			const reload = await listProducts();
 			products = reload.data;
 		} catch {
-			error = 'Gagal menghapus produk terpilih.';
+			error = t('Gagal menghapus produk terpilih.');
 		} finally {
 			batchDeleting = false;
 		}

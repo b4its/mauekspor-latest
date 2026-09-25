@@ -38,20 +38,25 @@
 	async function save() {
 		error = '';
 		if (!valid) {
-			error = 'HS Code harus 4 digit atau 6 digit (misal 0901 atau 0901.21).';
+			error = t('HS Code harus 4 digit atau 6 digit (misal 0901 atau 0901.21).');
 			return;
 		}
 		saving = true;
 		try {
-			await updateProduct(data.product.id, {
+			const res = await updateProduct(data.product.id, {
 				hs: hsCode.trim(),
 				hs_code: hsCode.trim(),
 				sku,
 				description_english_b2b: descriptionEn
 			});
+			if (res.data) {
+				hsCode = res.data.hs ?? hsCode;
+				sku = res.data.sku ?? sku;
+				descriptionEn = res.data.description_english_b2b ?? descriptionEn;
+			}
 			saved = true;
 		} catch {
-			error = 'Gagal menyimpan override enrichment ke backend.';
+			error = t('Gagal menyimpan override enrichment ke backend.');
 		} finally {
 			saving = false;
 		}
@@ -62,16 +67,15 @@
 	<title>{t('Timpa Enrichment AI')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Enrichment Override" eyebrow={`${data.product.name} - AI result edit`}>
+<AppShell title={t('HS Code Enrichment & Override')} eyebrow={`${data.product.name} - AI result edit`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Manual override')}</Badge>
 			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
-				Reviews and overrides the AI enrichment results.
+				{t('Use the enrichment suggestions below, then override the HS code and specification if the AI result needs correction. Saved overrides are written back to the backend product record.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				A human checkpoint keeps the HS recommendation accurate before it touches commercial documents.
-				Endpoint prepared in <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">overrideEnrichment()</code>.
+				{t('A human checkpoint keeps the HS recommendation accurate before it touches commercial documents.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>
@@ -82,8 +86,7 @@
 				<Badge>{t('Override saved')}</Badge>
 				<h3 class="text-xl font-semibold tracking-tight">{t('Manually edited')}</h3>
 				<p class="text-muted-foreground">
-					HS {hsCode} is now the approved recommendation for {data.product.name}. Badge will show
-					"Manually Edited" on the product detail page.
+					{t('HS code tersimpan sebagai rekomendasi yang disetujui untuk')} {data.product.name}.
 				</p>
 				<Button href={`/products/${data.product.id}`}>{t('Back to product')}</Button>
 			</CardContent>
@@ -119,7 +122,7 @@
 
 			<div class="flex flex-wrap gap-2">
 				<Button variant="outline" href={`/products/${data.product.id}`}>{t('Batal')}</Button>
-				<Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save override'}</Button>
+				<Button type="submit" disabled={saving}>{saving ? t('Saving...') : t('Save override')}</Button>
 			</div>
 		</form>
 	{/if}

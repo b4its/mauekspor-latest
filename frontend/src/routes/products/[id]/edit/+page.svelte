@@ -31,7 +31,7 @@
 	async function save() {
 		error = '';
 		if (!valid) {
-			error = 'Lengkapi kolom wajib sebelum menyimpan.';
+			error = t('Lengkapi kolom wajib sebelum menyimpan.');
 			return;
 		}
 		saving = true;
@@ -49,7 +49,7 @@
 			});
 			saved = true;
 		} catch {
-			error = 'Gagal menyimpan produk ke backend.';
+			error = t('Gagal menyimpan produk ke backend.');
 		} finally {
 			saving = false;
 		}
@@ -57,14 +57,14 @@
 </script>
 
 <svelte:head>
-	<title>Edit {data.product.name} | MauEkspor</title>
+	<title>{t('Edit product')} {data.product.name} | MauEkspor</title>
 </svelte:head>
 
 <AppShell title={data.product.id} eyebrow={t('Edit product')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Product master data')}</Badge>
-			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">Update {data.product.name}.</CardTitle>
+			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Produk diperbarui.')} — {data.product.name}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 				{t('Setiap kolom di sini memberi masukan ke klasifikasi HS, kepatuhan, katalog, dan kutipan.')}
 			</CardDescription>
