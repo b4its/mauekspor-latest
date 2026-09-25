@@ -130,8 +130,7 @@
 		try {
 			const res = await getBusinessProfile(id);
 			const fresh = res.data as (typeof seedProfiles)[number] & { certifications?: string[] };
-			const idx = profiles.items.findIndex((p) => p.id === id);
-			if (idx >= 0) profiles.items[idx] = fresh;
+			profiles.upsert(fresh);
 		} catch {
 			detailError = t('Gagal memuat detail profil.');
 		} finally {

@@ -11,7 +11,8 @@
 
 	const certOptions = ['Halal', 'ISO 22000', 'HACCP', 'SVLK', 'Organic', 'Origin declaration', 'Nutrition facts'];
 
-	let selected = $state(['Halal', 'Origin declaration']);
+	let selected = $state<string[]>([]);
+	let synced = $state(false);
 	let saved = $state(false);
 	let saving = $state(false);
 	let error = $state('');
@@ -21,16 +22,34 @@
 		profiles.load();
 	});
 
+	// Sinkronkan pilihan dari profil yang dimuat (hanya sekali, agar tidak menimpa edit user).
+	$effect(() => {
+		if (synced) return;
+		const profile = profiles.items[0];
+		if (profile) {
+			selected = [...(profile.certifications ?? [])];
+			synced = true;
+		}
+	});
+
 	function toggleCert(cert: string) {
 		selected = selected.includes(cert) ? selected.filter((item) => item !== cert) : [...selected, cert];
 	}
 
 	async function handleSave() {
 		error = '';
+		const profile = profiles.items[0] ?? seedProfiles[0];
+		if (!profile) {
+			error = t('Profil bisnis belum tersedia.');
+			return;
+		}
 		saving = true;
 		try {
-			const profile = profiles.items[0] ?? seedProfiles[0];
-			if (profile) await updateCertifications(profile.id, selected);
+			const res = await updateCertifications(profile.id, selected);
+			if (res.data) {
+				profiles.upsert(res.data);
+				selected = [...(res.data.certifications ?? selected)];
+			}
 			saved = true;
 		} catch {
 			error = t('Gagal menyimpan sertifikasi.');
