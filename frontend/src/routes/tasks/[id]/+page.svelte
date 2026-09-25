@@ -11,6 +11,9 @@
 	let { data } = $props();
 	let completed = $state(false);
 	let reassigned = $state(false);
+	let assignOpen = $state(false);
+	let assignOwner = $state('');
+	let assigning = $state(false);
 	let error = $state('');
 	let message = $state('');
 	let editing = $state(false);
@@ -53,18 +56,32 @@
 		}
 	}
 
+	function openAssign() {
+		assignOwner = localOwner;
+		error = '';
+		assignOpen = true;
+	}
+
 	async function handleAssign() {
 		error = '';
+		if (!assignOwner.trim()) {
+			error = t('Nama penanggung jawab wajib diisi.');
+			return;
+		}
+		assigning = true;
 		try {
-			const res = await assignTask(data.task.id, 'Operations Lead');
+			const res = await assignTask(data.task.id, assignOwner.trim());
 			reassigned = true;
 			if (res.data) {
 				serverOwner = res.data.owner;
 				serverStatus = res.data.status;
 			}
 			message = t('Penanggung jawab diperbarui.');
+			assignOpen = false;
 		} catch {
 			error = t('Gagal mengubah penanggung jawab.');
+		} finally {
+			assigning = false;
 		}
 	}
 
@@ -175,15 +192,24 @@
 					<CardDescription class="mt-2 leading-relaxed">{data.task.description}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2">
-					<Button variant="outline" onclick={handleAssign}>{reassigned ? t('Ditugaskan') : t('Tugaskan tugas')}</Button>
+					<Button variant="outline" onclick={() => (assignOpen ? (assignOpen = false) : openAssign())}>{assignOpen ? t('Batal') : t('Tugaskan tugas')}</Button>
 					<Button onclick={handleComplete}>{completed ? t('Selesai') : t('Tandai selesai')}</Button>
 				</div>
+				{#if assignOpen}
+					<div class="mt-3 flex flex-wrap items-end gap-2">
+						<label class="grid gap-1 text-sm font-semibold">
+							{t('Penanggung jawab')}
+							<Input bind:value={assignOwner} placeholder="Operations Lead" class="min-w-[220px]" />
+						</label>
+						<Button disabled={assigning} onclick={handleAssign}>{assigning ? t('Menyimpan...') : t('Tugaskan')}</Button>
+					</div>
+				{/if}
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 				{/if}
 			</CardHeader>
 			<CardContent class="grid grid-cols-2 gap-2 md:grid-cols-4">
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pemilik')} <strong class="mt-1 block text-sm font-bold text-foreground">{reassigned ? 'Operations Lead' : localOwner}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pemilik')} <strong class="mt-1 block text-sm font-bold text-foreground">{localOwner}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Jatuh tempo')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.task.due}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Modul')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.task.module}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Proyek')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.task.projectId}</strong></div>
