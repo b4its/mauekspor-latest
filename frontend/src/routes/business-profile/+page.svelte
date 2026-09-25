@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { businessProfiles as seedProfiles } from '$lib/data/trade';
-	import { listBusinessProfiles, getBusinessProfile, updateCertifications } from '$lib/api/business-profile';
+	import { listBusinessProfiles, getBusinessProfile, updateCertifications, deleteBusinessProfile } from '$lib/api/business-profile';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
@@ -137,6 +137,25 @@
 			detailLoading = false;
 		}
 	}
+
+	let deleting = $state(false);
+	let deleteError = $state('');
+	async function handleDelete() {
+		const target = profile;
+		if (!target) return;
+		if (!confirm(t('Hapus profil bisnis ini secara permanen?'))) return;
+		deleting = true;
+		deleteError = '';
+		try {
+			await deleteBusinessProfile(target.id);
+			profiles.remove(target.id);
+			selectedId = '';
+		} catch {
+			deleteError = t('Gagal menghapus profil bisnis.');
+		} finally {
+			deleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -240,6 +259,10 @@
 		{/if}
 	{/if}
 
+	{#if deleteError}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{deleteError}</p>
+	{/if}
+
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -266,6 +289,7 @@
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href="/business-profile/edit">{t('Edit profil')}</Button>
 					<Button href="/business-profile/certifications">{t('Kelola sertifikasi')}</Button>
+					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus profil')}</Button>
 				</div>
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
