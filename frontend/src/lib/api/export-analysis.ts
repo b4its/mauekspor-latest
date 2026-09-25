@@ -14,10 +14,13 @@ export type ComparePayload = {
 export type CompareResult = {
 	analysisId: string;
 	country: string;
+	countryName?: string;
 	score: number;
 	grade: string;
 	critical_issues: number;
 	recommendation: string;
+	marketDemand?: string;
+	duties?: string;
 };
 
 export type RegulationSection = {

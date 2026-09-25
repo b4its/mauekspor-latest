@@ -4899,14 +4899,34 @@ def _compare_analyses_results(product: dict, country_codes: list[str]) -> dict:
                 "updatedAt": "now",
             })
         critical_count = sum(1 for i in (analysis.get("complianceIssues") or []) if i.get("severity") == "critical")
+        raw_rec = analysis.get("recommendations") or ""
+        # Bersihkan text markdown & carriage returns agar tidak merusak layout tabel
+        clean_rec = raw_rec.replace("\r\n", "\n").replace("\r", "\n").strip()
+        import re
+        clean_rec = re.sub(r"^#+\s*", "", clean_rec, flags=re.MULTILINE)
+        clean_rec = re.sub(r"[*_~`]", "", clean_rec)
+        clean_rec = re.sub(r"\|[^|\n]+\|", "", clean_rec)
+        clean_rec = re.sub(r"\n+", " • ", clean_rec)
+        clean_rec = re.sub(r"\s+", " ", clean_rec).strip(" •")
+        if len(clean_rec) > 220:
+            clean_rec = clean_rec[:220].rstrip() + "..."
+        if not clean_rec:
+            clean_rec = "Analisis kepatuhan selesai."
+
+        country_obj = db.get("countries", code) or {}
+        c_name = country_obj.get("country_name") or country_obj.get("name") or code
+
         results.append({
             "analysis": analysis,
             "analysisId": analysis.get("id"),
             "country": code,
+            "countryName": c_name,
             "score": analysis.get("score", 0),
             "grade": analysis.get("statusGrade", "Warning"),
             "critical_issues": critical_count,
-            "recommendation": (analysis.get("recommendations") or "")[:200],
+            "recommendation": clean_rec,
+            "marketDemand": analysis.get("marketDemand", "Medium"),
+            "duties": analysis.get("duties", "Pending"),
         })
     results.sort(key=lambda r: r["score"], reverse=True)
     return {"data": {"product": {"id": product.get("id"), "name": product.get("name")}, "results": results}, "meta": {}}
