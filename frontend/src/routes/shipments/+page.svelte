@@ -15,6 +15,8 @@
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
+	import { page } from '$app/state';
+
 	const filters = ['All', 'Booking Requested', 'Customs Submitted', 'Loaded', 'Exception'];
 	let activeFilter = $state('All');
 	let query = $state('');
@@ -26,13 +28,37 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let fRoute = $state('');
 	let fMode = $state('Ocean FCL');
 	let fEta = $state('');
+	let fProjectId = $state('');
+	let fOrderId = $state('');
 	let error = $state('');
+	let paramProcessed = $state(false);
 
 	let shipments = createRemoteList(listShipments, seedShipments);
 	let remoteProjects = createRemoteList(listTradeProjects, projects);
 	$effect(() => {
 		shipments.load();
 		remoteProjects.load();
+	});
+
+	$effect(() => {
+		if (paramProcessed) return;
+		const queryForwarder = page.url.searchParams.get('forwarder');
+		const queryRoute = page.url.searchParams.get('route');
+		const queryMode = page.url.searchParams.get('mode');
+		const queryProjectId = page.url.searchParams.get('projectId');
+		const queryOrderId = page.url.searchParams.get('orderId');
+		const queryDestination = page.url.searchParams.get('destination');
+
+		if (queryForwarder || queryRoute || queryProjectId || queryOrderId || queryDestination) {
+			if (queryForwarder) fForwarder = queryForwarder;
+			if (queryRoute) fRoute = queryRoute;
+			else if (queryDestination) fRoute = `Jakarta → ${queryDestination}`;
+			if (queryMode) fMode = queryMode;
+			if (queryProjectId) fProjectId = queryProjectId;
+			if (queryOrderId) fOrderId = queryOrderId;
+			showForm = true;
+			paramProcessed = true;
+		}
 	});
 
 	let filteredShipments = $derived(
@@ -65,6 +91,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		fRoute = '';
 		fMode = 'Ocean FCL';
 		fEta = '';
+		fProjectId = '';
+		fOrderId = '';
 		formError = '';
 		showForm = true;
 	}
@@ -83,6 +111,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				forwarder: fForwarder.trim(),
 				route: fRoute.trim(),
 				mode: fMode,
+				projectId: fProjectId.trim() || undefined,
 				eta: fEta.trim()
 			});
 			if (res.data) {
@@ -163,6 +192,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardContent>
 		{#if showForm}
 			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				{#if fOrderId}
+					<div class="rounded-md bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+						{t('Booking pengiriman untuk Pesanan')} #{fOrderId}
+					</div>
+				{/if}
 				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
 					<label class="grid gap-1 text-sm font-semibold">
 						{t('Forwarder')}
@@ -183,6 +217,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					<label class="grid gap-1 text-sm font-semibold">
 						{t('ETA')}
 						<Input bind:value={fEta} placeholder="18 Sep 2026" />
+					</label>
+				</div>
+				<div class="grid gap-2 sm:grid-cols-2">
+					<label class="grid gap-1 text-sm font-semibold">
+						{t('Proyek Ekspor')}
+						<select bind:value={fProjectId} class="h-10 rounded-md border bg-background px-3 text-sm">
+							<option value="">{t('Pilih proyek (opsional)')}</option>
+							{#each remoteProjects.items as p}
+								<option value={p.id}>{p.name} ({p.country})</option>
+							{/each}
+						</select>
 					</label>
 				</div>
 				{#if formError}

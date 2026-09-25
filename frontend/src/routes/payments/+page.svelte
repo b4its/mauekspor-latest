@@ -13,6 +13,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
+	import { page } from '$app/state';
+
 	const filters = ['All', 'Pending', 'Deposit Paid', 'Due Soon', 'Overdue', 'Settled'];
 	let activeFilter = $state('All');
 	let query = $state('');
@@ -28,10 +30,30 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let fDueDate = $state('');
 	let fMethod = $state('Bank Transfer');
 	let error = $state('');
+	let paramProcessed = $state(false);
 
 	let payments = createRemoteList(listPayments, seedPayments);
 	$effect(() => {
 		payments.load();
+	});
+
+	$effect(() => {
+		if (paramProcessed) return;
+		const queryOrderId = page.url.searchParams.get('orderId');
+		const queryAmount = page.url.searchParams.get('amount');
+		const queryCurrency = page.url.searchParams.get('currency');
+		const queryBuyer = page.url.searchParams.get('buyer');
+		const queryMethod = page.url.searchParams.get('method');
+
+		if (queryOrderId || queryAmount || queryBuyer) {
+			if (queryOrderId) fOrderId = queryOrderId;
+			if (queryAmount) fAmount = queryAmount;
+			if (queryCurrency) fCurrency = queryCurrency;
+			if (queryBuyer) fBuyer = queryBuyer;
+			if (queryMethod) fMethod = queryMethod;
+			showForm = true;
+			paramProcessed = true;
+		}
 	});
 
 	let filteredPayments = $derived(
@@ -172,6 +194,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardContent>
 		{#if showForm}
 			<CardContent class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
+				{#if fOrderId}
+					<div class="rounded-md bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+						{t('Pencatatan pembayaran / invoice untuk Pesanan')} #{fOrderId}
+					</div>
+				{/if}
 				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 					<label class="grid gap-1 text-sm font-semibold">
 						{t('Buyer')}
