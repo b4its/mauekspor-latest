@@ -29,7 +29,10 @@ services:
       - .env.local
     environment:
       MAUEKSPOR_DATABASE_URL: postgresql://${POSTGRES_USER:-mauekspor}:${POSTGRES_PASSWORD:-mauekspor}@localhost:${DB_PORT:-5447}/${POSTGRES_DB:-mauekspor}
-      MAUEKSPOR_AI_BASE_URL: http://localhost:20128/v1
+      MAUEKSPOR_AI_BASE_URL: ${MAUEKSPOR_AI_BASE_URL:-http://localhost:20128/v1}
+      MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-hk/deepseek-4.1-flash}
+      MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-your-ai-api-key-here}
+      MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-remote}
       MAUEKSPOR_CORS_ORIGINS: ${MAUEKSPOR_CORS_ORIGINS}
       MAUEKSPOR_DISABLE_RATE_LIMIT: "1"
     volumes:
