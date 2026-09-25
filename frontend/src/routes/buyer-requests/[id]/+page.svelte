@@ -39,8 +39,8 @@
 	async function handleClose() {
 		error = '';
 		try {
-			await updateBuyerRequestStatus(data.request.id, { status: 'Closed' });
-			data.request.status = 'Closed';
+			const res = await updateBuyerRequestStatus(data.request.id, { status: 'Closed' });
+			data.request.status = res.data?.status ?? 'Closed';
 		} catch {
 			error = t('Gagal menutup permintaan.');
 		}
@@ -67,13 +67,13 @@
 		error = '';
 		selectingId = String(match.catalogId);
 		try {
-			await updateBuyerRequestStatus(data.request.id, {
+			const res = await updateBuyerRequestStatus(data.request.id, {
 				status: 'Closed',
 				selected_catalog: String(match.catalogId),
 				umkm: String(match.umkm_id ?? '')
 			});
-			data.request.status = 'Closed';
-			data.request.selectedCatalogId = String(match.catalogId);
+			data.request.status = res.data?.status ?? 'Closed';
+			data.request.selectedCatalogId = res.data?.selectedCatalogId ?? String(match.catalogId);
 		} catch {
 			error = t('Gagal menutup permintaan.');
 		} finally {
@@ -88,7 +88,9 @@
 			.catch(() =>
 				getMatchedCatalogs(data.request.id)
 					.then((res) => (matches = res.data))
-					.catch((e) => console.error("API error:", e))
+					.catch(() => {
+						matches = [];
+					})
 			);
 	});
 
