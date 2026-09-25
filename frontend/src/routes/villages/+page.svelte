@@ -31,6 +31,8 @@
 	import XIcon from '@lucide/svelte/icons/x';
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import PackageIcon from '@lucide/svelte/icons/package';
+	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
+	import GlobeIcon from '@lucide/svelte/icons/globe';
 
 	// Initial seed fallback if backend is offline during hydration
 	const seedVillages: Village[] = [
@@ -458,6 +460,20 @@
 								<span class="text-muted-foreground">{t('Pengelola')}:</span>
 								<span class="font-medium text-foreground">{village.organization}</span>
 							</div>
+						</div>
+
+						<div class="mt-3 flex flex-wrap gap-1.5">
+							<Button size="sm" variant="outline" class="h-7 text-[11px]" href={`/export-analysis/create?product=${encodeURIComponent(village.flagshipCommodity)}`}>
+								<TrendingUpIcon class="mr-1 size-3" />
+								<span>{t('Analisis Ekspor')}</span>
+							</Button>
+							<Button size="sm" variant="ghost" class="h-7 text-[11px]" href={`/buyer-requests?search=${encodeURIComponent(village.flagshipCommodity)}`}>
+								<span>{t('Permintaan')}</span>
+							</Button>
+							<Button size="sm" variant="ghost" class="h-7 text-[11px]" href={`/marketing?search=${encodeURIComponent(village.flagshipCommodity)}`}>
+								<GlobeIcon class="mr-1 size-3" />
+								<span>{t('Intelijen')}</span>
+							</Button>
 						</div>
 					</CardContent>
 

@@ -12,6 +12,7 @@
 	import type { MarketIntelligence, ProductPricing } from '$lib/api/marketing';
 	import type { Product } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
+	import { page as pageState } from '$app/state';
 	import { formatCurrency } from '$lib/utils/format';
 
 	let products = createRemoteList<Product>(listProducts, seedProducts);
@@ -26,6 +27,31 @@
 	let page = $state(1);
 	const PER_PAGE = 12;
 	let loadError = $state('');
+	let paramProcessed = $state(false);
+
+	$effect(() => {
+		if (paramProcessed) return;
+		const queryTab = pageState.url.searchParams.get('tab');
+		if (queryTab === 'pricing' || queryTab === 'mi') {
+			tab = queryTab;
+		}
+		const queryCountry = pageState.url.searchParams.get('destination') || pageState.url.searchParams.get('country');
+		if (queryCountry) {
+			country = queryCountry.toUpperCase();
+		}
+		const querySearch = pageState.url.searchParams.get('search') || pageState.url.searchParams.get('query');
+		if (querySearch && !search) {
+			search = querySearch;
+		}
+		const queryProductId = pageState.url.searchParams.get('productId');
+		if (queryProductId && products.items.length > 0) {
+			const found = products.items.find((p) => p.id === queryProductId);
+			if (found) {
+				openProduct(found);
+				paramProcessed = true;
+			}
+		}
+	});
 
 	$effect(() => {
 		// Reset halaman saat filter berubah
@@ -278,6 +304,33 @@
 													{/each}
 												</div>
 											{/if}
+
+											<div class="mt-3 flex flex-wrap gap-2 border-t pt-2">
+												<Button
+													size="sm"
+													variant="outline"
+													class="h-7 text-xs"
+													href={`/export-analysis/create?productId=${encodeURIComponent(selectedProduct?.id ?? '')}&destination=${encodeURIComponent(rec.code)}`}
+												>
+													{t('Analisis Ekspor')}
+												</Button>
+												<Button
+													size="sm"
+													variant="ghost"
+													class="h-7 text-xs"
+													href={`/forwarders?destination=${encodeURIComponent(rec.code)}`}
+												>
+													{t('Cari Forwarder')}
+												</Button>
+												<Button
+													size="sm"
+													variant="ghost"
+													class="h-7 text-xs"
+													href={`/costing/create?productId=${encodeURIComponent(selectedProduct?.id ?? '')}&destination=${encodeURIComponent(rec.code)}`}
+												>
+													{t('Hitung Biaya')}
+												</Button>
+											</div>
 										</div>
 									{/each}
 								</div>
@@ -394,6 +447,22 @@
 									<p class="mt-2 text-xs text-muted-foreground">
 										{t('Kurs dipakai:')} {pricing.exchangeRateUsed} · · {t('Margin')} {pricing.targetMarginPercent}%
 									</p>
+									<div class="mt-4 flex flex-wrap gap-2">
+										<Button
+											size="sm"
+											variant="default"
+											href={`/costing/create?productId=${encodeURIComponent(selectedProduct.id)}&destination=${encodeURIComponent(country)}`}
+										>
+											{t('Buka di Skenario Costing')}
+										</Button>
+										<Button
+											size="sm"
+											variant="outline"
+											href={`/trade-projects/new?product=${encodeURIComponent(selectedProduct.name)}&destination=${encodeURIComponent(country)}`}
+										>
+											{t('Mulai Proyek Ekspor')}
+										</Button>
+									</div>
 								</div>
 							</div>
 						{/if}
