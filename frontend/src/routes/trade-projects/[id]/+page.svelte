@@ -8,9 +8,11 @@
 	import { pipeline as seedPipeline } from '$lib/data/trade';
 	import { listComplianceRequirements } from '$lib/api/compliance';
 	import { listTradeDocuments } from '$lib/api/documents';
+	import { listQuotations } from '$lib/api/quotations';
+	import { listShipments } from '$lib/api/shipments';
 	import { updateTradeProject, deleteTradeProject } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
-	import type { ComplianceRequirement, TradeDocument } from '$lib/data/trade';
+	import type { ComplianceRequirement, TradeDocument, Quotation, Shipment } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
 	import { goto } from '$app/navigation';
 	import { currency, statusTone } from '$lib/utils/format';
@@ -38,9 +40,13 @@
 
 	let compliance = createRemoteList<ComplianceRequirement>(listComplianceRequirements, []);
 	let docs = createRemoteList<TradeDocument>(listTradeDocuments, []);
+	let quotations = createRemoteList<Quotation>(listQuotations, []);
+	let shipments = createRemoteList<Shipment>(listShipments, []);
 	$effect(() => {
 		compliance.load();
 		docs.load();
+		quotations.load();
+		shipments.load();
 	});
 
 	let complianceTasks = $derived(
@@ -53,6 +59,10 @@
 			.filter((doc) => doc.projectId === data.project.id)
 			.map((doc) => ({ name: doc.type, score: doc.validationScore, status: doc.status }))
 	);
+	let projectQuotations = $derived(quotations.items.filter((q) => q.projectId === data.project.id));
+	let projectShipments = $derived(shipments.items.filter((s) => s.projectId === data.project.id));
+	let primaryShipment = $derived(projectShipments[0] ?? null);
+	let hsConfidence = $derived(data.project.hsConfidence ?? null);
 
 	let pipeline = $derived(
 		seedPipeline.map((item) => {
@@ -70,10 +80,6 @@
 
 	function trTab(x: string) {
 		return t(x === 'Compliance' ? 'Kepatuhan' : x === 'Quotation' ? 'Kutipan' : x === 'Documents' ? 'Dokumen' : 'Pengiriman');
-	}
-
-	function trMilestone(m: string) {
-		return t(m === 'Cargo Ready' ? 'Kargo Siap' : m === 'Picked Up' ? 'Diambil' : m === 'Customs Submitted' ? 'Bea Cukai Diajukan' : m === 'Loaded' ? 'Dimuat' : m === 'Departed' ? 'Berangkat' : 'Tiba');
 	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -234,7 +240,11 @@
 					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('HS yang Direkomendasikan')}</span>
 					<strong class="mt-2 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{data.project.hsCode}</strong>
 					<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
-						{t('Keyakinan AI 84%. Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.')}
+						{#if hsConfidence !== null}
+							{t('Keyakinan AI')} {hsConfidence}%. {t('Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.')}
+						{:else}
+							{t('Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.')}
+						{/if}
 					</p>
 				</div>
 			</CardContent>
@@ -280,24 +290,53 @@
 					{/each}
 				</div>
 			{:else if selectedTab === 'Quotation'}
-				<div class="rounded-xl border bg-muted/30 p-5">
-					<h3 class="text-2xl font-bold tracking-tight">{data.project.incoterm}</h3>
-					<p class="mt-2 leading-relaxed text-muted-foreground">
-						{currency.format(data.project.value)} {t('berlaku hingga')} 12 Sep 2026. {t('Termasuk pengepakan ekspor, penanganan asal, dan asumsi freight laut dasar.')}
-					</p>
-					<Button class="mt-4" onclick={openEdit}>{t('Siapkan revisi')}</Button>
+				<div class="grid gap-2.5">
+					{#if projectQuotations.length === 0}
+						<p class="rounded-lg border bg-muted/30 p-3.5 text-sm text-muted-foreground">{t('Belum ada kutipan untuk proyek ini.')}</p>
+						<Button class="w-fit" variant="outline" href="/quotations">{t('Buat kutipan')}</Button>
+					{/if}
+					{#each projectQuotations as quote}
+						<a href={`/quotations/${quote.id}`} class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5 no-underline transition-colors hover:bg-muted/50">
+							<div>
+								<strong class="block text-sm font-bold text-foreground">{quote.id} · {quote.incoterm}</strong>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{quote.supplier} → {quote.buyer} · {t('valid hingga')} {quote.validUntil}</span>
+							</div>
+							<div class="text-right">
+								<strong class="block text-sm font-bold text-foreground">{currency.format(quote.value)}</strong>
+								<Badge variant={toneVariant(statusTone(quote.status))}>{quote.status}</Badge>
+							</div>
+						</a>
+					{/each}
+					<Button class="w-fit" variant="outline" onclick={openEdit}>{t('Siapkan revisi')}</Button>
 				</div>
 			{:else}
-				<div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-6">
-					{#each ['Cargo Ready', 'Picked Up', 'Customs Submitted', 'Loaded', 'Departed', 'Arrived'] as milestone, index}
-						<div
-							class={index < 3
-								? 'rounded-lg border border-primary/40 bg-primary/10 p-3.5 text-center text-sm font-bold text-primary'
-								: 'rounded-lg border bg-muted/30 p-3.5 text-center text-sm font-bold'}
-						>
-							{trMilestone(milestone)}
+				<div class="grid gap-2.5">
+					{#if !primaryShipment}
+						<p class="rounded-lg border bg-muted/30 p-3.5 text-sm text-muted-foreground">{t('Belum ada pengiriman untuk proyek ini.')}</p>
+						<Button class="w-fit" variant="outline" href="/shipments">{t('Buat pengiriman')}</Button>
+					{:else}
+						<div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+							<div>
+								<strong class="block text-sm font-bold text-foreground">{primaryShipment.id} · {primaryShipment.route}</strong>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{primaryShipment.forwarder} · ETA {primaryShipment.eta} · {primaryShipment.progress}%</span>
+							</div>
+							<Badge variant={toneVariant(statusTone(primaryShipment.status))}>{primaryShipment.status}</Badge>
 						</div>
-					{/each}
+						{#if primaryShipment.milestones?.length}
+							<div class="grid gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+								{#each primaryShipment.milestones as step}
+									<div
+										class={step.status === 'Done' || step.status === 'Current'
+											? 'rounded-lg border border-primary/40 bg-primary/10 p-3.5 text-center text-sm font-bold text-primary'
+											: 'rounded-lg border bg-muted/30 p-3.5 text-center text-sm font-bold'}
+									>
+										{step.label}
+									</div>
+								{/each}
+							</div>
+						{/if}
+						<a href={`/shipments/${primaryShipment.id}`} class="text-xs font-semibold text-primary hover:underline">{t('Buka detail pengiriman')} &rarr;</a>
+					{/if}
 				</div>
 			{/if}
 		</CardContent>
