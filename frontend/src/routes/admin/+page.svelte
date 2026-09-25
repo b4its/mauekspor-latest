@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { page as pageState } from '$app/state';
 	import AppShell from '$lib/components/AppShell.svelte';
+	import AdminSidebar from '$lib/components/AdminSidebar.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/components/ui/card/index.js';
@@ -430,6 +432,16 @@
 		}
 	});
 
+	$effect(() => {
+		if (pageState.url.hash === '#studio' || pageState.url.searchParams.get('tab') === 'crud') {
+			activeTab = 'crud';
+		} else if (pageState.url.hash === '#diagnostics' || pageState.url.searchParams.get('tab') === 'diagnostics') {
+			activeTab = 'diagnostics';
+		} else if (pageState.url.hash === '#audit' || pageState.url.searchParams.get('tab') === 'audit') {
+			activeTab = 'audit';
+		}
+	});
+
 	function selectTable(name: string) {
 		activeTable = name;
 		search = '';
@@ -614,6 +626,9 @@
 </svelte:head>
 
 <AppShell title={t('Admin Panel')} eyebrow={t('Pusat Komando & Administrasi Ekspor-Impor')}>
+	{#snippet sidebar()}
+		<AdminSidebar />
+	{/snippet}
 	{#if !isAdmin}
 		<div class="grid place-items-center gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-12 text-center">
 			<ShieldAlertIcon class="size-12 text-destructive/60" />

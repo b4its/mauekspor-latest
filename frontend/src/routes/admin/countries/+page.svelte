@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
+	import AdminSidebar from '$lib/components/AdminSidebar.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/components/ui/card/index.js';
@@ -50,7 +51,7 @@
 	let selectedRegion = $state('');
 	let activeCountryCode = $state('');
 	let countryPage = $state(1);
-	let countryPageSize = $state(8);
+	let countryPageSize = $state(20);
 
 	// Regulations state
 	let regulations = $state<AdminRegulation[]>([]);
@@ -476,6 +477,9 @@
 </svelte:head>
 
 <AppShell title="Countries & Regulations" eyebrow={t('Admin Intelijen & Regulasi')}>
+	{#snippet sidebar()}
+		<AdminSidebar />
+	{/snippet}
 	{#if !isAdmin}
 		<div class="grid place-items-center gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-12 text-center">
 			<ShieldAlertIcon class="size-12 text-destructive/60" />
@@ -569,176 +573,162 @@
 			</div>
 		</Card>
 
-		<!-- Main Dual-Column Workspace -->
-		<div class="grid gap-6 lg:grid-cols-[360px_1fr]">
-			<!-- Left column: Countries selector -->
-			<Card class="flex flex-col">
-				<CardHeader class="p-4 pb-3">
-					<div class="flex items-center justify-between">
-						<CardTitle class="flex items-center gap-2 text-base font-bold">
-							<GlobeIcon class="size-4 text-primary" />
-							{t('Daftar Negara')} ({filteredCountries.length})
-						</CardTitle>
-						<button
-							onclick={loadCountries}
-							class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-							title={t('Segarkan')}
-						>
-							<RefreshCwIcon class="size-3.5 {countriesLoading ? 'animate-spin' : ''}" />
-						</button>
+		<!-- Horizontal Country Selector Panel -->
+		<Card class="mb-6">
+			<CardHeader class="flex flex-wrap items-center justify-between gap-3 p-4 pb-3 border-b">
+				<div class="flex items-center gap-2">
+					<GlobeIcon class="size-4 text-primary" />
+					<CardTitle class="text-sm font-bold">
+						{t('Pilih Negara')} ({filteredCountries.length})
+					</CardTitle>
+					{#if activeCountryCode}
+						<Badge variant="outline" class="font-mono text-xs">
+							{flagEmoji(activeCountryCode)} {activeCountryCode}
+						</Badge>
+					{/if}
+				</div>
+				<div class="flex flex-wrap items-center gap-2">
+					<div class="relative w-48 sm:w-64">
+						<SearchIcon class="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							type="search"
+							bind:value={countrySearch}
+							placeholder={t('Cari kode atau nama negara...')}
+							class="h-8 pl-8 text-xs"
+						/>
 					</div>
-					<!-- Search and Region Filters -->
-					<div class="mt-3 space-y-2">
-						<div class="relative">
-							<SearchIcon class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-							<Input
-								type="search"
-								bind:value={countrySearch}
-								placeholder={t('Cari kode atau nama negara...')}
-								class="pl-8 text-xs"
-							/>
-						</div>
-						<div class="flex flex-wrap gap-1">
+					<button
+						onclick={loadCountries}
+						class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+						title={t('Segarkan')}
+					>
+						<RefreshCwIcon class="size-3.5 {countriesLoading ? 'animate-spin' : ''}" />
+					</button>
+				</div>
+			</CardHeader>
+			<CardContent class="p-4 space-y-3">
+				<!-- Region Filter Pills -->
+				<div class="flex flex-wrap gap-1">
+					<button
+						type="button"
+						onclick={() => { selectedRegion = ''; countryPage = 1; }}
+						class="rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors {selectedRegion === '' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}"
+					>
+						{t('Semua Kawasan')}
+					</button>
+					{#each regions as r}
+						<button
+							type="button"
+							onclick={() => { selectedRegion = selectedRegion === r ? '' : r; countryPage = 1; }}
+							class="rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors {selectedRegion === r ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}"
+						>
+							{r}
+						</button>
+					{/each}
+				</div>
+
+				<!-- Countries Chips -->
+				{#if countriesLoading}
+					<div class="flex flex-wrap gap-1.5">
+						{#each Array(10) as _}
+							<div class="h-7 w-24 animate-pulse rounded-full bg-muted/60"></div>
+						{/each}
+					</div>
+				{:else if filteredCountries.length === 0}
+					<div class="p-4 text-center text-xs text-muted-foreground">
+						{t('Tidak ada negara yang sesuai.')}
+					</div>
+				{:else}
+					<div class="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-1">
+						{#each pagedCountries as c (c.country_code)}
 							<button
 								type="button"
-								onclick={() => (selectedRegion = '')}
-								class="rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors {selectedRegion === '' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}"
+								onclick={() => selectCountry(c.country_code)}
+								class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors hover:bg-accent {activeCountryCode === c.country_code ? 'border-primary bg-primary font-bold text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}"
 							>
-								{t('Semua Kawasan')}
+								<span>{flagEmoji(c.country_code)}</span>
+								<span class="truncate font-medium">{c.country_name}</span>
+								<span class="text-[10px] font-mono opacity-80">({c.country_code})</span>
+								{#if c.regulationsCount !== undefined && c.regulationsCount > 0}
+									<Badge variant={activeCountryCode === c.country_code ? 'secondary' : 'outline'} class="h-4 shrink-0 px-1 text-[10px]">
+										{c.regulationsCount}
+									</Badge>
+								{/if}
+								{#if c.id && c.id.startsWith('CTY-')}
+									<span class="size-1.5 rounded-full bg-emerald-500" title={t('Kustom')}></span>
+								{/if}
 							</button>
-							{#each regions as r}
-								<button
-									type="button"
-									onclick={() => (selectedRegion = selectedRegion === r ? '' : r)}
-									class="rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors {selectedRegion === r ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}"
-								>
-									{r}
-								</button>
-							{/each}
+						{/each}
+					</div>
+					<div class="pt-2 border-t">
+						<Pagination
+							bind:page={countryPage}
+							bind:pageSize={countryPageSize}
+							totalPages={totalCountryPages}
+							totalItems={filteredCountries.length}
+						/>
+					</div>
+				{/if}
+			</CardContent>
+		</Card>
+
+		<!-- Full-width Country Regulations Panel -->
+		<div class="space-y-4">
+			{#if !selectedCountry}
+				<Card class="p-12 text-center text-muted-foreground">
+					<GlobeIcon class="mx-auto size-12 opacity-30" />
+					<h3 class="mt-3 text-lg font-bold">{t('Pilih Negara')}</h3>
+					<p class="mt-1 text-sm">{t('Pilih negara di atas untuk melihat dan mengelola regulasinya.')}</p>
+				</Card>
+			{:else}
+				<!-- Selected Country Details Banner -->
+				<Card class="p-5">
+					<div class="flex flex-wrap items-center justify-between gap-4">
+						<div class="flex items-center gap-3">
+							<span class="text-3xl select-none">{flagEmoji(selectedCountry.country_code)}</span>
+							<div>
+								<div class="flex items-center gap-2">
+									<h2 class="text-xl font-bold tracking-tight text-foreground">
+										{selectedCountry.country_name}
+									</h2>
+									<Badge variant="secondary" class="font-mono text-xs">{selectedCountry.country_code}</Badge>
+									{#if selectedCountry.id && selectedCountry.id.startsWith('CTY-')}
+										<Badge variant="default" class="text-xs">{t('Negara Kustom')}</Badge>
+									{:else}
+										<Badge variant="outline" class="text-xs">{t('Master Data')}</Badge>
+									{/if}
+								</div>
+								<p class="text-xs text-muted-foreground mt-0.5">
+									{selectedCountry.region || '—'} • {regulations.length} {t('aturan tercatat')}
+								</p>
+							</div>
+						</div>
+						<div class="flex flex-wrap items-center gap-2">
+							<Button onclick={openCreateRegulation} size="sm" variant="default">
+								<PlusIcon class="size-4" />
+								{t('Tambah Regulasi')}
+							</Button>
+							{#if selectedCountry.id && selectedCountry.id.startsWith('CTY-')}
+								<Button onclick={() => openEditCountry(selectedCountry)} size="sm" variant="outline">
+									<PencilIcon class="size-3.5" />
+									{t('Edit Negara')}
+								</Button>
+								<Button onclick={() => openDeleteCountry(selectedCountry)} size="sm" variant="outline" class="text-destructive hover:bg-destructive/10">
+									<Trash2Icon class="size-3.5" />
+									{t('Hapus Negara')}
+								</Button>
+							{/if}
+							<Button
+								href={`/countries/${selectedCountry.country_code}`}
+								target="_blank"
+								size="sm"
+								variant="outline"
+							>
+								<ExternalLinkIcon class="size-3.5" />
+								{t('Lihat Direktori Publik')}
+							</Button>
 						</div>
 					</div>
-				</CardHeader>
-
-				<CardContent class="flex-1 p-2">
-					{#if countriesLoading}
-						<div class="space-y-2 p-2">
-							{#each Array(6) as _}
-								<div class="h-14 animate-pulse rounded-lg bg-muted/60"></div>
-							{/each}
-						</div>
-					{:else if filteredCountries.length === 0}
-						<div class="p-8 text-center text-sm text-muted-foreground">
-							{t('Tidak ada negara yang sesuai.')}
-						</div>
-					{:else}
-						<div class="space-y-1">
-							{#each pagedCountries as c (c.country_code)}
-								<div
-									role="button"
-									tabindex="0"
-									onclick={() => selectCountry(c.country_code)}
-									onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectCountry(c.country_code); }}
-									class="group flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-all hover:bg-accent/60 {activeCountryCode === c.country_code ? 'bg-accent/90 shadow-xs ring-1 ring-primary/40' : ''}"
-								>
-									<div class="flex min-w-0 items-center gap-2.5">
-										<span class="text-xl shrink-0 select-none">{flagEmoji(c.country_code)}</span>
-										<div class="min-w-0">
-											<div class="flex items-center gap-1.5 font-bold text-foreground">
-												<span class="truncate">{c.country_name}</span>
-												<span class="text-xs font-mono font-medium text-muted-foreground">({c.country_code})</span>
-											</div>
-											<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-												<span>{c.region || '—'}</span>
-												{#if c.regulationsCount !== undefined && c.regulationsCount > 0}
-													<span>•</span>
-													<span>{c.regulationsCount} {t('Regulasi')}</span>
-												{/if}
-											</div>
-										</div>
-									</div>
-									<div class="flex shrink-0 items-center gap-1">
-										{#if c.id && c.id.startsWith('CTY-')}
-											<Badge variant="default" class="text-[10px] px-1.5 py-0">{t('Kustom')}</Badge>
-											<button
-												onclick={(e) => { e.stopPropagation(); openEditCountry(c); }}
-												class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-												title={t('Edit')}
-											>
-												<PencilIcon class="size-3.5" />
-											</button>
-											<button
-												onclick={(e) => { e.stopPropagation(); openDeleteCountry(c); }}
-												class="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-												title={t('Hapus')}
-											>
-												<Trash2Icon class="size-3.5" />
-											</button>
-										{:else}
-											<Badge variant="outline" class="text-[10px] px-1.5 py-0 text-muted-foreground">{t('Master')}</Badge>
-										{/if}
-									</div>
-								</div>
-							{/each}
-						</div>
-						<div class="mt-3 pt-2 border-t">
-							<Pagination
-								bind:page={countryPage}
-								bind:pageSize={countryPageSize}
-								totalPages={totalCountryPages}
-								totalItems={filteredCountries.length}
-							/>
-						</div>
-					{/if}
-				</CardContent>
-			</Card>
-
-			<!-- Right column: Country Regulations Panel -->
-			<div class="space-y-4">
-				{#if !selectedCountry}
-					<Card class="p-12 text-center text-muted-foreground">
-						<GlobeIcon class="mx-auto size-12 opacity-30" />
-						<h3 class="mt-3 text-lg font-bold">{t('Pilih Negara')}</h3>
-						<p class="mt-1 text-sm">{t('Pilih negara untuk melihat dan mengelola regulasinya.')}</p>
-					</Card>
-				{:else}
-					<!-- Selected Country Details Banner -->
-					<Card class="p-5">
-						<div class="flex flex-wrap items-center justify-between gap-4">
-							<div class="flex items-center gap-3">
-								<span class="text-3xl select-none">{flagEmoji(selectedCountry.country_code)}</span>
-								<div>
-									<div class="flex items-center gap-2">
-										<h2 class="text-xl font-bold tracking-tight text-foreground">
-											{selectedCountry.country_name}
-										</h2>
-										<Badge variant="secondary" class="font-mono text-xs">{selectedCountry.country_code}</Badge>
-										{#if selectedCountry.id && selectedCountry.id.startsWith('CTY-')}
-											<Badge variant="default" class="text-xs">{t('Negara Kustom')}</Badge>
-										{:else}
-											<Badge variant="outline" class="text-xs">{t('Master Data')}</Badge>
-										{/if}
-									</div>
-									<p class="text-xs text-muted-foreground mt-0.5">
-										{selectedCountry.region || '—'} • {regulations.length} {t('aturan tercatat')}
-									</p>
-								</div>
-							</div>
-							<div class="flex flex-wrap items-center gap-2">
-								<Button onclick={openCreateRegulation} size="sm" variant="default">
-									<PlusIcon class="size-4" />
-									{t('Tambah Regulasi')}
-								</Button>
-								<Button
-									href={`/countries/${selectedCountry.country_code}`}
-									target="_blank"
-									size="sm"
-									variant="outline"
-								>
-									<ExternalLinkIcon class="size-3.5" />
-									{t('Lihat Direktori Publik')}
-								</Button>
-							</div>
-						</div>
 
 						<!-- Category Filter Pills -->
 						<div class="mt-4 flex flex-wrap items-center gap-1.5 border-t pt-3">
@@ -891,7 +881,6 @@
 					{/if}
 				{/if}
 			</div>
-		</div>
 	{/if}
 </AppShell>
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import AppSidebar from '$lib/components/AppSidebar.svelte';
+	import AdminSidebar from '$lib/components/AdminSidebar.svelte';
 	import GlobalAiAssistant from '$lib/components/GlobalAiAssistant.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
@@ -17,6 +18,7 @@
 	import ActivityIcon from '@lucide/svelte/icons/activity';
 	import BellIcon from '@lucide/svelte/icons/bell';
 	import ArrowRightLeftIcon from '@lucide/svelte/icons/arrow-right-left';
+	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import MenuIcon from '@lucide/svelte/icons/menu';
 	import ShieldAlertIcon from '@lucide/svelte/icons/shield-alert';
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
@@ -193,6 +195,8 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 <Sidebar.Provider>
 	{#if sidebar}
 		{@render sidebar()}
+	{:else if page.url.pathname.startsWith('/admin')}
+		<AdminSidebar />
 	{:else}
 		<AppSidebar />
 	{/if}
@@ -207,7 +211,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				<Breadcrumb.Root>
 					<Breadcrumb.List>
 						<Breadcrumb.Item class="hidden sm:block">
-							<Breadcrumb.Link href="/dashboard" class="text-xs font-medium uppercase tracking-wide">{eyebrow}</Breadcrumb.Link>
+							<Breadcrumb.Link href={page.url.pathname.startsWith('/admin') ? '/admin' : '/dashboard'} class="text-xs font-medium uppercase tracking-wide">{eyebrow}</Breadcrumb.Link>
 						</Breadcrumb.Item>
 						<Breadcrumb.Separator class="hidden sm:block" />
 						<Breadcrumb.Item>
@@ -243,10 +247,17 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 							<span class="absolute -right-0.5 -top-0.5 rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">{activityCount}</span>
 						{/if}
 					</Button>
-					<Button href="/trade-projects" variant="outline" size="sm">{t('View projects')}</Button>
-					<Button href="/trade-projects/new" size="sm">
-						<span>{t('New trade project')}</span>
-					</Button>
+					{#if page.url.pathname.startsWith('/admin')}
+						<Button href="/dashboard" variant="outline" size="sm">
+							<ArrowLeftIcon class="size-3.5 me-1" />
+							<span>{t('Kembali ke aplikasi')}</span>
+						</Button>
+					{:else}
+						<Button href="/trade-projects" variant="outline" size="sm">{t('View projects')}</Button>
+						<Button href="/trade-projects/new" size="sm">
+							<span>{t('New trade project')}</span>
+						</Button>
+					{/if}
 					{#if user}
 						<Button variant="ghost" size="sm" disabled={loggingOut} title={user.role} onclick={handleLogout} class="text-muted-foreground">
 							<span class="ms-1 text-[11px] font-semibold uppercase tracking-wide">{loggingOut ? '...' : t('Logout')}</span>
@@ -287,12 +298,19 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 									<span>{i18n.locale === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
 								</DropdownMenu.Item>
 								<DropdownMenu.Separator />
-								<DropdownMenu.Item onclick={() => goto('/trade-projects')}>
-									<span>{t('View projects')}</span>
-								</DropdownMenu.Item>
-								<DropdownMenu.Item onclick={() => goto('/trade-projects/new')}>
-									<span>{t('New trade project')}</span>
-								</DropdownMenu.Item>
+								{#if page.url.pathname.startsWith('/admin')}
+									<DropdownMenu.Item onclick={() => goto('/dashboard')}>
+										<ArrowLeftIcon class="size-4 mr-2" />
+										<span>{t('Kembali ke aplikasi')}</span>
+									</DropdownMenu.Item>
+								{:else}
+									<DropdownMenu.Item onclick={() => goto('/trade-projects')}>
+										<span>{t('View projects')}</span>
+									</DropdownMenu.Item>
+									<DropdownMenu.Item onclick={() => goto('/trade-projects/new')}>
+										<span>{t('New trade project')}</span>
+									</DropdownMenu.Item>
+								{/if}
 								<DropdownMenu.Separator />
 								{#if user}
 									<DropdownMenu.Item onclick={handleLogout} class="text-destructive focus:text-destructive">
