@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -17,14 +18,36 @@
 	let productId = $state('');
 	let destination = $state('');
 	let created = $state(false);
+	let createdId = $state('');
 	let creating = $state(false);
 	let error = $state('');
 
 	$effect(() => {
 		products.load();
 		listCountries()
-			.then((res) => (countries = res.data))
+			.then((res) => {
+				countries = res.data;
+				const destParam = page.url.searchParams.get('destination') || page.url.searchParams.get('country');
+				if (destParam && !destination) {
+					destination = destParam.toUpperCase();
+				}
+			})
 			.catch(() => { error = t('Gagal memuat daftar negara.'); });
+	});
+
+	$effect(() => {
+		if (products.items.length > 0 && !productId) {
+			const prodParam = page.url.searchParams.get('productId') || page.url.searchParams.get('product');
+			const hsParam = page.url.searchParams.get('hsCode');
+			if (prodParam) {
+				const found = products.items.find((p) => p.id === prodParam || p.id.toLowerCase() === prodParam.toLowerCase());
+				if (found) productId = found.id;
+			} else if (hsParam) {
+				const cleanHs = hsParam.replace(/\./g, '');
+				const found = products.items.find((p) => p.hs && p.hs.replace(/\./g, '').startsWith(cleanHs));
+				if (found) productId = found.id;
+			}
+		}
 	});
 
 	let valid = $derived(productId && destination);
@@ -41,14 +64,18 @@
 		}
 		creating = true;
 		try {
-			await createExportAnalysis({ productId, destination });
+			const res = await createExportAnalysis({ productId, destination });
 			created = true;
+			if (res.data?.id) {
+				createdId = res.data.id;
+			}
 		} catch {
 			error = t('Gagal menjalankan analisis. Periksa apakah analisis untuk produk & negara ini sudah ada.');
 		} finally {
 			creating = false;
 		}
 	}
+
 </script>
 
 <svelte:head>
@@ -76,9 +103,13 @@
 				<p class="w-full text-sm leading-relaxed text-muted-foreground">
 					{t('Analisis dibuat dan siap direview di backend.')}
 				</p>
-				<Button href="/export-analysis">{t('Lihat analisis')}</Button>
+				{#if createdId}
+					<Button href={`/export-analysis/${createdId}`}>{t('Buka Hasil Analisis')}</Button>
+				{/if}
+				<Button variant="outline" href="/export-analysis">{t('Lihat semua analisis')}</Button>
 				<Button variant="outline" href="/export-analysis/compare">{t('Bandingkan pasar')}</Button>
 			</CardContent>
+
 		</Card>
 	{:else}
 		<form

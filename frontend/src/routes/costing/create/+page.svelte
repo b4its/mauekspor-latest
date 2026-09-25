@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -25,8 +26,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 	let incoterm = $state('FOB');
 	let targetMargin = $state('22');
 	let created = $state(false);
+	let createdId = $state('');
 	let creating = $state(false);
 	let error = $state('');
+
+	$effect(() => {
+		const destParam = page.url.searchParams.get('destination') || page.url.searchParams.get('country');
+		if (destParam && !destination) destination = destParam;
+
+		const projParam = page.url.searchParams.get('projectId');
+		if (projParam && !projectId) projectId = projParam;
+
+		const prodParam = page.url.searchParams.get('productId') || page.url.searchParams.get('product');
+		if (prodParam && !productId) productId = prodParam;
+	});
 
 	const incoterms = ['EXW', 'FOB', 'CIF', 'DAP'];
 
@@ -40,7 +53,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 		}
 		creating = true;
 		try {
-			await createCostingScenario({
+			const res = await createCostingScenario({
 				title,
 				projectId,
 				productId,
@@ -49,12 +62,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 				destination
 			});
 			created = true;
+			if (res.data?.id) {
+				createdId = res.data.id;
+			}
 		} catch {
 			error = t('Gagal membuat skenario costing.');
 		} finally {
 			creating = false;
 		}
 	}
+
 </script>
 
 <svelte:head>
@@ -78,9 +95,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 				<Badge variant="secondary" class="w-fit">{t('Skenario dibuat')}</Badge>
 				<h3 class="text-2xl font-bold tracking-tight">{title}</h3>
 				<p class="text-sm text-muted-foreground">{destination} · {incoterm} · {t('margin target')} {targetMargin}%. {t('Skenario tersimpan di backend.')}</p>
-				<Button href="/costing" class="mt-2 w-fit">{t('Kembali ke costing')}</Button>
+				<div class="mt-2 flex flex-wrap gap-2.5">
+					{#if createdId}
+						<Button href={`/costing/${createdId}`}>{t('Buka Skenario Costing')}</Button>
+					{/if}
+					<Button variant="outline" href="/costing">{t('Kembali ke costing')}</Button>
+				</div>
 			</CardContent>
 		</Card>
+
 	{:else}
 		<Card>
 			<form class="grid gap-4 p-6" onsubmit={(event) => { event.preventDefault(); create(); }}>

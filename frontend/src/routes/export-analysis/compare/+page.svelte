@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -60,6 +61,24 @@
 			.catch(() => {
 				error = t('Gagal memuat daftar negara.');
 			});
+	});
+
+	$effect(() => {
+		const targetParam = page.url.searchParams.get('target') || page.url.searchParams.get('country');
+		if (targetParam && selectedCodes.length === 0) {
+			const parsed = targetParam.split(',').map((c) => c.trim().toUpperCase()).filter(Boolean);
+			if (parsed.length > 0) selectedCodes = parsed;
+		}
+	});
+
+	$effect(() => {
+		if (products.items.length > 0 && !selectedProductId) {
+			const prodParam = page.url.searchParams.get('productId') || page.url.searchParams.get('product');
+			if (prodParam) {
+				const found = products.items.find((p) => p.id === prodParam || p.id.toLowerCase() === prodParam.toLowerCase());
+				if (found) selectedProductId = found.id;
+			}
+		}
 	});
 
 	function countryFlag(code: string): string {

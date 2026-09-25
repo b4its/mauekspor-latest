@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -22,7 +23,20 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let forwarders = createRemoteList(listForwarders, seedForwarders);
 	$effect(() => {
 		forwarders.load();
+		const destParam = page.url.searchParams.get('destination') || page.url.searchParams.get('country');
+		if (destParam) {
+			const upper = destParam.toUpperCase();
+			if (DEST_OPTIONS.some((o) => o.code === upper)) {
+				recDest = upper;
+				loadRecommendations();
+			}
+		}
+		const modeParam = page.url.searchParams.get('mode');
+		if (modeParam && modeFilters.includes(modeParam)) {
+			activeFilter = modeParam;
+		}
 	});
+
 
 	let filteredForwarders = $derived(
 		forwarders.items.filter((forwarder) => {

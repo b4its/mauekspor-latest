@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -28,7 +29,19 @@
 	let targetValue = $state('');
 	let eta = $state('');
 	let created = $state(false);
+	let createdId = $state('');
 	let error = $state('');
+
+	$effect(() => {
+		const destParam = page.url.searchParams.get('destination') || page.url.searchParams.get('country');
+		if (destParam && !destination) destination = destParam;
+
+		const prodParam = page.url.searchParams.get('product');
+		if (prodParam && !product) product = prodParam;
+
+		const buyerParam = page.url.searchParams.get('buyer');
+		if (buyerParam && !buyer) buyer = buyerParam;
+	});
 
 	let progress = $derived(Math.round(((step + 1) / steps.length) * 100));
 	let currentValid = $derived(
@@ -52,7 +65,7 @@
 		}
 
 		try {
-			await createTradeProject({
+			const res = await createTradeProject({
 				name: projectName,
 				projectType,
 				product,
@@ -63,10 +76,14 @@
 				eta: eta || undefined
 			});
 			created = true;
+			if (res.data?.id) {
+				createdId = res.data.id;
+			}
 		} catch {
 			error = t('Gagal membuat proyek. Coba lagi.');
 		}
 	}
+
 
 	function back() {
 		error = '';
@@ -130,8 +147,14 @@
 						<p class="mt-1 leading-relaxed text-muted-foreground">
 							{t('Proyek berhasil disimpan di backend. Selanjutnya timeline & compliance jobs akan menempel ke proyek ini secara asinkron.')}
 						</p>
-						<Button href="/trade-projects" class="mt-3 w-fit">{t('Kembali ke proyek')}</Button>
+						<div class="mt-3 flex flex-wrap gap-2.5">
+							{#if createdId}
+								<Button href={`/trade-projects/${createdId}`}>{t('Buka Proyek Baru')}</Button>
+							{/if}
+							<Button variant="outline" href="/trade-projects">{t('Kembali ke proyek')}</Button>
+						</div>
 					</div>
+
 				{:else}
 					{#if step === 0}
 						<div class="field grid gap-2">

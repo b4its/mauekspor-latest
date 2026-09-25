@@ -103,8 +103,15 @@
 				</div>
 			</div>
 
+			<div class="mt-5 flex flex-wrap gap-2.5">
+				<Button href={`/export-analysis/create?destination=${country.country_code}`}>{t('Mulai Analisis Ekspor')}</Button>
+				<Button variant="outline" href={`/export-analysis/compare?target=${country.country_code}`}>{t('Bandingkan Pasar')}</Button>
+				<Button variant="outline" href={`/forwarders?destination=${country.country_code}`}>{t('Cari Forwarder ke Jalur Ini')}</Button>
+			</div>
+
 			{#if country.data_note}
 				<p class="mt-5 rounded-xl border border-[#0b3d91]/20 bg-[#0b3d91]/5 px-4 py-3 text-[13px] leading-relaxed text-[#0b1d3a]/80 dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+
 					{country.data_note}
 				</p>
 			{/if}

@@ -84,7 +84,8 @@
 
 		<div class="mt-4 flex flex-wrap gap-2.5">
 			<Button variant="outline" href="/hs-codes">{t('Kembali ke daftar')}</Button>
-			<Button variant="outline" href="/export-analysis/create">{t('Analisis produk')}</Button>
+			<Button variant="outline" href={`/export-analysis/create?hsCode=${record.hs_code}`}>{t('Analisis produk')}</Button>
 		</div>
+
 	{/if}
 </AppShell>

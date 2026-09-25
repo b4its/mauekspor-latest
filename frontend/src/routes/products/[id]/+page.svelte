@@ -94,12 +94,16 @@
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/products/${data.product.id}/edit`}>{t('Edit produk')}</Button>
 					<Button variant="outline" href={`/products/${data.product.id}/enrich`}>{t('Timpa enrichment AI')}</Button>
+					<Button variant="outline" href={`/export-analysis/create?productId=${data.product.id}`}>{t('Analisis Ekspor')}</Button>
+					<Button variant="outline" href={`/costing/create?productId=${data.product.id}`}>{t('Hitung Costing')}</Button>
+					<Button variant="outline" href={`/catalogs/create?productId=${data.product.id}`}>{t('Buat Katalog')}</Button>
 					<Button disabled={enriching} onclick={runEnrichment}>
 						{enriching ? t('Memproses...') : enriched ? t('Enrichment AI diperbarui') : t('Jalankan enrichment AI')}
 					</Button>
 					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>{t('Hapus')}</Button>
 				</div>
 			</CardHeader>
+
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Kode HS')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.product.hs}{data.product.hsConfidence ? ` (${data.product.hsConfidence}% conf)` : ''}</strong>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { t } from '$lib/i18n.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -24,6 +25,15 @@
 	projects.load();
 	let productId = $state('');
 	let projectId = $state('');
+
+	$effect(() => {
+		const prodParam = page.url.searchParams.get('productId') || page.url.searchParams.get('product');
+		if (prodParam && !productId) productId = prodParam;
+
+		const projParam = page.url.searchParams.get('projectId');
+		if (projParam && !projectId) projectId = projParam;
+	});
+
 	let title = $state('');
 	let targetMarket = $state('');
 	let moq = $state('');
