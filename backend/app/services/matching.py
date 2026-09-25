@@ -11,9 +11,8 @@ Strategi lanjutan (digunakan untuk skor akhir bila data tersedia):
 from __future__ import annotations
 
 import re
-from typing import Any
 
-from app import db, ai
+from app import db
 
 # Pemetaan nama kategori -> id (konsisten dengan seed/UI)
 CATEGORY_IDS = {
