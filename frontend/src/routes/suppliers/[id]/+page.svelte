@@ -130,6 +130,15 @@
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="default" href={`/costing/create?product=${encodeURIComponent(data.supplier.category)}`}>
+				{t('Hitung Costing')}
+			</Button>
+			<Button variant="outline" href={`/buyer-requests?search=${encodeURIComponent(data.supplier.category)}`}>
+				{t('Cari Permintaan')}
+			</Button>
+			<Button variant="outline" href={`/products?query=${encodeURIComponent(data.supplier.category)}`}>
+				{t('Produk Terkait')}
+			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit supplier')}</Button>
 			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus supplier')}</Button>
 		</div>
