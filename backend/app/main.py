@@ -10,7 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import db
 from app.core.config import settings
-from app.core.permissions import can_mutate_module, can_read_module
+from app.core.permissions import can_mutate_module, can_read_module, can_read_path
 from app.core.security import decode_token
 from app.api.routes import router
 from app.seed import seed_if_empty
@@ -431,13 +431,17 @@ async def require_auth_for_mutations(request, call_next):
                 status_code=403,
                 content=_error_body(403, f"Role {user.get('role', '')} cannot modify this resource"),
             )
-    elif not can_read_module((user or {}).get("role", ""), module) and not _is_anon_read(
+    elif not can_read_path((user or {}).get("role", ""), request.url.path) and not _is_anon_read(
         request.url.path
     ):
-        # 403 untuk modul admin-only, 401 untuk modul yang butuh login.
         from app.core.permissions import ADMIN_ONLY_MODULES as _ADMIN_ONLY
-        if module in _ADMIN_ONLY:
-            return JSONResponse(status_code=403, content=_error_body(403, "Admin access required"))
+        # Modul admin-only SELALU 403 (tak membocorkan apakah perlu login).
+        # Modul komersial: 403 bila sudah login tapi peran tak berhak, else 401.
+        if module in _ADMIN_ONLY or user:
+            return JSONResponse(
+                status_code=403,
+                content=_error_body(403, "You do not have access to this resource"),
+            )
         return JSONResponse(status_code=401, content=_error_body(401, "Authentication required"))
     return await call_next(request)
 
