@@ -646,6 +646,7 @@ export type EducationalArticle = {
 	content?: string;
 	videoUrl?: string;
 	fileUrl?: string;
+	fileId?: string;
 	fileName?: string;
 	orderIndex?: number;
 	createdAt?: string;

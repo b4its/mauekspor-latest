@@ -51,8 +51,14 @@
 	let fileUrl = $derived(
 		data.article.fileUrl
 			? data.article.fileUrl.startsWith('/files/storage/')
-				? fileDownloadUrl(data.article.fileUrl.split('/files/storage/')[1])
-				: data.article.fileUrl
+				// Legacy: nama storage (tanpa file id) → gunakan fileId bila tersedia.
+				? data.article.fileId
+					? fileDownloadUrl(data.article.fileId)
+					: null
+				: data.article.fileUrl.startsWith('/files/')
+					// Path backend "/files/{id}/download/" → prefix API base.
+					? fileDownloadUrl(data.article.fileUrl.split('/files/')[1].split('/')[0])
+					: data.article.fileUrl
 			: null
 	);
 
