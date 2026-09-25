@@ -219,7 +219,7 @@
 		<Card>
 			<h3 class="text-2xl font-bold tracking-tight">{t('Cost Breakdown')}</h3>
 			<div class="mt-4 grid gap-3">
-				{#each data.quotation.costLines as line}
+					{#each data.quotation.costLines ?? [] as line}
 					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-3 py-2.5">
 						<span class="text-sm font-bold text-muted-foreground">{line.label}</span>
 						<strong class="text-sm font-bold">{currency.format(line.amount)}</strong>

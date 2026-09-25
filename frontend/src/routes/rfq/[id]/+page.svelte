@@ -194,7 +194,7 @@
 					</div>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					{#each data.rfq.requirements as requirement}
+					{#each data.rfq.requirements ?? [] as requirement}
 						<Badge variant="outline">{requirement}</Badge>
 					{/each}
 				</div>

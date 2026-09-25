@@ -207,7 +207,7 @@
 			<CardHeader class="p-0"><CardTitle>{t('Risks')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2 p-0 pt-4">
 				<ul class="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
-					{#each data.supplier.risks as risk}
+					{#each data.supplier.risks ?? [] as risk}
 						<li>{risk}</li>
 					{/each}
 				</ul>

@@ -197,7 +197,7 @@
 		<Card>
 			<CardHeader class="p-0"><CardTitle>{t('Daftar Periksa Validasi')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3 p-0 pt-4">
-				{#each data.document.checks as check}
+					{#each data.document.checks ?? [] as check}
 					<div class="grid gap-2.5 rounded-lg border bg-muted/40 p-3">
 						<Badge variant={toneVariant(statusTone(check.status))} class="w-fit">{check.status}</Badge>
 						<div>

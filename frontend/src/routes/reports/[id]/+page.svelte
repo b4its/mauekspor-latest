@@ -126,7 +126,7 @@
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{data.report.type} · {localPeriod} · {data.report.owner}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.report.sections.length}</strong></div>
+			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{(data.report.sections ?? []).length}</strong></div>
 		</CardContent>
 		<div class="mt-5 flex flex-wrap gap-2.5">
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
@@ -174,7 +174,7 @@
 				{/if}
 				{#if generated}
 					<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-						{#each data.report.sections as section}
+						{#each data.report.sections ?? [] as section}
 							{#if typeof section === 'object' && section !== null}
 								<div class="rounded-lg border bg-muted/40 p-3">
 									<span class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{section.title}</span>
@@ -188,7 +188,7 @@
 					</div>
 				{:else}
 					<div class="flex flex-wrap gap-2">
-						{#each data.report.sections as section}
+						{#each data.report.sections ?? [] as section}
 							{#if typeof section === 'object' && section !== null}
 								<span class="rounded-full border bg-muted/40 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{section.title}</span>
 							{:else}
@@ -207,7 +207,7 @@
 			</CardHeader>
 			<CardContent class="grid gap-3 p-5">
 				<div class="grid gap-3 sm:grid-cols-3">
-					{#each data.report.insights as insight}
+					{#each data.report.insights ?? [] as insight}
 						<div class="rounded-lg border bg-muted/40 p-3 text-sm font-semibold text-muted-foreground">{insight}</div>
 					{/each}
 				</div>

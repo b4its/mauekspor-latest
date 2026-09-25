@@ -215,7 +215,7 @@
 			<CardContent class="grid gap-4 p-5">
 				<h3 class="text-xl font-bold tracking-tight">{t('Baris Order')}</h3>
 				<div class="grid gap-2">
-					{#each data.order.lines as line}
+					{#each data.order.lines ?? [] as line}
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 							<span class="block">{line.product}</span>
 							<strong class="mt-1 block text-sm font-bold text-foreground">{line.quantity}</strong>
@@ -230,7 +230,7 @@
 			<CardContent class="grid gap-4 p-5">
 				<h3 class="text-xl font-bold tracking-tight">{t('Daftar Periksa Eksekusi')}</h3>
 				<div class="grid gap-2">
-					{#each data.order.checklist as item}
+					{#each data.order.checklist ?? [] as item}
 						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
 							<Badge variant={toneVariant(statusTone(item.status))}>{item.status}</Badge>
 							<strong class="text-sm font-bold">{item.label}</strong>

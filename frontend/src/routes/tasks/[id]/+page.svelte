@@ -222,7 +222,7 @@
 				<CardTitle class="mt-3 text-2xl font-bold tracking-tight">{t('Pekerjaan yang Diperlukan')}</CardTitle>
 			</CardHeader>
 			<CardContent class="grid grid-cols-2 gap-2 md:grid-cols-4">
-				{#each data.task.checklist as item}
+					{#each data.task.checklist ?? [] as item}
 					<div class={completed || item.done ? 'rounded-lg border border-primary/30 bg-primary/10 p-3' : 'rounded-lg border bg-muted/40 p-3'}>
 						<span class="text-xs font-bold text-muted-foreground">{completed || item.done ? t('Selesai') : t('Menunggu')}</span>
 						<strong class="mt-1 block text-sm font-bold">{item.label}</strong>

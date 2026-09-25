@@ -221,7 +221,7 @@
 			</CardHeader>
 			<CardContent class="grid gap-3 pt-4">
 				<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-					{#each data.payment.milestones as milestone}
+					{#each data.payment.milestones ?? [] as milestone}
 						<div class="grid gap-2 rounded-lg border bg-muted/30 p-3.5">
 							<Badge variant={toneVariant(statusTone(received ? 'Done' : milestone.status))} class="w-fit">{received ? 'Done' : milestone.status}</Badge>
 							<strong class="text-sm font-bold">{milestone.label}</strong>

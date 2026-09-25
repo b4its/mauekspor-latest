@@ -257,7 +257,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							</div>
 						</div>
 						<div class="flex flex-wrap gap-2">
-							{#each file.tags as tag}
+							{#each file.tags ?? [] as tag}
 								<span class="rounded-full border bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{tag}</span>
 							{/each}
 						</div>

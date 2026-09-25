@@ -220,7 +220,7 @@
 		<Card>
 			<CardHeader class="p-0"><CardTitle>{t('Buyer Signals')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5 p-0 pt-4">
-				{#each data.buyer.signals as signal}
+					{#each data.buyer.signals ?? [] as signal}
 					<div class="relative rounded-lg border bg-muted/30 p-3.5 pl-10">
 						<span class={`absolute left-3.5 top-4 size-3 rounded-full ${signal.tone === 'green' ? 'bg-green-600' : signal.tone === 'orange' ? 'bg-orange-500' : signal.tone === 'red' ? 'bg-red-500' : 'bg-blue-600'}`}></span>
 						<strong class="block text-sm font-bold">{signal.label}</strong>
