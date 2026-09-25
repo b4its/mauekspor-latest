@@ -186,3 +186,109 @@ def test_educational_file_upload_produces_downloadable_url():
         dl = c.get(f"/api/v1{data['fileUrl']}")
         assert dl.status_code == 200, dl.text
         assert dl.content == b"hello world"
+
+
+def test_create_product_persists_certificates_and_description():
+    """Form produk baru mengirim certificates/description — jangan direset ke kosong."""
+    with TestClient(app) as c:
+        _login(c)
+        payload = {
+            "name": "QA Product",
+            "category": "Food & Beverage",
+            "origin": "Aceh",
+            "certificates": ["Halal", "ISO 22000"],
+            "description": "Deskripsi QA",
+            "material_composition": "Kopi",
+            "quality_specs": {"Grade": "A"},
+        }
+        res = c.post("/api/v1/products/", json=payload)
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["certificates"] == ["Halal", "ISO 22000"]
+        assert data["description"] == "Deskripsi QA"
+        assert data["material_composition"] == "Kopi"
+        assert data["quality_specs"] == {"Grade": "A"}
+
+
+def test_update_product_persists_certificates():
+    with TestClient(app) as c:
+        _login(c)
+        pid = c.get("/api/v1/products/").json()["data"][0]["id"]
+        res = c.patch(f"/api/v1/products/{pid}/", json={"certificates": ["SVLK"]})
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["certificates"] == ["SVLK"]
+
+
+def test_dashboard_summary_scopes_to_caller():
+    """role & business_profile harus milik pemanggil, bukan admin pertama di tabel."""
+    with TestClient(app) as c:
+        _login(c)
+        res = c.get("/api/v1/business-profiles/dashboard/summary/")
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["role"] == "Admin"
+
+
+def test_mark_payment_received_zero_amount_not_settled():
+    """Payment tanpa nilai terutang (amount=0) tidak boleh ditandai 'Settled'."""
+    with TestClient(app) as c:
+        _login(c)
+        created = c.post("/api/v1/payments/", json={"buyer": "QA", "amount": 0, "currency": "USD"}).json()["data"]
+        res = c.post(f"/api/v1/payments/{created['id']}/mark-received/")
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["status"] == "Deposit Paid"
+
+
+def test_verify_supplier_bumps_capability_score():
+    with TestClient(app) as c:
+        _login(c)
+        sid = c.get("/api/v1/suppliers/").json()["data"][0]["id"]
+        res = c.post(f"/api/v1/suppliers/{sid}/verify/")
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["capabilityScore"] >= 90
+
+
+def test_buyer_request_selected_catalog_id_alias():
+    with TestClient(app) as c:
+        _login(c)
+        rid = c.get("/api/v1/buyer-requests/").json()["data"][0]["id"]
+        res = c.patch(
+            f"/api/v1/buyer-requests/{rid}/status/",
+            json={"status": "Closed", "selected_catalog": "CAT-1", "umkm": "UMKM-1"},
+        )
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["selectedCatalogId"] == "CAT-1"
+        assert data["selectedUmkmId"] == "UMKM-1"
+
+
+def test_catalog_update_persists_base_price_alias():
+    with TestClient(app) as c:
+        _login(c)
+        catalog_id = c.get("/api/v1/catalogs/").json()["data"][0]["id"]
+        res = c.put(f"/api/v1/catalogs/{catalog_id}/", json={"base_price_exw": 1234})
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["basePriceExw"] == 1234
+
+
+def test_list_countries_includes_custom_country_id():
+    with TestClient(app) as c:
+        _login(c)
+        created = c.post(
+            "/api/v1/admin/countries/",
+            json={"country_code": "ZQ", "country_name": "QA-Land", "region": "Asia"},
+        )
+        assert created.status_code == 200, created.text
+        cid = created.json()["data"]["id"]
+        items = c.get("/api/v1/countries/").json()["data"]
+        custom = [x for x in items if x.get("country_code") == "ZQ"]
+        assert custom and custom[0].get("id") == cid
+
+
+def test_regulation_check_does_not_clobber_readiness_score():
+    with TestClient(app) as c:
+        _login(c)
+        aid = c.get("/api/v1/export-analysis/").json()["data"][0]["id"]
+        before = c.get(f"/api/v1/export-analysis/{aid}/").json()["data"].get("score")
+        res = c.post(f"/api/v1/export-analysis/{aid}/regulation-recommendations/")
+        assert res.status_code == 200, res.text
+        assert res.json()["data"].get("score") == before
