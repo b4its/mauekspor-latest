@@ -5,7 +5,8 @@
 
 .PHONY: help install dev-env dev-up dev-down dev-restart dev-status dev-logs \
         dev-logs-backend dev-logs-frontend dev-shell-backend dev-network \
-        dev-clean dev-rebuild dev-db-reset test test-backend test-frontend check build
+        dev-clean dev-rebuild dev-db-reset test test-backend test-frontend check build \
+        frontend-clean reset-frontend
 
 SHELL := /bin/bash
 COMPOSE_FILE := docker-compose.dev.yml
@@ -38,6 +39,7 @@ help:
 	@echo "  make dev-clean        # Remove containers, volumes, images"
 	@echo "  make dev-rebuild      # Clean rebuild from scratch"
 	@echo "  make dev-db-reset     # Reset database (HAPUS SEMUA DATA!)"
+	@echo "  make frontend-clean   # Clear .svelte-kit/.vite cache & re-sync (fix stale SSR errors)"
 	@echo ""
 	@echo "🧪 TESTING & QUALITY:"
 	@echo "  make test             # Run all tests (backend + frontend)"
@@ -162,6 +164,15 @@ dev-clean: $(ENV_FILE)
 	@echo "🧹 Cleaning up all development resources..."
 	@docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down -v --remove-orphans
 	@echo "✅ Cleanup complete"
+
+frontend-clean:
+	@echo ""
+	@echo "🧹 Clearing frontend build caches (.svelte-kit, .vite)..."
+	@rm -rf frontend/.svelte-kit frontend/node_modules/.vite frontend/node_modules/.vite-temp
+	@cd frontend && ./node_modules/.bin/svelte-kit sync
+	@echo "✅ Frontend caches cleared & re-synced."
+
+reset-frontend: frontend-clean
 
 dev-rebuild: $(ENV_FILE)
 	@echo ""
