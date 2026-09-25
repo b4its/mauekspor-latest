@@ -84,7 +84,7 @@
 			<Badge>{t('Panduan penyiapan')}</Badge>
 			<h2 class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Mulai dengan tujuan komersial, lalu lampirkan data produk dan kepatuhan.')}</h2>
 			<p class="leading-relaxed text-muted-foreground">
-				{t('Wizard ini membuat kontrak frontend untuk alur kerja backend di masa depan: simpan proyek, buat tugas awal, dan picu pekerjaan HS/kepatuhan secara asinkron.')}
+				{t('Wizard ini menyimpan proyek dagang baru ke backend beserta tujuan komersial, produk, dan konteks kepatuhannya.')}
 			</p>
 
 			<div class="stepper flex flex-wrap gap-2.5" aria-label="Wizard progress">

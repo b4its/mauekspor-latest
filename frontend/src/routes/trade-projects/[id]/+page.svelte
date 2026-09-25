@@ -38,8 +38,10 @@
 
 	let compliance = createRemoteList<ComplianceRequirement>(listComplianceRequirements, []);
 	let docs = createRemoteList<TradeDocument>(listTradeDocuments, []);
-	compliance.load();
-	docs.load();
+	$effect(() => {
+		compliance.load();
+		docs.load();
+	});
 
 	let complianceTasks = $derived(
 		compliance.items
@@ -283,7 +285,7 @@
 					<p class="mt-2 leading-relaxed text-muted-foreground">
 						{currency.format(data.project.value)} {t('berlaku hingga')} 12 Sep 2026. {t('Termasuk pengepakan ekspor, penanganan asal, dan asumsi freight laut dasar.')}
 					</p>
-					<Button class="mt-4">{t('Siapkan revisi')}</Button>
+					<Button class="mt-4" onclick={openEdit}>{t('Siapkan revisi')}</Button>
 				</div>
 			{:else}
 				<div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-6">
