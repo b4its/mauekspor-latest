@@ -43,7 +43,22 @@ def test_compliance_evidence_accepts_note_key():
             json={"requirementId": req_id, "note": "Lab report QR uploaded", "fileName": "lab.pdf"},
         )
         assert res.status_code == 200, res.text
-        assert res.json()["data"]["currentEvidence"] == "Lab report QR uploaded"
+        data = res.json()["data"]
+        assert data["currentEvidence"] == "Lab report QR uploaded"
+        assert data["evidenceFile"] == "lab.pdf"
+
+
+def test_shipment_exception_resolve_persists_note_and_owner():
+    with TestClient(app) as c:
+        _login(c)
+        shipment_id = c.get("/api/v1/shipments/").json()["data"][0]["id"]
+        payload = {"shipmentId": shipment_id, "note": "Customs docs corrected", "owner": "Operations"}
+        res = c.post(f"/api/v1/shipments/{shipment_id}/exceptions/resolve/", json=payload)
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["status"] == "In Transit"
+        assert data["lastExceptionResolution"]["note"] == "Customs docs corrected"
+        assert data["lastExceptionResolution"]["owner"] == "Operations"
 
 
 def test_quotation_create_accepts_extra_frontend_keys():

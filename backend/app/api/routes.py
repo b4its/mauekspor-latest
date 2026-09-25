@@ -4,7 +4,6 @@ import hmac
 import json
 import logging
 import os
-import pathlib
 import time
 from datetime import datetime, timezone
 
@@ -902,12 +901,21 @@ def create_product_pricing(product_id: str, payload: dict):
 
 
 @router.post("/products/{product_id}/ai/catalog-description/")
-def generate_product_catalog_description(product_id: str, payload: dict):
+def generate_product_catalog_description(product_id: str, payload: dict | None = None):
     product = db.get("products", product_id)
     if not product:
         raise HTTPException(404, "Product not found")
     from app.services.market_intel import generate_catalog_description
-    result = generate_catalog_description(product)
+    opts = payload or {}
+    catalog = None
+    catalog_id = opts.get("catalog_id")
+    if catalog_id:
+        catalog = db.get("catalogs", catalog_id)
+    result = generate_catalog_description(
+        product,
+        save_to_catalog=bool(opts.get("save_to_catalog")),
+        catalog=catalog,
+    )
     return {"data": result, "meta": {}}
 
 
@@ -2667,12 +2675,17 @@ def upload_compliance_evidence(req_id: str, payload: dict):
     record = db.get("compliance_requirements", req_id)
     if not record:
         raise HTTPException(404, "Compliance requirement not found")
-    record["currentEvidence"] = payload.get("description") or payload.get("note") or record.get("currentEvidence")
+    file_name = payload.get("fileName") or payload.get("filename")
+    description = payload.get("description") or payload.get("note")
+    if file_name:
+        record["evidenceFile"] = file_name
+    record["currentEvidence"] = description or record.get("currentEvidence")
     record["status"] = "Evidence Uploaded"
     record["updatedAt"] = "now"
+    summary = file_name or record.get("currentEvidence") or "Bukti diunggah"
     _notify(
         f"Bukti diunggah untuk {record.get('title', 'requirement')}",
-        record["currentEvidence"],
+        summary,
         "Compliance", "Info", f"/compliance/{req_id}",
     )
     return _save_one(record)
@@ -2864,14 +2877,35 @@ def update_shipment_milestone(shipment_id: str, payload: dict):
 
 
 @router.post("/shipments/{shipment_id}/exceptions/resolve/")
-def resolve_shipment_exception(shipment_id: str):
+def resolve_shipment_exception(shipment_id: str, payload: dict | None = None):
     record = db.get("shipments", shipment_id)
     if not record:
         raise HTTPException(404, "Shipment not found")
+    opts = payload or {}
+    note = (opts.get("note") or "").strip()
+    owner = (opts.get("owner") or "Operations").strip()
+    exceptions = record.get("exceptions") or []
+    if isinstance(exceptions, list):
+        for exc in exceptions:
+            if isinstance(exc, dict) and exc.get("status") != "Resolved":
+                exc["status"] = "Resolved"
+                if note:
+                    exc["resolutionNote"] = note
+                exc["resolvedBy"] = owner
     record["status"] = "In Transit"
     record.pop("exception", None)
+    record["exceptions"] = exceptions
+    record["lastExceptionResolution"] = {
+        "note": note,
+        "owner": owner,
+        "at": "now",
+    }
     record["updatedAt"] = "now"
-    _notify("Exception shipment diselesaikan", "Shipment kembali In Transit.", "Shipments", "Info", f"/shipments/{shipment_id}")
+    _notify(
+        "Exception shipment diselesaikan",
+        note or f"Shipment kembali In Transit (ditangani oleh {owner}).",
+        "Shipments", "Info", f"/shipments/{shipment_id}",
+    )
     return _save_one(record)
 
 
