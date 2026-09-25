@@ -5,7 +5,8 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { statusTone } from '$lib/utils/format';
-	import { generateTradeDocument, approveTradeDocument, updateTradeDocument, deleteTradeDocument } from '$lib/api/documents';
+	import { generateTradeDocument, approveTradeDocument, updateTradeDocument, deleteTradeDocument, documentPdfUrl } from '$lib/api/documents';
+	import DownloadIcon from '@lucide/svelte/icons/download';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
@@ -139,6 +140,10 @@
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="default" href={documentPdfUrl(data.document.id)} target="_blank">
+				<DownloadIcon class="size-4" />
+				{t('Unduh PDF')}
+			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
 			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 		</div>
@@ -178,12 +183,17 @@
 					<CardDescription>{t('Kolom dihasilkan dari data proyek, produk, kutipan, dan pengiriman.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
+					<Button variant="outline" href={documentPdfUrl(data.document.id)} target="_blank">
+						<DownloadIcon class="size-4" />
+						{t('Unduh PDF')}
+					</Button>
 					<Button variant="outline" onclick={regenerate}>{t('Regenerasi')}</Button>
 					<Button disabled={approving || approved || displayScore < 90} onclick={approve}>
 						{approving ? t('Menyetujui...') : approved ? t('Disetujui') : t('Setujui dokumen')}
 					</Button>
 				</div>
 			</CardHeader>
+
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				{#each Object.entries(data.document.fields) as [key, value]}
 					<div class="rounded-lg border bg-muted/40 p-3">

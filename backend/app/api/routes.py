@@ -2957,6 +2957,23 @@ def delete_document(document_id: str):
     return {"data": {"status": "deleted", "id": document_id}, "meta": {}}
 
 
+@router.get("/documents/{document_id}/pdf/")
+def download_trade_document_pdf(document_id: str):
+    record = db.get("documents", document_id)
+    if not record:
+        raise HTTPException(404, "Document not found")
+    project = db.get("trade_projects", record.get("projectId", "")) if record.get("projectId") else None
+    from app.services.pricing import build_trade_document_pdf
+    pdf_bytes = build_trade_document_pdf(record, project)
+    safe_type = str(record.get("type", "document")).lower().replace(" ", "-")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{safe_type}-{document_id}.pdf"'},
+    )
+
+
+
 # ----------------------------------------------------------------------------
 # SHIPMENTS
 # ----------------------------------------------------------------------------

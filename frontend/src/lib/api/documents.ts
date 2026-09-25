@@ -43,3 +43,9 @@ export function updateTradeDocument(id: string, payload: Partial<TradeDocument>)
 export function deleteTradeDocument(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/documents/${id}/`, { method: 'DELETE' });
 }
+
+export function documentPdfUrl(id: string): string {
+	const base = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+	return `${base}/documents/${id}/pdf/`;
+}
+

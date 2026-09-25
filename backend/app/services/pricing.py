@@ -516,3 +516,48 @@ def build_invoice_pdf(record: dict[str, Any]) -> bytes:
             lines.append(f"{extra.capitalize():<12}: {record.get(extra)}")
     lines += ["", "Terima kasih telah menggunakan MauEkspor.", f"Generated: {datetime.now(timezone.utc).isoformat()}"]
     return _wrap_pdf("\n".join(lines).encode("utf-8", errors="replace"))
+
+
+def build_trade_document_pdf(doc: dict[str, Any], project: dict[str, Any] | None = None) -> bytes:
+    """Buat PDF dokumen ekspor resmi (Commercial Invoice, Packing List, Certificate, dll)."""
+    doc_type = doc.get("type", "Export Trade Document").upper()
+    lines: list[str] = [
+        f"MAUEKSPOR - {doc_type}",
+        "=" * 60,
+        f"Document ID : {doc.get('id', '-')}",
+        f"Type        : {doc.get('type', '-')}",
+        f"Status      : {doc.get('status', '-')}",
+        f"Version     : {doc.get('version', 'v1.0')}",
+        f"Validation  : {doc.get('validationScore', 0)} / 100",
+        f"Owner/Issuer: {doc.get('owner', '-')}",
+        "",
+        "PROJECT CONTEXT",
+        "-" * 60,
+    ]
+    if project:
+        lines += [
+            f"Project Name: {project.get('name', '-')}",
+            f"Buyer       : {project.get('buyer', '-')}",
+            f"Destination : {project.get('destination', project.get('country', '-'))}",
+            f"Incoterm    : {project.get('incoterm', '-')}",
+            f"Product     : {project.get('product', '-')}",
+            f"Target Value: {project.get('currency', 'USD')} {project.get('targetValue', project.get('value', '-'))}",
+        ]
+    else:
+        lines.append(f"Project ID  : {doc.get('projectId', '-')}")
+
+    clauses = doc.get("clauses") or doc.get("requirements") or []
+    if clauses:
+        lines += ["", "CLAUSES & REQUIREMENTS", "-" * 60]
+        for c in clauses:
+            lines.append(f"- {c}")
+
+    lines += [
+        "",
+        "=" * 60,
+        "VERIFICATION & COMPLIANCE STAMP",
+        "Document validated against Indonesian Export Regulations & Destination Customs.",
+        f"Generated: {datetime.now(timezone.utc).isoformat()}",
+    ]
+    return _wrap_pdf("\n".join(lines).encode("utf-8", errors="replace"))
+

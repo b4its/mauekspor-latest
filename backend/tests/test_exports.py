@@ -137,3 +137,24 @@ def test_download_invoice_pdf_unknown_404():
         token = _login(c)
         res = c.get("/api/v1/billing/NOPE/invoice.pdf/", headers={"Authorization": f"Bearer {token}"})
         assert res.status_code == 404
+
+
+def test_download_document_pdf():
+    with TestClient(app) as c:
+        token = _login(c)
+        h = {"Authorization": f"Bearer {token}"}
+        docs = c.get("/api/v1/documents/", headers=h).json()["data"]
+        assert docs, "perlu minimal 1 record document seed"
+        doc_id = docs[0]["id"]
+        res = c.get(f"/api/v1/documents/{doc_id}/pdf/", headers=h)
+        assert res.status_code == 200, res.text
+        assert res.headers["content-type"] == "application/pdf"
+        assert res.content.startswith(b"%PDF-")
+
+
+def test_download_document_pdf_unknown_404():
+    with TestClient(app) as c:
+        token = _login(c)
+        res = c.get("/api/v1/documents/DOC-NONEXISTENT/pdf/", headers={"Authorization": f"Bearer {token}"})
+        assert res.status_code == 404
+

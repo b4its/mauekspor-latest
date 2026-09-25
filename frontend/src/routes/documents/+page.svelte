@@ -6,7 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, tradeDocuments as seedDocuments } from '$lib/data/trade';
 	import type { TradeDocument } from '$lib/data/trade';
-	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument } from '$lib/api/documents';
+	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument, documentPdfUrl } from '$lib/api/documents';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
@@ -295,6 +295,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								</Button>
 							{/if}
 							<Button
+								variant="outline"
+								size="sm"
+								class="h-7 text-xs"
+								href={documentPdfUrl(document.id)}
+								target="_blank"
+							>
+								PDF
+							</Button>
+							<Button
 								variant="ghost"
 								size="sm"
 								class="h-7 text-xs text-destructive hover:bg-destructive/10"
@@ -303,6 +312,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							>
 								{t('Hapus')}
 							</Button>
+
 						</div>
 					</div>
 				</Card>
