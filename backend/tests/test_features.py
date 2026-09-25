@@ -92,12 +92,21 @@ def test_catalog_description_generate():
 def test_export_analysis_compliance_and_regulations():
     with TestClient(app) as c:
         _login(c)
-        r = c.post("/api/v1/export-analysis/", json={"productId": "PRD-COF-001", "destination": "JP"})
-        assert r.status_code in (200, 409), r.text  # 409 bila sudah ada
-        if r.status_code == 409:
-            analysis = c.get("/api/v1/export-analysis/").json()["data"][0]
-        else:
-            analysis = r.json()["data"]
+        # Pilih kombinasi produk/negara yang belum ada agar analisis benar-benar
+        # dibuat (dedup product+country sekarang aktif).
+        existing = c.get("/api/v1/export-analysis/").json()["data"]
+        taken = {(a.get("productId"), (a.get("destination") or "")[:2].upper()) for a in existing}
+        products = c.get("/api/v1/products/").json()["data"]
+        pid, dest = None, "SG"
+        for p in products:
+            if (p["id"], "SG") not in taken:
+                pid = p["id"]
+                break
+        assert pid, "tidak ada kombinasi produk/negara bebas untuk diuji"
+
+        r = c.post("/api/v1/export-analysis/", json={"productId": pid, "destination": dest})
+        assert r.status_code == 200, r.text
+        analysis = r.json()["data"]
         aid = analysis["id"]
         # Detail berisi snapshot & grade
         detail = c.get(f"/api/v1/export-analysis/{aid}/").json()["data"]
@@ -112,7 +121,7 @@ def test_export_analysis_compliance_and_regulations():
         assert r.json()["data"]["productChanged"] is False
         # Compare
         r = c.post("/api/v1/export-analysis/compare/", json={
-            "product_id": "PRD-COF-001", "country_codes": ["JP", "SG"],
+            "product_id": pid, "country_codes": ["JP", "SG"],
         })
         assert r.status_code == 200, r.text
         assert len(r.json()["data"]["results"]) == 2

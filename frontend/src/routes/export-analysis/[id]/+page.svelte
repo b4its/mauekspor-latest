@@ -339,7 +339,32 @@
 			</CardContent>
 		</Card>
 
-		{#if typeof data.analysis.recommendations === 'string' && (data.analysis.recommendations as string).length > 0}
+		{#if Array.isArray(data.analysis.recommendations) && data.analysis.recommendations.length > 0}
+			<Card>
+				<CardHeader>
+					<Badge variant="secondary">{t('Rekomendasi')}</Badge>
+					<CardTitle>{t('Langkah perbaikan')}</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<ul class="grid gap-2">
+						{#each data.analysis.recommendations as rec, index (index)}
+							<li class="flex items-start gap-2 rounded-lg border bg-muted/30 p-2.5 text-sm">
+								<span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary"></span>
+								<span class="leading-relaxed">
+									{#if rec && typeof rec === 'object'}
+										{#if rec.title}<b>{rec.title}</b>{/if}
+										{#if rec.type}<span class="ms-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold text-muted-foreground">{rec.type}</span>{/if}
+										{#if rec.detail}<span class="mt-0.5 block text-muted-foreground">{rec.detail}</span>{/if}
+									{:else}
+										{String(rec)}
+									{/if}
+								</span>
+							</li>
+						{/each}
+					</ul>
+				</CardContent>
+			</Card>
+		{:else if typeof data.analysis.recommendations === 'string' && (data.analysis.recommendations as string).length > 0}
 			<Card>
 				<CardHeader>
 					<Badge variant="secondary">{t('Rekomendasi')}</Badge>
