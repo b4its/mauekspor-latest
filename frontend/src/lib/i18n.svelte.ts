@@ -2510,7 +2510,11 @@ const dictionary: Record<string, Entry> = {
 	'Buat pengiriman': { id: 'Buat pengiriman', en: 'Create shipment' },
 	'Buka detail pengiriman': { id: 'Buka detail pengiriman', en: 'Open shipment detail' },
 	'Keyakinan AI': { id: 'Keyakinan AI', en: 'AI confidence' },
-	'Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.': { id: 'Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.', en: 'Requires human confirmation before document generation.' }
+	'Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.': { id: 'Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.', en: 'Requires human confirmation before document generation.' },
+	'Akses ditolak': { id: 'Akses ditolak', en: 'Access denied' },
+	'Peran Anda': { id: 'Peran Anda', en: 'Your role' },
+	'tidak memiliki akses ke halaman ini. Hubungi admin bila Anda merasa ini keliru.': { id: 'tidak memiliki akses ke halaman ini. Hubungi admin bila Anda merasa ini keliru.', en: 'does not have access to this page. Contact an admin if you believe this is a mistake.' },
+	'Kembali ke dasbor': { id: 'Kembali ke dasbor', en: 'Back to dashboard' }
 };
 
 let initial: Locale = 'id';

@@ -6,6 +6,7 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import { Card, CardTitle, CardDescription } from '$lib/components/ui/card/index.js';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -16,8 +17,11 @@
 	import BellIcon from '@lucide/svelte/icons/bell';
 	import ArrowRightLeftIcon from '@lucide/svelte/icons/arrow-right-left';
 	import MenuIcon from '@lucide/svelte/icons/menu';
+	import ShieldAlertIcon from '@lucide/svelte/icons/shield-alert';
 	import { getStatus, getUser, logout, fetchSession } from '$lib/stores/session.svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { canViewPath } from '$lib/roleAccess';
 	import { listNotifications } from '$lib/api/notifications';
 	import { getAccessToken } from '$lib/api/client';
 import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
@@ -36,6 +40,13 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 	let user = $derived(getUser());
 	let userStatus = $derived(getStatus());
+
+	// Route guard: apakah peran pengguna boleh melihat halaman saat ini?
+	// Selama status masih loading kita jangan blokir (hindari kedip) — hanya
+	// blokir bila sudah terautentikasi dan perannya tidak berhak.
+	let canView = $derived(
+		userStatus !== 'authenticated' || canViewPath(user?.role, page.url.pathname)
+	);
 
 	async function handleLogout() {
 		loggingOut = true;
@@ -288,7 +299,24 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 		</header>
 
 		<div class="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 p-3 sm:p-4 lg:p-6">
-			{@render children()}
+			{#if canView}
+				{@render children()}
+			{:else}
+				<Card class="mx-auto mt-10 max-w-lg p-8 text-center">
+					<div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-destructive/10">
+						<ShieldAlertIcon class="size-7 text-destructive" />
+					</div>
+					<CardTitle class="font-display text-3xl font-black tracking-tight text-[#0b1d3a] dark:text-white">
+						{t('Akses ditolak')}
+					</CardTitle>
+					<CardDescription class="mt-2 leading-relaxed">
+						{t('Peran Anda')} ({user?.role ?? '—'}) {t('tidak memiliki akses ke halaman ini. Hubungi admin bila Anda merasa ini keliru.')}
+					</CardDescription>
+					<div class="mt-6 flex justify-center">
+						<Button href="/dashboard">{t('Kembali ke dasbor')}</Button>
+					</div>
+				</Card>
+			{/if}
 		</div>
 	</Sidebar.Inset>
 

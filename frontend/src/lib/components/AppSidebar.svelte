@@ -9,6 +9,7 @@
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import Logo from '$lib/components/Logo.svelte';
 	import { navGroups, projects, userAccounts } from '$lib/data/trade';
+	import { allowedHrefs } from '$lib/roleAccess';
 	import { t } from '$lib/i18n.svelte';
 
 	import InfoIcon from '@lucide/svelte/icons/info';
@@ -71,6 +72,19 @@
 			'User'
 	);
 	let openRiskCount = $derived(projects.filter((project) => project.risk !== 'Low').length);
+
+	// Filter menu sesuai peran pengguna yang login. Admin melihat semua.
+	const userRole = $derived((currentUser as { role?: string }).role ?? '');
+	const visibleNavGroups = $derived.by(() => {
+		const allowed = allowedHrefs(userRole);
+		if (allowed === '*') return navGroups;
+		return navGroups
+			.map((group) => ({
+				...group,
+				items: group.items.filter((item) => allowed.has(item.href))
+			}))
+			.filter((group) => group.items.length > 0);
+	});
 
 	const groupIconFor: Record<string, typeof RouteIcon> = {
 		Overview: LayoutDashboardIcon,
@@ -166,7 +180,7 @@
 	</Sidebar.Header>
 
 	<Sidebar.Content>
-		{#each navGroups as group (group.label)}
+		{#each visibleNavGroups as group (group.label)}
 			{@const GroupIcon = groupIconFor[group.label] ?? InfoIcon}
 			{#if group.label === 'Overview'}
 				<Sidebar.Group>
