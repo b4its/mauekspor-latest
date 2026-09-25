@@ -33,7 +33,7 @@ services:
       MAUEKSPOR_AI_MODEL: ${MAUEKSPOR_AI_MODEL:-hk/deepseek-4.1-flash}
       MAUEKSPOR_AI_API_KEY: ${MAUEKSPOR_AI_API_KEY:-your-ai-api-key-here}
       MAUEKSPOR_AI_MODE: ${MAUEKSPOR_AI_MODE:-remote}
-      MAUEKSPOR_CORS_ORIGINS: ${MAUEKSPOR_CORS_ORIGINS}
+      MAUEKSPOR_CORS_ORIGINS: ${MAUEKSPOR_CORS_ORIGINS:-}
       MAUEKSPOR_DISABLE_RATE_LIMIT: "1"
     volumes:
       - ./backend:/app:cached

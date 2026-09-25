@@ -16,6 +16,7 @@ backend/*.egg-info/
 backend/mauekspor.db
 backend/data/
 backend/uploads/
+uploads/
 
 guideline
 /guideline

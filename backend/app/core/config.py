@@ -1,6 +1,9 @@
+import ast
+import json
 from pathlib import Path
+from typing import Any
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Path absolut ke .env di dalam direktori backend, agar konfigurasi terbaca
@@ -21,13 +24,51 @@ class Settings(BaseSettings):
     secret_key: str = "change-me-in-production"
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
-    cors_origins: list[str] = [
+    cors_origins: list[str] | str = [
         "http://localhost:5188",
         "http://127.0.0.1:5188",
         "http://localhost:3015",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v: Any) -> list[str]:
+        default_origins = [
+            "http://localhost:5188",
+            "http://127.0.0.1:5188",
+            "http://localhost:3015",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ]
+        if isinstance(v, str):
+            v = v.strip()
+            # Bersihkan tanda kutip pembungkus jika ada (mis. dari Make/shell/env: '["..."]' atau "['...']")
+            while (v.startswith("'") and v.endswith("'")) or (v.startswith('"') and v.endswith('"')):
+                v = v[1:-1].strip()
+            if not v:
+                return default_origins
+            if v.startswith("[") and v.endswith("]"):
+                try:
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        items = [str(item).strip() for item in parsed if str(item).strip()]
+                        return items if items else default_origins
+                except Exception:
+                    try:
+                        parsed = ast.literal_eval(v)
+                        if isinstance(parsed, (list, tuple, set)):
+                            items = [str(item).strip() for item in parsed if str(item).strip()]
+                            return items if items else default_origins
+                    except Exception:
+                        pass
+            items = [item.strip().strip("'\"") for item in v.strip("[]").split(",") if item.strip().strip("'\"")]
+            return items if items else default_origins
+        if isinstance(v, (list, tuple, set)):
+            items = [str(item).strip() for item in v if str(item).strip()]
+            return items if items else default_origins
+        return default_origins
     seed_admin_email: str = "admin@mauekspor.example"
     seed_admin_password: str = "admin123"
     seed_exporter_email: str = "rizal@kopigayo.example"

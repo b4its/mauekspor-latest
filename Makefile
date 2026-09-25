@@ -202,7 +202,7 @@ test: test-backend test-frontend
 
 test-backend:
 	@echo "🐍 Running backend tests with pytest..."
-	@cd backend && .venv/bin/pytest -c pytest.ini
+	@cd backend && MAUEKSPOR_UPLOAD_DIR=uploads .venv/bin/pytest -c pytest.ini
 
 test-frontend:
 	@echo "⚡ Running frontend tests with vitest..."

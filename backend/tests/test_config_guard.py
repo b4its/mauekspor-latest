@@ -75,3 +75,35 @@ def test_pbkdf2_iterations_dipakai_oleh_hash_password():
         assert not security.verify_password("salah", stored)
     finally:
         settings.pbkdf2_iterations = original
+
+
+def test_cors_origins_parsing_formats():
+    """cors_origins harus tahan terhadap berbagai format env var (quotes, JSON, CSV)."""
+    # 1. Single quotes wrapping JSON array (seperti export Make / env file)
+    s1 = Settings(cors_origins="'[\"http://host1:5188\", \"http://host2:5188\"]'")
+    assert s1.cors_origins == ["http://host1:5188", "http://host2:5188"]
+
+    # 2. Raw JSON array string
+    s2 = Settings(cors_origins='["http://host1:5188", "http://host2:5188"]')
+    assert s2.cors_origins == ["http://host1:5188", "http://host2:5188"]
+
+    # 3. Python-style single quotes in list string
+    s3 = Settings(cors_origins="['http://host1:5188', 'http://host2:5188']")
+    assert s3.cors_origins == ["http://host1:5188", "http://host2:5188"]
+
+    # 4. Comma-separated strings
+    s4 = Settings(cors_origins="http://host1:5188, http://host2:5188")
+    assert s4.cors_origins == ["http://host1:5188", "http://host2:5188"]
+
+    # 5. Single URL string
+    s5 = Settings(cors_origins="http://host1:5188")
+    assert s5.cors_origins == ["http://host1:5188"]
+
+    # 6. Empty string -> fallback default
+    s6 = Settings(cors_origins="")
+    assert "http://localhost:5188" in s6.cors_origins
+
+    # 7. Direct list
+    s7 = Settings(cors_origins=["http://custom:5188"])
+    assert s7.cors_origins == ["http://custom:5188"]
+

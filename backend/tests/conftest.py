@@ -20,6 +20,10 @@ os.environ.pop("MAUEKSPOR_AI_API_KEY", None)
 # secara langsung (unit) di test_security / test_audit_regressions.
 os.environ.setdefault("MAUEKSPOR_DISABLE_RATE_LIMIT", "1")
 
+# Pastikan upload dir menggunakan direktori lokal saat test berjalan di luar container
+if os.environ.get("MAUEKSPOR_UPLOAD_DIR", "").startswith("/app"):
+    os.environ["MAUEKSPOR_UPLOAD_DIR"] = os.path.join(os.getcwd(), "uploads")
+
 
 @pytest.fixture(autouse=True)
 def clean_store():
