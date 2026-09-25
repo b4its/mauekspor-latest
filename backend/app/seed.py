@@ -199,11 +199,23 @@ def seed_if_empty():
         "deadline": "2026-08-12", "matchScore": 86, "requirements": ["HS 0901.21", "Japanese label"],
         "matches": [{"supplier": "PT Kopi Gayo Nusantara", "catalog": "Premium Gayo Arabica 250g", "score": 86, "reason": "Strong fit."}],
     })
+    db.insert("rfqs", {
+        "id": "RFQ-0892", "projectId": "EXP-2408-026", "productId": "PRD-SNK-006", "buyerName": "Merlion Grocers",
+        "destination": "Singapore", "quantity": "5,000 pouches", "incoterm": "DAP Singapore DC", "status": "Quoted",
+        "deadline": "2026-08-20", "matchScore": 81, "requirements": ["Halal", "Nutrition facts", "Bilingual label"],
+        "matches": [{"supplier": "North Sumatra Snacks", "catalog": "Cassava Chips Sea Salt 100g", "score": 81, "reason": "Price and capacity fit."}],
+    })
     db.insert("quotations", {
         "id": "Q-2408-017-A", "rfqId": "RFQ-0891", "projectId": "EXP-2408-017", "supplier": "PT Kopi Gayo Nusantara",
         "buyer": "Hikari Foods Co.", "incoterm": "FOB Tanjung Priok", "value": 42800, "currency": "USD",
         "status": "In Review", "validUntil": "2026-08-20", "margin": 22, "notes": "Pending label proof.",
         "costLines": [{"label": "COGS", "amount": 28500}, {"label": "Margin", "amount": 10950}], "updatedAt": "2026-08-06",
+    })
+    db.insert("quotations", {
+        "id": "Q-2408-026-A", "rfqId": "RFQ-0892", "projectId": "EXP-2408-026", "supplier": "North Sumatra Snacks",
+        "buyer": "Merlion Grocers", "incoterm": "DAP Singapore DC", "value": 21800, "currency": "USD",
+        "status": "Accepted", "validUntil": "2026-09-05", "margin": 19, "notes": "FOB DAP Singapore, net 21 days.",
+        "costLines": [{"label": "COGS", "amount": 16800}, {"label": "Margin", "amount": 5000}], "updatedAt": "2026-08-06",
     })
     db.insert("orders", {
         "id": "SO-2408-026", "quotationId": "Q-2408-026-A", "projectId": "EXP-2408-026", "buyer": "Merlion Grocers",
@@ -211,6 +223,13 @@ def seed_if_empty():
         "currency": "USD", "paymentTerms": "Net 21 after delivery", "deliveryWindow": "24-29 Aug 2026", "readiness": 88,
         "lines": [{"product": "Cassava Chips Sea Salt", "quantity": "5,000 pouches", "unitPrice": 4.36, "total": 21800}],
         "checklist": [{"label": "Quotation accepted", "status": "Done"}], "updatedAt": "2026-08-06",
+    })
+    db.insert("orders", {
+        "id": "SO-2408-017", "quotationId": "Q-2408-017-A", "projectId": "EXP-2408-017", "buyer": "Hikari Foods Co.",
+        "supplier": "PT Kopi Gayo Nusantara", "status": "Confirmed", "incoterm": "FOB Tanjung Priok", "value": 42800,
+        "currency": "USD", "paymentTerms": "30% deposit, 70% on shipment", "deliveryWindow": "12-18 Sep 2026", "readiness": 74,
+        "lines": [{"product": "Gayo Arabica Coffee Beans", "quantity": "2,000 bags", "unitPrice": 21.4, "total": 42800}],
+        "checklist": [{"label": "Quotation accepted", "status": "Done"}, {"label": "Deposit received", "status": "Done"}], "updatedAt": "2026-08-06",
     })
 
     # ---------- Compliance / Documents / Shipments / Payments / Tasks ----------

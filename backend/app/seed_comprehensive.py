@@ -516,18 +516,17 @@ def _seed_rfqs():
     existing = {r["id"] for r in db.all("rfqs")}
     
     rfqs = [
-        {"id": "RFQ-0891", "projectId": "EXP-2408-017", "productId": "PRD-COF-001", "buyerName": "Hikari Foods Co.", "destination": "Japan", "quantity": "2,000 bags / 500 kg", "incoterm": "FOB Tanjung Priok", "status": "Matching"},
+        {"id": "RFQ-0891", "projectId": "EXP-2408-017", "productId": "PRD-COF-001", "buyerName": "Hikari Foods Co.", "destination": "Japan", "quantity": "2,000 bags / 500 kg", "incoterm": "FOB Tanjung Priok", "status": "Matching",
+         "deadline": "2026-08-12", "matchScore": 86, "requirements": ["HS 0901.21", "Japanese label"],
+         "matches": [{"supplier": "PT Kopi Gayo Nusantara", "catalog": "Premium Gayo Arabica 250g", "score": 86, "reason": "Strong fit."}]},
+        {"id": "RFQ-0892", "projectId": "EXP-2408-026", "productId": "PRD-SNK-006", "buyerName": "Merlion Grocers", "destination": "Singapore", "quantity": "5,000 pouches", "incoterm": "DAP Singapore DC", "status": "Quoted",
+         "deadline": "2026-08-20", "matchScore": 81, "requirements": ["Halal", "Nutrition facts", "Bilingual label"],
+         "matches": [{"supplier": "North Sumatra Snacks", "catalog": "Cassava Chips Sea Salt 100g", "score": 81, "reason": "Price and capacity fit."}]},
     ]
     
     for rfq in rfqs:
         if rfq["id"] not in existing:
-            db.insert("rfqs", {
-                **rfq,
-                "deadline": "2026-08-12",
-                "matchScore": 86,
-                "requirements": ["HS 0901.21", "Japanese label"],
-                "matches": [{"supplier": "PT Kopi Gayo Nusantara", "catalog": "Premium Gayo Arabica 250g", "score": 86, "reason": "Strong fit."}],
-            })
+            db.insert("rfqs", {**rfq})
 
 
 def _seed_quotations():
@@ -536,6 +535,7 @@ def _seed_quotations():
     
     quotations = [
         {"id": "Q-2408-017-A", "rfqId": "RFQ-0891", "projectId": "EXP-2408-017", "supplier": "PT Kopi Gayo Nusantara", "buyer": "Hikari Foods Co.", "incoterm": "FOB Tanjung Priok", "value": 42800, "currency": "USD", "status": "In Review"},
+        {"id": "Q-2408-026-A", "rfqId": "RFQ-0892", "projectId": "EXP-2408-026", "supplier": "North Sumatra Snacks", "buyer": "Merlion Grocers", "incoterm": "DAP Singapore DC", "value": 21800, "currency": "USD", "status": "Accepted"},
     ]
     
     for quot in quotations:
@@ -555,19 +555,19 @@ def _seed_orders():
     existing = {o["id"] for o in db.all("orders")}
     
     orders = [
-        {"id": "SO-2408-026", "quotationId": "Q-2408-026-A", "projectId": "EXP-2408-026", "buyer": "Merlion Grocers", "supplier": "North Sumatra Snacks", "status": "Document Prep", "incoterm": "DAP Singapore DC", "value": 21800, "currency": "USD", "readiness": 88},
+        {"id": "SO-2408-026", "quotationId": "Q-2408-026-A", "projectId": "EXP-2408-026", "buyer": "Merlion Grocers", "supplier": "North Sumatra Snacks", "status": "Document Prep", "incoterm": "DAP Singapore DC", "value": 21800, "currency": "USD", "readiness": 88,
+         "paymentTerms": "Net 21 after delivery", "deliveryWindow": "24-29 Aug 2026",
+         "lines": [{"product": "Cassava Chips Sea Salt", "quantity": "5,000 pouches", "unitPrice": 4.36, "total": 21800}],
+         "checklist": [{"label": "Quotation accepted", "status": "Done"}]},
+        {"id": "SO-2408-017", "quotationId": "Q-2408-017-A", "projectId": "EXP-2408-017", "buyer": "Hikari Foods Co.", "supplier": "PT Kopi Gayo Nusantara", "status": "Confirmed", "incoterm": "FOB Tanjung Priok", "value": 42800, "currency": "USD", "readiness": 74,
+         "paymentTerms": "30% deposit, 70% on shipment", "deliveryWindow": "12-18 Sep 2026",
+         "lines": [{"product": "Gayo Arabica Coffee Beans", "quantity": "2,000 bags", "unitPrice": 21.4, "total": 42800}],
+         "checklist": [{"label": "Quotation accepted", "status": "Done"}, {"label": "Deposit received", "status": "Done"}]},
     ]
-    
+
     for order in orders:
         if order["id"] not in existing:
-            db.insert("orders", {
-                **order,
-                "paymentTerms": "Net 21 after delivery",
-                "deliveryWindow": "24-29 Aug 2026",
-                "lines": [{"product": "Cassava Chips Sea Salt", "quantity": "5,000 pouches", "unitPrice": 4.36, "total": 21800}],
-                "checklist": [{"label": "Quotation accepted", "status": "Done"}],
-                "updatedAt": "2026-08-06",
-            })
+            db.insert("orders", {**order, "updatedAt": "2026-08-06"})
 
 
 # ============================================================================
