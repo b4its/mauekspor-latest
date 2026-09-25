@@ -52,9 +52,7 @@
 	);
 
 
-	$effect(() => {
-		// Muat hanya setelah sesi terautentikasi (read API kini butuh auth).
-		if (getStatus() !== 'authenticated') return;
+	function loadAll() {
 		projects.load();
 		payments.load();
 		complianceRequirements.load();
@@ -73,13 +71,23 @@
 				lanes = res.data.length ? res.data : seedLanes;
 			})
 			.catch(() => { error = t('Gagal memuat lane analytics.'); });
+	}
+
+	$effect(() => {
+		// Muat hanya setelah sesi terautentikasi (read API kini butuh auth).
+		if (getStatus() !== 'authenticated') return;
+		loadAll();
 	});
 
 	async function handleRefresh() {
 		error = '';
 		refreshing = true;
 		try {
-			await refreshAnalytics();
+			// Refresh mengembalikan metrik terbaru; pakai langsung lalu muat ulang
+			// list/lane lain agar seluruh angka di layar ikut diperbarui.
+			const res = await refreshAnalytics();
+			if (res.data?.length) metrics = res.data;
+			loadAll();
 			refreshed = true;
 		} catch {
 			error = t('Gagal me-refresh analytics.');
