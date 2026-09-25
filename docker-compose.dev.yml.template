@@ -59,9 +59,20 @@ services:
       NODE_ENV: development
       PORT: 5188
       HOST: 0.0.0.0
+      # pnpm 10+ menjalankan "deps status check" otomatis saat `pnpm dev` dan
+      # mencoba purge node_modules; di container tanpa TTY ini gagal. Nonaktifkan.
+      CI: "true"
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
     volumes:
       - ./frontend:/app:cached
+      # Isolasi artefak generated agar TIDAK bocor ke host lewat bind mount:
+      # node_modules (paket container) & .svelte-kit (hasil `svelte-kit sync`)
+      # harus tetap milik container. Tanpa ini, container menulis .svelte-kit
+      # dengan versi kit yang berbeda dari host → error "Failed to load url …
+      # shared-server.js … Does the file exist?".
       - /app/node_modules
+      - /app/.svelte-kit
+      - /app/node_modules/.vite
     healthcheck:
       test:
         - CMD-SHELL

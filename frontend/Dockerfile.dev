@@ -1,17 +1,26 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache curl && npm install -g pnpm@8.15.9
+# curl untuk healthcheck. pnpm disediakan lewat corepack sesuai `packageManager`
+# di package.json (pnpm 11 + lockfileVersion 9) agar resolusi dependensi IDENTIK
+# dengan host. JANGAN pin versi pnpm yang berbeda dari package.json — pnpm lama
+# tidak bisa membaca lockfile baru dan akan resolve ulang ke versi lain.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+    CI=true
+RUN apk add --no-cache curl && corepack enable
 
 COPY package.json pnpm-lock.yaml* ./
 
+# Frozen lockfile memastikan versi persis sama dengan lockfile (tanpa resolve ulang).
 RUN if [ -f pnpm-lock.yaml ]; then \
       pnpm install --frozen-lockfile; \
     else \
       pnpm install; \
-    fi || pnpm install
+    fi
 
 COPY . .
 
-CMD ["pnpm", "dev", "--host", "0.0.0.0", "--port", "5188"]
+# Jalankan vite langsung (bukan `pnpm dev`) agar pnpm tidak memicu
+# "deps status check" yang mencoba purge node_modules dan gagal tanpa TTY.
+CMD ["./node_modules/.bin/vite", "dev", "--host", "0.0.0.0", "--port", "5188"]
