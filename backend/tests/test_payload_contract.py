@@ -104,3 +104,85 @@ def test_buyer_request_requirements_list_roundtrip():
         data = res.json()["data"]
         assert data["requirements"] == payload["requirements"]
         assert data["subject"] == payload["subject"]
+
+
+def test_mark_payment_received_accepts_empty_body():
+    """Frontend memanggil POST mark-received tanpa body — harus 200, bukan 422."""
+    with TestClient(app) as c:
+        _login(c)
+        payment_id = c.get("/api/v1/payments/").json()["data"][0]["id"]
+        res = c.post(f"/api/v1/payments/{payment_id}/mark-received/")
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["status"] in {"Settled", "Deposit Paid"}
+
+
+def test_mark_payment_received_accepts_amount_body():
+    with TestClient(app) as c:
+        _login(c)
+        payment_id = c.get("/api/v1/payments/").json()["data"][0]["id"]
+        res = c.post(f"/api/v1/payments/{payment_id}/mark-received/", json={"amount": 1000})
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["paid"] == 1000
+
+
+def test_update_market_persists_country_and_product():
+    """Editor market mengirim {country, productId, ...} — field ini harus tersimpan."""
+    with TestClient(app) as c:
+        _login(c)
+        market_id = c.get("/api/v1/markets/").json()["data"][0]["id"]
+        res = c.patch(
+            f"/api/v1/markets/{market_id}/",
+            json={"country": "Germany", "productId": "PRD-COF-001", "status": "Watchlist"},
+        )
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["country"] == "Germany"
+        assert data["productId"] == "PRD-COF-001"
+        assert data["status"] == "Watchlist"
+
+
+def test_update_variant_type_preserves_type_code_when_omitted():
+    with TestClient(app) as c:
+        _login(c)
+        catalog_id = c.get("/api/v1/catalogs/").json()["data"][0]["id"]
+        created = c.post(
+            f"/api/v1/catalogs/{catalog_id}/variant-types/",
+            json={"type_code": "color", "type_name": "Warna", "sort_order": 0},
+        ).json()["data"]
+        assert created["typeCode"] == "color"
+        # Update hanya nama — typeCode TIDAK boleh berubah menjadi 'custom'.
+        updated = c.put(
+            f"/api/v1/catalogs/{catalog_id}/variant-types/{created['id']}/",
+            json={"type_name": "Warna Baru"},
+        ).json()["data"]
+        assert updated["typeName"] == "Warna Baru"
+        assert updated["typeCode"] == "color"
+
+
+def test_export_analysis_dedup_detects_seeded_destination():
+    """Analisis seed hanya punya `destination` (nama negara) — dedup harus tetap mendeteksinya."""
+    with TestClient(app) as c:
+        _login(c)
+        # Seed ANL-COF-001 adalah PRD-COF-001 / Japan tanpa countryCode.
+        res = c.post(
+            "/api/v1/export-analysis/",
+            json={"productId": "PRD-COF-001", "destination": "Japan"},
+        )
+        assert res.status_code == 409, res.text
+
+
+def test_educational_file_upload_produces_downloadable_url():
+    with TestClient(app) as c:
+        _login(c)
+        article_id = c.get("/api/v1/educational/articles/").json()["data"][0]["id"]
+        res = c.post(
+            f"/api/v1/educational/articles/{article_id}/upload-file/",
+            files={"file": ("catatan.txt", b"hello world", "text/plain")},
+        )
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["fileUrl"].startswith("/files/")
+        assert data["fileUrl"].endswith("/download/")
+        dl = c.get(f"/api/v1{data['fileUrl']}")
+        assert dl.status_code == 200, dl.text
+        assert dl.content == b"hello world"

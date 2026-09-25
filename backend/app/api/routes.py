@@ -646,9 +646,10 @@ def compute_product_readiness(product: dict) -> int:
 
 @router.post("/products/batch/enrich/")
 def batch_enrich_products(payload: sc.BatchActionPayload):
-    """Enrich beberapa produk sekaligus (default: semua yang masih 'Needs HS Review').
+    """Enrich beberapa produk sekaligus (default: semua yang belum 'Enriched').
 
-    Jika payload.ids kosong, ambil semua produk berstatus 'Needs HS Review'.
+    Jika payload.ids kosong, ambil semua produk yang statusnya bukan 'Enriched'
+    (mencakup 'Needs HS Review', 'Draft', dan 'Ready').
     Endpoint ini didasarkan pada ProductSync service Adaptasi ExportReadyAI (sync & review loop).
     """
     from app.data.hs_loader import get_hs_loader
@@ -1927,7 +1928,8 @@ def update_catalog_variant_type(catalog_id: str, type_id: str, payload: sc.Updat
         raise HTTPException(404, "Variant type not found")
     if payload.type_name:
         vt["typeName"] = payload.type_name
-    vt["typeCode"] = payload.type_code
+    if payload.type_code:
+        vt["typeCode"] = payload.type_code
     if payload.sort_order is not None:
         vt["sortOrder"] = payload.sort_order
     vt["updatedAt"] = "now"
@@ -2415,9 +2417,11 @@ def refresh_market(market_id: str):
     record = db.get("markets", market_id)
     if not record:
         raise HTTPException(404, "Market not found")
+    country = record.get("country") or record.get("destination") or ""
+    product = record.get("productId") or record.get("products") or ""
     insight = ai.ask_json(
         "You are a market intelligence analyst for Indonesian exports. Return JSON with score (0-100) and insight.",
-        f"Market: {record.get('destination', '')} for {record.get('products', '')}",
+        f"Market: {country} for {product}",
         kind="market_insight",
     )
     if insight and isinstance(insight.get("score"), (int, float)):
@@ -2425,7 +2429,8 @@ def refresh_market(market_id: str):
     else:
         record["marketScore"] = min(record.get("marketScore", 0) + 5, 100)
     if insight and insight.get("insight"):
-        record.setdefault("insight", insight["insight"])
+        # Selalu perbarui insight dengan hasil refresh terbaru (bukan setdefault).
+        record["insight"] = insight["insight"]
     record["updatedAt"] = "now"
     return _save_one(record)
 
@@ -2435,8 +2440,10 @@ def update_market(market_id: str, payload: dict):
     record = db.get("markets", market_id)
     if not record:
         raise HTTPException(404, "Market not found")
-    for field in ("destination", "products", "status", "marketScore", "insight",
-                  "strategy", "tariff", "requirements", "notes"):
+    for field in ("country", "destination", "productId", "products", "projectId",
+                  "status", "marketScore", "insight", "entryStrategy", "strategy",
+                  "tariff", "requirements", "notes", "complianceComplexity",
+                  "logisticsFeasibility", "estimatedMargin", "growth"):
         if field in payload:
             record[field] = payload[field]
     record["updatedAt"] = "now"
@@ -2968,7 +2975,7 @@ def create_payment(payload: dict):
 
 
 @router.post("/payments/{payment_id}/mark-received/")
-def mark_payment_received(payment_id: str, payload: dict):
+def mark_payment_received(payment_id: str, payload: dict | None = None):
     record = db.get("payments", payment_id)
     if not record:
         raise HTTPException(404, "Payment not found")
@@ -2980,7 +2987,8 @@ def mark_payment_received(payment_id: str, payload: dict):
         except (TypeError, ValueError):
             raise HTTPException(422, "amount must be a number")
 
-    amount = _to_float(payload.get("amount") or record.get("paid") or record.get("amount", 0))
+    opts = payload or {}
+    amount = _to_float(opts.get("amount") or record.get("paid") or record.get("amount", 0))
     owed = _to_float(record.get("amount", 0) or 0)
     if amount < 0:
         raise HTTPException(422, "amount must not be negative")
@@ -3893,7 +3901,22 @@ def upload_educational_file(article_id: str, file: UploadFile = File(...)):
     stored_name = f"{int(time.time() * 1000)}-{safe_name}"
     with open(os.path.join(UPLOAD_DIR, stored_name), "wb") as out:
         out.write(content)
-    record["fileUrl"] = f"/files/storage/{stored_name}"
+    # Daftarkan juga sebagai file asset agar endpoint /files/{id}/download/ valid
+    # (sebelumnya hanya menyimpan nama storage, sehingga tautan unduh selalu 404).
+    file_record = db.insert("files", {
+        "id": db.gen_id("files", "FIL-EDU"),
+        "name": safe_name,
+        "type": "Educational",
+        "projectId": "",
+        "status": "Verified",
+        "size": f"{len(content) / 1024:.0f} KB",
+        "tags": ["educational", "article"],
+        "storageName": stored_name,
+        "contentType": file.content_type or "application/octet-stream",
+        "updatedAt": "now",
+    })
+    record["fileUrl"] = f"/files/{file_record['id']}/download/"
+    record["fileId"] = file_record["id"]
     record["fileName"] = safe_name
     record["updatedAt"] = "now"
     return _save_one(record)
@@ -4526,8 +4549,15 @@ def create_analysis(payload: sc.CreateExportAnalysisPayload):
     if not product:
         raise HTTPException(404, "Product not found")
     country_code = resolve_country(str(payload.destination))
-    # Deduplikasi (product, country)
+    # Deduplikasi (product, country). Record lama/seed hanya punya `destination`
+    # (nama negara) tanpa `countryCode`, jadi cocokkan juga destination ternormalisasi.
     existing = db.get_by("export_analyses", productId=payload.productId, countryCode=country_code)
+    if not existing:
+        for cand in db.find("export_analyses", productId=payload.productId):
+            stored_code = cand.get("countryCode") or resolve_country(str(cand.get("destination", "")))
+            if stored_code == country_code:
+                existing = cand
+                break
     if existing:
         raise HTTPException(409, "Analysis for this product & country already exists")
 

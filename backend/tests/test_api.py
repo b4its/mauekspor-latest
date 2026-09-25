@@ -79,8 +79,16 @@ def test_export_analysis_flow():
         created = c.post(
             "/api/v1/export-analysis/", json={"productId": "PRD-COF-001", "destination": "Japan"}
         )
-        assert created.status_code == 200
-        analysis_id = created.json()["data"]["id"]
+        # Seed sudah menyediakan analisis PRD-COF-001/Japan → 409 (dedup aktif);
+        # gunakan analisis seed untuk melanjutkan flow.
+        if created.status_code == 200:
+            analysis_id = created.json()["data"]["id"]
+        else:
+            assert created.status_code == 409, created.text
+            analysis_id = next(
+                a["id"] for a in c.get("/api/v1/export-analysis/").json()["data"]
+                if a["productId"] == "PRD-COF-001" and a["destination"] == "Japan"
+            )
 
         checked = c.post(f"/api/v1/export-analysis/{analysis_id}/regulation-recommendations/")
         assert checked.status_code == 200

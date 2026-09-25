@@ -449,7 +449,7 @@ class AddVariantTypePayload(BaseModel):
 
 
 class UpdateVariantTypePayload(BaseModel):
-    type_code: str = "custom"
+    type_code: Optional[str] = None
     type_name: str = ""
     sort_order: Optional[int] = None
 
