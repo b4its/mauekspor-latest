@@ -30,7 +30,7 @@
 	let localContainer = $derived(savedContainer || data.shipment.container);
 	let localRoute = $derived(savedRoute || data.shipment.route);
 
-	let displayStatus = $derived(resolved && data.shipment.status === 'Exception' ? 'Booking Requested' : advanced ? 'In Transit' : savedStatus || data.shipment.status);
+	let displayStatus = $derived(savedStatus || (advanced ? 'In Transit' : resolved ? 'In Transit' : data.shipment.status));
 	let displayProgress = $derived(advanced ? Math.min(data.shipment.progress + 18, 100) : data.shipment.progress);
 
 	async function resolveException() {
