@@ -11,6 +11,7 @@
 	import { navGroups, projects, userAccounts } from '$lib/data/trade';
 	import { allowedHrefs } from '$lib/roleAccess';
 	import { t } from '$lib/i18n.svelte';
+	import { openAiAssistant } from '$lib/stores/aiAssistant.svelte';
 
 	import InfoIcon from '@lucide/svelte/icons/info';
 	import RouteIcon from '@lucide/svelte/icons/route';
@@ -253,17 +254,19 @@
 	</Sidebar.Content>
 
 	<Sidebar.Footer>
-		<div
-			class="rounded-xl border border-sidebar-border bg-gradient-to-br from-[#0b3d91]/10 to-[#1e63d6]/5 p-3 shadow-xs group-data-[collapsible=icon]:hidden dark:from-white/10 dark:to-white/5"
+		<button
+			type="button"
+			onclick={() => openAiAssistant()}
+			class="w-full text-left rounded-xl border border-sidebar-border bg-gradient-to-br from-[#0b3d91]/10 to-[#1e63d6]/5 p-3 shadow-xs group-data-[collapsible=icon]:hidden dark:from-white/10 dark:to-white/5 hover:border-primary/40 hover:bg-[#0b3d91]/15 transition-all cursor-pointer"
 		>
 			<Badge variant="outline" class="gap-1 border-[#0b3d91]/30 bg-[#0b3d91]/10 text-[#0b3d91] dark:border-white/30 dark:bg-white/10 dark:text-white">
 				<SparklesIcon class="size-3" />
 				<span>{t('Nuxim AI active')}</span>
 			</Badge>
 			<p class="mt-2 text-[13px] leading-snug text-sidebar-foreground/70">
-				{t('Resolve label evidence for Japan before quotation approval.')}
+				{t('Tanya asisten AI untuk regulasi, costing, & kepatuhan workspace.')}
 			</p>
-		</div>
+		</button>
 
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
