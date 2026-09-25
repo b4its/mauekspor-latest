@@ -665,7 +665,11 @@ def batch_enrich_products(payload: sc.BatchActionPayload):
     for record in targets:
         keywords = " ".join([str(record.get("name", "")), str(record.get("category", "")), str(record.get("description", ""))])
         context = loader.get_hs_code_context(keywords, max_results=10)
-        system = "You are an Indonesia export HS code classifier. Return JSON with keys hsCode (8 digits), confidence (0-100), reason."
+        system = (
+            "You are an Indonesia export trade advisor and HS code classifier. "
+            "Return a JSON object with keys: hsCode (8 digits string), confidence (0-100), reason, "
+            "nameEnglishB2b (string), descriptionEnglishB2b (string), marketingHighlights (list of strings)."
+        )
         user = f"Product: {record.get('name', '')} ({record.get('category', '')} - {record.get('description', '')})\n{context}"
         enriched_data = ai.ask_json(system, user, kind="classify")
         hs_code = ""
@@ -687,13 +691,30 @@ def batch_enrich_products(payload: sc.BatchActionPayload):
         record["hs"] = hs_code
         record["hsConfidence"] = confidence if confidence is not None else 88
         record["sku"] = sku
+        if enriched_data:
+            if enriched_data.get("nameEnglishB2b"):
+                record["name_english_b2b"] = str(enriched_data["nameEnglishB2b"])
+            if enriched_data.get("descriptionEnglishB2b"):
+                record["description_english_b2b"] = str(enriched_data["descriptionEnglishB2b"])
+            if enriched_data.get("marketingHighlights") and isinstance(enriched_data["marketingHighlights"], list):
+                record["marketing_highlights"] = [str(x) for x in enriched_data["marketingHighlights"]]
         record["readiness"] = compute_product_readiness(record)
         record["updatedAt"] = "now"
         db.save(record)
 
         existing = db.get_by("product_enrichments", productId=record["id"])
+        name_en = record.get("name_english_b2b") or f"{record.get('name')} (Export Grade)"
+        desc_en = record.get("description_english_b2b") or f"{record.get('name')} - Premium quality Indonesian commodity prepared for export distribution."
+        mktg = record.get("marketing_highlights") or ["Verified Indonesian origin", "Export quality standard", "Available for B2B container shipments"]
         if existing:
-            existing.update({"hsCodeRecommendation": hs_code, "skuGenerated": sku, "lastUpdatedAi": "now"})
+            existing.update({
+                "hsCodeRecommendation": hs_code,
+                "skuGenerated": sku,
+                "nameEnglishB2b": name_en,
+                "descriptionEnglishB2b": desc_en,
+                "marketingHighlights": mktg,
+                "lastUpdatedAi": "now",
+            })
             db.save(existing)
         else:
             db.insert("product_enrichments", {
@@ -701,9 +722,9 @@ def batch_enrich_products(payload: sc.BatchActionPayload):
                 "productId": record["id"],
                 "hsCodeRecommendation": hs_code,
                 "skuGenerated": sku,
-                "nameEnglishB2b": record.get("name_english_b2b", ""),
-                "descriptionEnglishB2b": record.get("description_english_b2b", ""),
-                "marketingHighlights": record.get("marketing_highlights", []),
+                "nameEnglishB2b": name_en,
+                "descriptionEnglishB2b": desc_en,
+                "marketingHighlights": mktg,
                 "lastUpdatedAi": "now",
             })
         enriched.append(record["id"])
@@ -720,15 +741,28 @@ def enrich_product(product_id: str):
     loader = get_hs_loader()
     keywords = " ".join([str(record.get("name", "")), str(record.get("category", "")), str(record.get("description", ""))])
     context = loader.get_hs_code_context(keywords, max_results=15)
-    system = "You are an Indonesia export HS code classifier. Return JSON with keys hsCode (8 digits), confidence (0-100), reason."
+    system = (
+        "You are an Indonesia export trade advisor and HS code classifier. "
+        "Return a JSON object with keys: hsCode (8 digits string), confidence (0-100), reason, "
+        "nameEnglishB2b (string), descriptionEnglishB2b (string), marketingHighlights (list of strings)."
+    )
     user = f"Product: {record.get('name', '')} ({record.get('category', '')} - {record.get('description', '')})\n{context}"
 
     enriched = ai.ask_json(system, user, kind="classify")
     hs_code = ""
     confidence = None
-    if enriched and enriched.get("hsCode"):
-        hs_code = str(enriched["hsCode"])
-        confidence = enriched.get("confidence")
+    if enriched:
+        raw_hs = str(enriched.get("hsCode") or enriched.get("hs_code") or enriched.get("hs") or "").replace(".", "").strip()
+        if raw_hs and raw_hs.isdigit():
+            if len(raw_hs) == 6:
+                hs_code = f"{raw_hs}00"
+            elif len(raw_hs) >= 8:
+                hs_code = raw_hs[:8]
+            else:
+                hs_code = raw_hs.ljust(8, "0")
+        raw_conf = enriched.get("confidence") or enriched.get("hsConfidence")
+        if isinstance(raw_conf, (int, float)):
+            confidence = int(raw_conf * 100) if raw_conf <= 1.0 else int(raw_conf)
     if not hs_code:
         # Fallback: cari HS code dari dataset
         results = loader.search_hs_codes(keywords, max_results=1, min_level=6)
@@ -744,16 +778,31 @@ def enrich_product(product_id: str):
     record["hs"] = hs_code
     record["hsConfidence"] = confidence if confidence is not None else 88
     record["sku"] = sku
-    record["status"] = "Enriched"
+    if enriched:
+        name_en = enriched.get("nameEnglishB2b") or enriched.get("name_english_b2b") or enriched.get("product_name_en")
+        if name_en:
+            record["name_english_b2b"] = str(name_en)
+        desc_en = enriched.get("descriptionEnglishB2b") or enriched.get("description_english_b2b") or enriched.get("description")
+        if desc_en:
+            record["description_english_b2b"] = str(desc_en)
+        mktg = enriched.get("marketingHighlights") or enriched.get("marketing_highlights")
+        if mktg and isinstance(mktg, list):
+            record["marketing_highlights"] = [str(x) for x in mktg]
     record["readiness"] = compute_product_readiness(record)
     record["updatedAt"] = "now"
 
     # Simpan enrichment terpisah (1-per-produk)
     existing = db.get_by("product_enrichments", productId=product_id)
+    name_en = record.get("name_english_b2b") or f"{record.get('name')} (Export Grade)"
+    desc_en = record.get("description_english_b2b") or f"{record.get('name')} - Premium quality Indonesian commodity prepared for export distribution."
+    mktg = record.get("marketing_highlights") or ["Verified Indonesian origin", "Export quality standard", "Available for B2B container shipments"]
     if existing:
         existing.update({
             "hsCodeRecommendation": hs_code,
             "skuGenerated": sku,
+            "nameEnglishB2b": name_en,
+            "descriptionEnglishB2b": desc_en,
+            "marketingHighlights": mktg,
             "lastUpdatedAi": "now",
         })
         db.save(existing)
@@ -763,11 +812,12 @@ def enrich_product(product_id: str):
             "productId": product_id,
             "hsCodeRecommendation": hs_code,
             "skuGenerated": sku,
-            "nameEnglishB2b": record.get("name_english_b2b", ""),
-            "descriptionEnglishB2b": record.get("description_english_b2b", ""),
-            "marketingHighlights": record.get("marketing_highlights", []),
+            "nameEnglishB2b": name_en,
+            "descriptionEnglishB2b": desc_en,
+            "marketingHighlights": mktg,
             "lastUpdatedAi": "now",
         })
+    db.save(record)
     return _save_one(record)
 
 
@@ -4468,6 +4518,79 @@ def rename_chat_session(session_id: str, payload: sc.RenameChatSessionPayload, c
     return _save_one(record)
 
 
+def _build_workspace_context(owner_id: str | None = None, page_context: str | None = None) -> str:
+    parts = []
+    user = db.get("users", str(owner_id)) if owner_id else None
+    if user:
+        parts.append(
+            f"- Pengguna: {user.get('fullName', user.get('name', 'User'))} "
+            f"(Role: {user.get('role', 'Exporter')}, Org: {user.get('organization', 'MauEkspor')})"
+        )
+    profiles = db.all("business_profiles")
+    if profiles:
+        bp = profiles[0]
+        parts.append(
+            f"- Perusahaan: {bp.get('companyName', '')} | Industri: {bp.get('industry', '')} "
+            f"| Skala: {bp.get('scale', '')} | Skor Kesiapan: {bp.get('exportReadinessScore', '')}%"
+        )
+
+    products = db.all("products")
+    if products:
+        prod_lines = []
+        for p in products[:6]:
+            price_val = p.get('price_idr') or p.get('price') or 0
+            prod_lines.append(
+                f"  * {p.get('id')}: {p.get('name')} (HS {p.get('hs', 'TBD')}, Kat: {p.get('category')}, "
+                f"Kesiapan: {p.get('readiness', 0)}%, Harga: Rp{int(price_val):,})"
+            )
+        parts.append("- Katalog Produk Workspace:\n" + "\n".join(prod_lines))
+
+    projects = db.all("trade_projects")
+    if projects:
+        proj_lines = []
+        for proj in projects[:5]:
+            proj_lines.append(
+                f"  * {proj.get('id')}: {proj.get('name')} -> {proj.get('country', '')} "
+                f"(Buyer: {proj.get('buyer', '')}, Tahap: {proj.get('stage', '')}, Kesiapan: {proj.get('readiness', 0)}%)"
+            )
+        parts.append("- Proyek Dagang Aktif:\n" + "\n".join(proj_lines))
+
+    analyses = db.all("export_analyses")
+    if analyses:
+        anl_lines = []
+        for a in analyses[:4]:
+            anl_lines.append(
+                f"  * {a.get('productName')} -> {a.get('destination')} (Skor: {a.get('score')}, Grade: {a.get('statusGrade')})"
+            )
+        parts.append("- Analisis Kepatuhan & Regulasi Ekspor:\n" + "\n".join(anl_lines))
+
+    if page_context:
+        page_map = {
+            "/products": "Halaman Katalog Produk & HS Code (pengguna sedang meninjau katalog produk atau klasifikasi kode HS)",
+            "/compliance": "Halaman Kepatuhan & Regulasi Ekspor (pengguna sedang mengecek checklist kepatuhan regulasi negara tujuan)",
+            "/export-analysis": "Halaman Analisis Kesiapan Ekspor (pengguna sedang mengevaluasi skor readiness dan grade kepatuhan produk)",
+            "/trade-projects": "Halaman Manajemen Proyek Dagang (pengguna sedang memantau pipeline dan milestones ekspor)",
+            "/costing": "Halaman Kalkulasi Biaya & Simulasi Harga Ekspor (EXW, FOB, CIF)",
+            "/markets": "Halaman Intelijen Pasar Ekspor & Tren Permintaan",
+            "/countries": "Halaman Direktori Regulasi Negara Tujuan Ekspor",
+            "/forwarders": "Halaman Direktori Freight Forwarder & Ekspedisi Logistik",
+            "/buyers": "Halaman Direktori Calon Pembeli Internasional (Buyer)",
+            "/buyer-requests": "Halaman Permintaan Pembeli / Inquiry Masuk",
+            "/orders": "Halaman Pesanan & Fulfillment Ekspor",
+            "/shipments": "Halaman Pelacakan Pengiriman Kontainer & Dokumen Pelabuhan",
+            "/analytics": "Halaman Ringkasan Analitik & Performa Perdagangan",
+            "/dashboard": "Halaman Dasbor Utama Ekspor",
+        }
+        matched = None
+        for path_prefix, desc in page_map.items():
+            if page_context.startswith(path_prefix):
+                matched = f"{page_context} ({desc})"
+                break
+        parts.append(f"- Konteks Halaman Aktif Pengguna: {matched or page_context}")
+
+    return "\n".join(parts)
+
+
 @router.post("/chat/sessions/{session_id}/messages/")
 def send_session_message(session_id: str, payload: sc.SendChatPayload):
     record = db.get("chat_sessions", session_id)
@@ -4476,13 +4599,27 @@ def send_session_message(session_id: str, payload: sc.SendChatPayload):
     record.setdefault("messages", []).append({"role": "user", "text": payload.text})
     history = "\n".join(f"{m.get('role', '')}: {m.get('text', '')}" for m in record["messages"][-8:])
     
+    ws_context = _build_workspace_context(record.get("userId"), getattr(payload, "page_context", None))
+    system_prompt = (
+        "Anda adalah MauEkspor AI Assistant, asisten kecerdasan buatan resmi untuk platform ekspor-impor MauEkspor Indonesia. "
+        "Anda adalah pakar perdagangan internasional, kepatuhan regulasi ekspor (karantina, BPOM, FDA, CE, JAS, EPA), "
+        "klasifikasi HS code, kalkulasi costing (EXW, FOB, CIF), pencarian pasar target, serta strategi operasional ekspor UMKM.\n\n"
+        "Panduan Respon:\n"
+        "1. Jawab selalu dalam Bahasa Indonesia yang profesional, ramah, dan actionable.\n"
+        "2. Format respon dengan markdown yang rapi (gunakan **bold**, bullet points, tabel jika relevan, dan `code` untuk istilah teknis seperti kode HS).\n"
+        "3. Jangan pernah katakan Anda tidak memiliki informasi mengenai MauEkspor atau produk pengguna, karena Anda terhubung langsung ke data workspace pengguna."
+    )
+
+    user_prompt = (
+        f"Berikut adalah data workspace MauEkspor pengguna saat ini:\n{ws_context}\n\n"
+        f"Riwayat percakapan:\n{history}\n\n"
+        f"Pertanyaan pengguna: {payload.text}\n"
+        "Jawab pertanyaan pengguna berdasarkan data workspace di atas dengan solutif dan akurat."
+    )
+
     reply = ai.complete(
-        "You are Nuxim AI, the MauEkspor trade assistant for Indonesian exporters. "
-        "Answer concisely in Indonesian, grounded in the workspace context given. "
-        "When the user gives a command like 'ringkaskan', 'buatkan', 'analisa', 'cari', 'hitung', 'jelaskan' — "
-        "execute it directly with relevant data. Use markdown formatting for structured responses: "
-        "**bold** for emphasis, `code` for technical terms, - for lists, and headers if needed.",
-        f"Conversation so far:\n{history}",
+        system_prompt,
+        user_prompt,
         kind="chat_reply",
     )
     

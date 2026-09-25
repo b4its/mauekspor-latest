@@ -10,7 +10,7 @@ os.environ.setdefault("MAUEKSPOR_ADMIN_CODE", "admin-bootstrap-2026")
 os.environ.setdefault("MAUEKSPOR_PBKDF2_ITERATIONS", "1")
 # Paksa AI mode mock selama test agar deterministik & tanpa network,
 # meski .env lokal mungkin menyetel mode remote.
-os.environ.setdefault("MAUEKSPOR_AI_MODE", "mock")
+os.environ["MAUEKSPOR_AI_MODE"] = "mock"
 os.environ.pop("MAUEKSPOR_AI_API_KEY", None)
 
 # Matikan rate-limit middleware HTTP selama test. Beberapa "megatest"

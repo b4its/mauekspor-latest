@@ -441,6 +441,7 @@ class RenameChatSessionPayload(BaseModel):
 
 class SendChatPayload(BaseModel):
     text: str
+    page_context: Optional[str] = None
 
 
 # ---------- Catalog images / variants ----------

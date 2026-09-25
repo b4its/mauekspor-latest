@@ -110,9 +110,10 @@ def check_packaging_compliance(product: dict, country_code: str) -> list[dict]:
 
 def _ai_judge(check_type: str, product: dict, country_code: str, regs: list[dict], issues: list[dict]) -> list[dict]:
     system = (
-        "You are a trade compliance analyst. Return a JSON list of compliance issues. "
+        "You are a trade compliance analyst. Return a JSON array of compliance issues. "
         "Each issue: {type, rule_key, your_value, required_value, description, severity} "
-        "where severity is critical/major/minor."
+        "where severity is critical/major/minor. "
+        "Return ONLY the JSON array without markdown code fences."
     )
     user = (
         f"Check {check_type} compliance for product '{product.get('name', '')}' "
@@ -120,9 +121,8 @@ def _ai_judge(check_type: str, product: dict, country_code: str, regs: list[dict
         f"specs: {product.get('quality_specs', {})}) to country {country_code}. "
         f"Regulations: {regs}"
     )
-    text = ai.complete(system, user, kind="compliance_check")
-    parsed = _parse_json_list(text)
-    if parsed:
+    parsed = ai.ask_json_list(system, user, kind="compliance_check")
+    if parsed and isinstance(parsed, list):
         return parsed
     return issues
 
@@ -200,6 +200,31 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
     def label(text_en: str, text_id: str) -> str:
         return text_id if is_id else text_en
 
+    ai_sections: dict[str, str] = {}
+    if ai.configured():
+        prompt_sys = (
+            "You are an international trade compliance expert for Indonesian exports. "
+            f"Generate concise, accurate, and actionable export regulation guidance in {'Indonesian' if is_id else 'English'} "
+            "for 10 standard trade compliance sections. "
+            "Return JSON: {\"sections\": {\"overview\": \"...\", \"prohibited_items\": \"...\", \"import_restrictions\": \"...\", "
+            "\"certifications\": \"...\", \"labeling\": \"...\", \"customs\": \"...\", \"testing\": \"...\", \"ip\": \"...\", "
+            "\"shipping\": \"...\", \"timeline_costs\": \"...\"}}"
+        )
+        prompt_usr = (
+            f"Product: {product_name} (HS: {hs_code}, Category: {snapshot.get('category', 'Komoditas')})\n"
+            f"Target Country: {country.get('country_name', country_code)} ({country_code})\n"
+            f"Known Regulations: {[r.get('description_rule') for r in regs[:5]]}"
+        )
+        res = ai.ask_json(prompt_sys, prompt_usr, kind="recommendations")
+        if res and isinstance(res, dict):
+            sec_dict = res.get("sections")
+            if isinstance(sec_dict, dict):
+                ai_sections = {str(k): str(v) for k, v in sec_dict.items()}
+            elif isinstance(sec_dict, list):
+                for item in sec_dict:
+                    if isinstance(item, dict) and "key" in item:
+                        ai_sections[str(item["key"])] = str(item.get("content") or item.get("body") or "")
+
     sections: list[dict] = []
     for key, en_title, id_title in _REGULATION_SECTIONS:
         body = ""
@@ -265,11 +290,14 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
                 "Budget 2-6 weeks for compliance preparation plus freight transit time; include certification costs.",
                 "Anggarkan 2-6 minggu untuk persiapan kepatuhan ditambah waktu transit; sertakan biaya sertifikasi.",
             )
+
+        ai_body = ai_sections.get(key)
+        final_body = ai_body if (ai_body and len(str(ai_body).strip()) > 15) else body
         sections.append({
             "key": key,
             "title_en": en_title,
             "title": id_title if is_id else en_title,
-            "body": body,
+            "body": final_body,
         })
     return {"sections": sections, "country": country, "from_cache": False}
 

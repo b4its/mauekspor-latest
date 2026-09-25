@@ -68,7 +68,10 @@ def test_generate_product_pricing():
     assert result["pricingInsight"]  # fallback insight dari ai.complete mock
 
 
-def test_generate_catalog_description_fallback():
+def test_generate_catalog_description_fallback(monkeypatch):
+    # Paksa jalur fallback deterministik (AI tak tersedia) agar tidak bergantung
+    # pada output mock remote.
+    monkeypatch.setattr(market_intel.ai, "ask_json", lambda *a, **k: None)
     product = {"id": "P-1", "name": "Kopi Gayo", "category": "Food & Beverage", "origin": "Aceh",
                "packaging": "250g", "moq": "1000", "leadTime": "21d", "certificates": ["Halal"]}
     result = market_intel.generate_catalog_description(product)
@@ -78,10 +81,29 @@ def test_generate_catalog_description_fallback():
     assert result["safety_info"][1]["value"] == "Yes"  # food
 
 
-def test_generate_catalog_description_non_food():
+def test_generate_catalog_description_non_food(monkeypatch):
+    monkeypatch.setattr(market_intel.ai, "ask_json", lambda *a, **k: None)
     product = {"name": "Rattan Chair", "category": "Furniture", "certificates": []}
     result = market_intel.generate_catalog_description(product)
     assert result["safety_info"][1]["value"] == "N/A"
+
+
+def test_generate_catalog_description_ai_parsed(monkeypatch):
+    # Bila AI mengembalikan struktur valid, dipakai apa adanya.
+    monkeypatch.setattr(
+        market_intel.ai,
+        "ask_json",
+        lambda *a, **k: {
+            "export_buyer_description": "Premium rattan.",
+            "technical_spec_sheet": [{"label": "Product", "value": "Chair"}],
+            "safety_sheet": [{"label": "Care", "value": "Dry clean"}],
+        },
+    )
+    result = market_intel.generate_catalog_description(
+        {"name": "Chair", "category": "Furniture"}
+    )
+    assert result["export_description"] == "Premium rattan."
+    assert result["safety_info"] == [{"label": "Care", "value": "Dry clean"}]
 
 
 def test_generate_catalog_description_save_ke_catalog():

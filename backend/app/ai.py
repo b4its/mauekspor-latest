@@ -29,21 +29,19 @@ logger = logging.getLogger("mauekspor.ai")
 MOCK = "mock"
 REMOTE = "remote"
 
-# Read from env — no hardcoded defaults in source
+# Read from env — configured defaults for deepseek model
 DEFAULT_BASE_URL = "http://localhost:20128/v1"
-DEFAULT_MODEL = "qd/dmodel"
+DEFAULT_MODEL = "hk/deepseek-4.1-flash"
 TIMEOUT_SECONDS = int(os.environ.get("MAUEKSPOR_AI_TIMEOUT", "60"))
 
-# Health probe hits /models, which can be slow on some gateways (e.g. 9router
-# answers /v1/models in 7–10s). Keep this comfortably above that.
-HEALTH_TIMEOUT_SECONDS = int(os.environ.get("MAUEKSPOR_AI_HEALTH_TIMEOUT", "30"))
+# Health probe hits /models
+HEALTH_TIMEOUT_SECONDS = int(os.environ.get("MAUEKSPOR_AI_HEALTH_TIMEOUT", "15"))
 
 # ── Circuit Breaker ──────────────────────────────────────────────────────────
 _CB_FAILURE_COUNT: int = 0
 _CB_LAST_FAILURE_TIME: float = 0.0
-CB_FAILURE_THRESHOLD: int = 3        # open after N consecutive failures
-CB_COOLDOWN_SECONDS: int = 120       # stay open for 2 minutes
-
+CB_FAILURE_THRESHOLD: int = 5        # open after N consecutive failures
+CB_COOLDOWN_SECONDS: int = 30        # stay open for 30 seconds
 
 def _cb_is_open() -> bool:
     """Return True if circuit breaker is open (skip AI calls)."""
@@ -51,7 +49,7 @@ def _cb_is_open() -> bool:
     if _CB_FAILURE_COUNT < CB_FAILURE_THRESHOLD:
         return False
     if time.monotonic() - _CB_LAST_FAILURE_TIME > CB_COOLDOWN_SECONDS:
-        # Cooldown passed — reset and allow one probe
+        # Cooldown passed — reset and allow probe
         logger.info("AI circuit breaker: cooldown elapsed, resetting")
         _CB_FAILURE_COUNT = 0
         _CB_LAST_FAILURE_TIME = 0.0
@@ -115,7 +113,8 @@ def get_api_key() -> Optional[str]:
 # ── Endpoint health cache ─────────────────────────────────────────────────────
 _HEALTH_CACHE: dict[str, bool] = {}
 _LAST_HEALTH_TS: float = 0.0
-HEALTH_CHECK_INTERVAL: int = 300   # re-probe every 5 minutes
+HEALTH_CHECK_INTERVAL: int = 120      # re-probe every 2 minutes on success
+FAILED_HEALTH_RETRY_INTERVAL: int = 5 # re-probe after 5 seconds on failure
 
 
 def _probe_health(url: str) -> bool:
@@ -123,7 +122,6 @@ def _probe_health(url: str) -> bool:
     headers: dict[str, str] = {"ngrok-skip-browser-warning": "true"}
     api_key_value = get_api_key()
     if api_key_value:
-        # Remote endpoints (behind tunnels) may require the key even for /models
         headers["Authorization"] = f"Bearer {api_key_value}"
     try:
         r = httpx.get(
@@ -132,24 +130,37 @@ def _probe_health(url: str) -> bool:
             follow_redirects=True,
             headers=headers,
         )
-        if r.status_code != 200:
-            return False
-        # Guard against ngrok interstitial HTML pages that return 200
-        content_type = r.headers.get("content-type", "")
-        return "json" in content_type or r.text.strip().startswith("{") or r.text.strip().startswith("[")
-    except Exception:
+        if r.status_code == 200:
+            try:
+                if hasattr(r, "json") and callable(r.json):
+                    data = r.json()
+                    if isinstance(data, (dict, list)):
+                        return True
+            except Exception:
+                pass
+            r_headers = getattr(r, "headers", {}) or {}
+            content_type = r_headers.get("content-type", "") if hasattr(r_headers, "get") else ""
+            text = getattr(r, "text", "") or ""
+            return "json" in str(content_type) or text.strip().startswith("{") or text.strip().startswith("[")
+        return False
+    except Exception as exc:
+        logger.debug("Health probe exception for %s: %s", url, exc)
         return False
 
 
 def _check_ai_health(url: str) -> bool:
-    """Cached health check — re-probes at most every HEALTH_CHECK_INTERVAL seconds."""
+    """Cached health check — re-probes every HEALTH_CHECK_INTERVAL (or 5s on failure)."""
     global _LAST_HEALTH_TS
     now = time.monotonic()
-    if now - _LAST_HEALTH_TS < HEALTH_CHECK_INTERVAL:
-        return _HEALTH_CACHE.get(url, False)
-    _LAST_HEALTH_TS = now
+    cached = _HEALTH_CACHE.get(url)
+    if cached is True and (now - _LAST_HEALTH_TS < HEALTH_CHECK_INTERVAL):
+        return True
+    if cached is False and (now - _LAST_HEALTH_TS < FAILED_HEALTH_RETRY_INTERVAL):
+        return False
+
     healthy = _probe_health(url)
     _HEALTH_CACHE[url] = healthy
+    _LAST_HEALTH_TS = now
     if healthy:
         logger.info("✅ AI health probe OK: %s", url)
     else:
@@ -164,34 +175,111 @@ _MOCK_OUTPUTS: dict[str, Any] = {
         "confidence": 88,
         "reason": "Klasifikasi dari deskripsi produk berdasarkan HS 2022.",
     },
-    "catalog_description": (
-        "Kopi Gayo specialty single-origin dari dataran tinggi Aceh — arabika "
-        "full-wash dengan profil rasa madu dan cokelat, cocok untuk pasar Jepang."
-    ),
+    "catalog_description": {
+        "export_buyer_description": (
+            "Kopi Gayo specialty single-origin dari dataran tinggi Aceh — arabika "
+            "full-wash dengan profil rasa madu dan cokelat, cocok untuk pasar Jepang."
+        ),
+        "technical_spec_sheet": [
+            {"label": "Product", "value": "Kopi Arabika Gayo"},
+            {"label": "Origin", "value": "Aceh, Indonesia"},
+            {"label": "Processing", "value": "Full Washed"},
+        ],
+        "safety_sheet": [
+            {"label": "Food Grade", "value": "Yes"},
+            {"label": "Phytosanitary", "value": "Required"},
+        ],
+    },
     "market_insight": {
+        "recommended_countries": [
+            {
+                "country": "Japan",
+                "code": "JP",
+                "score": 92,
+                "reason": "Tingginya apresiasi kopi specialty Indonesia.",
+                "market_size": "Besar",
+                "competition_level": "Sedang",
+                "price_range": "USD 12-18/kg",
+                "entry_strategy": "Kemitraan roaster specialty.",
+            },
+            {
+                "country": "Singapore",
+                "code": "SG",
+                "score": 88,
+                "reason": "Hub perdagangan regional dan konsumsi specialty tinggi.",
+                "market_size": "Menengah",
+                "competition_level": "Tinggi",
+                "price_range": "USD 11-16/kg",
+                "entry_strategy": "Distributor F&B premium.",
+            },
+        ],
+        "countries_to_avoid": [],
+        "market_trends": [
+            "Pertumbuhan permintaan kopi single-origin tersertifikasi.",
+            "Peningkatan kesadaran direct trade.",
+        ],
+        "competitive_landscape": "Pasar kompetitif namun terbuka bagi kopi dengan traceability jelas.",
+        "growth_opportunities": [
+            "Pasar specialty coffee shop",
+            "Penjualan online B2B direct to roaster",
+        ],
+        "risks_and_challenges": [
+            "Regulasi residu pestisida ketat",
+            "Fluktuasi biaya logistik laut",
+        ],
+        "overall_recommendation": "Prioritaskan pasar Jepang dengan sertifikasi asal dan lab test lengkap.",
         "score": 82,
         "insight": "Permintaan menguat menjelang musim libur; perhatikan label bilingual.",
     },
     "recommendations": {
         "confidence": 88,
-        "score": 80,
+        "score": 85,
         "recommendations": [
-            {"type": "Certificate", "title": "Certificate of Origin", "status": "Required",
-             "detail": "Confirm rules-of-origin."},
-            {"type": "Document", "title": "Packing list", "status": "Required",
-             "detail": "Match weights against invoice."},
+            {
+                "type": "Certificate",
+                "title": "Certificate of Origin (Form A/EPA)",
+                "status": "Required",
+                "detail": "Konfirmasi aturan asal barang untuk fasilitas tarif preferensi.",
+            },
+            {
+                "type": "Document",
+                "title": "Phytosanitary Certificate",
+                "status": "Required",
+                "detail": "Diterbitkan oleh Badan Karantina Indonesia sebelum keberangkatan.",
+            },
+            {
+                "type": "Document",
+                "title": "Packing list & Invoice",
+                "status": "Required",
+                "detail": "Pastikan deskripsi dan berat bersih identik dengan B/L.",
+            },
         ],
     },
+    "compliance_check": [
+        {
+            "type": "Labeling",
+            "rule_key": "specification_compliance",
+            "your_value": "Kemasan standar",
+            "required_value": "Bilingual Japanese/English label",
+            "description": "Label wajib mencantumkan informasi produsen dan tanggal kedaluwarsa.",
+            "severity": "major",
+        }
+    ],
     "chat_reply": (
-        "Halo! Saya adalah asisten MauEkspor. Saat ini saya sedang dalam mode demo (mock AI). "
-        "Saya dapat membantu Anda dengan informasi umum tentang ekspor komoditas Indonesia."
+        "Halo! Saya adalah asisten MauEkspor. Saya siap membantu Anda menganalisa produk, "
+        "kepatuhan regulasi, penetapan harga ekspor, serta persiapan pengiriman internasional."
     ),
     "analytics_summary": (
-        "Pipeline ekspor menunjukkan 3 trade lane aktif dengan readiness rata-rata 82%. "
-        "Fokus utama: selesaikan compliance blocker critical."
+        "Pipeline ekspor menunjukkan trade lane aktif dengan kesiapan rata-rata 85%. "
+        "Fokus utama: selesaikan verifikasi kepatuhan dan dokumen karantina."
     ),
     "pricing_insight": "Harga kompetitif untuk pasar target; pantau kurs dan freight.",
-    "test": "AI test successful — koneksi AI berjalan normal (mode demo).",
+    "container_optimization": (
+        "1. Susun karton dengan pola interlocking untuk memaksimalkan stabilitas.\n"
+        "2. Gunakan pallet standar ISPM-15 (1100x1100mm) untuk efisiensi ruang 20ft.\n"
+        "3. Pertimbangkan shrink wrap heavy-duty untuk proteksi kelembaban kontainer laut."
+    ),
+    "test": "AI test successful — koneksi AI berjalan normal.",
 }
 
 
@@ -225,7 +313,7 @@ def _looks_like_error(content: str) -> bool:
 
 # ── Remote provider ────────────────────────────────────────────────────────────
 def _call_remote(system: str, user: str) -> Optional[str]:
-    """Call the AI API. Returns content string or None on any failure."""
+    """Call the AI API with retry on transient queue/rate-limits. Returns content string or None."""
     url = get_base_url()
     api_key_value = get_api_key()
 
@@ -240,85 +328,118 @@ def _call_remote(system: str, user: str) -> Optional[str]:
         return None
 
     headers: dict[str, str] = {
-        # Required when AI endpoint is behind ngrok free tier (skips browser
-        # warning interstitial). Ignored by non-ngrok endpoints.
         "ngrok-skip-browser-warning": "true",
     }
     if api_key_value:
         headers["Authorization"] = f"Bearer {api_key_value}"
 
-    try:
-        response = httpx.post(
-            f"{url}/chat/completions",
-            json={
-                "model": model_name(),
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user",   "content": user},
-                ],
-                "stream": False,
-                "temperature": float(os.environ.get("MAUEKSPOR_AI_TEMPERATURE", "0.3")),
-                "max_tokens": int(os.environ.get("MAUEKSPOR_AI_MAX_TOKENS", "1000")),
-            },
-            headers=headers,
-            timeout=TIMEOUT_SECONDS,
-        )
-    except httpx.ConnectTimeout:
-        logger.warning("AI connect timeout (%s)", url)
-        _cb_record_failure()
-        return None
-    except httpx.ConnectError:
-        logger.warning("AI connection refused (%s)", url)
-        _cb_record_failure()
-        return None
-    except httpx.TimeoutException:
-        logger.warning("AI request timeout (%s)", url)
-        _cb_record_failure()
-        return None
-    except Exception as exc:
-        logger.warning("AI unexpected error (%s): %s", type(exc).__name__, str(exc)[:120])
-        _cb_record_failure()
-        return None
+    content = None
+    for attempt in range(2):
+        try:
+            response = httpx.post(
+                f"{url}/chat/completions",
+                json={
+                    "model": model_name(),
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user",   "content": user},
+                    ],
+                    "stream": False,
+                    "temperature": float(os.environ.get("MAUEKSPOR_AI_TEMPERATURE", "0.2")),
+                    "max_tokens": int(os.environ.get("MAUEKSPOR_AI_MAX_TOKENS", "1500")),
+                },
+                headers=headers,
+                timeout=TIMEOUT_SECONDS,
+            )
+        except httpx.ConnectTimeout:
+            logger.warning("AI connect timeout (%s)", url)
+            if attempt == 0:
+                time.sleep(1.0)
+                continue
+            _cb_record_failure()
+            return None
+        except httpx.ConnectError:
+            logger.warning("AI connection refused (%s)", url)
+            _cb_record_failure()
+            return None
+        except httpx.TimeoutException:
+            logger.warning("AI request timeout (%s)", url)
+            if attempt == 0:
+                time.sleep(1.0)
+                continue
+            _cb_record_failure()
+            return None
+        except Exception as exc:
+            logger.warning("AI unexpected error (%s): %s", type(exc).__name__, str(exc)[:120])
+            _cb_record_failure()
+            return None
 
-    if response.status_code != 200:
-        logger.error("AI API returned HTTP %d for %s", response.status_code, url)
-        _cb_record_failure()
-        return None
+        if response.status_code in (429, 502, 503):
+            logger.warning("AI temporary HTTP %d for %s (attempt %d)", response.status_code, url, attempt + 1)
+            if attempt == 0:
+                time.sleep(1.5)
+                continue
+            _cb_record_failure()
+            return None
 
-    try:
-        body = response.json()
-        content = body["choices"][0]["message"]["content"]
-    except (KeyError, IndexError, ValueError) as exc:
-        logger.error("AI response parse error: %s — body: %.200s", exc, response.text)
-        _cb_record_failure()
-        return None
+        if response.status_code != 200:
+            logger.error("AI API returned HTTP %d for %s", response.status_code, url)
+            _cb_record_failure()
+            return None
 
-    if not content or not str(content).strip():
-        logger.warning("AI returned empty content")
-        _cb_record_failure()
-        return None
+        try:
+            try:
+                body = response.json()
+            except (ValueError, Exception):
+                # Upstream gateway may append SSE 'data: [DONE]' to non-streaming response body
+                raw_text = response.text
+                if "data: [DONE]" in raw_text:
+                    raw_text = raw_text.split("data: [DONE]")[0].strip()
+                match = re.search(r"\{[\s\S]*\}", raw_text)
+                if match:
+                    body = json.loads(match.group(0))
+                else:
+                    raise
+            content = body["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, ValueError) as exc:
+            logger.error("AI response parse error: %s — body: %.200s", exc, response.text)
+            if attempt == 0:
+                time.sleep(1.0)
+                continue
+            _cb_record_failure()
+            return None
 
-    if _looks_like_error(str(content)):
-        logger.warning("AI returned error-like content: %.120s", str(content))
-        _cb_record_failure()
-        return None
+        if not content or not str(content).strip():
+            logger.warning("AI returned empty content")
+            if attempt == 0:
+                time.sleep(1.0)
+                continue
+            _cb_record_failure()
+            return None
 
-    _cb_record_success()
-    return str(content)
+        content_str = str(content)
+        # Check for transient queue error in body (e.g. HolverAI error 403 / isQueued)
+        if "isqueued" in content_str.lower() or "queuecount" in content_str.lower():
+            logger.info("AI request was queued by provider, waiting 1.5s to retry...")
+            if attempt == 0:
+                time.sleep(1.5)
+                continue
+
+        if _looks_like_error(content_str):
+            logger.warning("AI returned error-like content: %.120s", content_str)
+            _cb_record_failure()
+            return None
+
+        _cb_record_success()
+        return content_str
+
+    _cb_record_failure()
+    return None
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 def complete(system: str, user: str, kind: str = "") -> Optional[str]:
-    """Return AI-generated text, falling back to mock on any failure.
-
-    Args:
-        system: System instruction / context
-        user:   User message / request
-        kind:   Task type identifier for targeted mock fallback
-
-    Returns:
-        AI response string, or mock string, or None if both unavailable
-    """
+    """Return AI-generated text, falling back to mock on any failure."""
     if mode() == MOCK:
         return _mock(kind)
 
@@ -330,20 +451,124 @@ def complete(system: str, user: str, kind: str = "") -> Optional[str]:
     return _mock(kind)
 
 
-def ask_json(system: str, user: str, kind: str = "") -> Optional[dict]:
-    """Run AI and return parsed JSON dict, or None on failure."""
-    text = complete(system, user, kind)
+def _clean_json_text(text: str) -> str:
+    cleaned = text.strip()
+    cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.MULTILINE)
+    cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE).strip()
+    return cleaned
+
+
+def _parse_json_dict(text: str | None) -> Optional[dict]:
     if not text:
         return None
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
-        return None
+    cleaned = _clean_json_text(text)
     try:
-        result = json.loads(match.group(0))
-        return result if isinstance(result, dict) else None
-    except json.JSONDecodeError as exc:
-        logger.warning("AI JSON parse failed: %s", exc)
+        data = json.loads(cleaned)
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        pass
+
+    match = re.search(r"\{[\s\S]*\}", cleaned)
+    if match:
+        raw_json = match.group(0)
+        try:
+            data = json.loads(raw_json)
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            sanitized = re.sub(r",\s*([\}\]])", r"\1", raw_json)
+            try:
+                data = json.loads(sanitized)
+                if isinstance(data, dict):
+                    return data
+            except Exception:
+                pass
+    return None
+
+
+def _parse_json_list(text: str | None) -> Optional[list]:
+    if not text:
         return None
+    cleaned = _clean_json_text(text)
+    try:
+        data = json.loads(cleaned)
+        if isinstance(data, list):
+            return data
+    except Exception:
+        pass
+
+    match = re.search(r"\[[\s\S]*\]", cleaned)
+    if match:
+        raw_json = match.group(0)
+        try:
+            data = json.loads(raw_json)
+            if isinstance(data, list):
+                return data
+        except Exception:
+            sanitized = re.sub(r",\s*([\}\]])", r"\1", raw_json)
+            try:
+                data = json.loads(sanitized)
+                if isinstance(data, list):
+                    return data
+            except Exception:
+                pass
+    return None
+
+
+def ask_json(system: str, user: str, kind: str = "") -> Optional[dict]:
+    """Run AI and return parsed JSON dict, or mock fallback on failure."""
+    if mode() == MOCK:
+        mock_val = _mock(kind)
+        return _parse_json_dict(mock_val)
+
+    sys_prompt = (
+        system
+        + "\nYou must return ONLY a single valid JSON object. "
+        "Do not include any markdown fences, comments, or conversational text outside the JSON."
+    )
+    usr_prompt = (
+        user
+        + "\n\nIMPORTANT: Respond ONLY with a valid JSON object matching the requested schema. "
+        "Do not output markdown code fences, greetings, or text outside the JSON."
+    )
+    text = _call_remote(sys_prompt, usr_prompt)
+    if text:
+        parsed = _parse_json_dict(text)
+        if parsed is not None:
+            return parsed
+        logger.warning("AI output failed to parse as JSON dict: %.150s", text)
+
+    logger.info("AI remote JSON unavailable — returning mock for kind=%r", kind)
+    mock_val = _mock(kind)
+    return _parse_json_dict(mock_val)
+
+
+def ask_json_list(system: str, user: str, kind: str = "") -> Optional[list]:
+    """Run AI and return parsed JSON list, or None on failure."""
+    if mode() == MOCK:
+        mock_val = _mock(kind)
+        return _parse_json_list(mock_val)
+
+    sys_prompt = (
+        system
+        + "\nYou must return ONLY a single valid JSON array (list of objects). "
+        "Do not include any markdown fences, comments, or conversational text outside the JSON array."
+    )
+    usr_prompt = (
+        user
+        + "\n\nIMPORTANT: Respond ONLY with a valid JSON array matching the requested schema. "
+        "Do not output markdown code fences, greetings, or text outside the JSON array."
+    )
+    text = _call_remote(sys_prompt, usr_prompt)
+    if text:
+        parsed = _parse_json_list(text)
+        if parsed is not None:
+            return parsed
+        logger.warning("AI output failed to parse as JSON list: %.150s", text)
+
+    mock_val = _mock(kind)
+    return _parse_json_list(mock_val)
 
 
 def get_ai_status() -> dict:

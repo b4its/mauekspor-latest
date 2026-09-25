@@ -144,7 +144,11 @@ def test_check_ingredient_empty_keywords_dilewati(monkeypatch):
 
 def test_ai_judge_returns_parsed(monkeypatch):
     monkeypatch.setattr(compliance.ai, "configured", lambda: True)
-    monkeypatch.setattr(compliance.ai, "complete", lambda *a, **k: '[{"type": "Label", "severity": "major"}]')
+    monkeypatch.setattr(
+        compliance.ai,
+        "ask_json_list",
+        lambda *a, **k: [{"type": "Label", "severity": "major"}],
+    )
     issues = compliance._ai_judge("ingredient", {"name": "X"}, "JP", [], [])
     assert len(issues) == 1
     assert issues[0]["type"] == "Label"
