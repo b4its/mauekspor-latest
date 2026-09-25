@@ -60,7 +60,13 @@
 		</Card>
 	{/if}
 
-	<div class="flex flex-wrap gap-2">
+	<div class="flex flex-wrap items-center gap-2.5">
+		<Button href={`/rfq?catalogId=${catalog.id}&product=${encodeURIComponent(catalog.productName || catalog.title)}&moq=${encodeURIComponent(catalog.moq || '')}`}>
+			{t('Minta Penawaran (RFQ)')}
+		</Button>
+		<Button variant="outline" href={`/chat?q=${encodeURIComponent(`Saya tertarik dengan produk ekspor "${catalog.title}" (MOQ: ${catalog.moq}, Pasar: ${catalog.targetMarket}). Bagaimana spesifikasi dan ketersediaan pengirimannya?`)}`}>
+			{t('Tanya AI tentang Produk Ini')}
+		</Button>
 		<Button href="/catalogs/public" variant="outline">{t('Kembali ke katalog publik')}</Button>
 	</div>
 </AppShell>

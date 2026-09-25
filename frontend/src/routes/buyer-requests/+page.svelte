@@ -14,10 +14,21 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { page } from '$app/state';
 
 	const filters = ['All', 'New', 'Matched', 'Quoted', 'Closed'];
 	let activeFilter = $state('All');
 	let query = $state('');
+	let queryParamProcessed = $state(false);
+
+	$effect(() => {
+		if (queryParamProcessed) return;
+		const q = page.url.searchParams.get('search') || page.url.searchParams.get('query') || page.url.searchParams.get('product');
+		if (q && !query) {
+			query = q;
+			queryParamProcessed = true;
+		}
+	});
 
 	let requests = createRemoteList(listBuyerRequests, seedRequests);
 	let buyers = createRemoteList(listBuyers, seedBuyers);

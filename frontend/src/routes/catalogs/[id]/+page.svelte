@@ -336,6 +336,9 @@
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/catalogs/${data.catalog.id}/edit`}>{t('Edit catalog')}</Button>
+					<Button variant="outline" href={`/catalogs/public/${data.catalog.id}`}>{t('Lihat Publik')}</Button>
+					<Button variant="outline" href={`/costing/create?product=${encodeURIComponent(data.catalog.title)}`}>{t('Hitung Costing')}</Button>
+					<Button variant="outline" href={`/buyer-requests?search=${encodeURIComponent(data.catalog.title)}`}>{t('Cari Permintaan')}</Button>
 					<Button variant="outline" onclick={handleGenerate} disabled={loadingAi}>
 						{loadingAi ? t('Memproses...') : aiDesc ? t('Buat ulang AI copy') : t('Buat AI copy')}
 					</Button>
