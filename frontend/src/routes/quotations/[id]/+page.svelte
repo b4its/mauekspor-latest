@@ -11,6 +11,7 @@
 
 	let { data } = $props();
 	let revised = $state(false);
+	let revising = $state(false);
 	let accepted = $state(false);
 	let error = $state('');
 	let message = $state('');
@@ -53,6 +54,30 @@
 			message = t('Quotation diterima.');
 		} catch {
 			error = t('Gagal menerima quotation.');
+		}
+	}
+
+	async function handleRevise() {
+		error = '';
+		revising = true;
+		try {
+			const newValue = Math.round(data.quotation.value * 1.025);
+			const res = await updateQuotation(data.quotation.id, {
+				value: newValue,
+				status: 'In Review'
+			});
+			revised = true;
+			if (res.data) {
+				serverStatus = res.data.status;
+				if (typeof res.data.value === 'number') serverValue = res.data.value;
+			} else {
+				serverValue = newValue;
+			}
+			message = t('Kuotasi direvisi +2.5%.');
+		} catch {
+			error = t('Gagal merevisi kuotasi.');
+		} finally {
+			revising = false;
 		}
 	}
 
@@ -171,11 +196,14 @@
 					<p class="mt-1 leading-relaxed text-muted-foreground">{data.quotation.notes}</p>
 				</div>
 				<div class="actions flex flex-wrap gap-3">
-					<Button variant="outline" onclick={() => (revised = true)}>{t('Revise +2.5%')}</Button>
+					<Button variant="outline" disabled={revising || revised} onclick={handleRevise}>{revising ? t('Merevisi...') : revised ? t('Direvisi +2.5%') : t('Revise +2.5%')}</Button>
 					<Button disabled={accepted} onclick={handleAccept}>{accepted ? t('Diterima') : t('Terima kutipan')}</Button>
 				</div>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+				{/if}
+				{#if message}
+					<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 				{/if}
 			</div>
 			<div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
