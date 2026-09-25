@@ -3917,6 +3917,46 @@ def publish_educational_module(module_id: str):
     return _save_one(record)
 
 
+# ── Progres belajar (course progress per user) ──────────────────────
+@router.get("/educational/modules/{module_id}/progress/")
+def get_lesson_progress(module_id: str, current_user: dict = Depends(get_current_user)):
+    """Kembalikan daftar lessonId yang sudah diselesaikan user untuk modul ini."""
+    user_id = str(current_user["id"])
+    rows = db.find("lesson_progress", userId=user_id, moduleId=module_id)
+    completed = [r.get("lessonId") for r in rows if r.get("completed")]
+    return {"data": {"moduleId": module_id, "completedLessonIds": completed}, "meta": {}}
+
+
+@router.post("/educational/modules/{module_id}/lessons/{lesson_id}/complete/")
+def complete_lesson(
+    module_id: str,
+    lesson_id: str,
+    payload: dict | None = None,
+    current_user: dict = Depends(get_current_user),
+):
+    """Tandai/batalkan penyelesaian satu lesson (default: complete=true)."""
+    user_id = str(current_user["id"])
+    if not db.get("educational_modules", module_id):
+        raise HTTPException(404, "Module not found")
+    completed = True if payload is None else bool(payload.get("completed", True))
+    rows = db.find("lesson_progress", userId=user_id, moduleId=module_id, lessonId=lesson_id)
+    if rows:
+        row = rows[0]
+        row["completed"] = completed
+        row["updatedAt"] = "now"
+        db.save(row)
+    else:
+        row = db.insert("lesson_progress", {
+            "id": db.gen_id("lesson_progress", "LPR"),
+            "userId": user_id,
+            "moduleId": module_id,
+            "lessonId": lesson_id,
+            "completed": completed,
+            "updatedAt": "now",
+        })
+    return _one(row)
+
+
 @router.get("/educational/articles/")
 def list_educational_articles():
     return _list_query("educational_articles")

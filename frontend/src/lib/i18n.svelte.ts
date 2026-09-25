@@ -2524,7 +2524,8 @@ const dictionary: Record<string, Entry> = {
 	'Kembali ke aplikasi': { id: 'Kembali ke aplikasi', en: 'Back to app' },
 	'Akses Admin': { id: 'Akses Admin', en: 'Admin access' },
 	'Panel ini hanya untuk peran Admin.': { id: 'Panel ini hanya untuk peran Admin.', en: 'This panel is for the Admin role only.' },
-	'Keluar': { id: 'Keluar', en: 'Sign out' }
+	'Keluar': { id: 'Keluar', en: 'Sign out' },
+	'Gagal menyimpan progres belajar.': { id: 'Gagal menyimpan progres belajar.', en: 'Failed to save learning progress.' }
 };
 
 let initial: Locale = 'id';

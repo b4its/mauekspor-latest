@@ -40,3 +40,19 @@ export function deleteEducationalModule(id: string) {
 export function publishEducationalModule(id: string) {
 	return apiFetch<EducationalModule>(`/educational/modules/${id}/publish/`, { method: 'POST' });
 }
+
+export type LessonProgress = {
+	moduleId: string;
+	completedLessonIds: string[];
+};
+
+export function getLessonProgress(moduleId: string) {
+	return apiFetch<LessonProgress>(`/educational/modules/${moduleId}/progress/`);
+}
+
+export function setLessonComplete(moduleId: string, lessonId: string, completed: boolean) {
+	return apiFetch<{ id: string }>(`/educational/modules/${moduleId}/lessons/${lessonId}/complete/`, {
+		method: 'POST',
+		body: JSON.stringify({ completed })
+	});
+}

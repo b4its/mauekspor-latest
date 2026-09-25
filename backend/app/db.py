@@ -27,6 +27,8 @@ _TABLES = [
     "chat_sessions", "regulation_recommendations", "buyer_profiles",
     "forwarder_profiles", "educational_lessons", "regulations",
     "settings", "suppliers",
+    # --- Progres belajar (course progress per user) ---
+    "lesson_progress",
     # --- Modul desa (komoditas unggulan & peta potensi desa) ---
     "villages",
 ]

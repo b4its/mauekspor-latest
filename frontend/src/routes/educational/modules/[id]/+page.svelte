@@ -6,7 +6,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
-	import { deleteEducationalModule } from '$lib/api/educational';
+	import { deleteEducationalModule, getLessonProgress, setLessonComplete } from '$lib/api/educational';
 	import { goto } from '$app/navigation';
 
 	import PlayCircleIcon from '@lucide/svelte/icons/play-circle';
@@ -26,6 +26,17 @@
 	let activeIndex = $state(initialIndex === -1 ? 0 : initialIndex);
 	let deleting = $state(false);
 	let error = $state('');
+
+	// Muat progres tersimpan dari backend (per user), lalu sinkronkan ke lessons.
+	$effect(() => {
+		const moduleId = data.module.id;
+		getLessonProgress(moduleId)
+			.then((res) => {
+				const done = new Set(res.data.completedLessonIds);
+				lessons = lessons.map((lesson) => ({ ...lesson, completed: done.has(lesson.id) }));
+			})
+			.catch(() => { /* progres opsional; biarkan status lokal */ });
+	});
 
 	async function handleDelete() {
 		error = '';
@@ -56,13 +67,24 @@
 	}
 
 	function toggleComplete(index: number) {
-		lessons[index].completed = !lessons[index].completed;
+		const next = !lessons[index].completed;
+		lessons[index].completed = next;
+		persistProgress(lessons[index].id, next);
 	}
 
 	function markCompleteAndNext() {
 		lessons[activeIndex].completed = true;
+		persistProgress(lessons[activeIndex].id, true);
 		if (activeIndex < lessons.length - 1) {
 			activeIndex += 1;
+		}
+	}
+
+	async function persistProgress(lessonId: string, completed: boolean) {
+		try {
+			await setLessonComplete(data.module.id, lessonId, completed);
+		} catch {
+			error = t('Gagal menyimpan progres belajar.');
 		}
 	}
 </script>
