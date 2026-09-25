@@ -206,7 +206,7 @@
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Payment')}<strong class="mt-1 block text-sm font-bold text-foreground">{localPaymentTerms}</strong></div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Delivery')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.deliveryWindow}</strong></div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Mata uang')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.currency}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Kutipan')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.order.quotationId}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Kutipan')}<strong class="mt-1 block text-sm font-bold text-foreground">{#if data.order.quotationId}<a class="text-primary hover:underline" href={`/quotations/${data.order.quotationId}`}>{data.order.quotationId}</a>{:else}—{/if}</strong></div>
 				</div>
 			</CardContent>
 		</Card>
