@@ -50,7 +50,6 @@
 
 			// Ensure container exists
 			if (!mapContainer) {
-				console.error('[VillagePotentialMap] Container not found');
 				return;
 			}
 
@@ -101,11 +100,9 @@
 			const group = L.featureGroup(markers);
 			mapInstance.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 6 });
 			
-			console.log('[VillagePotentialMap] ✓ Initialized with ' + markers.length + ' village markers');
 			isLoading = false;
 			
-		} catch (error) {
-			console.error('[VillagePotentialMap] Initialization failed:', error);
+		} catch {
 			isLoading = false;
 		}
 	});

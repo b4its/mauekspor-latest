@@ -135,7 +135,7 @@
 		deleting = true;
 		try {
 			await deleteExportAnalysis(data.analysis.id);
-			await goto('/export-analysis');
+			goto('/export-analysis');
 		} catch {
 			error = t('Gagal menghapus analisis.');
 		} finally {

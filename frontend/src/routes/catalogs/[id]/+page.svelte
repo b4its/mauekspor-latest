@@ -70,10 +70,10 @@
 	$effect(() => {
 		getCatalogPricing(data.catalog.id)
 			.then((res) => (pricing = res.data as CatalogPricing))
-			.catch((e) => console.error("API error:", e));
+			.catch(() => (pricing = null));
 		getCatalogMarketIntelligence(data.catalog.id)
 			.then((res) => (marketIntel = res.data as CatalogMI))
-			.catch((e) => console.error("API error:", e));
+			.catch(() => (marketIntel = null));
 	});
 
 	async function handlePricing() {
@@ -191,10 +191,10 @@
 	$effect(() => {
 		listCatalogImages(data.catalog.id)
 			.then((res) => (images = res.data))
-			.catch((e) => console.error("API error:", e));
+			.catch(() => (images = []));
 		listVariantTypes(data.catalog.id)
 			.then((res) => (variantTypes = res.data.data))
-			.catch((e) => console.error("API error:", e));
+			.catch(() => (variantTypes = []));
 	});
 
 	async function handleUploadImage(event: Event) {
