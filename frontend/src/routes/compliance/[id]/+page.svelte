@@ -153,7 +153,19 @@
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{localTitle}
 				</CardTitle>
-				<CardDescription class="mt-2">{data.project?.name ?? data.requirement.projectId} - {data.product?.name ?? data.requirement.productId}</CardDescription>
+				<CardDescription class="mt-2">
+					{#if data.requirement.projectId}
+						<a href={`/trade-projects/${data.requirement.projectId}`} class="text-primary hover:underline">{data.project?.name ?? data.requirement.projectId}</a>
+					{:else}
+						<span>{data.project?.name ?? data.requirement.projectId}</span>
+					{/if}
+					{' - '}
+					{#if data.requirement.productId}
+						<a href={`/products/${data.requirement.productId}`} class="text-primary hover:underline">{data.product?.name ?? data.requirement.productId}</a>
+					{:else}
+						<span>{data.product?.name ?? data.requirement.productId}</span>
+					{/if}
+				</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('AI confidence')}</span>
@@ -161,6 +173,22 @@
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="default" href="/documents">
+				{t('Lihat Dokumen Ekspor')}
+			</Button>
+			<Button variant="outline" href="/hs-codes">
+				{t('Cek Tarif & HS Code')}
+			</Button>
+			{#if data.requirement.projectId}
+				<Button variant="outline" href={`/trade-projects/${data.requirement.projectId}`}>
+					{t('Buka Proyek Ekspor')}
+				</Button>
+			{/if}
+			{#if data.requirement.productId}
+				<Button variant="outline" href={`/products/${data.requirement.productId}`}>
+					{t('Buka Produk')}
+				</Button>
+			{/if}
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
 			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 		</div>

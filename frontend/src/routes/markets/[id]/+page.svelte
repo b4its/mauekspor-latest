@@ -129,9 +129,19 @@
 			<div class="min-w-0">
 				<Badge variant={toneVariant(statusTone(localStatus))}>{localStatus}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
-					{data.product?.name ?? data.market.productId}
+					{#if data.market.productId}
+						<a href={`/products/${data.market.productId}`} class="hover:underline">{data.product?.name ?? data.market.productId}</a>
+					{:else}
+						{data.product?.name ?? data.market.productId}
+					{/if}
 				</CardTitle>
-				<CardDescription class="mt-2">{data.project?.name ?? data.market.projectId}</CardDescription>
+				<CardDescription class="mt-2">
+					{#if data.market.projectId}
+						<a href={`/trade-projects/${data.market.projectId}`} class="text-primary hover:underline">{data.project?.name ?? data.market.projectId}</a>
+					{:else}
+						{data.project?.name ?? data.market.projectId}
+					{/if}
+				</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Market score')}</span>
@@ -139,6 +149,18 @@
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="default" href={`/export-analysis/create?destination=${encodeURIComponent(localCountry)}&productId=${encodeURIComponent(data.market.productId ?? '')}`}>
+				{t('Mulai Analisis Ekspor')}
+			</Button>
+			<Button variant="outline" href={`/export-analysis/compare?target=${encodeURIComponent(localCountry)}`}>
+				{t('Bandingkan Pasar')}
+			</Button>
+			<Button variant="outline" href={`/forwarders?destination=${encodeURIComponent(localCountry)}`}>
+				{t('Cari Forwarder')}
+			</Button>
+			<Button variant="outline" href={`/costing/create?destination=${encodeURIComponent(localCountry)}&productId=${encodeURIComponent(data.market.productId ?? '')}`}>
+				{t('Hitung Costing')}
+			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
 			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 		</div>
