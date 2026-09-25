@@ -32,6 +32,7 @@
 	let specRequirements = $state('');
 	let keywordTags = $state('');
 	let created = $state(false);
+	let createdId = $state('');
 	let creating = $state(false);
 	let error = $state('');
 
@@ -45,7 +46,7 @@
 		}
 		creating = true;
 		try {
-			await createBuyerRequest({
+			const res = await createBuyerRequest({
 				subject,
 				buyerId,
 				productId,
@@ -59,6 +60,9 @@
 				keyword_tags: keywordTags.split(',').map((t) => t.trim()).filter(Boolean)
 			});
 			created = true;
+			if (res.data?.id) {
+				createdId = res.data.id;
+			}
 		} catch {
 			error = t('Gagal membuat permintaan buyer.');
 		} finally {
@@ -92,9 +96,13 @@
 				</CardDescription>
 			</CardHeader>
 			<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-				<Button href="/buyer-requests">{t('Kembali ke permintaan')}</Button>
+				{#if createdId}
+					<Button href={`/buyer-requests/${createdId}`}>{t('Buka Permintaan')}</Button>
+				{/if}
+				<Button variant="outline" href="/buyer-requests">{t('Kembali ke permintaan')}</Button>
 			</CardContent>
 		</Card>
+
 	{:else}
 		<Card>
 			<form class="grid gap-4 p-1" onsubmit={(event) => { event.preventDefault(); create(); }}>

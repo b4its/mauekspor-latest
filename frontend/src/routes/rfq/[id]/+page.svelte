@@ -14,6 +14,7 @@
 	let shortlisted = $state('');
 	let shortlisting = $state('');
 	let quoteCreated = $state(false);
+	let createdQuotationId = $state('');
 	let creatingQuote = $state(false);
 	let error = $state('');
 	let message = $state('');
@@ -58,20 +59,25 @@
 		error = '';
 		creatingQuote = true;
 		try {
-			await createQuotation({
+			const res = await createQuotation({
 				rfqId: data.rfq.id,
-				incoterm: data.rfq.incoterm,
+				incoterm: data.rfq.incoterm || 'FOB',
 				value: 42800,
-				currency: 'IDR',
-				validUntil: '2026-09-30'
+				currency: 'USD',
+				validUntil: data.rfq.deadline || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
 			});
+
 			quoteCreated = true;
+			if (res.data?.id) {
+				createdQuotationId = res.data.id;
+			}
 		} catch {
-			error = 'Gagal membuat quotation draft.';
+			error = t('Gagal membuat quotation draft.');
 		} finally {
 			creatingQuote = false;
 		}
 	}
+
 
 	function openEdit() {
 		editIncoterm = localIncoterm;
@@ -232,8 +238,12 @@
 				{/if}
 				{#if quoteCreated}
 					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Quotation draft tersimpan di backend.')}</p>
+					{#if createdQuotationId}
+						<Button href={`/quotations/${createdQuotationId}`}>{t('Buka Quotation')}</Button>
+					{/if}
+				{:else}
+					<Button class="w-fit" disabled={!shortlisted} onclick={handleCreateQuote}>{creatingQuote ? t('Membuat...') : t('Buat draft kuotasi')}</Button>
 				{/if}
-				<Button class="w-fit" disabled={!shortlisted || quoteCreated} onclick={handleCreateQuote}>{quoteCreated ? 'Draft created' : creatingQuote ? 'Creating...' : 'Create quotation draft'}</Button>
 			</CardContent>
 		</Card>
 	</div>

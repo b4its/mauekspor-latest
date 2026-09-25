@@ -6,9 +6,12 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { confirmOrder, updateOrder, deleteOrder } from '$lib/api/orders';
+	import { createShipment } from '$lib/api/shipments';
+	import { createPayment } from '$lib/api/payments';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 	import { generateTradeDocument } from '$lib/api/documents';
+
 
 	let { data } = $props();
 	let confirmed = $state(false);
@@ -82,7 +85,56 @@
 		}
 	}
 
+	let creatingShipment = $state(false);
+	let creatingPayment = $state(false);
+
+	async function handleCreateShipment() {
+		error = '';
+		creatingShipment = true;
+		try {
+			const res = await createShipment({
+				forwarder: 'Samudera Indonesia Logistics',
+				route: `${localSupplier} -> ${localBuyer}`,
+				mode: 'Ocean FCL',
+				projectId: data.project?.id ?? data.order.projectId,
+				eta: data.order.deliveryWindow || '30 days'
+			});
+			message = t('Pengiriman forwarder berhasil dibuat.');
+			if (res.data?.id) {
+				goto(`/shipments/${res.data.id}`);
+			}
+		} catch {
+			error = t('Gagal membuat pengiriman.');
+		} finally {
+			creatingShipment = false;
+		}
+	}
+
+	async function handleCreatePayment() {
+		error = '';
+		creatingPayment = true;
+		try {
+			const res = await createPayment({
+				orderId: data.order.id,
+				buyer: localBuyer,
+				amount: data.order.value,
+				currency: data.order.currency || 'USD',
+				method: 'Letter of Credit (L/C)',
+				dueDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+			});
+			message = t('Invoice/pembayaran berhasil dicatat.');
+			if (res.data?.id) {
+				goto(`/payments/${res.data.id}`);
+			}
+		} catch {
+			error = t('Gagal membuat pencatatan pembayaran.');
+		} finally {
+			creatingPayment = false;
+		}
+	}
+
 	function openEdit() {
+
 		editBuyer = localBuyer;
 		editSupplier = localSupplier;
 		editIncoterm = localIncoterm;
@@ -195,7 +247,14 @@
 					<div class="flex flex-wrap gap-2">
 						<Button variant="outline" disabled={confirmed} onclick={handleConfirm}>{t('Konfirmasi order')}</Button>
 						<Button disabled={docsStarted || startingDocs} onclick={handleDocs}>{startingDocs ? t('Memulai...') : t('Mulai persiapan dokumen')}</Button>
+						<Button variant="outline" disabled={creatingShipment} onclick={handleCreateShipment}>
+							{creatingShipment ? t('Membuat...') : t('Pesan Pengiriman Forwarder')}
+						</Button>
+						<Button variant="outline" disabled={creatingPayment} onclick={handleCreatePayment}>
+							{creatingPayment ? t('Memproses...') : t('Catat Invoice / Pembayaran')}
+						</Button>
 					</div>
+
 					{#if error}
 						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 					{/if}

@@ -6,6 +6,7 @@
 	import { Card, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { acceptQuotation, updateQuotation, deleteQuotation } from '$lib/api/quotations';
+	import { createOrder } from '$lib/api/orders';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 
@@ -56,6 +57,34 @@
 			error = t('Gagal menerima quotation.');
 		}
 	}
+
+	let convertingOrder = $state(false);
+
+	async function handleConvertToOrder() {
+		error = '';
+		convertingOrder = true;
+		try {
+			const res = await createOrder({
+				quotationId: data.quotation.id,
+				projectId: data.quotation.projectId,
+				buyer: data.quotation.buyer,
+				value: displayValue,
+				incoterm: localIncoterm,
+				currency: data.quotation.currency || 'USD',
+				paymentTerms: '30% Deposit, 70% against B/L',
+				deliveryWindow: '30-45 days'
+			});
+			if (res.data?.id) {
+				message = t('Sales Order berhasil dibuat dari kuotasi ini.');
+				goto(`/orders/${res.data.id}`);
+			}
+		} catch {
+			error = t('Gagal membuat Sales Order dari kuotasi.');
+		} finally {
+			convertingOrder = false;
+		}
+	}
+
 
 	async function handleRevise() {
 		error = '';
@@ -198,7 +227,13 @@
 				<div class="actions flex flex-wrap gap-3">
 					<Button variant="outline" disabled={revising || revised} onclick={handleRevise}>{revising ? t('Merevisi...') : revised ? t('Direvisi +2.5%') : t('Revise +2.5%')}</Button>
 					<Button disabled={accepted} onclick={handleAccept}>{accepted ? t('Diterima') : t('Terima kutipan')}</Button>
+					{#if accepted || displayStatus === 'Accepted'}
+						<Button variant="default" disabled={convertingOrder} onclick={handleConvertToOrder}>
+							{convertingOrder ? t('Mengonversi...') : t('Konversi ke Sales Order')}
+						</Button>
+					{/if}
 				</div>
+
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 				{/if}

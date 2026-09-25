@@ -193,17 +193,21 @@
 						{#if match.contactInfo && (match.contactInfo.phone || match.contactInfo.email)}
 							<p class="mt-1 text-xs text-muted-foreground">{t('Kontak:')} {match.contactInfo.phone || match.contactInfo.email}</p>
 						{/if}
-						{#if data.request.status !== 'Closed'}
-							<div class="mt-2.5">
+						<div class="mt-2.5 flex flex-wrap items-center gap-2">
+							{#if match.catalogId}
+								<Button size="sm" variant="ghost" href={`/catalogs/${match.catalogId}`}>{t('Lihat katalog')}</Button>
+							{/if}
+							{#if data.request.status !== 'Closed'}
 								<Button size="sm" variant="outline" onclick={() => handleSelect(match)} disabled={selectingId !== ''}>
 									{selectingId === String(match.catalogId) ? t('Memilih...') : t('Pilih katalog ini')}
 								</Button>
-							</div>
-						{:else if data.request.selectedCatalogId === String(match.catalogId)}
-							<p class="mt-2 text-xs font-bold text-primary">✓ {t('Katalog terpilih')}</p>
-						{/if}
+							{:else if data.request.selectedCatalogId === String(match.catalogId)}
+								<p class="text-xs font-bold text-primary">✓ {t('Katalog terpilih')}</p>
+							{/if}
+						</div>
 					</div>
 				{/each}
+
 			</CardContent>
 		</Card>
 	</div>
