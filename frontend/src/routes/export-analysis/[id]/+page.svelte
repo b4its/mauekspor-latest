@@ -252,7 +252,7 @@
 						{t('Tidak ada isu kepatuhan. Produk siap untuk analisis pasar.')}
 					</p>
 				{/if}
-				{#each issues as issue (issue.rule_key + issue.type)}
+				{#each issues as issue, issueIndex (issue.rule_key + '-' + issue.type + '-' + issueIndex)}
 					<div class="rounded-lg border bg-muted/30 p-3.5">
 						<div class="flex flex-wrap items-center justify-between gap-2">
 							<strong class="text-sm">{issue.type}{issue.rule_key ? ` — ${issue.rule_key}` : ''}</strong>

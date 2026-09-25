@@ -268,7 +268,7 @@
 											{/if}
 											{#if rec.forwarders && rec.forwarders.length > 0}
 												<div class="mt-2 grid gap-1.5">
-													{#each rec.forwarders as fwd (fwd.id)}
+													{#each rec.forwarders as fwd, fwdIndex (fwd.id ?? fwd.name ?? fwdIndex)}
 														<div class="rounded-md border bg-background/60 px-2.5 py-1.5 text-xs">
 															<b>{fwd.name}</b> {fwd.averageRating ? `· ⭐ ${fwd.averageRating}` : ''}
 															{#if fwd.contactInfo?.phone}
