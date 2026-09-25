@@ -26,12 +26,15 @@
 	let savedCountry = $state('');
 	let savedSegment = $state('');
 	let savedStatus = $state('');
+	let serverStatus = $state('');
+	let serverScore = $state<number | null>(null);
+	let lastContact = $state('');
 	let localName = $derived(savedName || data.buyer.name);
 	let localCountry = $derived(savedCountry || data.buyer.country);
 	let localSegment = $derived(savedSegment || data.buyer.segment);
-	let localBaseStatus = $derived(savedStatus || data.buyer.status);
+	let localBaseStatus = $derived(serverStatus || savedStatus || data.buyer.status);
 	let displayStatus = $derived(qualified && localBaseStatus === 'Lead' ? 'Qualified' : localBaseStatus);
-	let displayScore = $derived(qualified ? Math.min(data.buyer.fitScore + 9, 100) : data.buyer.fitScore);
+	let displayScore = $derived(serverScore ?? (qualified ? Math.min(data.buyer.fitScore + 9, 100) : data.buyer.fitScore));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -43,8 +46,13 @@
 	async function handleQualify() {
 		error = '';
 		try {
-			await qualifyBuyer(data.buyer.id);
+			const res = await qualifyBuyer(data.buyer.id);
 			qualified = true;
+			if (res.data) {
+				serverStatus = res.data.status;
+				if (typeof res.data.fitScore === 'number') serverScore = res.data.fitScore;
+			}
+			message = t('Buyer berhasil dikualifikasi.');
 		} catch {
 			error = t('Gagal mengkualifikasi buyer.');
 		}
@@ -53,8 +61,13 @@
 	async function handleLogContact() {
 		error = '';
 		try {
-			await logBuyerContact(data.buyer.id, `Follow-up call recorded (${new Date().toISOString().slice(0, 10)})`);
+			const res = await logBuyerContact(data.buyer.id, `Follow-up call recorded (${new Date().toISOString().slice(0, 10)})`);
 			logged = true;
+			if (res.data) {
+				serverStatus = res.data.status;
+				lastContact = res.data.lastContact ?? '';
+			}
+			message = t('Kontak dicatat.');
 		} catch {
 			error = t('Gagal mencatat kontak.');
 		}

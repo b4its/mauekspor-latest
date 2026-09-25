@@ -24,8 +24,10 @@
 	let savedCountry = $state('');
 	let savedStatus = $state('');
 	let savedScore = $state<number | null>(null);
+	let serverScore = $state<number | null>(null);
+	let serverStatus = $state('');
 	let localCountry = $derived(savedCountry || data.market.country);
-	let localStatus = $derived(savedStatus || data.market.status);
+	let localStatus = $derived(serverStatus || savedStatus || data.market.status);
 	let selectedScenario = $state('Base');
 	const scenarios = ['Base', 'Optimistic', 'Conservative'];
 
@@ -35,12 +37,12 @@
 
 	let displayScore = $derived(
 		selectedScenario === 'Optimistic'
-			? Math.min((savedScore ?? data.market.marketScore) + 6, 100)
+			? Math.min((serverScore ?? savedScore ?? data.market.marketScore) + 6, 100)
 			: selectedScenario === 'Conservative'
-				? Math.max((savedScore ?? data.market.marketScore) - 8, 0)
+				? Math.max((serverScore ?? savedScore ?? data.market.marketScore) - 8, 0)
 				: refreshed
-					? Math.min((savedScore ?? data.market.marketScore) + 2, 100)
-					: (savedScore ?? data.market.marketScore)
+					? Math.min((serverScore ?? savedScore ?? data.market.marketScore) + 2, 100)
+					: (serverScore ?? savedScore ?? data.market.marketScore)
 	);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -54,8 +56,13 @@
 		error = '';
 		refreshing = true;
 		try {
-			await refreshMarketInsight(data.market.id);
+			const res = await refreshMarketInsight(data.market.id);
 			refreshed = true;
+			if (res.data) {
+				if (typeof res.data.marketScore === 'number') serverScore = res.data.marketScore;
+				serverStatus = res.data.status;
+			}
+			message = t('Insight pasar diperbarui.');
 		} catch {
 			error = t('Gagal refresh insight pasar.');
 		} finally {

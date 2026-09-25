@@ -23,10 +23,11 @@
 	let savedTitle = $state('');
 	let savedStatus = $state('');
 	let savedPeriod = $state('');
+	let serverStatus = $state('');
 	let localTitle = $derived(savedTitle || data.report.title);
-	let localStatus = $derived(savedStatus || data.report.status);
+	let localStatus = $derived(serverStatus || savedStatus || data.report.status);
 	let localPeriod = $derived(savedPeriod || data.report.period);
-	let displayStatus = $derived(scheduled ? 'Scheduled' : generated ? 'Ready' : localStatus);
+	let displayStatus = $derived(serverStatus || (scheduled ? 'Scheduled' : generated ? 'Ready' : localStatus));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -39,10 +40,12 @@
 		error = '';
 		busy = true;
 		try {
-			await generateReport(data.report.id);
+			const res = await generateReport(data.report.id);
 			generated = true;
+			if (res.data) serverStatus = res.data.status;
+			message = t('Laporan berhasil dibuat.');
 		} catch {
-			error = 'Gagal generate laporan.';
+			error = t('Gagal generate laporan.');
 		} finally {
 			busy = false;
 		}
@@ -52,8 +55,10 @@
 		error = '';
 		busy = true;
 		try {
-			await scheduleReport(data.report.id);
+			const res = await scheduleReport(data.report.id);
 			scheduled = true;
+			if (res.data) serverStatus = res.data.status;
+			message = t('Laporan dijadwalkan.');
 		} catch {
 			error = t('Gagal menjadwalkan laporan.');
 		} finally {

@@ -25,11 +25,12 @@
 	let savedAmount = $state(0);
 	let savedStatus = $state('');
 	let savedMethod = $state('');
+	let serverStatus = $state('');
 	let localBuyer = $derived(savedBuyer || data.payment.buyer);
 	let localAmount = $derived(savedAmount || data.payment.amount);
 	let localMethod = $derived(savedMethod || data.payment.method);
 	let paidAmount = $derived(received ? data.payment.amount : data.payment.paid);
-	let displayStatus = $derived(received ? 'Settled' : savedStatus || data.payment.status);
+	let displayStatus = $derived(serverStatus || (received ? 'Settled' : savedStatus || data.payment.status));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -45,6 +46,7 @@
 			received = true;
 			if (res.data) {
 				savedStatus = res.data.status;
+				serverStatus = res.data.status;
 				savedAmount = res.data.amount;
 			}
 			message = t('Pembayaran ditandai diterima.');
@@ -56,8 +58,12 @@
 	async function handleReminder() {
 		error = '';
 		try {
-			await sendPaymentReminder(data.payment.id);
+			const res = await sendPaymentReminder(data.payment.id);
 			reminded = true;
+			if (res.data?.status) {
+				savedStatus = res.data.status;
+				serverStatus = res.data.status;
+			}
 			message = t('Pengingat pembayaran berhasil dikirim.');
 		} catch {
 			error = t('Gagal mengirim pengingat.');
@@ -179,12 +185,9 @@
 					<CardDescription>{t('Payment status is connected to order release, document handoff, and shipment readiness.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" onclick={handleReminder}>{reminded ? 'Reminder sent' : 'Send reminder'}</Button>
-					<Button onclick={handleReceived}>{received ? 'Received' : 'Mark received'}</Button>
+					<Button variant="outline" onclick={handleReminder}>{reminded ? t('Reminder sent') : t('Send reminder')}</Button>
+					<Button onclick={handleReceived}>{received ? t('Received') : t('Mark received')}</Button>
 				</div>
-				{#if error}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
-				{/if}
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 				{/if}

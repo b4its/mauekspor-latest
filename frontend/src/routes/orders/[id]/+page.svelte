@@ -27,12 +27,21 @@
 	let savedSupplier = $state('');
 	let savedIncoterm = $state('');
 	let savedPaymentTerms = $state('');
+	let serverStatus = $state('');
+	let serverReadiness = $state<number | null>(null);
 	let localBuyer = $derived(savedBuyer || data.order.buyer);
 	let localSupplier = $derived(savedSupplier || data.order.supplier);
 	let localIncoterm = $derived(savedIncoterm || data.order.incoterm);
 	let localPaymentTerms = $derived(savedPaymentTerms || data.order.paymentTerms);
-	let displayStatus = $derived(docsStarted ? 'Document Prep' : confirmed ? 'Confirmed' : data.order.status);
-	let displayReadiness = $derived(docsStarted ? Math.min(data.order.readiness + 12, 100) : confirmed ? Math.min(data.order.readiness + 7, 100) : data.order.readiness);
+	let displayStatus = $derived(serverStatus || (docsStarted ? 'Document Prep' : confirmed ? 'Confirmed' : data.order.status));
+	let displayReadiness = $derived(
+		serverReadiness ??
+			(docsStarted
+				? Math.min(data.order.readiness + 12, 100)
+				: confirmed
+					? Math.min(data.order.readiness + 7, 100)
+					: data.order.readiness)
+	);
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -45,9 +54,10 @@
 		error = '';
 		startingDocs = true;
 		try {
-			await generateTradeDocument({ projectId: data.project?.id ?? data.order.projectId, type: 'Commercial Invoice' });
+			const res = await generateTradeDocument({ projectId: data.project?.id ?? data.order.projectId, type: 'Commercial Invoice' });
 			docsStarted = true;
-			message = 'Dokumen Commercial Invoice berhasil disiapkan.';
+			if (res.data?.status) serverStatus = 'Document Prep';
+			message = t('Dokumen Commercial Invoice berhasil disiapkan.');
 		} catch {
 			error = t('Gagal menyiapkan dokumen.');
 		} finally {
@@ -63,6 +73,8 @@
 			if (res.data) {
 				savedBuyer = res.data.buyer;
 				savedSupplier = res.data.supplier;
+				serverStatus = res.data.status;
+				if (typeof res.data.readiness === 'number') serverReadiness = res.data.readiness;
 			}
 			message = t('Order berhasil dikonfirmasi.');
 		} catch {

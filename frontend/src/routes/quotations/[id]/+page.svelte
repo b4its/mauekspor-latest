@@ -25,11 +25,14 @@
 	let savedStatus = $state('');
 	let savedValidUntil = $state('');
 	let savedMargin = $state(0);
+	// Status resmi dari server setelah aksi (accept/revise/save) agar tampilan konsisten.
+	let serverStatus = $state('');
+	let serverValue = $state<number | null>(null);
 	let localIncoterm = $derived(savedIncoterm || data.quotation.incoterm);
 	let localValidUntil = $derived(savedValidUntil || data.quotation.validUntil);
 	let localMargin = $derived(savedMargin || data.quotation.margin);
-	let displayStatus = $derived(accepted ? 'Accepted' : revised ? 'In Review' : savedStatus || data.quotation.status);
-	let displayValue = $derived(revised ? Math.round(data.quotation.value * 1.025) : data.quotation.value);
+	let displayStatus = $derived(serverStatus || (accepted ? 'Accepted' : revised ? 'In Review' : savedStatus || data.quotation.status));
+	let displayValue = $derived(serverValue ?? (revised ? Math.round(data.quotation.value * 1.025) : data.quotation.value));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -41,8 +44,13 @@
 	async function handleAccept() {
 		error = '';
 		try {
-			await acceptQuotation(data.quotation.id);
+			const res = await acceptQuotation(data.quotation.id);
 			accepted = true;
+			if (res.data) {
+				serverStatus = res.data.status;
+				if (typeof res.data.value === 'number') serverValue = res.data.value;
+			}
+			message = t('Quotation diterima.');
 		} catch {
 			error = t('Gagal menerima quotation.');
 		}
@@ -80,6 +88,8 @@
 			savedStatus = res.data.status;
 			savedValidUntil = res.data.validUntil;
 			savedMargin = res.data.margin;
+			serverStatus = res.data.status;
+			serverValue = res.data.value;
 			message = t('Kuotasi diperbarui.');
 			editing = false;
 		} catch {

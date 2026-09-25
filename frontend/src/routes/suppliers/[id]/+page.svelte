@@ -22,10 +22,12 @@
 	let editContact = $state('');
 	let savedName = $state('');
 	let savedLocation = $state('');
+	let serverStatus = $state('');
+	let serverScore = $state<number | null>(null);
 	let localName = $derived(savedName || data.supplier.name);
 	let localLocation = $derived(savedLocation || data.supplier.location);
-	let displayStatus = $derived(verified ? 'Verified' : data.supplier.status);
-	let displayScore = $derived(verified ? Math.max(data.supplier.capabilityScore, 95) : data.supplier.capabilityScore);
+	let displayStatus = $derived(serverStatus || (verified ? 'Verified' : data.supplier.status));
+	let displayScore = $derived(serverScore ?? (verified ? Math.max(data.supplier.capabilityScore, 95) : data.supplier.capabilityScore));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -37,8 +39,13 @@
 	async function handleVerify() {
 		error = '';
 		try {
-			await verifySupplier(data.supplier.id);
+			const res = await verifySupplier(data.supplier.id);
 			verified = true;
+			if (res.data) {
+				serverStatus = res.data.status;
+				if (typeof res.data.capabilityScore === 'number') serverScore = res.data.capabilityScore;
+			}
+			message = t('Supplier diverifikasi.');
 		} catch {
 			error = t('Gagal memverifikasi supplier.');
 		}
@@ -47,8 +54,10 @@
 	async function handleRequestEvidence() {
 		error = '';
 		try {
-			await requestSupplierEvidence(data.supplier.id);
+			const res = await requestSupplierEvidence(data.supplier.id);
 			evidenceRequested = true;
+			if (res.data) serverStatus = res.data.status;
+			message = t('Permintaan bukti dikirim.');
 		} catch {
 			error = t('Gagal meminta evidence.');
 		}

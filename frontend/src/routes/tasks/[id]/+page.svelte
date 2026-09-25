@@ -24,10 +24,12 @@
 	let savedStatus = $state('');
 	let savedPriority = $state('');
 	let savedOwner = $state('');
+	let serverStatus = $state('');
+	let serverOwner = $state('');
 	let localTitle = $derived(savedTitle || data.task.title);
-	let localOwner = $derived(savedOwner || data.task.owner);
+	let localOwner = $derived(serverOwner || savedOwner || data.task.owner);
 	let localPriority = $derived(savedPriority || data.task.priority);
-	let displayStatus = $derived(completed ? 'Done' : savedStatus || data.task.status);
+	let displayStatus = $derived(serverStatus || (completed ? 'Done' : savedStatus || data.task.status));
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -39,8 +41,13 @@
 	async function handleComplete() {
 		error = '';
 		try {
-			await completeTask(data.task.id);
+			const res = await completeTask(data.task.id);
 			completed = true;
+			if (res.data) {
+				serverStatus = res.data.status;
+				if (res.data.owner) serverOwner = res.data.owner;
+			}
+			message = t('Tugas ditandai selesai.');
 		} catch {
 			error = t('Gagal menyelesaikan tugas.');
 		}
@@ -49,8 +56,13 @@
 	async function handleAssign() {
 		error = '';
 		try {
-			await assignTask(data.task.id, 'Operations Lead');
+			const res = await assignTask(data.task.id, 'Operations Lead');
 			reassigned = true;
+			if (res.data) {
+				serverOwner = res.data.owner;
+				serverStatus = res.data.status;
+			}
+			message = t('Penanggung jawab diperbarui.');
 		} catch {
 			error = t('Gagal mengubah penanggung jawab.');
 		}
