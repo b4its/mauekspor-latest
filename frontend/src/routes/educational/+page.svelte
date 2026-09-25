@@ -66,8 +66,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let paginationPage_articles = $state(1);
 	let paginationPageSize_articles = $state(5);
-	let pagedItems_articles = $derived(paginate(articles.items ?? [], paginationPage_articles, paginationPageSize_articles));
-	let paginationTotalPages_articles = $derived(calcTotalPages(articles.items?.length ?? 0, paginationPageSize_articles));
+	let filteredArticles = $derived(
+		articles.items.filter((article) => {
+			const matchesLevel = levelFilter === 'All' || article.level === levelFilter;
+			const matchesQuery = [article.title, article.level, article.status, article.summary]
+				.join(' ')
+				.toLowerCase()
+				.includes(query.trim().toLowerCase());
+			return matchesLevel && matchesQuery;
+		})
+	);
+	let pagedItems_articles = $derived(paginate(filteredArticles ?? [], paginationPage_articles, paginationPageSize_articles));
+	let paginationTotalPages_articles = $derived(calcTotalPages(filteredArticles?.length ?? 0, paginationPageSize_articles));
 
 </script>
 
@@ -210,6 +220,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredModules?.length ?? 0} />
 
-	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
+	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={filteredArticles?.length ?? 0} />
 
 </AppShell>

@@ -13,9 +13,11 @@
 	import type { Product } from '$lib/data/trade';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
 
 	let filter = $state('All');
-	let query = $state('');
+	// Terima deep-link dari halaman lain (mis. villages → /products?query=Kopi).
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	const filters = ['All', 'Ready', 'Enriched', 'Needs HS Review'];
 	let products = $state<Product[]>([]);
 	let loaded = $state(false);
