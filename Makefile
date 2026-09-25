@@ -12,6 +12,8 @@ SHELL := /bin/bash
 COMPOSE_FILE := docker-compose.dev.yml
 PROJECT_NAME := mauekspor-dev
 ENV_FILE := .env.local
+-include .env.local
+export
 
 help:
 	@echo ""
@@ -79,8 +81,8 @@ $(ENV_FILE):
 		echo "MAUEKSPOR_AI_MODE=remote" >> $(ENV_FILE); \
 		echo "MAUEKSPOR_AI_API_KEY=your-ai-api-key-here" >> $(ENV_FILE); \
 		echo "MAUEKSPOR_AI_BASE_URL=http://localhost:20128/v1" >> $(ENV_FILE); \
-		echo "MAUEKSPOR_AI_MODEL=qd/dmodel" >> $(ENV_FILE); \
-		echo "MAUEKSPOR_CORS_ORIGINS='[\"http://localhost\",\"http://127.0.0.1\",\"http://0.0.0.0\",\"http://$$HOST_IP\",\"http://$$HOST_IP:5188\",\"http://$$HOST_IP:8016\"]'" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_AI_MODEL=hk/deepseek-4.1-flash" >> $(ENV_FILE); \
+		echo "MAUEKSPOR_CORS_ORIGINS='[\"http://localhost\",\"http://127.0.0.1\",\"http://0.0.0.0\",\"http://$$HOST_IP\",\"http://$$HOST_IP:5188\",\"http://$$HOST_IP:8016\",\"http://localhost:3015\"]'" >> $(ENV_FILE); \
 		echo "VITE_API_BASE_URL=/api/v1" >> $(ENV_FILE); \
 		echo "BACKEND_ORIGIN=http://localhost:8016" >> $(ENV_FILE); \
 		echo "MAUEKSPOR_ENABLE_CSRF=0" >> $(ENV_FILE); \
@@ -129,7 +131,7 @@ dev-status: $(ENV_FILE)
 	@echo -n "  Database  : " && docker inspect --format='{{.State.Health.Status}}' mauekspor-dev-db 2>/dev/null || echo "N/A"
 	@echo -n "  Backend   : " && (curl -s --max-time 3 http://localhost:8016/api/v1/health 2>/dev/null | grep -q ok && echo "✅ OK") || echo "❌ Not responding"
 	@echo -n "  Frontend  : " && (curl -s --max-time 3 http://localhost:5188/ 2>/dev/null | head -c 1 | grep -q . && echo "✅ OK") || echo "❌ Not responding"
-	@echo -n "  AI Service: " && (curl -s --max-time 3 http://localhost:20128/v1/models 2>/dev/null | grep -q qd && echo "✅ OK") || echo "❌ Not responding"
+	@echo -n "  AI Service: " && (curl -s --max-time 5 -H "Authorization: Bearer $(MAUEKSPOR_AI_API_KEY)" http://localhost:20128/v1/models 2>/dev/null | grep -qE "(hk|deepseek|model|object)" && echo "✅ OK") || echo "❌ Not responding"
 	@echo ""
 	@make -s dev-network
 
