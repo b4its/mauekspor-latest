@@ -193,9 +193,9 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 />
 
 <Sidebar.Provider>
-	{#if sidebar}
+	{#if sidebar && (userStatus === 'loading' || user?.role === 'Admin')}
 		{@render sidebar()}
-	{:else if page.url.pathname.startsWith('/admin')}
+	{:else if page.url.pathname.startsWith('/admin') && (userStatus === 'loading' || user?.role === 'Admin')}
 		<AdminSidebar />
 	{:else}
 		<AppSidebar />

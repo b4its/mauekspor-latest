@@ -11,6 +11,7 @@
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
 	import DatabaseIcon from '@lucide/svelte/icons/database';
 	import GlobeIcon from '@lucide/svelte/icons/globe';
+	import BotIcon from '@lucide/svelte/icons/bot';
 	import UsersIcon from '@lucide/svelte/icons/users';
 	import ScrollTextIcon from '@lucide/svelte/icons/scroll-text';
 	import KeyIcon from '@lucide/svelte/icons/key';
@@ -30,6 +31,7 @@
 		{ label: 'Dasbor Admin', href: '/admin', icon: LayoutDashboardIcon },
 		{ label: 'Studio Database', href: '/admin#studio', icon: DatabaseIcon },
 		{ label: 'Negara & Regulasi', href: '/admin/countries', icon: GlobeIcon },
+		{ label: 'Diagnostik AI & Sistem', href: '/admin#diagnostics', icon: BotIcon },
 		{ label: 'Pengguna', href: '/users', icon: UsersIcon },
 		{ label: 'Audit Log', href: '/audit', icon: ScrollTextIcon },
 		{ label: 'Kunci API', href: '/api-keys', icon: KeyIcon },
@@ -37,12 +39,18 @@
 	];
 
 	function isActive(href: string) {
-		const clean = href.split('#')[0];
+		const [clean, hash] = href.split('#');
 		if (clean === '/admin') {
-			if (href.includes('#studio')) {
-				return page.url.pathname === '/admin' && (page.url.hash === '#studio' || page.url.searchParams.get('tab') === 'crud');
+			if (page.url.pathname !== '/admin') return false;
+			const currentHash = page.url.hash;
+			const currentTab = page.url.searchParams.get('tab');
+			if (hash === 'studio') {
+				return currentHash === '#studio' || currentTab === 'crud';
 			}
-			return page.url.pathname === '/admin' && page.url.hash !== '#studio' && page.url.searchParams.get('tab') !== 'crud';
+			if (hash === 'diagnostics') {
+				return currentHash === '#diagnostics' || currentTab === 'diagnostics';
+			}
+			return !hash && (!currentHash || currentHash === '#dashboard') && (!currentTab || currentTab === 'dashboard');
 		}
 		return page.url.pathname === clean || page.url.pathname.startsWith(clean + '/');
 	}
@@ -76,7 +84,18 @@
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton isActive={isActive(item.href)} tooltipContent={t(item.label)}>
 							{#snippet child({ props }: { props: Record<string, unknown> })}
-								<a {...props} href={item.href} onclick={() => sidebar.setOpenMobile(false)}>
+								<a
+									{...props}
+									href={item.href}
+									onclick={(e) => {
+										sidebar.setOpenMobile(false);
+										if (page.url.pathname === '/admin' && (item.href === '/admin' || item.href.startsWith('/admin#'))) {
+											e.preventDefault();
+											const target = item.href === '/admin' ? '/admin' : item.href.replace('/admin', '');
+											goto(target, { replaceState: true, noScroll: true, keepFocus: true });
+										}
+									}}
+								>
 									<NavIcon class="size-4 shrink-0" />
 									<span>{t(item.label)}</span>
 								</a>

@@ -476,7 +476,7 @@
 	<title>{t('Kelola Negara & Regulasi')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Countries & Regulations" eyebrow={t('Admin Intelijen & Regulasi')}>
+<AppShell title={t('Countries & Regulations')} eyebrow={t('Admin Intelijen & Regulasi')}>
 	{#snippet sidebar()}
 		<AdminSidebar />
 	{/snippet}

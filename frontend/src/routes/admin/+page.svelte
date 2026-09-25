@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page as pageState } from '$app/state';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import AdminSidebar from '$lib/components/AdminSidebar.svelte';
@@ -433,14 +434,26 @@
 	});
 
 	$effect(() => {
-		if (pageState.url.hash === '#studio' || pageState.url.searchParams.get('tab') === 'crud') {
+		const hash = pageState.url.hash;
+		const tab = pageState.url.searchParams.get('tab');
+		if (hash === '#studio' || tab === 'crud') {
 			activeTab = 'crud';
-		} else if (pageState.url.hash === '#diagnostics' || pageState.url.searchParams.get('tab') === 'diagnostics') {
+		} else if (hash === '#diagnostics' || tab === 'diagnostics') {
 			activeTab = 'diagnostics';
-		} else if (pageState.url.hash === '#audit' || pageState.url.searchParams.get('tab') === 'audit') {
+		} else if (hash === '#audit' || tab === 'audit') {
 			activeTab = 'audit';
+		} else if (hash === '' || hash === '#dashboard' || tab === 'dashboard') {
+			activeTab = 'dashboard';
 		}
 	});
+
+	function switchTab(tab: 'dashboard' | 'crud' | 'diagnostics' | 'audit') {
+		activeTab = tab;
+		const hash = tab === 'dashboard' ? '' : `#${tab === 'crud' ? 'studio' : tab}`;
+		if (typeof window !== 'undefined' && pageState.url.hash !== hash) {
+			goto(hash || '/admin', { replaceState: true, noScroll: true, keepFocus: true });
+		}
+	}
 
 	function selectTable(name: string) {
 		activeTable = name;
@@ -697,7 +710,7 @@
 		<!-- Navigation Tabs -->
 		<div class="mb-6 flex flex-wrap items-center gap-2 border-b pb-3">
 			<button
-				onclick={() => (activeTab = 'dashboard')}
+				onclick={() => switchTab('dashboard')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'dashboard' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
 				<LayoutDashboardIcon class="size-4" />
@@ -705,7 +718,7 @@
 			</button>
 
 			<button
-				onclick={() => (activeTab = 'crud')}
+				onclick={() => switchTab('crud')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'crud' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
 				<DatabaseIcon class="size-4" />
@@ -716,7 +729,7 @@
 			</button>
 
 			<button
-				onclick={() => (activeTab = 'diagnostics')}
+				onclick={() => switchTab('diagnostics')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'diagnostics' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
 				<BotIcon class="size-4" />
@@ -724,7 +737,7 @@
 			</button>
 
 			<button
-				onclick={() => (activeTab = 'audit')}
+				onclick={() => switchTab('audit')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'audit' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
 				<FileTextIcon class="size-4" />
