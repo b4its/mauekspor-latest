@@ -32,11 +32,14 @@ export default defineConfig({
 		host: '0.0.0.0',
 		port: 5188,
 		strictPort: true,
-		// Proxy /api/* ke backend.
+		// Proxy /api/v1/* ke backend.
+		// PENTING: pakai prefix '/api/v1' (bukan '/api') agar rute frontend
+		// yang kebetulan diawali '/api' — mis. /api-keys — TIDAK ikut diproxy
+		// dan tetap dirender oleh SvelteKit.
 		// Dev default -> localhost:8016 (port dev, tidak tabrakan dengan prod Docker di 8015)
 		// Override: BACKEND_ORIGIN=http://localhost:8015 untuk arahkan ke prod Docker
 		proxy: {
-			'/api': {
+			'/api/v1': {
 				target: process.env.BACKEND_ORIGIN ?? DEFAULT_BACKEND,
 				changeOrigin: true
 			}
