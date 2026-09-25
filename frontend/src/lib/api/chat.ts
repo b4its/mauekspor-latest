@@ -36,10 +36,24 @@ export function renameChatSession(id: string, title: string) {
 	});
 }
 
-export function sendSessionMessage(id: string, text: string) {
+export type AiStatus = {
+	mode: string;
+	configured: boolean;
+	health: string;
+	circuit_breaker?: string;
+	consecutive_failures?: number;
+	endpoint?: string;
+	model?: string;
+};
+
+export function getAiStatus() {
+	return apiFetch<AiStatus>('/ai/status/');
+}
+
+export function sendSessionMessage(id: string, text: string, page_context?: string) {
 	return apiFetch<ChatSession>(`/chat/sessions/${id}/messages/`, {
 		method: 'POST',
-		body: JSON.stringify({ text })
+		body: JSON.stringify({ text, page_context })
 	});
 }
 
