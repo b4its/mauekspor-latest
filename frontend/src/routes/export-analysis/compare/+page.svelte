@@ -409,7 +409,7 @@
 										</span>
 									</div>
 									<a
-										href={`/export-analysis?country=${bestResult.country}&product=${selectedProductId}`}
+										href={bestResult.analysisId ? `/export-analysis/${bestResult.analysisId}` : `/export-analysis?country=${bestResult.country}&product=${selectedProductId}`}
 										class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition-colors shadow-xs"
 									>
 										<span>{t('Buka Analisis Lengkap')}</span>
@@ -583,7 +583,7 @@
 									<!-- Action Link -->
 									<div class="pt-2 border-t mt-auto">
 										<a
-											href={`/export-analysis?country=${result.country}&product=${selectedProductId}`}
+											href={result.analysisId ? `/export-analysis/${result.analysisId}` : `/export-analysis?country=${result.country}&product=${selectedProductId}`}
 											class="flex items-center justify-center gap-1.5 w-full rounded-lg border bg-card hover:bg-muted/60 py-2 px-3 text-xs font-bold text-foreground transition-colors shadow-xs"
 										>
 											<span>{t('Buka Analisis Lengkap')}</span>
@@ -723,7 +723,7 @@
 										{#each results as result}
 											<TableCell class="text-center p-3.5 border-r last:border-r-0 whitespace-normal">
 												<a
-													href={`/export-analysis?country=${result.country}&product=${selectedProductId}`}
+													href={result.analysisId ? `/export-analysis/${result.analysisId}` : `/export-analysis?country=${result.country}&product=${selectedProductId}`}
 													class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
 												>
 													<span>{t('Lihat Detail')}</span>

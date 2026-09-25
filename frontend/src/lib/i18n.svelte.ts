@@ -2558,7 +2558,12 @@ const dictionary: Record<string, Entry> = {
 	'Tidak ada negara yang cocok dengan pencarian.': { id: 'Tidak ada negara yang cocok dengan pencarian.', en: 'No countries match your search.' },
 	'Maksimal 5 negara': { id: 'Maksimal 5 negara', en: 'Maximum 5 countries' },
 	'Minimal 2 negara harus dipilih untuk perbandingan.': { id: 'Minimal 2 negara harus dipilih untuk perbandingan.', en: 'At least 2 countries must be selected for comparison.' },
-	'Pilih minimal 2 negara di atas untuk memulai analisis komparasi multi-pasar.': { id: 'Pilih minimal 2 negara di atas untuk memulai analisis komparasi multi-pasar.', en: 'Select at least 2 countries above to start multi-market comparative analysis.' }
+	'Pilih minimal 2 negara di atas untuk memulai analisis komparasi multi-pasar.': { id: 'Pilih minimal 2 negara di atas untuk memulai analisis komparasi multi-pasar.', en: 'Select at least 2 countries above to start multi-market comparative analysis.' },
+	'Analisis Lengkap Tersedia': { id: 'Analisis Lengkap Tersedia', en: 'Full Analysis Available' },
+	'Memfilter analisis untuk:': { id: 'Memfilter analisis untuk:', en: 'Filtering analysis for:' },
+	'Tampilkan Semua': { id: 'Tampilkan Semua', en: 'Show All' },
+	'Reset Filter': { id: 'Reset Filter', en: 'Reset Filter' },
+	'Buat Analisis Baru': { id: 'Buat Analisis Baru', en: 'Create New Analysis' }
 };
 
 let initial: Locale = 'id';
