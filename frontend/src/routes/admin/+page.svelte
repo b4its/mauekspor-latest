@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
+	import AdminSidebar from '$lib/components/AdminSidebar.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/components/ui/card/index.js';
@@ -614,6 +615,9 @@
 </svelte:head>
 
 <AppShell title={t('Admin Panel')} eyebrow={t('Pusat Komando & Administrasi Ekspor-Impor')}>
+	{#snippet sidebar()}
+		<AdminSidebar />
+	{/snippet}
 	{#if !isAdmin}
 		<div class="grid place-items-center gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-12 text-center">
 			<ShieldAlertIcon class="size-12 text-destructive/60" />
@@ -993,58 +997,57 @@
 					{/each}
 				</div>
 
-				<div class="grid gap-4 lg:grid-cols-[280px_1fr]">
-					<!-- Tables List Sidebar -->
-					<Card class="h-fit">
-						<CardHeader class="p-3 pb-2">
-							<CardTitle class="flex items-center justify-between text-sm">
-								<span class="flex items-center gap-1.5">
-									<DatabaseIcon class="size-4" />
-									{t('Tabel')} ({filteredTables.length})
-								</span>
-							</CardTitle>
-							<div class="mt-2 flex items-center gap-1.5 rounded-md border bg-muted/20 px-2 py-1">
-								<SearchIcon class="size-3.5 text-muted-foreground" />
-								<input
-									type="text"
-									placeholder={t('Cari nama tabel...')}
-									bind:value={tableSearch}
-									class="w-full bg-transparent text-xs outline-none"
-								/>
-								{#if tableSearch}
-									<button onclick={() => (tableSearch = '')} class="text-muted-foreground hover:text-foreground">
-										<XIcon class="size-3" />
-									</button>
-								{/if}
-							</div>
-						</CardHeader>
-						<CardContent class="max-h-[70vh] overflow-y-auto p-2">
-							{#if tablesLoading}
-								<div class="space-y-1 p-2">
-									{#each [1, 2, 3, 4, 5, 6] as _}
-										<div class="h-8 animate-pulse rounded-md bg-muted/40"></div>
-									{/each}
-								</div>
-							{:else if filteredTables.length === 0}
-								<p class="py-6 text-center text-xs text-muted-foreground">{t('Tabel tidak ditemukan')}</p>
-							{:else}
-								<div class="space-y-0.5">
-									{#each filteredTables as table}
-										<button
-											onclick={() => selectTable(table.name)}
-											class="flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-accent {activeTable === table.name ? 'bg-accent font-bold text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}"
-										>
-											<span class="truncate">{table.name}</span>
-											<Badge variant={activeTable === table.name ? 'default' : 'outline'} class="h-5 shrink-0 px-1.5 text-[10px]">
-												{table.count}
-											</Badge>
-										</button>
-									{/each}
-								</div>
+				<!-- Horizontal Table Selector (pengganti kolom "sidebar tabel" agar
+				     panel admin tidak tampak memiliki sidebar kedua). -->
+				<Card>
+					<CardHeader class="flex-row flex-wrap items-center justify-between gap-3 p-3">
+						<CardTitle class="flex items-center gap-1.5 text-sm">
+							<DatabaseIcon class="size-4" />
+							{t('Tabel')} ({filteredTables.length})
+						</CardTitle>
+						<div class="flex items-center gap-1.5 rounded-md border bg-muted/20 px-2 py-1">
+							<SearchIcon class="size-3.5 text-muted-foreground" />
+							<input
+								type="text"
+								placeholder={t('Cari nama tabel...')}
+								bind:value={tableSearch}
+								class="w-40 bg-transparent text-xs outline-none sm:w-56"
+							/>
+							{#if tableSearch}
+								<button onclick={() => (tableSearch = '')} class="text-muted-foreground hover:text-foreground">
+									<XIcon class="size-3" />
+								</button>
 							{/if}
-						</CardContent>
-					</Card>
+						</div>
+					</CardHeader>
+					<CardContent class="p-3 pt-0">
+						{#if tablesLoading}
+							<div class="flex flex-wrap gap-1.5">
+								{#each [1, 2, 3, 4, 5, 6, 7, 8] as _}
+									<div class="h-7 w-24 animate-pulse rounded-full bg-muted/40"></div>
+								{/each}
+							</div>
+						{:else if filteredTables.length === 0}
+							<p class="py-3 text-center text-xs text-muted-foreground">{t('Tabel tidak ditemukan')}</p>
+						{:else}
+							<div class="flex flex-wrap gap-1.5">
+								{#each filteredTables as table}
+									<button
+										onclick={() => selectTable(table.name)}
+										class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors hover:bg-accent {activeTable === table.name ? 'border-primary bg-primary font-bold text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}"
+									>
+										<span class="truncate">{table.name}</span>
+										<Badge variant={activeTable === table.name ? 'secondary' : 'outline'} class="h-4 shrink-0 px-1.5 text-[10px]">
+											{table.count}
+										</Badge>
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</CardContent>
+				</Card>
 
+				<div class="grid gap-4">
 					<!-- Table Records Management Panel -->
 					<Card>
 						<CardHeader class="flex-row flex-wrap items-center justify-between gap-3 p-4">

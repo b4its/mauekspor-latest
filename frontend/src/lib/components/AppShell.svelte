@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import AppSidebar from '$lib/components/AppSidebar.svelte';
+	import GlobalAiAssistant from '$lib/components/GlobalAiAssistant.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
@@ -26,7 +27,14 @@
 	import { getAccessToken } from '$lib/api/client';
 import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
-	let { title = 'Overview', eyebrow = 'Export-import command center', children } = $props();
+	let {
+		title = 'Overview',
+		eyebrow = 'Export-import command center',
+		// Snippet sidebar opsional: halaman (mis. panel Admin) bisa memakai sidebar
+		// khusus alih-alih AppSidebar utama. Default = AppSidebar.
+		sidebar,
+		children
+	}: { title?: string; eyebrow?: string; sidebar?: import('svelte').Snippet; children: import('svelte').Snippet } = $props();
 	let commandOpen = $state(false);
 	let activityOpen = $state(false);
 	let commandQuery = $state('');
@@ -183,7 +191,11 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 />
 
 <Sidebar.Provider>
-	<AppSidebar />
+	{#if sidebar}
+		{@render sidebar()}
+	{:else}
+		<AppSidebar />
+	{/if}
 
 	<Sidebar.Inset class="landing-font min-h-svh">
 <header
@@ -392,4 +404,6 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 			</Sheet.Footer>
 		</Sheet.Content>
 	</Sheet.Root>
+
+	<GlobalAiAssistant />
 </Sidebar.Provider>

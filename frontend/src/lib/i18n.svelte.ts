@@ -2514,7 +2514,17 @@ const dictionary: Record<string, Entry> = {
 	'Akses ditolak': { id: 'Akses ditolak', en: 'Access denied' },
 	'Peran Anda': { id: 'Peran Anda', en: 'Your role' },
 	'tidak memiliki akses ke halaman ini. Hubungi admin bila Anda merasa ini keliru.': { id: 'tidak memiliki akses ke halaman ini. Hubungi admin bila Anda merasa ini keliru.', en: 'does not have access to this page. Contact an admin if you believe this is a mistake.' },
-	'Kembali ke dasbor': { id: 'Kembali ke dasbor', en: 'Back to dashboard' }
+	'Kembali ke dasbor': { id: 'Kembali ke dasbor', en: 'Back to dashboard' },
+	'Panel Admin': { id: 'Panel Admin', en: 'Admin panel' },
+	'Administrasi': { id: 'Administrasi', en: 'Administration' },
+	'Dasbor Admin': { id: 'Dasbor Admin', en: 'Admin dashboard' },
+	'Studio Database': { id: 'Studio Database', en: 'Database studio' },
+	'Negara & Regulasi': { id: 'Negara & Regulasi', en: 'Countries & regulations' },
+	'Pengaturan': { id: 'Pengaturan', en: 'Settings' },
+	'Kembali ke aplikasi': { id: 'Kembali ke aplikasi', en: 'Back to app' },
+	'Akses Admin': { id: 'Akses Admin', en: 'Admin access' },
+	'Panel ini hanya untuk peran Admin.': { id: 'Panel ini hanya untuk peran Admin.', en: 'This panel is for the Admin role only.' },
+	'Keluar': { id: 'Keluar', en: 'Sign out' }
 };
 
 let initial: Locale = 'id';
