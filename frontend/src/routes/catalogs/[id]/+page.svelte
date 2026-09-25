@@ -190,10 +190,10 @@
 
 	$effect(() => {
 		listCatalogImages(data.catalog.id)
-			.then((res) => (images = res.data))
+			.then((res) => (images = res.data ?? []))
 			.catch(() => (images = []));
 		listVariantTypes(data.catalog.id)
-			.then((res) => (variantTypes = res.data.data))
+			.then((res) => (variantTypes = res.data?.data ?? []))
 			.catch(() => (variantTypes = []));
 	});
 
