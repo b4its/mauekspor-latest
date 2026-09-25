@@ -26,6 +26,13 @@ class CreateProductPayload(BaseModel):
     grossWeight: Optional[str] = None
     moq: Optional[str] = None
     leadTime: Optional[str] = None
+    description: Optional[str] = None
+    material_composition: Optional[str] = None
+    production_technique: Optional[str] = None
+    finishing_type: Optional[str] = None
+    quality_specs: Optional[dict] = None
+    dimensions_l_w_h: Optional[dict] = None
+    certificates: Optional[list] = None
 
 
 # ---------- Trade projects ----------
@@ -496,6 +503,7 @@ class UpdateProductPayload(BaseModel):
     name_english_b2b: Optional[str] = None
     description_english_b2b: Optional[str] = None
     marketing_highlights: Optional[list] = None
+    certificates: Optional[list] = None
 
 
 # ---------- Costing update / create detail ----------

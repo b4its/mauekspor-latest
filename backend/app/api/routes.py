@@ -585,23 +585,24 @@ def get_product(product_id: str):
 
 @router.post("/products/")
 def create_product(payload: sc.CreateProductPayload):
-    data = payload.model_dump()
+    data = payload.model_dump(exclude_none=True)
     data.update({
         "id": db.gen_id("products", "PRD"),
         "status": "Needs HS Review",
         "hs": "TBD",
-        "certificates": [],
         "readiness": 40,
-        "description": "",
-        "material_composition": "",
-        "production_technique": "",
-        "finishing_type": "",
-        "quality_specs": {},
-        "dimensions_l_w_h": {},
-        "weight_net": None,
-        "weight_gross": None,
         "updatedAt": "now",
     })
+    # Default hanya bila klien tidak mengirim nilainya (jangan timpa input user).
+    data.setdefault("certificates", [])
+    data.setdefault("description", "")
+    data.setdefault("material_composition", "")
+    data.setdefault("production_technique", "")
+    data.setdefault("finishing_type", "")
+    data.setdefault("quality_specs", {})
+    data.setdefault("dimensions_l_w_h", {})
+    data.setdefault("weight_net", None)
+    data.setdefault("weight_gross", None)
     data["readiness"] = compute_product_readiness(data)
     return _one(db.insert("products", data))
 
@@ -1015,10 +1016,17 @@ def put_profile(profile_id: str, payload: sc.CreateBusinessProfilePayload):
 
 @router.patch("/business-profiles/{profile_id}/")
 def update_profile(profile_id: str, payload: dict):
-    record = db.update("business_profiles", profile_id, payload)
+    record = db.get("business_profiles", profile_id)
     if not record:
         raise HTTPException(404, "Business profile not found")
-    return _one(record)
+    for field, value in payload.items():
+        if field == "readiness":
+            continue  # readiness dihitung ulang, bukan dari klien
+        record[field] = value
+    # Samakan dengan PUT/certifications: readiness diturunkan dari jumlah sertifikasi.
+    record["readiness"] = min(40 + len(record.get("certifications", []) or []) * 8, 100)
+    record["updatedAt"] = "now"
+    return _save_one(record)
 
 
 @router.delete("/business-profiles/{profile_id}/")
@@ -1042,10 +1050,9 @@ def update_certifications(profile_id: str, payload: sc.UpdateCertificationsPaylo
 
 
 @router.get("/business-profiles/dashboard/summary/")
-def dashboard_summary():
+def dashboard_summary(current_user: dict = Depends(get_current_user)):
     """Ringkasan dashboard berbasis role (Admin vs Exporter/UMKM)."""
     users = db.all("users")
-    admin = next((u for u in users if u.get("role") == "Admin"), None)
     products = db.all("products")
     catalogs = db.all("catalogs")
     profiles = db.all("business_profiles")
@@ -1053,7 +1060,14 @@ def dashboard_summary():
     role_counts: dict[str, int] = {}
     for u in users:
         role_counts[str(u.get("role", "Exporter"))] = role_counts.get(str(u.get("role", "Exporter")), 0) + 1
-    has_profile = any(p.get("owner") or p.get("companyName") for p in profiles)
+    # Scope ke pemanggil: profil bisnis milik user login (admin melihat semua).
+    uid = current_user.get("id")
+    my_profiles = (
+        profiles
+        if current_user.get("role") == "Admin"
+        else [p for p in profiles if p.get("owner") == uid or p.get("userId") == uid]
+    )
+    has_profile = bool(my_profiles)
     published_cats = [c for c in catalogs if str(c.get("status", "")).lower() == "published"]
     product_ids_in_catalog = {str(c.get("productId", "")) for c in catalogs if c.get("productId")}
     products_without_catalog = [p for p in products if str(p.get("id", "")) not in product_ids_in_catalog]
@@ -1061,9 +1075,9 @@ def dashboard_summary():
     edu_modules = db.all("educational_modules")
     edu_articles = db.all("educational_articles")
     return {"data": {
-        "role": (admin or {}).get("role", "Exporter"),
+        "role": current_user.get("role", "Exporter"),
         "has_business_profile": has_profile,
-        "business_profile": profiles[0] if profiles else None,
+        "business_profile": (my_profiles[0] if my_profiles else None),
         "counts": {
             "products": len(products),
             "products_without_catalog": len(products_without_catalog),
@@ -1400,9 +1414,14 @@ def update_buyer_request_status(request_id: str, payload: sc.UpdateBuyerRequestS
         raise HTTPException(404, "Buyer request not found")
     record["status"] = payload.status
     if payload.selected_catalog or payload.selected_catalog_id:
-        record["selectedCatalog"] = payload.selected_catalog_id or payload.selected_catalog
+        chosen = payload.selected_catalog_id or payload.selected_catalog
+        # Simpan kedua alias agar konsisten dengan tipe frontend (selectedCatalogId).
+        record["selectedCatalogId"] = chosen
+        record["selectedCatalog"] = chosen
     if payload.umkm or payload.umkm_id:
-        record["selectedUmkm"] = payload.umkm_id or payload.umkm
+        chosen_umkm = payload.umkm_id or payload.umkm
+        record["selectedUmkmId"] = chosen_umkm
+        record["selectedUmkm"] = chosen_umkm
     record["updatedAt"] = "now"
     return _save_one(record)
 
@@ -1758,6 +1777,9 @@ def update_catalog(catalog_id: str, payload: sc.UpdateCatalogPayload):
         data.pop("is_published")
         if record["status"] == "Published":
             record["readiness"] = max(record.get("readiness", 0), 95)
+    # Jaga alias camelCase yang dipakai filter harga (lihat create_catalog).
+    if data.get("base_price_exw") is not None:
+        record["basePriceExw"] = data["base_price_exw"]
     record.update(data)
     record["updatedAt"] = "now"
     return _save_one(record)
@@ -2132,8 +2154,16 @@ def compare_costings(payload: sc.BatchActionPayload):
         except (TypeError, ValueError):
             return None
 
-    best_margin = max(items, key=lambda c: _num(c, "margin") or -1, default=None)
-    best_fob = min(items, key=lambda c: _num(c, "fobPrice") or float("inf"), default=None)
+    def _margin_key(c):
+        v = _num(c, "margin")
+        return v if v is not None else -1
+
+    def _fob_key(c):
+        v = _num(c, "fobPrice")
+        return v if v is not None else float("inf")
+
+    best_margin = max(items, key=_margin_key, default=None)
+    best_fob = min(items, key=_fob_key, default=None)
     recommendation = None
     if best_margin:
         recommendation = {
@@ -2993,7 +3023,8 @@ def mark_payment_received(payment_id: str, payload: dict | None = None):
     if amount < 0:
         raise HTTPException(422, "amount must not be negative")
     record["paid"] = amount
-    record["status"] = "Settled" if amount >= owed else "Deposit Paid"
+    # Hanya "Settled" bila memang ada yang terutang dan sudah lunas.
+    record["status"] = "Settled" if (owed > 0 and amount >= owed) else "Deposit Paid"
     record["updatedAt"] = "now"
     _notify(
         f"Pembayaran {record.get('status', '')}",
@@ -3162,7 +3193,10 @@ def verify_supplier(supplier_id: str):
     if not record:
         raise HTTPException(404, "Supplier not found")
     record["status"] = "Verified"
+    # Naikkan kedua skor: capabilityScore adalah skor utama yang ditampilkan UI,
+    # complianceScore untuk kepatuhan. Sebelumnya hanya complianceScore yang di-set.
     record["complianceScore"] = max(record.get("complianceScore", 0), 90)
+    record["capabilityScore"] = max(record.get("capabilityScore", 0), 90)
     return _save_one(record)
 
 
@@ -4764,7 +4798,10 @@ def run_regulation_check(analysis_id: str, payload: dict | None = None):
         kind="recommendations",
     )
     record["confidence"] = recommendations.get("confidence", 88) if recommendations else 88
-    record["score"] = recommendations.get("score", 80) if recommendations else 80
+    # CATATAN: jangan menimpa `score` (skor kesiapan kepatuhan) di sini — skor itu
+    # dihitung dari isu kepatuhan (create/reanalyze). Simpan skor AI regulasi di field terpisah.
+    if recommendations and isinstance(recommendations.get("score"), (int, float)):
+        record["regulationScore"] = int(recommendations["score"])
     if recommendations and isinstance(recommendations.get("recommendations"), list):
         record["recommendations"] = recommendations["recommendations"]
     else:
@@ -4793,6 +4830,7 @@ def list_countries(region: str = "", search: str = ""):
         code = str(dbc.get("country_code", ""))
         if code and code not in known:
             items.append({
+                "id": dbc.get("id"),
                 "country_code": code,
                 "country_name": dbc.get("country_name", code),
                 "region": dbc.get("region", "Asia"),
