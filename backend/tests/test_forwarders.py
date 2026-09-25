@@ -97,3 +97,27 @@ def test_get_statistics():
 
 def test_get_statistics_forwarder_tidak_ada():
     assert forwarders.get_statistics("FWD-TIDAK") == {}
+
+
+def test_my_forwarder_statistics_uses_own_profile():
+    """Statistik /forwarders/profile/me/statistics/ harus milik user sendiri, bukan seed lain."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    with TestClient(app) as c:
+        c.post("/api/v1/auth/login/", json={"email": "admin@mauekspor.example", "password": "admin123"})
+        # Buat profil forwarder untuk user login.
+        c.post("/api/v1/forwarders/profile/", json={"companyName": "QA Freight Co."})
+        # Sebelum ada entri direktori → statistik nol (bukan error, bukan milik seed).
+        res = c.get("/api/v1/forwarders/profile/me/statistics/")
+        assert res.status_code == 200, res.text
+        assert res.json()["data"]["totalReviews"] == 0
+
+        # Tambahkan entri direktori dengan userId yang sama → statistik memakai entri itu.
+        from app import db
+        me = c.get("/api/v1/auth/me/").json()["data"]
+        db.insert("forwarders", {"id": "FWD-MINE", "name": "QA Freight Co.", "userId": me["id"], "averageRating": 0})
+        db.insert("forwarder_reviews", {"id": "RV-MINE-1", "forwarderId": "FWD-MINE", "rating": 5, "umkmId": "U-9"})
+        res2 = c.get("/api/v1/forwarders/profile/me/statistics/")
+        assert res2.status_code == 200, res2.text
+        assert res2.json()["data"]["totalReviews"] == 1

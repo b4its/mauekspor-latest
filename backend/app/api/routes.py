@@ -1560,6 +1560,51 @@ def get_my_forwarder_profile(current_user: dict = Depends(get_current_user)):
     return _profile_one(record, persist=False)
 
 
+@router.get("/forwarders/profile/me/statistics/")
+def get_my_forwarder_statistics(current_user: dict = Depends(get_current_user)):
+    """Statistik rating forwarder milik user login.
+
+    Forwarder directory (`forwarders`) dicari lewat relasi profil:
+    1) field `forwarderId` pada profil, 2) kecocokan `userId`, 3) kecocokan
+    `companyName`. Hanya statistik milik user sendiri yang dikembalikan —
+    sebelumnya halaman memakai id forwarder seed sembarang.
+    """
+    from app.services.forwarders import get_statistics, recalculate_rating
+
+    profile = db.get_by("forwarder_profiles", userId=current_user["id"])
+    if not profile:
+        raise HTTPException(404, "Forwarder profile not found")
+
+    fwd = None
+    if profile.get("forwarderId"):
+        fwd = db.get("forwarders", str(profile["forwarderId"]))
+    if not fwd:
+        fwd = db.get_by("forwarders", userId=current_user["id"])
+    if not fwd:
+        company = str(profile.get("companyName") or "").strip().lower()
+        if company:
+            fwd = next(
+                (f for f in db.all("forwarders") if str(f.get("name", "")).strip().lower() == company),
+                None,
+            )
+    if not fwd:
+        # Tidak ada entri direktori: kembalikan statistik nol (bukan id seed lain).
+        return {
+            "data": {
+                "totalReviews": int(profile.get("totalReviews", 0) or 0),
+                "averageRating": float(profile.get("averageRating", 0) or 0),
+                "ratingDistribution": {"5": 0, "4": 0, "3": 0, "2": 0, "1": 0},
+                "uniquePartnerships": 0,
+                "recentReviews": [],
+                "trend30Days": [],
+            },
+            "meta": {},
+        }
+
+    recalculate_rating(fwd, persist=False)
+    return {"data": get_statistics(fwd["id"]), "meta": {}}
+
+
 @router.put("/forwarders/profile/{profile_id}/")
 def update_forwarder_profile(
     profile_id: str,

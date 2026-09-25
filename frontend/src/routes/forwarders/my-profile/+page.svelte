@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { forwarders as seedForwarders } from '$lib/data/trade';
-	import { getMyForwarderProfile, getForwarderStatistics } from '$lib/api/forwarders';
+	import { getMyForwarderProfile, getMyForwarderStatistics } from '$lib/api/forwarders';
 	import type { ForwarderProfile, ForwarderStatistics } from '$lib/api/forwarders';
 	import { t } from '$lib/i18n.svelte';
 
@@ -13,13 +13,14 @@
 	let fallback = $derived(seedForwarders[0]);
 
 	$effect(() => {
+		// Muat profil forwarder milik user login, lalu statistik miliknya sendiri
+		// (sebelumnya memakai id forwarder seed demo yang salah).
 		getMyForwarderProfile()
 			.then((res) => (profile = res.data))
 			.catch(() => (profile = null));
-		// Statistik dari forwarder seed (untuk demo role Forwarder)
-		getForwarderStatistics(seedForwarders[0].id)
+		getMyForwarderStatistics()
 			.then((res) => (stats = res.data))
-			.catch(() => {});
+			.catch(() => (stats = null));
 	});
 </script>
 

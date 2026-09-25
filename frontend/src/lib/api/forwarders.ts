@@ -53,6 +53,10 @@ export function getMyForwarderProfile() {
 	return apiFetch<ForwarderProfile>('/forwarders/profile/me/');
 }
 
+export function getMyForwarderStatistics() {
+	return apiFetch<ForwarderStatistics>('/forwarders/profile/me/statistics/');
+}
+
 export function updateForwarderProfile(id: string, payload: Partial<ForwarderProfile>) {
 	return apiFetch<ForwarderProfile>(`/forwarders/profile/${id}/`, {
 		method: 'PUT',
