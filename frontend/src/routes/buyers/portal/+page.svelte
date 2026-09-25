@@ -265,7 +265,7 @@
 			{:else}
 				{#each pagedItems as catalog}
 					<Card class="transition-all hover:border-ring/40 hover:shadow-md">
-						<a href={`/catalogs/${catalog.id}`} class="block h-full p-5 no-underline">
+						<a href={`/catalogs/public/${catalog.id}`} class="block h-full p-5 no-underline">
 							<div class="flex items-center justify-between gap-3">
 								<Badge variant={toneVariant(statusTone(catalog.status))}>{catalog.status}{#if catalog.relevanceScore} · {t('Relevansi')} {catalog.relevanceScore}%{/if}</Badge>
 								<strong class="text-2xl font-bold tracking-tight">{catalog.readiness}%</strong>
@@ -296,7 +296,7 @@
 								</div>
 							{/if}
 							<div class="mt-3 flex items-center justify-end">
-								<Button size="sm" variant="outline">{t('Lihat katalog')}</Button>
+								<span class="inline-flex h-8 items-center rounded-md border px-3 text-xs font-semibold text-primary">{t('Lihat katalog')} &rarr;</span>
 							</div>
 						</a>
 					</Card>

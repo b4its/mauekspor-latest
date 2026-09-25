@@ -111,6 +111,7 @@
 		Countries: GlobeIcon,
 		'Countries & Regulations': GlobeIcon,
 		Catalogs: FolderOpenIcon,
+		'Public Catalog': StoreIcon,
 		Buyers: ContactIcon,
 		'Buyer Portal': StoreIcon,
 		'Buyer Requests': ClipboardListIcon,

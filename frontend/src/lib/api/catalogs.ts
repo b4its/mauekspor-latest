@@ -98,6 +98,21 @@ export function listForwarderCatalogs() {
 	return apiFetch<Catalog[]>('/catalogs/forwarder/');
 }
 
+/** Katalog publik (hanya status Published) — dapat diakses tanpa login. */
+export function listPublicCatalogs(search = '', tag = '') {
+	const params = new URLSearchParams();
+	if (search) params.set('search', search);
+	if (tag) params.set('tag', tag);
+	const q = params.toString();
+	return apiFetch<Catalog[]>(`/catalogs/public/${q ? `?${q}` : ''}`);
+}
+
+export function getPublicCatalog(id: string) {
+	return apiFetch<Catalog & { images?: unknown[]; variantTypes?: unknown[]; sellerName?: string; productName?: string }>(
+		`/catalogs/public/${id}/`
+	);
+}
+
 // ---------- Catalog AI ----------
 export function getCatalogMarketIntelligence(id: string) {
 	return apiFetch(`/catalogs/${id}/ai/market-intelligence/`);

@@ -729,7 +729,8 @@ export const navGroups: NavGroup[] = [
 			{ label: 'Export Analysis', href: '/export-analysis' },
 			{ label: 'Markets', href: '/markets' },
 			{ label: 'Countries', href: '/countries' },
-			{ label: 'Catalogs', href: '/catalogs' }
+			{ label: 'Catalogs', href: '/catalogs' },
+			{ label: 'Public Catalog', href: '/catalogs/public' }
 		]
 	},
 	{

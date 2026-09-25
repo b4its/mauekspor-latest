@@ -48,6 +48,7 @@ export const HREF_MODULE: Record<string, string> = {
 	'/compliance': 'compliance',
 	'/markets': 'markets',
 	'/catalogs': 'catalogs',
+	'/catalogs/public': 'catalogs',
 	'/buyers': 'buyers',
 	'/buyers/portal': 'buyers/portal',
 	'/buyers/my-profile': 'buyers/portal',
@@ -116,7 +117,8 @@ const ROLE_READ_MODULES: Record<UserRole, Set<string>> = {
 /** Href yang selalu boleh dilihat semua peran (dashboard, about, halaman publik). */
 const ALWAYS_ALLOWED = new Set([
 	'/dashboard',
-	'/about'
+	'/about',
+	'/catalogs/public'
 ]);
 
 /**
