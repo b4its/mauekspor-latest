@@ -73,6 +73,18 @@ def test_check_specification_compliance_missing():
         assert i["severity"] == "major"
 
 
+def test_check_specification_compliance_case_insensitive(monkeypatch):
+    """Required spec 'EU Label' harus cocok dengan spesifikasi produk meski beda kapital."""
+    monkeypatch.setattr(
+        compliance.country_data,
+        "get_regulations",
+        lambda cc: [{"rule_category": "Labeling", "required_specs": "EU Label", "rule_key": "x", "description": "d", "severity": "major"}],
+    )
+    product = {"name": "Coffee", "quality_specs": {"labels": "EU Label"}}
+    issues = compliance.check_specification_compliance(product, "XX")
+    assert issues == [], f"spesifikasi yang ada seharusnya tidak dilaporkan hilang: {issues}"
+
+
 def test_check_packaging_compliance():
     product = {"name": "Rattan Chair", "packaging": "kayu tidak diolah"}
     issues = compliance.check_packaging_compliance(product, "EU")

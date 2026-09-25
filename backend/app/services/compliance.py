@@ -69,10 +69,13 @@ def check_specification_compliance(product: dict, country_code: str) -> list[dic
     regs = [r for r in country_data.get_regulations(country_code) if r["rule_category"] == "Labeling"]
     quality_specs = product.get("quality_specs") or {}
     spec_text = " ".join(f"{k}: {v}" for k, v in quality_specs.items()) if isinstance(quality_specs, dict) else str(quality_specs)
+    # Bandingkan case-insensitive: lower-case kedua sisi agar "EU Label" pada
+    # required_specs tetap cocok dengan spesifikasi produk "labels: EU Label".
+    haystack = (spec_text + " " + str(product.get("name", ""))).lower()
     issues: list[dict] = []
     for reg in regs:
         required = [s.strip() for s in reg.get("required_specs", "").split(",") if s.strip()]
-        missing = [s for s in required if s.lower() not in (spec_text + " " + str(product.get("name", "")).lower())]
+        missing = [s for s in required if s.lower() not in haystack]
         if missing:
             issues.append({
                 "type": "Labeling",
