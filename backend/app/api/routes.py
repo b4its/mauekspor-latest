@@ -2595,8 +2595,8 @@ def update_quotation(quotation_id: str, payload: dict):
     record = db.get("quotations", quotation_id)
     if not record:
         raise HTTPException(404, "Quotation not found")
-    for field in ("buyer", "product", "value", "currency", "incoterm", "status",
-                  "validUntil", "costLines", "notes", "destination", "quantity"):
+    for field in ("buyer", "supplier", "product", "value", "currency", "incoterm", "status",
+                  "validUntil", "costLines", "notes", "destination", "quantity", "margin"):
         if field in payload:
             record[field] = payload[field]
     record["updatedAt"] = "now"
@@ -2650,8 +2650,9 @@ def update_order(order_id: str, payload: dict):
     record = db.get("orders", order_id)
     if not record:
         raise HTTPException(404, "Order not found")
-    for field in ("buyer", "product", "quantity", "value", "currency", "incoterm",
-                  "destination", "status", "eta", "notes", "projectId"):
+    for field in ("buyer", "supplier", "product", "quantity", "value", "currency", "incoterm",
+                  "destination", "status", "eta", "notes", "projectId",
+                  "paymentTerms", "deliveryWindow"):
         if field in payload:
             record[field] = payload[field]
     record["updatedAt"] = "now"
@@ -3495,6 +3496,7 @@ def create_template(payload: dict):
         "title": payload.get("title", "Template"),
         "category": payload.get("category", "Document"),
         "description": payload.get("description", ""),
+        "fields": payload.get("fields", []),
         "status": payload.get("status", "Draft"),
         "usedCount": 0,
         "updatedAt": "now",
@@ -5368,6 +5370,15 @@ def set_display_currency(payload: dict):
         raise HTTPException(422, "Currency code must be 3-letter ISO code")
     pricing_svc.DISPLAY_CURRENCY = new_currency
     settings.display_currency = new_currency
+    # Persist agar pilihan mata uang bertahan lintas restart (bukan hanya in-memory).
+    records = db.all("settings")
+    if records:
+        record = records[0]
+    else:
+        record = db.insert("settings", {"id": "SET-ORG-001", **dict(DEFAULT_SETTINGS)})
+    record["displayCurrency"] = new_currency
+    record["updatedAt"] = "now"
+    db.save(record)
     fx = pricing_svc.get_exchange_rate()
     return {
         "data": {

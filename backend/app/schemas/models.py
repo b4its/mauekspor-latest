@@ -84,6 +84,12 @@ class CreateBuyerRequestPayload(BaseModel):
     productId: str = ""
     deadline: str = ""
     requirements: list[str] = Field(default_factory=list)
+    # Field tambahan yang dipakai mesin matching (dikirim form create).
+    product_category: str = ""
+    hs_code_target: str = ""
+    spec_requirements: str = ""
+    keyword_tags: list[str] = Field(default_factory=list)
+    target_volume: Optional[float] = None
 
 
 # ---------- Forwarders ----------
@@ -195,6 +201,7 @@ class AssignTaskPayload(BaseModel):
 class CreateCalendarEventPayload(BaseModel):
     title: str
     date: str
+    time: str = ""
     type: str = "Task"
     projectId: str = ""
     owner: str = ""
