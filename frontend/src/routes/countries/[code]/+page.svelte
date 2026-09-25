@@ -200,7 +200,7 @@
 							<CardContent class="grid gap-5">
 								<div>
 									<h3 class="flex items-center gap-2 text-sm font-bold">
-										<BanknoteIcon class="size-4 text-[#0b3d91]" />
+										<BanknoteIcon class="size-4 text-primary" />
 										{t('Pajak impor & domestik')}
 									</h3>
 									{#if country.tariff}
@@ -211,14 +211,14 @@
 								</div>
 								<div>
 									<h3 class="flex items-center gap-2 text-sm font-bold">
-										<FileTextIcon class="size-4 text-[#0b3d91]" />
+										<FileTextIcon class="size-4 text-primary" />
 										{t('Dokumen yang dibutuhkan')}
 									</h3>
 									{#if country.documents && country.documents.length > 0}
 										<ul class="mt-2 grid gap-2">
 											{#each country.documents as doc}
 												<li class="flex items-start gap-2 text-sm leading-relaxed">
-												<span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#0b3d91]"></span>
+												<span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary"></span>
 												<span>{doc}</span>
 												</li>
 											{/each}
@@ -235,7 +235,7 @@
 						<Card class="mt-4">
 							<CardHeader class="p-4 pb-2">
 								<CardTitle class="flex items-center gap-2 text-base">
-									<ShieldCheckIcon class="size-4 text-[#0b3d91]" />
+									<ShieldCheckIcon class="size-4 text-primary" />
 									{t('Aturan produk per kategori')}
 								</CardTitle>
 							</CardHeader>
@@ -262,13 +262,13 @@
 						<Card class="rounded-xl">
 							<CardHeader class="p-4 pb-2">
 								<CardTitle class="flex items-center gap-2 text-base">
-									<LandmarkIcon class="size-4 text-[#0b3d91]" />
+									<LandmarkIcon class="size-4 text-primary" />
 									{t('Otoritas resmi')}
 								</CardTitle>
 							</CardHeader>
 							<CardContent class="grid gap-2 p-4 pt-2">
 								{#each country.authorities as auth}
-									<a href={auth.url} target="_blank" rel="noopener noreferrer" class="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-[13px] font-semibold transition-colors hover:border-[#0b3d91]/40 hover:bg-secondary">
+									<a href={auth.url} target="_blank" rel="noopener noreferrer" class="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-[13px] font-semibold transition-colors hover:border-primary/40 hover:bg-secondary">
 										<span>{auth.name}</span>
 										<ExternalLinkIcon class="size-3.5 shrink-0 text-muted-foreground" />
 									</a>
@@ -281,13 +281,13 @@
 						<Card class="rounded-xl">
 							<CardHeader class="p-4 pb-2">
 								<CardTitle class="flex items-center gap-2 text-base">
-									<GlobeIcon class="size-4 text-[#0b3d91]" />
+									<GlobeIcon class="size-4 text-primary" />
 									{t('Sumber referensi')}
 								</CardTitle>
 							</CardHeader>
 							<CardContent class="grid gap-2 p-4 pt-2">
 								{#each country.sources as src}
-									<a href={src.url} target="_blank" rel="noopener noreferrer" class="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-[13px] font-semibold transition-colors hover:border-[#0b3d91]/40 hover:bg-secondary">
+									<a href={src.url} target="_blank" rel="noopener noreferrer" class="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-[13px] font-semibold transition-colors hover:border-primary/40 hover:bg-secondary">
 										<span>{src.name}</span>
 										<ExternalLinkIcon class="size-3.5 shrink-0 text-muted-foreground" />
 									</a>
