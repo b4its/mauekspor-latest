@@ -143,6 +143,20 @@
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="default" href={`/calendar?type=Shipment&title=${encodeURIComponent(`Kedatangan Kargo: ${localRoute} (${data.shipment.id})`)}&projectId=${encodeURIComponent(data.shipment.projectId ?? '')}`}>
+				{t('Tambah ke Kalender')}
+			</Button>
+			<Button variant="outline" href="/forwarders">
+				{t('Kontak Forwarder')}
+			</Button>
+			<Button variant="outline" href="/documents">
+				{t('Dokumen Pengapalan')}
+			</Button>
+			{#if data.shipment.projectId}
+				<Button variant="outline" href={`/trade-projects/${data.shipment.projectId}`}>
+					{t('Buka Proyek Ekspor')}
+				</Button>
+			{/if}
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
 			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 		</div>

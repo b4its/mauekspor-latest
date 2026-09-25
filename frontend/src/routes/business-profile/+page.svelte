@@ -346,6 +346,11 @@
 				<p class="leading-relaxed text-muted-foreground">
 					{t('Sertifikasi berbasis bukti, data produk yang konsisten, dan berkas kepatuhan yang lengkap adalah jalur tercepat menuju skor kesiapan profil yang lebih tinggi.')}
 				</p>
+				<div class="mt-4 flex flex-wrap gap-2">
+					<Button size="sm" variant="outline" href="/products">{t('Kelola Produk')}</Button>
+					<Button size="sm" variant="outline" href="/compliance">{t('Cek Kepatuhan')}</Button>
+					<Button size="sm" variant="outline" href="/educational">{t('Modul Edukasi')}</Button>
+				</div>
 			</CardContent>
 		</Card>
 	</div>

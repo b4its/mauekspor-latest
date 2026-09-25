@@ -33,6 +33,7 @@
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 	import XIcon from '@lucide/svelte/icons/x';
+	import { page } from '$app/state';
 
 	let sessions = $state<ChatSession[]>([]);
 	let activeId = $state('');
@@ -42,6 +43,16 @@
 	let error = $state('');
 	let suggestions = $state<{ question: string; context?: string }[]>([]);
 	let sidebarOpen = $state(true);
+	let queryProcessed = $state(false);
+
+	$effect(() => {
+		if (queryProcessed) return;
+		const q = page.url.searchParams.get('q') || page.url.searchParams.get('prompt') || page.url.searchParams.get('question');
+		if (q && !input) {
+			input = q;
+			queryProcessed = true;
+		}
+	});
 
 	// Inisialisasi: tertutup di mobile/tablet (<1024px), terbuka di desktop
 	if (typeof window !== 'undefined' && window.innerWidth < 1024) {

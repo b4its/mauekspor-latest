@@ -14,6 +14,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import { createCalendarEvent, markCalendarEventDone, updateCalendarEvent, deleteCalendarEvent } from '$lib/api/calendar';
 
+	import { page } from '$app/state';
+
 	const filters = ['All', 'Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
 	const types = ['Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
 	let activeFilter = $state('All');
@@ -34,6 +36,33 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	let fTime = $state('09:00');
 	let fType = $state<CalendarEvent['type']>('Buyer');
 	let fProjectId = $state('');
+	let paramProcessed = $state(false);
+
+	$effect(() => {
+		events.load();
+		projects.load();
+	});
+
+	$effect(() => {
+		if (paramProcessed) return;
+		const queryTitle = page.url.searchParams.get('title');
+		const queryDate = page.url.searchParams.get('date');
+		const queryType = page.url.searchParams.get('type');
+		const queryProjectId = page.url.searchParams.get('projectId');
+
+		if (queryTitle || queryDate || queryType || queryProjectId) {
+			if (queryTitle) fTitle = queryTitle;
+			if (queryDate) fDate = queryDate;
+			else if (!fDate) fDate = new Date().toISOString().slice(0, 10);
+			if (queryType && types.includes(queryType)) {
+				fType = queryType as CalendarEvent['type'];
+			}
+			if (queryProjectId) fProjectId = queryProjectId;
+			showForm = true;
+			paramProcessed = true;
+		}
+	});
+
 	let filteredEvents = $derived(
 		events.items.filter(
 			(event) =>
@@ -52,11 +81,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		if (tone === 'orange') return 'outline';
 		return 'secondary';
 	}
-
-	$effect(() => {
-		events.load();
-		projects.load();
-	});
 
 	async function handleCreate() {
 		error = '';

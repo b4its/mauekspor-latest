@@ -146,6 +146,17 @@
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
+			<Button variant="default" href={`/calendar?type=Payment&title=${encodeURIComponent(`Jatuh Tempo Pembayaran: ${localBuyer} (${data.payment.id})`)}&date=${encodeURIComponent(data.payment.dueDate ?? '')}`}>
+				{t('Jadwalkan di Kalender')}
+			</Button>
+			{#if data.payment.orderId}
+				<Button variant="outline" href={`/orders/${data.payment.orderId}`}>
+					{t('Buka Pesanan')}
+				</Button>
+			{/if}
+			<Button variant="outline" href="/documents">
+				{t('Dokumen Invoice')}
+			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
 			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 		</div>

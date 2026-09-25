@@ -28,11 +28,36 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let fDueDate = $state('');
 	let error = $state('');
 
+	import { page } from '$app/state';
+
 	let workTasks = createRemoteList(listTasks, seedTasks);
 	let projects = createRemoteList(listTradeProjects, seedProjects);
+	let paramProcessed = $state(false);
+
 	$effect(() => {
 		workTasks.load();
 		projects.load();
+	});
+
+	$effect(() => {
+		if (paramProcessed) return;
+		const queryTitle = page.url.searchParams.get('title');
+		const queryModule = page.url.searchParams.get('module');
+		const queryPriority = page.url.searchParams.get('priority');
+		const queryOwner = page.url.searchParams.get('owner');
+		const querySearch = page.url.searchParams.get('search');
+
+		if (querySearch && !query) {
+			query = querySearch;
+		}
+		if (queryTitle || queryModule) {
+			if (queryTitle) fTitle = queryTitle;
+			if (queryModule) fModule = queryModule;
+			if (queryPriority) fPriority = queryPriority;
+			if (queryOwner) fOwner = queryOwner;
+			showForm = true;
+			paramProcessed = true;
+		}
 	});
 
 	let filteredTasks = $derived(

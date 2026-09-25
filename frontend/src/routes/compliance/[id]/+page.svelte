@@ -189,6 +189,12 @@
 					{t('Buka Produk')}
 				</Button>
 			{/if}
+			<Button variant="outline" href={`/calendar?type=Compliance&title=${encodeURIComponent(`Kepatuhan: ${localTitle}`)}&projectId=${encodeURIComponent(data.requirement.projectId ?? '')}`}>
+				{t('Jadwalkan di Kalender')}
+			</Button>
+			<Button variant="outline" href={`/chat?q=${encodeURIComponent(`Bagaimana cara memenuhi dan mengurus kepatuhan ekspor "${localTitle}" (Kategori: ${data.requirement.category}, Bukti wajib: ${data.requirement.requiredEvidence})?`)}`}>
+				{t('Konsultasi AI')}
+			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
 			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
 		</div>
