@@ -125,7 +125,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			complianceRequirements.remove(item.id);
 			message = `Persyaratan "${item.title}" dihapus.`;
 		} catch {
-			error = 'Gagal menghapus persyaratan kepatuhan.';
+			error = t('Gagal menghapus persyaratan kepatuhan.');
 		} finally {
 			busyId = '';
 		}

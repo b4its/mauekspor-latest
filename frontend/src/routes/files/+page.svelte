@@ -89,7 +89,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				const cur = files.items.find((f) => f.id === fileId);
 				if (cur) files.upsert({ ...cur, status: 'Verified' });
 			}
-			message = 'File terverifikasi.';
+			message = t('File terverifikasi.');
 		} catch {
 			error = t('Gagal memverifikasi file.');
 		} finally {

@@ -57,7 +57,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			used = true;
 			usedId = templateId;
 			if (res.data) templates.upsert(res.data);
-			message = 'Template berhasil diterapkan.';
+			message = t('Template berhasil diterapkan.');
 		} catch {
 			error = t('Gagal menerapkan template.');
 		}

@@ -60,7 +60,7 @@
 				billings.upsert(res.data);
 			}
 			downloaded = true;
-			message = 'Invoice berhasil diunduh.';
+			message = t('Invoice berhasil diunduh.');
 		} catch {
 			error = t('Gagal mengunduh invoice.');
 		} finally {

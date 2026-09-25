@@ -28,15 +28,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	});
 
 	let deletingId = $state('');
+	let deleteError = $state('');
 
 	async function handleDelete(id: string) {
 		if (!confirm(t('Hapus skenario costing ini?'))) return;
+		deleteError = '';
 		deletingId = id;
 		try {
 			await deleteCostingScenario(id);
 			costingScenarios.remove(id);
 		} catch {
-			alert(t('Gagal menghapus skenario costing.'));
+			deleteError = t('Gagal menghapus skenario costing.');
 		} finally {
 			deletingId = '';
 		}
@@ -77,7 +79,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			const res = await compareCostingScenarios(selected);
 			compareResult = res.data;
 		} catch {
-			compareError = 'Gagal membandingkan skenario costing.';
+			compareError = t('Gagal membandingkan skenario costing.');
 		} finally {
 			comparing = false;
 		}
@@ -206,6 +208,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	{#if costingScenarios.error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{costingScenarios.error}</p>
+	{/if}
+
+	{#if deleteError}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{deleteError}</p>
 	{/if}
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

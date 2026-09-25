@@ -82,11 +82,11 @@
 	async function handleCreate() {
 		error = '';
 		if (!newKeyName.trim()) {
-			error = 'Nama API key wajib diisi.';
+			error = t('Nama API key wajib diisi.');
 			return;
 		}
 		if (selectedScopes.length === 0) {
-			error = 'Pilih minimal satu lingkup akses (scope).';
+			error = t('Pilih minimal satu lingkup akses (scope).');
 			return;
 		}
 		creating = true;
@@ -117,7 +117,7 @@
 				const target = keys.items.find((k) => k.id === id);
 				if (target) keys.upsert({ ...target, status: 'Revoked' });
 			}
-			message = 'Kunci API berhasil dicabut (Revoked).';
+			message = t('Kunci API berhasil dicabut (Revoked).');
 		} catch {
 			error = t('Gagal mencabut API key.');
 		} finally {
@@ -134,7 +134,7 @@
 			keys.remove(id);
 			message = t('Kunci API dihapus.');
 		} catch {
-			error = 'Gagal menghapus API key.';
+			error = t('Gagal menghapus API key.');
 		} finally {
 			deletingId = '';
 		}

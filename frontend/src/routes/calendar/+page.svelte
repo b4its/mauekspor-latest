@@ -140,7 +140,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 				const ev = events.items.find((e) => e.id === eventId);
 				if (ev) events.upsert({ ...ev, status: 'Done' });
 			}
-			message = 'Event ditandai selesai.';
+			message = t('Event ditandai selesai.');
 		} catch {
 			error = t('Gagal menandai event selesai.');
 		} finally {

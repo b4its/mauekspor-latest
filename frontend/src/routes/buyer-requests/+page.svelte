@@ -29,15 +29,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	});
 
 	let deletingId = $state('');
+	let deleteError = $state('');
 
 	async function handleDelete(id: string) {
 		if (!confirm(t('Hapus permintaan buyer ini?'))) return;
+		deleteError = '';
 		deletingId = id;
 		try {
 			await deleteBuyerRequest(id);
 			requests.remove(id);
 		} catch {
-			alert(t('Gagal menghapus permintaan buyer.'));
+			deleteError = t('Gagal menghapus permintaan buyer.');
 		} finally {
 			deletingId = '';
 		}
@@ -117,6 +119,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	{#if requests.error}
 		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{requests.error}</p>
+	{/if}
+
+	{#if deleteError}
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{deleteError}</p>
 	{/if}
 
 	{#if requests.loading}
