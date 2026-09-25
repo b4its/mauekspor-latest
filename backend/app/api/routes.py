@@ -4913,7 +4913,15 @@ def _compare_analyses_results(product: dict, country_codes: list[str]) -> dict:
         if not clean_rec:
             clean_rec = "Analisis kepatuhan selesai."
 
-        country_obj = db.get("countries", code) or {}
+        # Nama negara: countries disimpan dengan country_code, bukan id == kode.
+        country_obj = (
+            db.get_by("countries", country_code=code)
+            or db.get("countries", code)
+            or {}
+        )
+        if not country_obj:
+            from app.data.countries import get_country
+            country_obj = get_country(code) or {}
         c_name = country_obj.get("country_name") or country_obj.get("name") or code
 
         results.append({
