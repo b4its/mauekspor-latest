@@ -7,7 +7,7 @@
 	import { billingRecords as seedBillingRecords } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { changePlan, downloadInvoice, getBilling } from '$lib/api/billing';
+	import { changePlan, downloadInvoice, invoicePdfUrl, getBilling } from '$lib/api/billing';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	
@@ -55,9 +55,13 @@
 		error = '';
 		busy = true;
 		try {
+			// Catat unduhan (counter) lalu buka PDF invoice di tab baru.
 			const res = await downloadInvoice(billing.id);
 			if (res.data) {
 				billings.upsert(res.data);
+			}
+			if (typeof window !== 'undefined') {
+				window.open(invoicePdfUrl(billing.id), '_blank', 'noopener');
 			}
 			downloaded = true;
 			message = t('Invoice berhasil diunduh.');

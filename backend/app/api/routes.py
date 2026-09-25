@@ -4445,6 +4445,25 @@ def download_invoice(billing_id: str):
     return _save_one(record)
 
 
+@router.get("/billing/{billing_id}/invoice.pdf/")
+def download_invoice_pdf(billing_id: str):
+    """Unduh invoice sebagai PDF (endpoint yang benar-benar menghasilkan file)."""
+    record = db.get("billing_records", billing_id)
+    if not record:
+        raise HTTPException(404, "Billing record not found")
+    record["invoiceDownloaded"] = record.get("invoiceDownloaded", 0) + 1
+    record["updatedAt"] = "now"
+    db.save(record)
+    from app.services.pricing import build_invoice_pdf
+    from fastapi.responses import Response
+    pdf_bytes = build_invoice_pdf(record)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="invoice-{billing_id}.pdf"'},
+    )
+
+
 # ----------------------------------------------------------------------------
 # SUPPORT / API KEYS / CHAT
 # ----------------------------------------------------------------------------

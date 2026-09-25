@@ -485,3 +485,34 @@ def build_compare_pdf(product: dict[str, Any], results: list[dict[str, Any]]) ->
         ]
     lines += ["", f"Generated: {datetime.now(timezone.utc).isoformat()}"]
     return _wrap_pdf("\n".join(lines).encode("utf-8", errors="replace"))
+
+
+def build_invoice_pdf(record: dict[str, Any]) -> bytes:
+    """Buat PDF invoice tagihan sederhana dari record billing."""
+    lines: list[str] = [
+        "MAUEKSPOR - INVOICE",
+        "=" * 60,
+        f"Invoice No  : INV-{record.get('id', '')}",
+        f"Plan        : {record.get('plan', '-')}",
+        f"Status      : {record.get('status', '-')}",
+        f"Period      : {record.get('period', record.get('billingPeriod', '-'))}",
+        "",
+        "BILLING DETAILS",
+        "-" * 60,
+    ]
+    amount = record.get("amount", record.get("price", 0))
+    currency_code = record.get("currency", "IDR")
+    try:
+        amount_fmt = f"{float(amount):,.2f}"
+    except (TypeError, ValueError):
+        amount_fmt = str(amount)
+    lines += [
+        f"Amount due  : {currency_code} {amount_fmt}",
+        f"Due date    : {record.get('dueDate', '-')}",
+        f"Next billing: {record.get('nextBilling', '-')}",
+    ]
+    for extra in ("seats", "addOns", "paymentMethod"):
+        if record.get(extra):
+            lines.append(f"{extra.capitalize():<12}: {record.get(extra)}")
+    lines += ["", "Terima kasih telah menggunakan MauEkspor.", f"Generated: {datetime.now(timezone.utc).isoformat()}"]
+    return _wrap_pdf("\n".join(lines).encode("utf-8", errors="replace"))

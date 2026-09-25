@@ -116,3 +116,24 @@ def test_public_catalog_detail_katalog_draft_404():
         }, headers={"Authorization": f"Bearer {token}"})
         cid = created.json()["data"]["id"]  # status Draft
         assert c.get(f"/api/v1/catalogs/public/{cid}/").status_code == 404
+
+
+def test_download_invoice_pdf():
+    with TestClient(app) as c:
+        token = _login(c)
+        h = {"Authorization": f"Bearer {token}"}
+        billing = c.get("/api/v1/billing/", headers=h).json()["data"]
+        assert billing, "perlu minimal 1 record billing seed"
+        bid = billing[0]["id"]
+        res = c.get(f"/api/v1/billing/{bid}/invoice.pdf/", headers=h)
+        assert res.status_code == 200, res.text
+        assert res.headers["content-type"] == "application/pdf"
+        assert res.content.startswith(b"%PDF-")
+        assert b"INVOICE" in res.content
+
+
+def test_download_invoice_pdf_unknown_404():
+    with TestClient(app) as c:
+        token = _login(c)
+        res = c.get("/api/v1/billing/NOPE/invoice.pdf/", headers={"Authorization": f"Bearer {token}"})
+        assert res.status_code == 404

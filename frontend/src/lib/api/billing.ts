@@ -1,4 +1,4 @@
-import { apiFetch } from '$lib/api/client';
+import { apiFetch, csvExportUrl } from '$lib/api/client';
 import type { BillingRecord } from '$lib/data/trade';
 
 export function getBilling() {
@@ -11,4 +11,9 @@ export function changePlan(plan: BillingRecord['plan']) {
 
 export function downloadInvoice(id: string) {
 	return apiFetch<BillingRecord>(`/billing/${id}/invoice/`, { method: 'POST' });
+}
+
+/** URL PDF invoice (dibuka di tab baru; endpoint GET menghasilkan file PDF). */
+export function invoicePdfUrl(id: string) {
+	return csvExportUrl(`/billing/${id}/invoice.pdf/`);
 }
