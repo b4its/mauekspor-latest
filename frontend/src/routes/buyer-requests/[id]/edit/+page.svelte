@@ -12,16 +12,16 @@
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.request));
-	let subject = $state(initial.subject);
-	let destination = $state(initial.destination);
-	let quantity = $state(initial.quantity);
-	let deadline = $state(initial.deadline);
+	let subject = $state(initial.subject ?? '');
+	let destination = $state(initial.destination ?? '');
+	let quantity = $state(initial.quantity ?? '');
+	let deadline = $state(initial.deadline ?? '');
 	let requirements = $state((initial.requirements ?? []).join('\n'));
 	let saved = $state(false);
 	let saving = $state(false);
 	let error = $state('');
 
-	let valid = $derived(subject.trim().length > 4 && destination.trim().length > 1 && quantity.trim().length > 1 && deadline);
+	let valid = $derived((subject ?? '').trim().length > 4 && (destination ?? '').trim().length > 1 && (quantity ?? '').trim().length > 1 && deadline);
 
 	async function save() {
 		error = '';

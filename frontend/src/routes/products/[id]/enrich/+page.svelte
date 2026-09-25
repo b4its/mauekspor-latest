@@ -14,15 +14,15 @@
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.product));
-	let hsCode = $state(initial.hs);
-	let sku = $state(initial.sku ?? `MEK-${initial.id.split('-').pop()}`);
-	let descriptionEn = $state(initial.description_english_b2b ?? `${initial.name} - premium export grade, suitable for B2B distribution.`);
+	let hsCode = $state(initial.hs ?? '');
+	let sku = $state(initial.sku ?? `MEK-${String(initial.id ?? '').split('-').pop()}`);
+	let descriptionEn = $state(initial.description_english_b2b ?? `${initial.name ?? ''} - premium export grade, suitable for B2B distribution.`);
 	let saved = $state(false);
 	let saving = $state(false);
 	let error = $state('');
 	let hsSuggestions = $state<string[]>([]);
 
-	let valid = $derived(/^\d{4}(\.\d{2})?$/.test(hsCode.trim()));
+	let valid = $derived(/^\d{4}(\.\d{2})?$/.test((hsCode ?? '').trim()));
 
 	async function loadHsSuggestions() {
 		const q = hsCode.trim();

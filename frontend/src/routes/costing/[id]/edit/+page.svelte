@@ -12,11 +12,11 @@
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.scenario));
-	let title = $state(initial.title);
-	let destination = $state(initial.destination);
-	let incoterm = $state(initial.incoterm);
-	let margin = $state(String(initial.margin));
-	let exchangeRate = $state(String(initial.exchangeRate));
+	let title = $state(initial.title ?? '');
+	let destination = $state(initial.destination ?? '');
+	let incoterm = $state(initial.incoterm ?? 'FOB');
+	let margin = $state(String(initial.margin ?? 0));
+	let exchangeRate = $state(String(initial.exchangeRate ?? 0));
 	let cogs = $state(String(initial.cogs_per_unit_idr ?? 0));
 	let saved = $state(false);
 	let saving = $state(false);
@@ -24,7 +24,7 @@
 
 	const incoterms = ['EXW', 'FOB', 'CIF', 'DAP'];
 
-	let valid = $derived(title.trim().length > 3 && destination.trim().length > 1 && Number(margin) >= 0 && Number(exchangeRate) > 0);
+	let valid = $derived((title ?? '').trim().length > 3 && (destination ?? '').trim().length > 1 && Number(margin) >= 0 && Number(exchangeRate) > 0);
 
 	async function save() {
 		error = '';

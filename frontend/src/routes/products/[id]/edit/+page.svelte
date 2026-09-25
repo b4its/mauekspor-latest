@@ -12,21 +12,21 @@
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.product));
-	let name = $state(initial.name);
-	let category = $state(initial.category);
-	let origin = $state(initial.origin);
-	let packaging = $state(initial.packaging);
-	let netWeight = $state(initial.netWeight);
-	let grossWeight = $state(initial.grossWeight);
-	let moq = $state(initial.moq);
-	let leadTime = $state(initial.leadTime);
-	let certificates = $state([...initial.certificates]);
+	let name = $state(initial.name ?? '');
+	let category = $state(initial.category ?? '');
+	let origin = $state(initial.origin ?? '');
+	let packaging = $state(initial.packaging ?? '');
+	let netWeight = $state(initial.netWeight ?? '');
+	let grossWeight = $state(initial.grossWeight ?? '');
+	let moq = $state(initial.moq ?? '');
+	let leadTime = $state(initial.leadTime ?? '');
+	let certificates = $state([...(initial.certificates ?? [])]);
 	let certificatesText = $state(certificates.join(', '));
 	let saved = $state(false);
 	let saving = $state(false);
 	let error = $state('');
 
-	let valid = $derived(name.trim().length > 2 && category.trim().length > 1 && origin.trim().length > 1);
+	let valid = $derived((name ?? '').trim().length > 2 && (category ?? '').trim().length > 1 && (origin ?? '').trim().length > 1);
 
 	async function save() {
 		error = '';

@@ -13,17 +13,17 @@
 
 	let { data } = $props();
 	const initial = $state.snapshot(untrack(() => data.catalog));
-	let title = $state(initial.title);
-	let targetMarket = $state(initial.targetMarket);
-	let moq = $state(initial.moq);
-	let leadTime = $state(initial.leadTime);
-	let priceRange = $state(initial.priceRange);
-	let description = $state(initial.description);
+	let title = $state(initial.title ?? '');
+	let targetMarket = $state(initial.targetMarket ?? '');
+	let moq = $state(initial.moq ?? '');
+	let leadTime = $state(initial.leadTime ?? '');
+	let priceRange = $state(initial.priceRange ?? '');
+	let description = $state(initial.description ?? '');
 	let saved = $state(false);
 	let saving = $state(false);
 	let error = $state('');
 
-	let valid = $derived(title.trim().length > 3 && targetMarket.trim().length > 1 && moq.trim().length > 1);
+	let valid = $derived((title ?? '').trim().length > 3 && (targetMarket ?? '').trim().length > 1 && (moq ?? '').trim().length > 1);
 
 	async function save() {
 		error = '';
