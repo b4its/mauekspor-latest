@@ -15,8 +15,10 @@
 	let evidenceNote = $state('');
 	let fileName = $state('');
 	let uploaded = $state(false);
+	let uploading = $state(false);
 	let verifying = $state(false);
 	let verified = $state(false);
+	let serverStatus = $state('');
 	let error = $state('');
 	let editing = $state(false);
 	let saving = $state(false);
@@ -35,7 +37,7 @@
 	let localSeverity = $derived(savedSeverity || data.requirement.severity);
 	let localOwner = $derived(savedOwner || data.requirement.owner);
 
-	let displayStatus = $derived(verified ? 'Verified' : uploaded ? 'Evidence Uploaded' : localStatus);
+	let displayStatus = $derived(serverStatus || (verified ? 'Verified' : uploaded ? 'Evidence Uploaded' : localStatus));
 
 	async function uploadEvidence() {
 		error = '';
@@ -43,25 +45,42 @@
 			error = t('Tambahkan catatan evidence minimal 8 karakter.');
 			return;
 		}
-		uploaded = true;
+		uploading = true;
 		try {
-			await uploadComplianceEvidence({
+			const res = await uploadComplianceEvidence({
 				requirementId: data.requirement.id,
 				note: evidenceNote.trim(),
 				fileName: fileName.trim() || undefined
 			});
+			uploaded = true;
+			if (res.data) {
+				savedStatus = res.data.status;
+				serverStatus = res.data.status;
+			}
+			message = t('Bukti berhasil disimpan.');
 		} catch {
 			error = t('Gagal menyimpan bukti ke backend.');
-			uploaded = false;
+		} finally {
+			uploading = false;
 		}
 	}
 
-	function verifyEvidence() {
+	async function verifyEvidence() {
+		error = '';
 		verifying = true;
-		window.setTimeout(() => {
-			verifying = false;
+		try {
+			const res = await updateComplianceRequirement(data.requirement.id, { status: 'Verified' });
 			verified = true;
-		}, 650);
+			if (res.data) {
+				savedStatus = res.data.status;
+				serverStatus = res.data.status;
+			}
+			message = t('Persyaratan ditandai terverifikasi.');
+		} catch {
+			error = t('Gagal memverifikasi persyaratan.');
+		} finally {
+			verifying = false;
+		}
 	}
 
 	function openEdit() {
@@ -227,8 +246,11 @@
 					{#if error}
 						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 					{/if}
+					{#if message}
+						<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+					{/if}
 					<div class="flex flex-wrap gap-2.5">
-						<Button variant="outline" type="submit">{t('Simpan bukti')}</Button>
+						<Button variant="outline" type="submit" disabled={uploading}>{uploading ? t('Menyimpan...') : t('Simpan bukti')}</Button>
 						<Button disabled={!uploaded || verifying || verified} onclick={verifyEvidence}>
 							{verifying ? t('Memverifikasi...') : verified ? t('Terverifikasi') : t('Tandai terverifikasi')}
 						</Button>

@@ -16,6 +16,7 @@ export type TradeProject = {
 	hsCode: string;
 	port: string;
 	payment: string;
+	hsConfidence?: number;
 };
 
 export type ComplianceTask = {

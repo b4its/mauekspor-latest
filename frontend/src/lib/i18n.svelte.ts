@@ -2486,7 +2486,31 @@ const dictionary: Record<string, Entry> = {
 	'Invoice berhasil diunduh.': { id: 'Invoice berhasil diunduh.', en: 'Invoice downloaded successfully.' },
 	'Event ditandai selesai.': { id: 'Event ditandai selesai.', en: 'Event marked as done.' },
 	'File terverifikasi.': { id: 'File terverifikasi.', en: 'File verified.' },
-	'Template berhasil diterapkan.': { id: 'Template berhasil diterapkan.', en: 'Template applied successfully.' }
+	'Template berhasil diterapkan.': { id: 'Template berhasil diterapkan.', en: 'Template applied successfully.' },
+	'Bukti berhasil disimpan.': { id: 'Bukti berhasil disimpan.', en: 'Evidence saved successfully.' },
+	'Persyaratan ditandai terverifikasi.': { id: 'Persyaratan ditandai terverifikasi.', en: 'Requirement marked verified.' },
+	'Kuotasi direvisi +2.5%.': { id: 'Kuotasi direvisi +2.5%.', en: 'Quotation revised +2.5%.' },
+	'Merevisi...': { id: 'Merevisi...', en: 'Revising...' },
+	'Direvisi +2.5%': { id: 'Direvisi +2.5%', en: 'Revised +2.5%' },
+	'Gagal menyimpan supplier.': { id: 'Gagal menyimpan supplier.', en: 'Failed to save supplier.' },
+	'Nama penanggung jawab wajib diisi.': { id: 'Nama penanggung jawab wajib diisi.', en: 'Assignee name is required.' },
+	'Penanggung jawab': { id: 'Penanggung jawab', en: 'Assignee' },
+	'Tugaskan': { id: 'Tugaskan', en: 'Assign' },
+	'Hapus profil': { id: 'Hapus profil', en: 'Delete profile' },
+	'Hapus profil bisnis ini secara permanen?': { id: 'Hapus profil bisnis ini secara permanen?', en: 'Delete this business profile permanently?' },
+	'Gagal menghapus profil bisnis.': { id: 'Gagal menghapus profil bisnis.', en: 'Failed to delete business profile.' },
+	'Mata uang tampilan': { id: 'Mata uang tampilan', en: 'Display currency' },
+	'Mata uang tampilan diperbarui.': { id: 'Mata uang tampilan diperbarui.', en: 'Display currency updated.' },
+	'Gagal memperbarui mata uang.': { id: 'Gagal memperbarui mata uang.', en: 'Failed to update currency.' },
+	'Semua harga (EXW/FOB/CIF) dihitung dan ditampilkan memakai mata uang ini.':
+		{ id: 'Semua harga (EXW/FOB/CIF) dihitung dan ditampilkan memakai mata uang ini.', en: 'All prices (EXW/FOB/CIF) are calculated and displayed in this currency.' },
+	'Belum ada kutipan untuk proyek ini.': { id: 'Belum ada kutipan untuk proyek ini.', en: 'No quotation for this project yet.' },
+	'Buat kutipan': { id: 'Buat kutipan', en: 'Create quotation' },
+	'Belum ada pengiriman untuk proyek ini.': { id: 'Belum ada pengiriman untuk proyek ini.', en: 'No shipment for this project yet.' },
+	'Buat pengiriman': { id: 'Buat pengiriman', en: 'Create shipment' },
+	'Buka detail pengiriman': { id: 'Buka detail pengiriman', en: 'Open shipment detail' },
+	'Keyakinan AI': { id: 'Keyakinan AI', en: 'AI confidence' },
+	'Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.': { id: 'Membutuhkan konfirmasi manusia sebelum pembuatan dokumen.', en: 'Requires human confirmation before document generation.' }
 };
 
 let initial: Locale = 'id';
