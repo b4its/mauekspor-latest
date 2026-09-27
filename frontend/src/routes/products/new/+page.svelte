@@ -97,38 +97,38 @@
 			}}
 		>
 			<div class="grid gap-2">
-				<Label>{t('Nama')}</Label>
-				<Input bind:value={name} placeholder="Gayo Arabica Coffee Beans" />
+				<Label for="p-name">{t('Nama')}</Label>
+				<Input id="p-name" bind:value={name} placeholder="Gayo Arabica Coffee Beans" />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div class="grid gap-2">
-					<Label>{t('Kategori')}</Label>
-					<NativeSelect bind:value={category}>
+					<Label for="p-category">{t('Kategori')}</Label>
+					<NativeSelect id="p-category" bind:value={category}>
 						{#each categories as option}
 							<option>{option}</option>
 						{/each}
 					</NativeSelect>
 				</div>
 				<div class="grid gap-2">
-					<Label>{t('Asal')}</Label>
-					<Input bind:value={origin} placeholder="Aceh, Indonesia" />
+					<Label for="p-origin">{t('Asal')}</Label>
+					<Input id="p-origin" bind:value={origin} placeholder="Aceh, Indonesia" />
 				</div>
 			</div>
 			<div class="grid gap-2">
-				<Label>{t('Kemasan')}</Label>
-				<Input bind:value={packaging} placeholder={t('Kantong valve 250g, 24 kantong per karton')} />
+				<Label for="p-packaging">{t('Kemasan')}</Label>
+				<Input id="p-packaging" bind:value={packaging} placeholder={t('Kantong valve 250g, 24 kantong per karton')} />
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label>{t('Berat bersih')}</Label><Input bind:value={netWeight} placeholder="250g" /></div>
-				<div class="grid gap-2"><Label>{t('Berat kotor')}</Label><Input bind:value={grossWeight} placeholder="280g" /></div>
+				<div class="grid gap-2"><Label for="p-net">{t('Berat bersih')}</Label><Input id="p-net" bind:value={netWeight} placeholder="250g" /></div>
+				<div class="grid gap-2"><Label for="p-gross">{t('Berat kotor')}</Label><Input id="p-gross" bind:value={grossWeight} placeholder="280g" /></div>
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<div class="grid gap-2"><Label>{t('MOQ')}</Label><Input bind:value={moq} placeholder={t('2.000 kantong')} /></div>
-				<div class="grid gap-2"><Label>{t('Waktu tunggu')}</Label><Input bind:value={leadTime} placeholder={t('21 hari')} /></div>
+				<div class="grid gap-2"><Label for="p-moq">{t('MOQ')}</Label><Input id="p-moq" bind:value={moq} placeholder={t('2.000 kantong')} /></div>
+				<div class="grid gap-2"><Label for="p-lead">{t('Waktu tunggu')}</Label><Input id="p-lead" bind:value={leadTime} placeholder={t('21 hari')} /></div>
 			</div>
 			<div class="grid gap-2">
-				<Label>{t('Sertifikat (dipisahkan koma)')}</Label>
-				<Input bind:value={certificates} placeholder={t('Halal, Organik sedang berjalan')} />
+				<Label for="p-certs">{t('Sertifikat (dipisahkan koma)')}</Label>
+				<Input id="p-certs" bind:value={certificates} placeholder={t('Halal, Organik sedang berjalan')} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}

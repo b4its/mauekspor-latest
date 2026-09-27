@@ -95,20 +95,20 @@
 		<Card>
 			<form class="grid gap-4 p-1 sm:grid-cols-2" onsubmit={(event) => { event.preventDefault(); save(); }}>
 				<div class="grid gap-2">
-					<Label>{t('Nama perusahaan')}</Label>
-					<Input bind:value={companyName} />
+					<Label for="bpe-company">{t('Nama perusahaan')}</Label>
+					<Input id="bpe-company" bind:value={companyName} />
 				</div>
 				<div class="grid gap-2">
-					<Label>{t('Alamat')}</Label>
-					<Input bind:value={address} />
+					<Label for="bpe-address">{t('Alamat')}</Label>
+					<Input id="bpe-address" bind:value={address} />
 				</div>
 				<div class="grid gap-2">
-					<Label>{t('Kapasitas produksi per bulan')}</Label>
-					<Input bind:value={productionCapacity} />
+					<Label for="bpe-capacity">{t('Kapasitas produksi per bulan')}</Label>
+					<Input id="bpe-capacity" bind:value={productionCapacity} />
 				</div>
 				<div class="grid gap-2">
-					<Label>{t('Tahun berdiri')}</Label>
-					<Input bind:value={yearEstablished} inputmode="numeric" />
+					<Label for="bpe-year">{t('Tahun berdiri')}</Label>
+					<Input id="bpe-year" bind:value={yearEstablished} inputmode="numeric" />
 				</div>
 
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive sm:col-span-2">{error}</p>{/if}

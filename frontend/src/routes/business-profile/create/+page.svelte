@@ -79,20 +79,20 @@
 		<Card>
 			<form class="grid gap-4 p-1 sm:grid-cols-2" onsubmit={(event) => { event.preventDefault(); create(); }}>
 				<div class="grid gap-2">
-					<Label>{t('Nama perusahaan')}</Label>
-					<Input bind:value={companyName} placeholder="PT Kopi Gayo Nusantara" />
+					<Label for="bp-company">{t('Nama perusahaan')}</Label>
+					<Input id="bp-company" bind:value={companyName} placeholder="PT Kopi Gayo Nusantara" />
 				</div>
 				<div class="grid gap-2">
-					<Label>{t('Alamat')}</Label>
-					<Input bind:value={address} placeholder="Takengon, Aceh, Indonesia" />
+					<Label for="bp-address">{t('Alamat')}</Label>
+					<Input id="bp-address" bind:value={address} placeholder="Takengon, Aceh, Indonesia" />
 				</div>
 				<div class="grid gap-2">
-					<Label>{t('Kapasitas produksi per bulan')}</Label>
-					<Input bind:value={productionCapacity} placeholder={t('12.000 kantong ritel / bulan')} />
+					<Label for="bp-capacity">{t('Kapasitas produksi per bulan')}</Label>
+					<Input id="bp-capacity" bind:value={productionCapacity} placeholder={t('12.000 kantong ritel / bulan')} />
 				</div>
 				<div class="grid gap-2">
-					<Label>{t('Tahun berdiri')}</Label>
-					<Input bind:value={yearEstablished} inputmode="numeric" placeholder="2018" />
+					<Label for="bp-year">{t('Tahun berdiri')}</Label>
+					<Input id="bp-year" bind:value={yearEstablished} inputmode="numeric" placeholder="2018" />
 				</div>
 
 				<fieldset class="grid gap-2 rounded-lg border p-4 sm:col-span-2">

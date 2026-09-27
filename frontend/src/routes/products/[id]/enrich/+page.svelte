@@ -110,12 +110,12 @@
 				<small class="text-xs text-muted-foreground">{t('8-digit validation ready; ketik 2+ digit untuk saran HS dari dataset 6.941 kode.')}</small>
 			</div>
 			<div class="grid gap-2">
-				<Label>{t('Generated SKU')}</Label>
-				<Input bind:value={sku} />
+				<Label for="enrich-sku">{t('Generated SKU')}</Label>
+				<Input id="enrich-sku" bind:value={sku} />
 			</div>
 			<div class="grid gap-2">
-				<Label>{t('Description (English B2B)')}</Label>
-				<Textarea bind:value={descriptionEn} rows={4} />
+				<Label for="enrich-desc">{t('Description (English B2B)')}</Label>
+				<Textarea id="enrich-desc" bind:value={descriptionEn} rows={4} />
 			</div>
 
 			{#if error}<Alert variant="destructive">{error}</Alert>{/if}

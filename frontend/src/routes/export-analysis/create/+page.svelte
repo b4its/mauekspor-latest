@@ -130,8 +130,10 @@
 				{/if}
 			</div>
 			<div class="grid gap-2">
-				<Label>{t('Pasar tujuan')}</Label>
+				<Label for="ea-destination" id="ea-destination-label">{t('Pasar tujuan')}</Label>
 				<SearchableSelect
+					id="ea-destination"
+					labelledby="ea-destination-label"
 					bind:value={destination}
 					placeholder={t('Pilih tujuan...')}
 					options={countries.map((c) => ({ value: c.country_code, label: c.country_name, sub: `${c.country_code} — ${c.region}` }))}

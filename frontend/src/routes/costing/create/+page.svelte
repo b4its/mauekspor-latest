@@ -108,32 +108,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 		<Card>
 			<form class="grid gap-4 p-6" onsubmit={(event) => { event.preventDefault(); create(); }}>
 				<div class="grid gap-2">
-					<Label>{t('Judul skenario')}</Label>
-					<Input bind:value={title} placeholder="Japan Coffee FOB Base Case" />
+					<Label for="cost-title">{t('Judul skenario')}</Label>
+					<Input id="cost-title" bind:value={title} placeholder="Japan Coffee FOB Base Case" />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label>{t('Proyek')}</Label>
-						<SearchableSelect bind:value={projectId} options={projects.items.map((p) => ({ value: p.id, label: p.name }))} />
+						<Label for="cost-project" id="cost-project-label">{t('Proyek')}</Label>
+						<SearchableSelect id="cost-project" labelledby="cost-project-label" bind:value={projectId} options={projects.items.map((p) => ({ value: p.id, label: p.name }))} />
 					</div>
 					<div class="grid gap-2">
-						<Label>{t('Produk')}</Label>
-						<SearchableSelect bind:value={productId} options={products.items.map((p) => ({ value: p.id, label: p.name, sub: p.hs ? `HS ${p.hs}` : '' }))} />
+						<Label for="cost-product" id="cost-product-label">{t('Produk')}</Label>
+						<SearchableSelect id="cost-product" labelledby="cost-product-label" bind:value={productId} options={products.items.map((p) => ({ value: p.id, label: p.name, sub: p.hs ? `HS ${p.hs}` : '' }))} />
 					</div>
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
-						<Label>{t('Tujuan')}</Label>
-						<Input bind:value={destination} placeholder="Japan" />
+						<Label for="cost-destination">{t('Tujuan')}</Label>
+						<Input id="cost-destination" bind:value={destination} placeholder="Japan" />
 					</div>
 					<div class="grid gap-2">
-						<Label>{t('Incoterm')}</Label>
-						<SearchableSelect bind:value={incoterm} options={incoterms.map((i) => ({ value: i, label: i }))} />
+						<Label for="cost-incoterm" id="cost-incoterm-label">{t('Incoterm')}</Label>
+						<SearchableSelect id="cost-incoterm" labelledby="cost-incoterm-label" bind:value={incoterm} options={incoterms.map((i) => ({ value: i, label: i }))} />
 					</div>
 				</div>
 				<div class="grid gap-2">
-					<Label>{t('Target margin %')}</Label>
-					<Input bind:value={targetMargin} inputmode="decimal" />
+					<Label for="cost-margin">{t('Target margin %')}</Label>
+					<Input id="cost-margin" bind:value={targetMargin} inputmode="decimal" />
 				</div>
 
 				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}

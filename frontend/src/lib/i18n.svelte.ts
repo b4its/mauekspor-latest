@@ -2690,7 +2690,9 @@ const dictionary: Record<string, Entry> = {
 	'Tutup pesan sukses': { id: 'Tutup pesan sukses', en: 'Dismiss success message' },
 	'Bersihkan pencarian tabel': { id: 'Bersihkan pencarian tabel', en: 'Clear table search' },
 	'Bersihkan pencarian data': { id: 'Bersihkan pencarian data', en: 'Clear record search' },
-	'Bersihkan pencarian audit': { id: 'Bersihkan pencarian audit', en: 'Clear audit search' }
+	'Bersihkan pencarian audit': { id: 'Bersihkan pencarian audit', en: 'Clear audit search' },
+	'Cari opsi': { id: 'Cari opsi', en: 'Search options' },
+	'Bersihkan pencarian': { id: 'Bersihkan pencarian', en: 'Clear search' }
 };
 
 let initial: Locale = 'id';

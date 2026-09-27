@@ -159,38 +159,38 @@
 				{:else}
 					{#if step === 0}
 						<div class="field grid gap-2">
-							<Label>{t('Tipe proyek')}</Label>
-							<SearchableSelect bind:value={projectType} options={[{value:'Exporter-led',label:'Exporter-led'},{value:'Buyer-led',label:'Buyer-led'},{value:'Joint',label:'Joint'}]} />
+							<Label for="tp-type" id="tp-type-label">{t('Tipe proyek')}</Label>
+							<SearchableSelect id="tp-type" labelledby="tp-type-label" bind:value={projectType} options={[{value:'Exporter-led',label:'Exporter-led'},{value:'Buyer-led',label:'Buyer-led'},{value:'Joint',label:'Joint'}]} />
 						</div>
 						<div class="field grid gap-2">
-							<Label>{t('Nama proyek')}</Label>
-							<Input bind:value={projectName} placeholder="Japan Coffee Trial Shipment" />
+							<Label for="tp-name">{t('Nama proyek')}</Label>
+							<Input id="tp-name" bind:value={projectName} placeholder="Japan Coffee Trial Shipment" />
 						</div>
 						<div class="field grid gap-2">
-							<Label>{t('Negara tujuan')}</Label>
-							<Input bind:value={destination} placeholder="Japan" />
+							<Label for="tp-destination">{t('Negara tujuan')}</Label>
+							<Input id="tp-destination" bind:value={destination} placeholder="Japan" />
 						</div>
 					{:else if step === 1}
 						<div class="field grid gap-2">
-							<Label>{t('Produk')}</Label>
-							<Input bind:value={product} placeholder="Gayo Arabica Coffee Beans" />
+							<Label for="tp-product">{t('Produk')}</Label>
+							<Input id="tp-product" bind:value={product} placeholder="Gayo Arabica Coffee Beans" />
 						</div>
 						<div class="field grid gap-2">
-							<Label>{t('Pembeli atau prospek')}</Label>
-							<Input bind:value={buyer} placeholder="Hikari Foods Co." />
+							<Label for="tp-buyer">{t('Pembeli atau prospek')}</Label>
+							<Input id="tp-buyer" bind:value={buyer} placeholder="Hikari Foods Co." />
 						</div>
 					{:else}
 						<div class="field grid gap-2">
-							<Label>{t('Incoterm target')}</Label>
-							<Input bind:value={incoterm} placeholder="FOB Tanjung Priok" />
+							<Label for="tp-incoterm">{t('Incoterm target')}</Label>
+							<Input id="tp-incoterm" bind:value={incoterm} placeholder="FOB Tanjung Priok" />
 						</div>
 						<div class="field grid gap-2">
-							<Label>{t('Nilai target')}</Label>
-							<Input bind:value={targetValue} inputmode="decimal" placeholder="42800" />
+							<Label for="tp-value">{t('Nilai target')}</Label>
+							<Input id="tp-value" bind:value={targetValue} inputmode="decimal" placeholder="42800" />
 						</div>
 						<div class="field grid gap-2">
-							<Label>{t('Perkiraan tanggal pengiriman')}</Label>
-							<Input bind:value={eta} type="date" />
+							<Label for="tp-eta">{t('Perkiraan tanggal pengiriman')}</Label>
+							<Input id="tp-eta" bind:value={eta} type="date" />
 						</div>
 					{/if}
 

@@ -301,8 +301,8 @@
 				<form class="grid gap-3" onsubmit={(event) => { event.preventDefault(); resolveException(); }}>
 					<p class="text-muted-foreground">{resolved ? t('Exception diselesaikan di backend.') : data.shipment.exception ?? t('No active logistics issue for this shipment.')}</p>
 					<div class="grid gap-2">
-						<Label>{t('Resolution note')}</Label>
-						<Textarea bind:value={exceptionNote} rows={5} placeholder={t('Commercial team approved booking before rate expiry...')} disabled={!data.shipment.exception || resolved} />
+						<Label for="shipment-resolution">{t('Resolution note')}</Label>
+						<Textarea id="shipment-resolution" bind:value={exceptionNote} rows={5} placeholder={t('Commercial team approved booking before rate expiry...')} disabled={!data.shipment.exception || resolved} />
 					</div>
 					{#if error}
 						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
