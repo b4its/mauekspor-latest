@@ -9,11 +9,15 @@
 	import { toneVariant } from '$lib/utils/format';
 
 	let profile = $state<BuyerProfile | null>(null);
+	let error = $state('');
 
 	$effect(() => {
 		getMyBuyerProfile()
 			.then((res) => (profile = res.data))
-			.catch(() => (profile = null));
+			.catch(() => {
+				profile = null;
+				error = t('Gagal memuat profil dari server.');
+			});
 	});
 
 </script>
@@ -40,6 +44,9 @@
 		</div>
 	</Card>
 
+	{#if error}
+		<p role="alert" class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{error}</p>
+	{/if}
 	{#if !profile}
 		<Card class="bg-gradient-to-br from-primary/10 to-background">
 			<CardContent class="grid gap-2 p-6">

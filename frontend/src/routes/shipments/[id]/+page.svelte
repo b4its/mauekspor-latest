@@ -270,6 +270,8 @@
 							<small class="text-sm text-muted-foreground">{formatDateTime(milestone.time)}</small>
 						</div>
 					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 				{#if advanced}
 					<div class="grid grid-cols-[auto_1fr] gap-3 rounded-lg border bg-muted/30 p-3.5">

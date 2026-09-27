@@ -113,6 +113,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<Button size="sm" variant={module.status === 'Published' ? 'outline' : 'default'} disabled={module.status === 'Published' || modulePublishing === module.id} onclick={() => publishModule(module.id)}>{modulePublishing === module.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
 						</div>
 					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada modul.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
@@ -134,6 +136,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<Button variant="ghost" size="sm" disabled={article.status === 'Published' || articlePublishing === article.id} onclick={() => publishArticle(article.id)}>{articlePublishing === article.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
 						</div>
 					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada artikel.')}</p>
 				{/each}
 			</CardContent>
 		</Card>

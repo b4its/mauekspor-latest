@@ -278,6 +278,8 @@
 							<strong class="text-sm font-bold">{milestone.label}</strong>
 							<small class="text-sm text-muted-foreground">{currency.format(milestone.amount)}</small>
 						</div>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 					{/each}
 				</div>
 				{#if data.order}

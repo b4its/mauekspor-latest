@@ -200,6 +200,8 @@
 			<CardContent class="flex flex-wrap gap-2">
 				{#each data.request.requirements ?? [] as requirement}
 					<span class="rounded-full border bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">{requirement}</span>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>

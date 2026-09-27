@@ -249,6 +249,8 @@
 				<div class="grid gap-3 sm:grid-cols-3">
 					{#each data.report.insights ?? [] as insight}
 						<div class="rounded-lg border bg-muted/40 p-3 text-sm font-semibold text-muted-foreground">{insight}</div>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 					{/each}
 				</div>
 				{#if generated}

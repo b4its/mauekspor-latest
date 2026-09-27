@@ -242,6 +242,8 @@
 				<div class="flex flex-wrap gap-2.5">
 					{#each data.rfq.requirements ?? [] as requirement}
 						<Badge variant="outline">{requirement}</Badge>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 					{/each}
 				</div>
 			</CardContent>
@@ -262,6 +264,8 @@
 							<Button variant="outline" size="sm" disabled={shortlisting !== ''} onclick={() => handleShortlist(match.supplier)}>{shortlisting === match.supplier ? t('Shortlisting...') : t('Shortlist')}</Button>
 						</div>
 					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>

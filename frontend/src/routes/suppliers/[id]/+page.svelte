@@ -248,6 +248,8 @@
 			<CardContent class="flex flex-wrap gap-2.5 p-0 pt-4">
 				{#each data.supplier.certificates as certificate}
 					<Badge variant="outline">{certificate}</Badge>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
@@ -258,6 +260,8 @@
 				<ul class="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
 					{#each data.supplier.risks ?? [] as risk}
 						<li>{risk}</li>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 					{/each}
 				</ul>
 			</CardContent>
@@ -276,6 +280,8 @@
 							<strong class="text-sm font-bold text-foreground">{product.name}</strong>
 							<small class="text-sm text-muted-foreground">{product.packaging} · {product.readiness}% {t('siap')}</small>
 						</a>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 					{/each}
 				</div>
 				{#if evidenceRequested}

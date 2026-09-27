@@ -37,7 +37,11 @@
 				businessType = p.businessType ?? '';
 				annualImportVolume = p.annualImportVolume ?? '';
 			})
-			.catch(() => {});
+			.catch(() => {
+				// Jangan menelan kegagalan: beri tahu pengguna agar form kosong
+				// tidak disalahartikan sebagai "belum ada profil".
+				error = t('Gagal memuat profil. Isi form untuk menyimpan profil baru.');
+			});
 	});
 
 	let valid = $derived(companyName.trim().length > 2 && contactEmail.trim().length > 4);

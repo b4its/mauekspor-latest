@@ -274,6 +274,8 @@
 			<CardContent class="grid gap-2.5 p-0 pt-4">
 				{#each data.market.opportunities ?? [] as item}
 					<span class="rounded-lg bg-primary/10 px-3 py-3 font-bold leading-relaxed text-primary">{item}</span>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
@@ -283,6 +285,8 @@
 			<CardContent class="grid gap-2.5 p-0 pt-4">
 				{#each data.market.risks ?? [] as item}
 					<span class="rounded-lg bg-orange-500/10 px-3 py-3 font-bold leading-relaxed text-orange-700">{item}</span>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
@@ -299,6 +303,8 @@
 							<strong class="block text-sm font-bold">{source.name}</strong>
 							<span class="mt-1 block text-sm text-muted-foreground">{formatDate(source.date)}</span>
 						</div>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 					{/each}
 				</div>
 				{#if refreshed}

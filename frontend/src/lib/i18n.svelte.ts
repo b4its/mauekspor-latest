@@ -2721,7 +2721,12 @@ const dictionary: Record<string, Entry> = {
 	'Hapus tiket dukungan': { id: 'Hapus tiket dukungan', en: 'Delete support ticket' },
 	'Tiket ini akan dihapus permanen dari workspace.': { id: 'Tiket ini akan dihapus permanen dari workspace.', en: 'This ticket will be permanently deleted from the workspace.' },
 	'Hapus ulasan': { id: 'Hapus ulasan', en: 'Delete review' },
-	'Ulasan ini akan dihapus permanen dan rating forwarder dihitung ulang.': { id: 'Ulasan ini akan dihapus permanen dan rating forwarder dihitung ulang.', en: 'This review will be permanently deleted and the forwarder rating recalculated.' }
+	'Ulasan ini akan dihapus permanen dan rating forwarder dihitung ulang.': { id: 'Ulasan ini akan dihapus permanen dan rating forwarder dihitung ulang.', en: 'This review will be permanently deleted and the forwarder rating recalculated.' },
+	'Belum ada modul.': { id: 'Belum ada modul.', en: 'No modules yet.' },
+	'Belum ada artikel.': { id: 'Belum ada artikel.', en: 'No articles yet.' },
+	'Gagal memuat profil dari server.': { id: 'Gagal memuat profil dari server.', en: 'Failed to load the profile from the server.' },
+	'Gagal memuat statistik dari server.': { id: 'Gagal memuat statistik dari server.', en: 'Failed to load statistics from the server.' },
+	'Gagal memuat profil. Isi form untuk menyimpan profil baru.': { id: 'Gagal memuat profil. Isi form untuk menyimpan profil baru.', en: 'Failed to load the profile. Fill in the form to save a new profile.' }
 };
 
 let initial: Locale = 'id';

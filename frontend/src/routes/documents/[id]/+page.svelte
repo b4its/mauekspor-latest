@@ -239,6 +239,8 @@
 						<span class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted-foreground">{key}</span>
 						<strong class="block text-sm font-bold">{value}</strong>
 					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
@@ -254,7 +256,9 @@
 							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{check.detail}</p>
 						</div>
 					</div>
-				{/each}
+				{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
+					{/each}
 			</CardContent>
 		</Card>
 

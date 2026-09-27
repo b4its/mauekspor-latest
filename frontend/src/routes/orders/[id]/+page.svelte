@@ -319,6 +319,8 @@
 							<strong class="mt-1 block text-sm font-bold text-foreground">{line.quantity}</strong>
 							<small class="mt-1 block">{currency.format(line.unitPrice)} {t('per unit')} - {currency.format(line.total)}</small>
 						</div>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 					{/each}
 				</div>
 			</CardContent>
@@ -333,6 +335,8 @@
 							<Badge variant={toneVariant(statusTone(item.status))}>{item.status}</Badge>
 							<strong class="text-sm font-bold">{item.label}</strong>
 						</div>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 					{/each}
 					{#if confirmed}
 						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">

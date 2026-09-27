@@ -247,6 +247,8 @@
 						</div>
 						<Progress value={item.value} class="mt-3" />
 					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>

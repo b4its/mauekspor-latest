@@ -299,7 +299,9 @@
 						<span class="text-sm font-bold text-muted-foreground">{line.label}</span>
 						<strong class="text-sm font-bold">{currency.format(line.amount)}</strong>
 					</div>
-				{/each}
+				{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
+					{/each}
 			</div>
 		</Card>
 

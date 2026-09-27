@@ -267,7 +267,9 @@
 						<span class="text-xs font-bold text-muted-foreground">{completed || item.done ? t('Selesai') : t('Menunggu')}</span>
 						<strong class="mt-1 block text-sm font-bold">{item.label}</strong>
 					</div>
-				{/each}
+				{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
+					{/each}
 			</CardContent>
 			<CardContent class="grid gap-2 p-0">
 				{#if reassigned}<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">{t('Tugas ditugaskan di backend.')}</p>{/if}

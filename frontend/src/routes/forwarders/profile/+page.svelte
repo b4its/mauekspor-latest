@@ -31,7 +31,10 @@
 				specializationRoutes = (p.specializationRoutes ?? []).join('\n');
 				serviceTypes = (p.serviceTypes ?? []).join('\n');
 			})
-			.catch(() => {});
+			.catch(() => {
+				// Tampilkan kegagalan pemuatan alih-alih membiarkan form kosong.
+				error = t('Gagal memuat profil. Isi form untuk menyimpan profil baru.');
+			});
 	});
 
 	let valid = $derived(companyName.trim().length > 2 && contactEmail.trim().length > 4);
