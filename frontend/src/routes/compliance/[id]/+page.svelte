@@ -10,6 +10,8 @@
 	import { uploadComplianceEvidence, updateComplianceRequirement, deleteComplianceRequirement } from '$lib/api/compliance';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let evidenceNote = $state('');
@@ -36,6 +38,38 @@
 	let localStatus = $derived(savedStatus || data.requirement.status);
 	let localSeverity = $derived(savedSeverity || data.requirement.severity);
 	let localOwner = $derived(savedOwner || data.requirement.owner);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	let displayStatus = $derived(serverStatus || (verified ? 'Verified' : uploaded ? 'Evidence Uploaded' : localStatus));
 
@@ -121,7 +155,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus requirement ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteComplianceRequirement(data.requirement.id);
@@ -196,7 +229,20 @@
 				{t('Konsultasi AI')}
 			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus persyaratan kepatuhan'),
+						description: t('Persyaratan ini akan dihapus permanen dari workspace.'),
+						detail: localTitle,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -240,13 +286,13 @@
 					{t('Pemilik')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.owner}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Jatuh tempo')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.due}</strong>
+					{t('Jatuh tempo')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(data.requirement.due)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Sumber')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.source}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Tanggal sumber')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.sourceDate}</strong>
+					{t('Tanggal sumber')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(data.requirement.sourceDate)}</strong>
 				</div>
 			</CardContent>
 		</Card>
@@ -293,4 +339,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

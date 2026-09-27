@@ -7,10 +7,44 @@
 	import { deleteUser } from '$lib/api/users';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDateTime } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let error = $state('');
 	let deleting = $state(false);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -21,7 +55,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus pengguna ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteUser(data.user.id);
@@ -51,7 +84,20 @@
 			<Badge variant="secondary">{data.user.role}</Badge>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus pengguna'),
+						description: t('Pengguna ini akan dihapus permanen dari workspace.'),
+						detail: data.user.fullName,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if error}
 			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
@@ -71,10 +117,10 @@
 				{t('Status')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.status}</strong>
 			</div>
 			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-				{t('Created')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.createdAt}</strong>
+				{t('Created')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDateTime(data.user.createdAt)}</strong>
 			</div>
 			<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-				{t('Login terakhir')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.user.lastLogin}</strong>
+				{t('Login terakhir')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDateTime(data.user.lastLogin)}</strong>
 			</div>
 		</CardContent>
 	</Card>
@@ -82,4 +128,14 @@
 	<div class="mt-4">
 		<Button variant="outline" href="/users">{t('Kembali ke pengguna')}</Button>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

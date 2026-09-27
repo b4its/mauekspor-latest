@@ -16,6 +16,8 @@
 	import { t } from '$lib/i18n.svelte';
 	import { goto } from '$app/navigation';
 	import { currency, statusTone } from '$lib/utils/format';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let selectedTab = $state('Compliance');
@@ -37,6 +39,38 @@
 	let localStage = $derived(savedStage || data.project.stage);
 	let localReadiness = $derived(savedReadiness ?? data.project.readiness);
 	let localRisk = $derived(savedRisk || data.project.risk);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	let compliance = createRemoteList<ComplianceRequirement>(listComplianceRequirements, []);
 	let docs = createRemoteList<TradeDocument>(listTradeDocuments, []);
@@ -128,7 +162,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus proyek ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteTradeProject(data.project.id);
@@ -162,7 +195,20 @@
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus proyek'),
+						description: t('Proyek ini akan dihapus permanen dari workspace.'),
+						detail: localName,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -227,8 +273,8 @@
 					<strong class="text-sm font-bold">{data.project.port}</strong>
 				</div>
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('ETA')}</span>
-					<strong class="text-sm font-bold">{data.project.eta}</strong>
+					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">					{t('ETA')}</span>
+					<strong class="text-sm font-bold">{formatDate(data.project.eta)}</strong>
 				</div>
 			</CardContent>
 		</Card>
@@ -268,7 +314,7 @@
 						<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5">
 							<div>
 								<strong class="block text-sm font-bold">{task.name}</strong>
-								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{task.owner} - {t('jatuh tempo')} {task.due}</span>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{task.owner} - {t('jatuh tempo')} {formatDate(task.due)}</span>
 							</div>
 							<Badge variant={toneVariant(statusTone(task.status))}>{task.status}</Badge>
 						</div>
@@ -299,7 +345,7 @@
 						<a href={`/quotations/${quote.id}`} class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5 no-underline transition-colors hover:bg-muted/50">
 							<div>
 								<strong class="block text-sm font-bold text-foreground">{quote.id} · {quote.incoterm}</strong>
-								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{quote.supplier} → {quote.buyer} · {t('valid hingga')} {quote.validUntil}</span>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{quote.supplier} → {quote.buyer} · {t('valid hingga')} {formatDate(quote.validUntil)}</span>
 							</div>
 							<div class="text-right">
 								<strong class="block text-sm font-bold text-foreground">{currency.format(quote.value)}</strong>
@@ -318,7 +364,7 @@
 						<div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
 							<div>
 								<strong class="block text-sm font-bold text-foreground">{primaryShipment.id} · {primaryShipment.route}</strong>
-								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{primaryShipment.forwarder} · ETA {primaryShipment.eta} · {primaryShipment.progress}%</span>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{primaryShipment.forwarder} · ETA {formatDate(primaryShipment.eta)} · {primaryShipment.progress}%</span>
 							</div>
 							<Badge variant={toneVariant(statusTone(primaryShipment.status))}>{primaryShipment.status}</Badge>
 						</div>
@@ -341,4 +387,14 @@
 			{/if}
 		</CardContent>
 	</Card>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

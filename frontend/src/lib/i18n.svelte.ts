@@ -2626,7 +2626,29 @@ const dictionary: Record<string, Entry> = {
 	'Hapus Kunci API': { id: 'Hapus Kunci API', en: 'Delete API Key' },
 	'Kunci API ini akan dihapus permanen dari workspace.': { id: 'Kunci API ini akan dihapus permanen dari workspace.', en: 'This API key will be permanently deleted from the workspace.' },
 	'Hapus pengiriman': { id: 'Hapus pengiriman', en: 'Delete shipment' },
-	'Pengiriman ini akan dihapus permanen dari workspace.': { id: 'Pengiriman ini akan dihapus permanen dari workspace.', en: 'This shipment will be permanently deleted from the workspace.' }
+	'Pengiriman ini akan dihapus permanen dari workspace.': { id: 'Pengiriman ini akan dihapus permanen dari workspace.', en: 'This shipment will be permanently deleted from the workspace.' },
+	'Hapus pengguna': { id: 'Hapus pengguna', en: 'Delete user' },
+	'Pengguna ini akan dihapus permanen dari workspace.': { id: 'Pengguna ini akan dihapus permanen dari workspace.', en: 'This user will be permanently deleted from the workspace.' },
+	'Hapus proyek': { id: 'Hapus proyek', en: 'Delete project' },
+	'Proyek ini akan dihapus permanen dari workspace.': { id: 'Proyek ini akan dihapus permanen dari workspace.', en: 'This project will be permanently deleted from the workspace.' },
+	'Hapus supplier': { id: 'Hapus supplier', en: 'Delete supplier' },
+	'Supplier ini akan dihapus permanen dari workspace.': { id: 'Supplier ini akan dihapus permanen dari workspace.', en: 'This supplier will be permanently deleted from the workspace.' },
+	'Hapus RFQ': { id: 'Hapus RFQ', en: 'Delete RFQ' },
+	'RFQ ini akan dihapus permanen dari workspace.': { id: 'RFQ ini akan dihapus permanen dari workspace.', en: 'This RFQ will be permanently deleted from the workspace.' },
+	'Hapus laporan': { id: 'Hapus laporan', en: 'Delete report' },
+	'Laporan ini akan dihapus permanen dari workspace.': { id: 'Laporan ini akan dihapus permanen dari workspace.', en: 'This report will be permanently deleted from the workspace.' },
+	'Hapus insight pasar': { id: 'Hapus insight pasar', en: 'Delete market insight' },
+	'Insight pasar ini akan dihapus permanen dari workspace.': { id: 'Insight pasar ini akan dihapus permanen dari workspace.', en: 'This market insight will be permanently deleted from the workspace.' },
+	'Hapus analisis': { id: 'Hapus analisis', en: 'Delete analysis' },
+	'Analisis ini akan dihapus permanen dari workspace.': { id: 'Analisis ini akan dihapus permanen dari workspace.', en: 'This analysis will be permanently deleted from the workspace.' },
+	'Hapus modul': { id: 'Hapus modul', en: 'Delete module' },
+	'Modul ini akan dihapus permanen dari workspace.': { id: 'Modul ini akan dihapus permanen dari workspace.', en: 'This module will be permanently deleted from the workspace.' },
+	'Hapus tipe varian': { id: 'Hapus tipe varian', en: 'Delete variant type' },
+	'Tipe varian ini beserta opsinya akan dihapus permanen.': { id: 'Tipe varian ini beserta opsinya akan dihapus permanen.', en: 'This variant type and its options will be permanently deleted.' },
+	'Hapus buyer': { id: 'Hapus buyer', en: 'Delete buyer' },
+	'Buyer ini akan dihapus permanen dari workspace.': { id: 'Buyer ini akan dihapus permanen dari workspace.', en: 'This buyer will be permanently deleted from the workspace.' },
+	'Hapus profil bisnis': { id: 'Hapus profil bisnis', en: 'Delete business profile' },
+	'Profil bisnis ini akan dihapus permanen dari workspace.': { id: 'Profil bisnis ini akan dihapus permanen dari workspace.', en: 'This business profile will be permanently deleted from the workspace.' }
 };
 
 let initial: Locale = 'id';

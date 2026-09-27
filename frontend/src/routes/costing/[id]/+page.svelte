@@ -8,6 +8,8 @@
 	import type { ExchangeRate } from '$lib/api/costing';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDateTime } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let recalculated = $state(false);
@@ -18,6 +20,38 @@
 	let fxEdit = $state('');
 	let fxError = $state('');
 	let fxSaving = $state(false);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	type Line = { category: string; label: string; amount: number };
 	type Container = { capacity_20ft?: number; capacity_40ft?: number; utilization_note?: string; tips?: string[]; ai_tips?: string };
@@ -57,7 +91,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus skenario costing ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteCostingScenario(data.scenario.id);
@@ -138,7 +171,20 @@
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/costing/${data.scenario.id}/edit`}>{t('Edit skenario')}</Button>
-					<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+					<Button
+						variant="outline"
+						class="text-destructive"
+						disabled={deleting}
+						onclick={() =>
+							askConfirm({
+								title: t('Hapus skenario costing'),
+								description: t('Skenario ini akan dihapus permanen dari workspace.'),
+								detail: data.scenario.title,
+								action: handleDelete
+							})}
+					>
+						{deleting ? t('Menghapus...') : t('Hapus')}
+					</Button>
 					<Button variant="outline" onclick={handleFx}>{fx ? `FX ${fx.rate} (${fx.source})` : t('Tampilkan kurs FX')}</Button>
 					{#if fx}
 						<Button variant="outline" size="sm" disabled={fxSaving} onclick={handleFxRefresh}>{fxSaving ? t('Memperbarui...') : t('Perbarui dari sumber')}</Button>
@@ -157,7 +203,7 @@
 							oninput={(e) => (fxEdit = (e.currentTarget as HTMLInputElement).value)}
 						/>
 						<Button size="sm" variant="outline" disabled={fxSaving} onclick={handleFxSave}>{fxSaving ? t('Menyimpan...') : t('Set kurs manual')}</Button>
-						<span class="text-xs text-muted-foreground">{fx.source} · {t('diperbarui')} {fx.updatedAt}</span>
+						<span class="text-xs text-muted-foreground">{fx.source} · {t('diperbarui')} {formatDateTime(fx.updatedAt)}</span>
 						{#if fxError}
 							<span class="rounded-lg bg-destructive/10 px-2 py-1 text-xs font-bold text-destructive">{fxError}</span>
 						{/if}
@@ -276,4 +322,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

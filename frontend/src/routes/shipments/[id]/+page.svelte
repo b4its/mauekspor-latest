@@ -10,6 +10,8 @@
 	import { updateShipmentMilestone, resolveShipmentException, updateShipment, deleteShipment } from '$lib/api/shipments';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDate, formatDateTime } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let exceptionNote = $state('');
@@ -32,6 +34,38 @@
 
 	let displayStatus = $derived(savedStatus || (advanced ? 'In Transit' : resolved ? 'In Transit' : data.shipment.status));
 	let displayProgress = $derived(advanced ? Math.min(data.shipment.progress + 18, 100) : data.shipment.progress);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	async function resolveException() {
 		error = '';
@@ -110,7 +144,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus pengiriman ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteShipment(data.shipment.id);
@@ -158,7 +191,20 @@
 				</Button>
 			{/if}
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus pengiriman'),
+						description: t('Pengiriman ini akan dihapus permanen dari workspace.'),
+						detail: data.shipment.id,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -204,7 +250,7 @@
 					{t('Container')} <strong class="mt-1 block text-sm font-bold text-foreground">{localContainer}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('ETA')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.eta}</strong>
+					{t('ETA')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(data.shipment.eta)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					Forwarder <strong class="mt-1 block text-sm font-bold text-foreground">{data.shipment.forwarder}</strong>
@@ -227,7 +273,7 @@
 								<Badge variant={toneVariant(statusTone(milestone.status))}>{milestone.status}</Badge>
 							</div>
 							<p class="my-2 text-sm leading-relaxed text-muted-foreground">{milestone.note}</p>
-							<small class="text-sm text-muted-foreground">{milestone.time}</small>
+							<small class="text-sm text-muted-foreground">{formatDateTime(milestone.time)}</small>
 						</div>
 					</div>
 				{/each}
@@ -268,4 +314,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

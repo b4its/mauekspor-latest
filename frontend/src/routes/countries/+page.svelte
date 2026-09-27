@@ -72,9 +72,9 @@
 					<MapIcon class="size-3.5" />
 					{t('195+ jurisdictions')}
 				</Badge>
-				<h1 class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
+				<h2 class="font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{t('Regulasi ekspor & impor setiap negara di dunia.')}
-				</h1>
+				</h2>
 				<CardDescription class="mt-2 max-w-xl leading-relaxed">
 					{t('Direktori kepabeanan global: sistem tarif (BTKI/HTSUS/TARIC/GACC), FTA, aturan impor & ekspor, pajak, dokumen, dan otoritas resmi. Baseline 15 Agustus 2026 — verifikasi ulang sebelum shipment.')}
 				</CardDescription>

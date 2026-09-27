@@ -7,6 +7,7 @@
 	import { statusTone } from '$lib/utils/format';
 	import { enrichProduct, deleteProduct, generateCatalogDescription, type CatalogDescription } from '$lib/api/products';
 	import { t } from '$lib/i18n.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let enriching = $state(false);
@@ -16,6 +17,38 @@
 	let catalogDesc = $state<CatalogDescription | null>(null);
 	let catalogLoading = $state(false);
 	let catalogError = $state('');
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	async function runEnrichment() {
 		enriching = true;
@@ -31,7 +64,6 @@
 	}
 
 	async function handleDelete() {
-		if (!confirm(t('Hapus produk ini?'))) return;
 		deleting = true;
 		try {
 			await deleteProduct(data.product.id);
@@ -100,7 +132,19 @@
 					<Button disabled={enriching} onclick={runEnrichment}>
 						{enriching ? t('Memproses...') : enriched ? t('Enrichment AI diperbarui') : t('Jalankan enrichment AI')}
 					</Button>
-					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>{t('Hapus')}</Button>
+					<Button
+						variant="destructive"
+						disabled={deleting}
+						onclick={() =>
+							askConfirm({
+								title: t('Hapus produk'),
+								description: t('Produk ini akan dihapus permanen dari workspace.'),
+								detail: data.product.name,
+								action: handleDelete
+							})}
+					>
+						{t('Hapus')}
+					</Button>
 				</div>
 			</CardHeader>
 
@@ -227,4 +271,14 @@
 			</Card>
 		{/if}
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

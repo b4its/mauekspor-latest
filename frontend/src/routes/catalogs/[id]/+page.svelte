@@ -28,6 +28,7 @@
 	import { uploadFileBinary, fileDownloadUrl } from '$lib/api/files';
 	import type { CatalogImage, VariantType, CatalogAIDescription } from '$lib/api/catalogs';
 	import { t } from '$lib/i18n.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	type CatalogPricing = {
 		exwPrice?: number;
@@ -66,6 +67,38 @@
 	let marketIntel = $state<CatalogMI | null>(null);
 	let aiLoading = $state(false);
 	let aiError = $state('');
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	$effect(() => {
 		getCatalogPricing(data.catalog.id)
@@ -137,7 +170,6 @@
 	}
 
 	async function handleRemoveVariantType(typeId: string) {
-		if (!confirm(t('Hapus tipe varian beserta opsinya?'))) return;
 		try {
 			await deleteVariantType(data.catalog.id, typeId);
 			await reloadVariants();
@@ -462,7 +494,12 @@
 								<strong class="text-sm">{vt.typeName}</strong>
 								<div class="flex items-center gap-2">
 									<button class="text-xs font-bold text-muted-foreground hover:text-foreground" onclick={() => (renameType = vt.typeName)}>{t('Ganti nama')}</button>
-									<button class="text-xs font-bold text-destructive hover:underline" onclick={() => handleRemoveVariantType(vt.id)}>{t('Hapus tipe')}</button>
+									<button class="text-xs font-bold text-destructive hover:underline" onclick={() => askConfirm({
+										title: t('Hapus tipe varian'),
+										description: t('Tipe varian ini beserta opsinya akan dihapus permanen.'),
+										detail: vt.typeName,
+										action: () => handleRemoveVariantType(vt.id)
+									})}>{t('Hapus tipe')}</button>
 								</div>
 							</div>
 							{#if renameType.length > 0 && variantTypes.some((x) => x.id === vt.id && x.typeName === renameType)}
@@ -655,4 +692,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

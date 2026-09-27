@@ -8,6 +8,8 @@
 	import { markPaymentReceived, sendPaymentReminder, updatePayment, deletePayment } from '$lib/api/payments';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let received = $state(false);
@@ -31,6 +33,38 @@
 	let localMethod = $derived(savedMethod || data.payment.method);
 	let paidAmount = $derived(received ? data.payment.amount : data.payment.paid);
 	let displayStatus = $derived(serverStatus || (received ? 'Settled' : savedStatus || data.payment.status));
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -113,7 +147,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus pembayaran ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deletePayment(data.payment.id);
@@ -138,7 +171,7 @@
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{localBuyer}
 				</CardTitle>
-				<CardDescription class="mt-2">{localMethod} · Due {data.payment.dueDate}</CardDescription>
+				<CardDescription class="mt-2">{localMethod} · Due {formatDate(data.payment.dueDate)}</CardDescription>
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Collected')}</span>
@@ -158,7 +191,20 @@
 				{t('Dokumen Invoice')}
 			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus pembayaran'),
+						description: t('Pembayaran ini akan dihapus permanen dari workspace.'),
+						detail: data.payment.id,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -254,4 +300,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

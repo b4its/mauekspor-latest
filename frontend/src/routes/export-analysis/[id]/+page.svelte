@@ -11,6 +11,7 @@
 	import { reanalyzeExportAnalysis, deleteExportAnalysis, getRegulationRecommendations, runRegulationCheck, analysisPdfUrl } from '$lib/api/export-analysis';
 	import { updateProduct, getProduct } from '$lib/api/products';
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 
@@ -34,6 +35,38 @@
 	let regs = $state<RegulationRecommendations | null>(null);
 	let showRegs = $state(false);
 	let regRunning = $state(false);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	// ---------- Inline Compliance Editor ----------
 	let editMode = $state(false);
@@ -130,7 +163,6 @@
 	}
 
 	async function handleDelete() {
-		if (!confirm(t('Hapus analisis ini?'))) return;
 		error = '';
 		deleting = true;
 		try {
@@ -216,7 +248,19 @@
 					<Button variant="outline" disabled={rerunning} onclick={handleRerun}>
 						{rerunning ? t('Menganalisis ulang...') : t('Analisis ulang')}
 					</Button>
-					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>{t('Hapus')}</Button>
+					<Button
+						variant="destructive"
+						disabled={deleting}
+						onclick={() =>
+							askConfirm({
+								title: t('Hapus analisis'),
+								description: t('Analisis ini akan dihapus permanen dari workspace.'),
+								detail: data.analysis.productName,
+								action: handleDelete
+							})}
+					>
+						{t('Hapus')}
+					</Button>
 				</div>
 			</CardHeader>
 			{#if error}
@@ -434,4 +478,14 @@
 			</CardContent>
 		</Card>
 	{/if}
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

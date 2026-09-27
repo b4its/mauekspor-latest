@@ -9,6 +9,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
@@ -140,10 +141,42 @@
 
 	let deleting = $state(false);
 	let deleteError = $state('');
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
 	async function handleDelete() {
 		const target = profile;
 		if (!target) return;
-		if (!confirm(t('Hapus profil bisnis ini secara permanen?'))) return;
 		deleting = true;
 		deleteError = '';
 		try {
@@ -289,7 +322,19 @@
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href="/business-profile/edit">{t('Edit profil')}</Button>
 					<Button href="/business-profile/certifications">{t('Kelola sertifikasi')}</Button>
-					<Button variant="destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus profil')}</Button>
+					<Button
+						variant="destructive"
+						disabled={deleting}
+						onclick={() =>
+							askConfirm({
+								title: t('Hapus profil bisnis'),
+								description: t('Profil bisnis ini akan dihapus permanen dari workspace.'),
+								detail: profile.companyName,
+								action: handleDelete
+							})}
+					>
+						{deleting ? t('Menghapus...') : t('Hapus profil')}
+					</Button>
 				</div>
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -354,4 +399,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

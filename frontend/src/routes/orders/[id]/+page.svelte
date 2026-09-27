@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 	import { generateTradeDocument } from '$lib/api/documents';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 
 	let { data } = $props();
@@ -45,6 +46,38 @@
 					? Math.min(data.order.readiness + 7, 100)
 					: data.order.readiness)
 	);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -172,7 +205,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus order ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteOrder(data.order.id);
@@ -206,7 +238,20 @@
 		</CardContent>
 		<div class="mt-5 flex flex-wrap gap-2.5">
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus order'),
+						description: t('Order ini akan dihapus permanen dari workspace.'),
+						detail: data.order.id,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -311,4 +356,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

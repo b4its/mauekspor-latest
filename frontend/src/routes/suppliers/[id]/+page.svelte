@@ -8,6 +8,8 @@
 	import { verifySupplier, requestSupplierEvidence, updateSupplier, deleteSupplier } from '$lib/api/suppliers';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let verified = $state(false);
@@ -28,6 +30,38 @@
 	let localLocation = $derived(savedLocation || data.supplier.location);
 	let displayStatus = $derived(serverStatus || (verified ? 'Verified' : data.supplier.status));
 	let displayScore = $derived(serverScore ?? (verified ? Math.max(data.supplier.capabilityScore, 95) : data.supplier.capabilityScore));
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -97,7 +131,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus supplier ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteSupplier(data.supplier.id);
@@ -140,7 +173,20 @@
 				{t('Produk Terkait')}
 			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit supplier')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus supplier')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus supplier'),
+						description: t('Supplier ini akan dihapus permanen dari workspace.'),
+						detail: localName,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus supplier')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -195,7 +241,7 @@
 					{t('Skor kepatuhan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.supplier.complianceScore}%</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Audit berikutnya')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.supplier.nextAudit}</strong>
+					{t('Audit berikutnya')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(data.supplier.nextAudit)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Kontak')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.supplier.contact}</strong>
@@ -247,4 +293,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

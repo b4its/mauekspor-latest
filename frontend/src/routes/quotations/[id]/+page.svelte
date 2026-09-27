@@ -9,6 +9,8 @@
 	import { createOrder } from '$lib/api/orders';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let revised = $state(false);
@@ -35,6 +37,38 @@
 	let localMargin = $derived(savedMargin || data.quotation.margin);
 	let displayStatus = $derived(serverStatus || (accepted ? 'Accepted' : revised ? 'In Review' : savedStatus || data.quotation.status));
 	let displayValue = $derived(serverValue ?? (revised ? Math.round(data.quotation.value * 1.025) : data.quotation.value));
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -155,7 +189,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus kuotasi ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteQuotation(data.quotation.id);
@@ -187,7 +220,20 @@
 		</CardHeader>
 		<div class="mt-5 flex flex-wrap gap-2.5">
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus quotation'),
+						description: t('Quotation ini akan dihapus permanen dari workspace.'),
+						detail: data.quotation.id,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -245,7 +291,7 @@
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Proyek')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.project?.name ?? data.quotation.projectId}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('RFQ')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.quotation.rfqId}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Mata uang')}<strong class="mt-1 block text-sm font-bold text-foreground">{data.quotation.currency}</strong></div>
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Valid until')}<strong class="mt-1 block text-sm font-bold text-foreground">{localValidUntil}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Valid until')}<strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(localValidUntil)}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Margin')}<strong class="mt-1 block text-sm font-bold text-foreground">{localMargin}%</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Status')}<strong class="mt-1 block text-sm font-bold text-foreground">{displayStatus}</strong></div>
 			</div>
@@ -271,4 +317,14 @@
 			{#if accepted}<p class="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 font-bold text-emerald-600">{t('Kuotasi diterima di backend.')}</p>{/if}
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

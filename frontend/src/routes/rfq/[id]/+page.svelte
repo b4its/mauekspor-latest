@@ -9,6 +9,8 @@
 	import { createQuotation } from '$lib/api/quotations';
 	import { shortlistRFQMatch, updateRFQ, deleteRFQ } from '$lib/api/rfq';
 	import { goto } from '$app/navigation';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let shortlisted = $state('');
@@ -33,6 +35,38 @@
 	let localQuantity = $derived(savedQuantity || data.rfq.quantity);
 	let localDeadline = $derived(savedDeadline || data.rfq.deadline);
 	let localStatus = $derived(savedStatus || data.rfq.status);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -117,7 +151,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus RFQ ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteRFQ(data.rfq.id);
@@ -151,7 +184,20 @@
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus RFQ'),
+						description: t('RFQ ini akan dihapus permanen dari workspace.'),
+						detail: data.rfq.id,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -196,7 +242,7 @@
 						{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{localIncoterm}</strong>
 					</div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-						{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{localDeadline}</strong>
+						{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(localDeadline)}</strong>
 					</div>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
@@ -247,4 +293,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

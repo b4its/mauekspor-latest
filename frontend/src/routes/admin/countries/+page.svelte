@@ -526,9 +526,9 @@
 							{t('Akses Administrator')}
 						</Badge>
 					</div>
-					<h1 class="mt-3 font-display text-3xl font-black tracking-tight text-[#0b1d3a] md:text-4xl dark:text-white">
+					<h2 class="mt-3 font-display text-3xl font-black tracking-tight text-[#0b1d3a] md:text-4xl dark:text-white">
 						{t('Kelola Negara & Regulasi')}
-					</h1>
+					</h2>
 					<CardDescription class="mt-2 max-w-xl leading-relaxed">
 						{t('Konfigurasi database negara tujuan, aturan kepabeanan, parameter larangan/pembatasan, dan spesifikasi wajib per komoditas.')}
 					</CardDescription>

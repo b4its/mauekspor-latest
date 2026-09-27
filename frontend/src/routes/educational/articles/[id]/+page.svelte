@@ -8,14 +8,46 @@
 	import { fileDownloadUrl } from '$lib/api/files';
 	import { deleteEducationalArticle } from '$lib/api/educational-articles';
 	import { goto } from '$app/navigation';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let error = $state('');
 	let deleting = $state(false);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus artikel ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteEducationalArticle(data.article.id);
@@ -97,7 +129,21 @@
 			{#if fileUrl}
 				<Button variant="outline" size="sm" href={fileUrl}>{t('Unduh file')}</Button>
 			{/if}
-			<Button variant="outline" size="sm" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				size="sm"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus artikel'),
+						description: t('Artikel ini akan dihapus permanen dari workspace.'),
+						detail: data.article.title,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</CardContent>
 		{#if error}
 			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
@@ -130,4 +176,14 @@
 	<div class="mt-5">
 		<Button variant="outline" href="/educational">{t('Kembali ke edukasi')}</Button>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

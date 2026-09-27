@@ -86,7 +86,7 @@
 								<Badge variant="secondary">{t('Data umum / regional')}</Badge>
 							{/if}
 						</div>
-						<h1 class="mt-2 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{country.country_name}</h1>
+						<h2 class="mt-2 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{country.country_name}</h2>
 						<p class="mt-1 text-sm font-bold text-muted-foreground">
 							{country.country_code} · {country.region}{country.subregion ? ` · ${country.subregion}` : ''}
 							{#if country.currency} · {country.currency}{/if}

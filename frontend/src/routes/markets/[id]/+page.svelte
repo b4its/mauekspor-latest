@@ -9,6 +9,8 @@
 	import { refreshMarketInsight, updateMarketInsight, deleteMarketInsight } from '$lib/api/markets';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let refreshed = $state(false);
@@ -30,6 +32,38 @@
 	let localStatus = $derived(serverStatus || savedStatus || data.market.status);
 	let selectedScenario = $state('Base');
 	const scenarios = ['Base', 'Optimistic', 'Conservative'];
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function trScenario(s: string) {
 		return t(s === 'Base' ? 'Dasar' : s === 'Optimistic' ? 'Optimis' : 'Konservatif');
@@ -106,7 +140,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus insight pasar ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteMarketInsight(data.market.id);
@@ -162,7 +195,20 @@
 				{t('Hitung Costing')}
 			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus insight pasar'),
+						description: t('Insight pasar ini akan dihapus permanen dari workspace.'),
+						detail: localCountry,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -257,7 +303,7 @@
 					{#each data.market.sources ?? [] as source}
 						<div class="rounded-lg border bg-muted/30 p-3.5">
 							<strong class="block text-sm font-bold">{source.name}</strong>
-							<span class="mt-1 block text-sm text-muted-foreground">{source.date}</span>
+							<span class="mt-1 block text-sm text-muted-foreground">{formatDate(source.date)}</span>
 						</div>
 					{/each}
 				</div>
@@ -267,4 +313,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

@@ -8,6 +8,8 @@
 	import { completeTask, assignTask, updateTask, deleteTask } from '$lib/api/tasks';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	let { data } = $props();
 	let completed = $state(false);
 	let reassigned = $state(false);
@@ -33,6 +35,38 @@
 	let localOwner = $derived(serverOwner || savedOwner || data.task.owner);
 	let localPriority = $derived(savedPriority || data.task.priority);
 	let displayStatus = $derived(serverStatus || (completed ? 'Done' : savedStatus || data.task.status));
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -123,7 +157,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus tugas ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteTask(data.task.id);
@@ -154,7 +187,20 @@
 		</CardContent>
 		<div class="mt-5 flex flex-wrap gap-2.5">
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus tugas'),
+						description: t('Tugas ini akan dihapus permanen dari workspace.'),
+						detail: localTitle,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if editing}
 			<div class="mt-4 grid gap-3 rounded-xl border bg-muted/20 p-4">
@@ -210,7 +256,7 @@
 			</CardHeader>
 			<CardContent class="grid grid-cols-2 gap-2 md:grid-cols-4">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pemilik')} <strong class="mt-1 block text-sm font-bold text-foreground">{localOwner}</strong></div>
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Jatuh tempo')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.task.due}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Jatuh tempo')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(data.task.due)}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Modul')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.task.module}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Proyek')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.task.projectId}</strong></div>
 			</CardContent>
@@ -235,4 +281,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

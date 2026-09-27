@@ -8,12 +8,46 @@
 	import type { MatchedItem } from '$lib/api/buyer-requests';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let matches = $state<MatchedItem[]>([]);
 	let matching = $state(false);
 	let deleting = $state(false);
 	let error = $state('');
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -48,7 +82,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus permintaan pembeli ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteBuyerRequest(data.request.id);
@@ -121,7 +154,20 @@
 				{#if data.request.status !== 'Closed'}
 					<Button variant="outline" onclick={handleClose}>{t('Tutup permintaan')}</Button>
 				{/if}
-				<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+				<Button
+					variant="outline"
+					class="text-destructive"
+					disabled={deleting}
+					onclick={() =>
+						askConfirm({
+							title: t('Hapus permintaan buyer'),
+							description: t('Permintaan ini akan dihapus permanen dari workspace.'),
+							detail: data.request.subject,
+							action: handleDelete
+						})}
+				>
+					{deleting ? t('Menghapus...') : t('Hapus')}
+				</Button>
 			</div>
 		</div>
 	</Card>
@@ -147,7 +193,7 @@
 					{t('Tujuan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.destination}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Batas waktu')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.deadline}</strong>
+					{t('Batas waktu')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(data.request.deadline)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Status')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.status}</strong>
@@ -211,4 +257,14 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

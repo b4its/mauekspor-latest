@@ -8,6 +8,7 @@
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { deleteEducationalModule, getLessonProgress, setLessonComplete } from '$lib/api/educational';
 	import { goto } from '$app/navigation';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	import PlayCircleIcon from '@lucide/svelte/icons/play-circle';
 	import BookOpenIcon from '@lucide/svelte/icons/book-open';
@@ -26,6 +27,38 @@
 	let activeIndex = $state(initialIndex === -1 ? 0 : initialIndex);
 	let deleting = $state(false);
 	let error = $state('');
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	// Muat progres tersimpan dari backend (per user), lalu sinkronkan ke lessons.
 	$effect(() => {
@@ -40,7 +73,6 @@
 
 	async function handleDelete() {
 		error = '';
-		if (!confirm(t('Hapus modul ini secara permanen?'))) return;
 		deleting = true;
 		try {
 			await deleteEducationalModule(data.module.id);
@@ -114,7 +146,20 @@
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
-			<Button variant="outline" class="text-destructive" disabled={deleting} onclick={handleDelete}>{deleting ? t('Menghapus...') : t('Hapus')}</Button>
+			<Button
+				variant="outline"
+				class="text-destructive"
+				disabled={deleting}
+				onclick={() =>
+					askConfirm({
+						title: t('Hapus modul'),
+						description: t('Modul ini akan dihapus permanen dari workspace.'),
+						detail: data.module.title,
+						action: handleDelete
+					})}
+			>
+				{deleting ? t('Menghapus...') : t('Hapus')}
+			</Button>
 		</div>
 		{#if error}
 			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
@@ -230,4 +275,14 @@
 	<div>
 		<Button variant="outline" href="/educational">{t('Kembali ke katalog kursus')}</Button>
 	</div>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

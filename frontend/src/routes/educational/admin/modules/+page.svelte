@@ -11,6 +11,7 @@
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let modules = createRemoteList(listEducationalModules, seedModules);
 	let publishing = $state('');
@@ -18,6 +19,38 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let error = $state('');
 	let newTitle = $state('');
 	let creating = $state(false);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	$effect(() => {
 		modules.load();
@@ -64,7 +97,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function removeModule(id: string) {
-		if (!confirm(t('Hapus modul ini beserta artikelnya?'))) return;
 		error = '';
 		deleting = id;
 		try {
@@ -153,7 +185,20 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<Button size="sm" variant="outline" disabled={index === modules.items.length - 1} onclick={() => moveModule(index, 1)}>↓</Button>
 							<Button size="sm" variant="outline" href={`/educational/modules/${module.id}`}>{t('Detail')}</Button>
 							<Button size="sm" variant={module.status === 'Published' ? 'outline' : 'default'} disabled={module.status === 'Published' || publishing === module.id} onclick={() => publishModule(module.id)}>{publishing === module.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
-							<Button size="sm" variant="destructive" disabled={deleting === module.id} onclick={() => removeModule(module.id)}>{deleting === module.id ? '...' : t('Hapus')}</Button>
+							<Button
+								size="sm"
+								variant="destructive"
+								disabled={deleting === module.id}
+								onclick={() =>
+									askConfirm({
+										title: t('Hapus modul'),
+										description: t('Modul ini akan dihapus permanen dari workspace.'),
+										detail: module.title,
+										action: () => removeModule(module.id)
+									})}
+							>
+								{deleting === module.id ? '...' : t('Hapus')}
+							</Button>
 						</div>
 					</div>
 				</div>
@@ -163,4 +208,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 {#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
 	<Pagination bind:page={paginationPage_modules} bind:pageSize={paginationPageSize_modules} totalPages={paginationTotalPages_modules} totalItems={modules.items?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>
