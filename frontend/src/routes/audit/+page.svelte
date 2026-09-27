@@ -10,6 +10,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -103,7 +104,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Card>
 					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
 						<div class="grid gap-1">
-							<Badge variant={toneVariant(statusTone(event.severity))} class="w-fit">{event.severity}</Badge>
+							<Badge variant={toneVariant(statusTone(event.severity))} class="w-fit">{label(event.severity)}</Badge>
 							<strong class="mt-2 text-lg font-bold tracking-tight">{event.action}</strong>
 							<p class="text-sm text-muted-foreground">{event.detail}</p>
 						</div>

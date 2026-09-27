@@ -41,7 +41,7 @@
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Katalog publik')}</Badge>
-			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
+			<CardTitle as="h1" class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 				{t('Jelajahi katalog ekspor yang telah dipublikasikan.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
@@ -84,7 +84,7 @@
 							<span class="text-xs font-semibold text-muted-foreground">{catalog.targetMarket}</span>
 						</div>
 						<a href={`/catalogs/public/${catalog.id}`} class="block no-underline hover:underline">
-							<h3 class="text-xl font-bold tracking-tight text-foreground">{catalog.title}</h3>
+							<h2 class="text-xl font-bold tracking-tight text-foreground">{catalog.title}</h2>
 						</a>
 						<p class="line-clamp-2 text-sm text-muted-foreground">{catalog.description}</p>
 						<div class="grid grid-cols-2 gap-2">

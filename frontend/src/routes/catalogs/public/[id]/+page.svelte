@@ -22,7 +22,7 @@
 				<Badge>{catalog.status}</Badge>
 				<Badge variant="outline">{catalog.targetMarket}</Badge>
 			</div>
-			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{catalog.title}</CardTitle>
+			<CardTitle as="h1" class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{catalog.title}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{catalog.description}</CardDescription>
 		</CardHeader>
 	</Card>

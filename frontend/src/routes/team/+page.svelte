@@ -12,6 +12,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -276,8 +277,8 @@ import { page } from '$app/state';
 				<Card class="grid gap-4">
 					<CardContent class="grid gap-4 p-5">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(member.status))}>{member.status}</Badge>
-							<strong class="text-sm font-bold text-muted-foreground">{member.role}</strong>
+							<Badge variant={toneVariant(statusTone(member.status))}>{label(member.status)}</Badge>
+							<strong class="text-sm font-bold text-muted-foreground">{label(member.role)}</strong>
 						</div>
 						<h3 class="text-xl font-bold tracking-tight">{member.name}</h3>
 						<p class="text-sm text-muted-foreground">{member.email}</p>

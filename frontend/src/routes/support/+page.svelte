@@ -14,6 +14,7 @@
 	import { createSupportTicket, resolveSupportTicket, updateSupportTicket, deleteSupportTicket } from '$lib/api/support';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -249,7 +250,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<small class="mt-2 block text-sm text-muted-foreground">{ticket.category} · {ticket.owner} · {ticket.createdAt}</small>
 					</div>
 					<aside class="grid justify-items-start gap-2 whitespace-nowrap md:justify-items-end">
-						<strong class="text-xl font-bold tracking-tight">{ticket.priority}</strong>
+						<strong class="text-xl font-bold tracking-tight">{label(ticket.priority)}</strong>
 						<Button variant="outline" size="sm" disabled={resolvingId === ticket.id} onclick={() => handleResolve(ticket.id)}>{resolvedId === ticket.id ? t('Resolved') : t('Resolve')}</Button>
 						<div class="flex gap-2">
 							<Button variant="outline" size="sm" disabled={busyId === ticket.id} onclick={() => openEdit(ticket)}>{t('Edit')}</Button>

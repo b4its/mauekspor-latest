@@ -275,7 +275,7 @@
 					{:else if mi}
 						<div class="grid gap-4">
 							<div>
-								<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Negara direkomendasikan')}</h4>
+								<h2 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Negara direkomendasikan')}</h2>
 								<div class="grid gap-2.5 md:grid-cols-2">
 									{#each mi.recommendedCountries ?? [] as rec}
 										<div class="rounded-lg border bg-muted/30 p-4">
@@ -339,7 +339,7 @@
 							<div class="grid gap-4 md:grid-cols-2">
 								{#if (mi.countriesToAvoid ?? []).length > 0}
 									<div>
-										<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Negara dihindari')}</h4>
+										<h2 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Negara dihindari')}</h2>
 										<div class="grid gap-2">
 											{#each mi.countriesToAvoid ?? [] as avoid}
 												<div class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs" role="alert">
@@ -350,7 +350,7 @@
 									</div>
 								{/if}
 								<div>
-									<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Tren pasar')}</h4>
+									<h2 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Tren pasar')}</h2>
 									<ul class="grid gap-1.5">
 										{#each mi.marketTrends ?? [] as trend}
 											<li class="rounded-lg border bg-muted/30 px-3 py-2 text-xs">• {trend}</li>
@@ -431,7 +431,7 @@
 
 							<div class="grid gap-4 md:grid-cols-2">
 								<div class="rounded-lg border bg-muted/30 p-4 text-xs">
-									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">{t('Rincian')}</h4>
+									<h2 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">{t('Rincian')}</h2>
 									{#if pricing.pricingBreakdown}
 										{#each Object.entries(pricing.pricingBreakdown) as [key, value]}
 											<div class="flex justify-between gap-3 border-b border-muted/40 py-1.5 last:border-0">
@@ -442,7 +442,7 @@
 									{/if}
 								</div>
 								<div class="rounded-lg border bg-primary/10 p-4 text-sm leading-relaxed">
-									<h4 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">{t('Wawasan AI')}</h4>
+									<h2 class="mb-2 font-bold uppercase tracking-wide text-muted-foreground">{t('Wawasan AI')}</h2>
 									<p>{pricing.pricingInsight ?? t('Harga kompetitif untuk pasar tujuan.')}</p>
 									<p class="mt-2 text-xs text-muted-foreground">
 										{t('Kurs dipakai:')} {pricing.exchangeRateUsed} · · {t('Margin')} {pricing.targetMarginPercent}%

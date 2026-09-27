@@ -280,7 +280,7 @@
 
 				{#if editMode}
 					<div class="mt-2 rounded-xl border bg-background p-4">
-						<h4 class="text-sm font-bold">{t('Editor produk (perbaikan kepatuhan)')}</h4>
+						<h2 class="text-sm font-bold">{t('Editor produk (perbaikan kepatuhan)')}</h2>
 						<p class="mt-1 text-xs text-muted-foreground">
 							{t('Perbaiki data produk lalu klik "Simpan & Re-Analyze" agar snapshot dan skor diperbarui.')}
 						</p>

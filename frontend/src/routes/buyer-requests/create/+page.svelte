@@ -140,7 +140,7 @@
 				</div>
 
 				<div class="rounded-xl border bg-muted/30 p-4">
-					<h4 class="text-sm font-bold">{t('Detail matching (opsional)')}</h4>
+					<h2 class="text-sm font-bold">{t('Detail matching (opsional)')}</h2>
 					<p class="mt-1 text-xs text-muted-foreground">{t('Semakin detail, semakin akurat skor kecocokan dengan katalog.')}</p>
 					<div class="mt-3 grid gap-4 sm:grid-cols-2">
 						<div class="grid gap-2">

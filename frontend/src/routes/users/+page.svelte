@@ -14,6 +14,7 @@
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { page as appPage } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	const roleFilters = ['All', 'Admin', 'Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance'];
 	const PAGE_SIZE = 5;
@@ -159,8 +160,8 @@
 						<strong class="block truncate">{user.fullName}</strong>
 						<small class="block truncate text-xs text-muted-foreground">{user.email}</small>
 					</a>
-					<span><Badge variant="secondary">{user.role}</Badge></span>
-					<span><Badge variant={toneVariant(statusTone(user.status))}>{user.status}</Badge></span>
+					<span><Badge variant="secondary">{label(user.role)}</Badge></span>
+					<span><Badge variant={toneVariant(statusTone(user.status))}>{label(user.status)}</Badge></span>
 					<span class="hidden text-muted-foreground md:block">{user.createdAt}</span>
 					<span class="grid justify-end">
 						<Button size="sm" variant="ghost" href={`/users/${user.id}`}>{t('Buka')}</Button>
