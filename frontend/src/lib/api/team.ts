@@ -5,10 +5,10 @@ export function listTeamMembers() {
 	return apiFetch<TeamMember[]>('/team/');
 }
 
-export function inviteTeamMember(email: string, role: TeamMember['role']) {
+export function inviteTeamMember(email: string, role: TeamMember['role'], name?: string) {
 	return apiFetch<TeamMember>('/team/invite/', {
 		method: 'POST',
-		body: JSON.stringify({ email, role })
+		body: JSON.stringify({ email, role, name })
 	});
 }
 

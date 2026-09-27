@@ -6,14 +6,23 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
-import { requestForwarderQuote, getForwarderStatistics, createForwarderReview, updateForwarderReview, deleteForwarderReview } from '$lib/api/forwarders';
-import type { ForwarderStatistics, ForwarderReview } from '$lib/api/forwarders';
-import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
+import { requestForwarderQuote, listForwarderQuotes, getForwarderStatistics, createForwarderReview, updateForwarderReview, deleteForwarderReview } from '$lib/api/forwarders';
+import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/api/forwarders';
+	import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import { formatDate } from '$lib/utils/date';
 
 	let { data } = $props();
 	let quoteRequested = $state(false);
 	let requesting = $state(false);
 	let error = $state('');
+	// Form kuotasi: lane, incoterm, kargo agar permintaan punya konteks lengkap.
+	let quoteOpen = $state(false);
+	let quoteLane = $state('');
+	let quoteIncoterm = $state('FOB');
+	let quoteCargo = $state('');
+	let quotes = $state<ForwarderQuote[]>([]);
+	const incoterms = ['EXW', 'FOB', 'CIF', 'DAP', 'DDP'];
 	let stats = $state<ForwarderStatistics | null>(null);
 	let rating = $state(5);
 	let reviewText = $state('');
@@ -30,6 +39,9 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 		getForwarderStatistics(data.forwarder.id)
 			.then((res) => (stats = res.data))
 			.catch(() => {});
+		listForwarderQuotes(data.forwarder.id)
+			.then((res) => (quotes = res.data ?? []))
+			.catch(() => {});
 	});
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -39,12 +51,26 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 		return 'secondary';
 	}
 
+	function openQuote() {
+		quoteLane = data.forwarder.coverage ?? '';
+		quoteCargo = '';
+		quoteIncoterm = 'FOB';
+		quoteRequested = false;
+		quoteOpen = true;
+	}
+
 	async function handleQuote() {
 		error = '';
 		requesting = true;
 		try {
-			await requestForwarderQuote(data.forwarder.id);
+			const res = await requestForwarderQuote(data.forwarder.id, {
+				lane: quoteLane,
+				incoterm: quoteIncoterm,
+				cargo: quoteCargo
+			});
+			quotes = [res.data.quote, ...quotes];
 			quoteRequested = true;
+			quoteOpen = false;
 		} catch {
 			error = t('Gagal meminta kuotasi forwarder.');
 		} finally {
@@ -120,8 +146,8 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 					contactName={data.forwarder.name}
 					company={data.forwarder.name}
 				/>
-				<Button disabled={quoteRequested || requesting} onclick={handleQuote}>
-					{quoteRequested ? t('Kuotasi diminta') : requesting ? t('Meminta...') : t('Minta kuotasi')}
+				<Button disabled={requesting} onclick={openQuote}>
+					{requesting ? t('Meminta...') : t('Minta kuotasi')}
 				</Button>
 				<Button variant="outline" href="/forwarders/catalogs">{t('Lihat katalog')}</Button>
 				<Button variant="outline" href="/shipments">{t('Buka pengiriman')}</Button>
@@ -130,14 +156,14 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
 	{#if quoteRequested}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
+		<div role="status" class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
 			<strong class="block">{t('Kuotasi diminta.')}</strong>
 			<span class="mt-1 block text-sm text-muted-foreground">
-				{t('Permintaan kuotasi dikirim ke')} {data.forwarder.contact} {t('di backend.')}
+				{t('Permintaan kuotasi tercatat dan diteruskan ke forwarder. Pantau perkembangannya di daftar permintaan kuotasi.')}
 			</span>
 		</div>
 	{/if}
@@ -256,6 +282,32 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 			</CardContent>
 		</Card>
 
+		<Card class="md:col-span-2">
+			<CardHeader>
+				<CardTitle>{t('Permintaan kuotasi')}</CardTitle>
+				<CardDescription>{t('Riwayat permintaan kuotasi freight untuk forwarder ini.')}</CardDescription>
+			</CardHeader>
+			<CardContent class="grid gap-2.5">
+				{#if quotes.length === 0}
+					<div class="rounded-xl border border-dashed p-6 text-center text-sm font-semibold text-muted-foreground">
+						{t('Belum ada permintaan kuotasi. Gunakan tombol "Minta kuotasi" di atas.')}
+					</div>
+				{:else}
+					{#each quotes as quote (quote.id)}
+						<div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+							<div class="min-w-0">
+								<strong class="block truncate text-sm">{quote.lane}</strong>
+								<span class="text-xs text-muted-foreground">
+									{quote.incoterm}{quote.cargo ? ` · ${quote.cargo}` : ''}{quote.createdAt ? ` · ${formatDate(quote.createdAt)}` : ''}
+								</span>
+							</div>
+							<Badge variant={toneVariant(statusTone(quote.status))}>{t(quote.status)}</Badge>
+						</div>
+					{/each}
+				{/if}
+			</CardContent>
+		</Card>
+
 		<Card>
 			<CardHeader><CardTitle>{t('Jalur yang dicakup')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-2.5">
@@ -265,4 +317,37 @@ import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 			</CardContent>
 		</Card>
 	</div>
+
+	<Dialog.Root bind:open={quoteOpen}>
+		<Dialog.Content class="sm:max-w-lg">
+			<Dialog.Header>
+				<Dialog.Title>{t('Minta kuotasi freight')}</Dialog.Title>
+				<Dialog.Description>
+					{t('Lengkapi detail jalur dan kargo agar forwarder dapat menyiapkan kuotasi yang akurat.')}
+				</Dialog.Description>
+			</Dialog.Header>
+			<div class="grid gap-3">
+				<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+					{t('Jalur / Lane')}
+					<Input bind:value={quoteLane} placeholder={t('mis. Belawan → Tokyo')} />
+				</label>
+				<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+					{t('Incoterm')}
+					<select class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={quoteIncoterm}>
+						{#each incoterms as term}<option value={term}>{term}</option>{/each}
+					</select>
+				</label>
+				<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
+					{t('Kargo')}
+					<Input bind:value={quoteCargo} placeholder={t('mis. Kopi Arabika 20ft kontainer')} />
+				</label>
+			</div>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => (quoteOpen = false)} disabled={requesting}>{t('Batal')}</Button>
+				<Button onclick={handleQuote} disabled={requesting || !quoteLane.trim()}>
+					{requesting ? t('Meminta...') : t('Kirim permintaan')}
+				</Button>
+			</Dialog.Footer>
+		</Dialog.Content>
+	</Dialog.Root>
 </AppShell>

@@ -2648,7 +2648,23 @@ const dictionary: Record<string, Entry> = {
 	'Hapus buyer': { id: 'Hapus buyer', en: 'Delete buyer' },
 	'Buyer ini akan dihapus permanen dari workspace.': { id: 'Buyer ini akan dihapus permanen dari workspace.', en: 'This buyer will be permanently deleted from the workspace.' },
 	'Hapus profil bisnis': { id: 'Hapus profil bisnis', en: 'Delete business profile' },
-	'Profil bisnis ini akan dihapus permanen dari workspace.': { id: 'Profil bisnis ini akan dihapus permanen dari workspace.', en: 'This business profile will be permanently deleted from the workspace.' }
+	'Profil bisnis ini akan dihapus permanen dari workspace.': { id: 'Profil bisnis ini akan dihapus permanen dari workspace.', en: 'This business profile will be permanently deleted from the workspace.' },
+	'Minta kuotasi freight': { id: 'Minta kuotasi freight', en: 'Request freight quotation' },
+	'Jalur / Lane': { id: 'Jalur / Lane', en: 'Route / Lane' },
+	'Kargo': { id: 'Kargo', en: 'Cargo' },
+	'Kirim permintaan': { id: 'Kirim permintaan', en: 'Send request' },
+	'Permintaan kuotasi': { id: 'Permintaan kuotasi', en: 'Quotation requests' },
+	'Riwayat permintaan kuotasi freight untuk forwarder ini.': { id: 'Riwayat permintaan kuotasi freight untuk forwarder ini.', en: 'Freight quotation request history for this forwarder.' },
+	'Belum ada permintaan kuotasi. Gunakan tombol "Minta kuotasi" di atas.': { id: 'Belum ada permintaan kuotasi. Gunakan tombol "Minta kuotasi" di atas.', en: 'No quotation requests yet. Use the "Request quotation" button above.' },
+	'Lengkapi detail jalur dan kargo agar forwarder dapat menyiapkan kuotasi yang akurat.': { id: 'Lengkapi detail jalur dan kargo agar forwarder dapat menyiapkan kuotasi yang akurat.', en: 'Complete the lane and cargo details so the forwarder can prepare an accurate quotation.' },
+	'Permintaan kuotasi tercatat dan diteruskan ke forwarder. Pantau perkembangannya di daftar permintaan kuotasi.': { id: 'Permintaan kuotasi tercatat dan diteruskan ke forwarder. Pantau perkembangannya di daftar permintaan kuotasi.', en: 'The quotation request was recorded and forwarded to the forwarder. Track its progress in the quotation request list.' },
+	'mis. Belawan → Tokyo': { id: 'mis. Belawan → Tokyo', en: 'e.g. Belawan → Tokyo' },
+	'mis. Kopi Arabika 20ft kontainer': { id: 'mis. Kopi Arabika 20ft kontainer', en: 'e.g. Arabica coffee 20ft container' },
+	'Requested': { id: 'Diminta', en: 'Requested' },
+	'Invited': { id: 'Diundang', en: 'Invited' },
+	'Tautan aktivasi tersalin.': { id: 'Tautan aktivasi tersalin.', en: 'Activation link copied.' },
+	'Salin tautan aktivasi': { id: 'Salin tautan aktivasi', en: 'Copy activation link' },
+	'Undangan dibuat. Teruskan tautan aktivasi ke anggota baru.': { id: 'Undangan dibuat. Teruskan tautan aktivasi ke anggota baru.', en: 'Invitation created. Forward the activation link to the new member.' }
 };
 
 let initial: Locale = 'id';

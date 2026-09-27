@@ -29,6 +29,20 @@ export type ForwarderStatistics = {
 	trend30Days?: { label: string; count: number }[];
 };
 
+export type ForwarderQuote = {
+	id: string;
+	forwarderId: string;
+	forwarderName?: string;
+	lane: string;
+	cargo?: string;
+	incoterm?: string;
+	note?: string;
+	status: string;
+	requestedByName?: string;
+	createdAt?: string;
+	updatedAt?: string;
+};
+
 export function listForwarders() {
 	return apiFetch<Forwarder[]>('/forwarders/');
 }
@@ -37,8 +51,18 @@ export function getForwarder(id: string) {
 	return apiFetch<Forwarder>(`/forwarders/${id}/`);
 }
 
-export function requestForwarderQuote(id: string) {
-	return apiFetch<Forwarder>(`/forwarders/${id}/request-quote/`, { method: 'POST' });
+export function requestForwarderQuote(
+	id: string,
+	payload: { lane?: string; incoterm?: string; cargo?: string; note?: string } = {}
+) {
+	return apiFetch<{ quote: ForwarderQuote; forwarder: Forwarder }>(
+		`/forwarders/${id}/request-quote/`,
+		{ method: 'POST', body: JSON.stringify(payload) }
+	);
+}
+
+export function listForwarderQuotes(id: string) {
+	return apiFetch<ForwarderQuote[]>(`/forwarders/${id}/quotes/`);
 }
 
 // ---------- Forwarder profiles ----------

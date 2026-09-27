@@ -29,6 +29,9 @@ import { page } from '$app/state';
 	let inviteEmail = $state('');
 	let inviteRole = $state<TeamMember['role']>('Operations');
 	let busyId = $state('');
+	// Tautan aktivasi undangan terakhir agar admin bisa meneruskannya.
+	let inviteLink = $state('');
+	let copiedInvite = $state(false);
 
 	// Konfirmasi terpusat untuk hapus anggota tim (pengganti window.confirm).
 	let confirmOpen = $state(false);
@@ -105,15 +108,29 @@ import { page } from '$app/state';
 		try {
 			const res = await inviteTeamMember(inviteEmail.trim(), inviteRole);
 			invited = true;
-			message = `Undangan dikirim ke ${inviteEmail.trim()}.`;
+			const path = res.meta?.activation_path as string | undefined;
+			inviteLink = path ? `${window.location.origin}${path}` : '';
+			copiedInvite = false;
+			message = t('Undangan dibuat. Teruskan tautan aktivasi ke anggota baru.');
 			if (res.data) teamMembers.upsert(res.data);
 			else await teamMembers.load();
 			showInvite = false;
 			inviteEmail = '';
-		} catch {
-			error = t('Gagal mengirim undangan.');
+		} catch (err) {
+			error = err instanceof Error ? err.message : t('Gagal mengirim undangan.');
 		} finally {
 			inviting = false;
+		}
+	}
+
+	async function copyInviteLink() {
+		if (!inviteLink) return;
+		try {
+			await navigator.clipboard.writeText(inviteLink);
+			copiedInvite = true;
+			setTimeout(() => (copiedInvite = false), 2500);
+		} catch {
+			error = t('Gagal menyalin tautan aktivasi.');
 		}
 	}
 
@@ -219,10 +236,18 @@ import { page } from '$app/state';
 	{/if}
 
 	{#if invited}
-		<div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-			<strong class="block">{t('Team invitation sent.')}</strong>
-			<span class="block text-sm text-muted-foreground">
-				{t('Undangan terkirim melalui backend.')}</span>
+		<div role="status" class="grid gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
+			<div>
+				<strong class="block">{t('Undangan dibuat. Teruskan tautan aktivasi ke anggota baru.')}</strong>
+			</div>
+			{#if inviteLink}
+				<div class="flex flex-wrap items-center gap-2">
+					<code class="min-w-0 flex-1 truncate rounded bg-background/80 px-2 py-1.5 font-mono text-xs">{inviteLink}</code>
+					<Button size="sm" variant="outline" onclick={copyInviteLink}>
+						{copiedInvite ? t('Tautan aktivasi tersalin.') : t('Salin tautan aktivasi')}
+					</Button>
+				</div>
+			{/if}
 		</div>
 	{/if}
 
