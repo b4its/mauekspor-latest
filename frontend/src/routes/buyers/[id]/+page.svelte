@@ -12,6 +12,7 @@
 	import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let qualified = $state(false);
@@ -228,7 +229,7 @@
 					{t('Kontak')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.buyer.contact.name}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Role')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.buyer.contact.role}</strong>
+					{t('Role')} <strong class="mt-1 block text-sm font-bold text-foreground">{label(data.buyer.contact.role)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Email')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.buyer.contact.email}</strong>

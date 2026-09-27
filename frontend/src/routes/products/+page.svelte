@@ -17,6 +17,7 @@
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { page } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let filter = $state(page.url.searchParams.get('status') ?? 'All');
 	// Terima deep-link dari halaman lain (mis. villages → /products?query=Kopi).
@@ -287,7 +288,7 @@
 				<a href={`/products/${product.id}`} class="block h-full p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
 						<div class="flex items-center gap-2">
-							<Badge variant={toneVariant(statusTone(product.status))}>{product.status}</Badge>
+							<Badge variant={toneVariant(statusTone(product.status))}>{label(product.status)}</Badge>
 							{#if product.is_village_priority}
 								<Badge variant="outline" class="gap-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
 									🌾 {t('Komoditas Desa')}

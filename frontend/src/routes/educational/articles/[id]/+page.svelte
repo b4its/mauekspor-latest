@@ -10,6 +10,7 @@
 	import { goto } from '$app/navigation';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let error = $state('');
@@ -74,7 +75,7 @@
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<div class="flex flex-wrap items-center gap-2.5">
-				<Badge variant={toneVariant(statusTone(data.article.status))}>{data.article.status}</Badge>
+				<Badge variant={toneVariant(statusTone(data.article.status))}>{label(data.article.status)}</Badge>
 				<Badge variant="secondary">{data.article.level}</Badge>
 				{#if data.article.videoUrl}
 					<Badge variant="outline">Video</Badge>

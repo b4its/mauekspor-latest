@@ -9,6 +9,7 @@
 	import { t } from '$lib/i18n.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let enriching = $state(false);
@@ -67,7 +68,7 @@
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(data.product.status))}>{data.product.status}</Badge>
+				<Badge variant={toneVariant(statusTone(data.product.status))}>{label(data.product.status)}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.product.name}
 				</CardTitle>

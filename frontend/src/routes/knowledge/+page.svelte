@@ -11,6 +11,7 @@
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -265,7 +266,7 @@ import { page } from '$app/state';
 			{#each pagedItems as article}
 				<Card class="grid gap-4">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>
+						<Badge variant={toneVariant(statusTone(article.status))}>{label(article.status)}</Badge>
 						<strong class="text-sm font-bold text-muted-foreground">{article.readTime}</strong>
 					</div>
 					<h3 class="text-2xl font-bold tracking-tight">{article.title}</h3>

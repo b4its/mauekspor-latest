@@ -13,6 +13,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let modules = createRemoteList(listEducationalModules, seedModules);
 	let publishing = $state('');
@@ -143,7 +144,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<span class="mt-1 block text-xs font-semibold text-muted-foreground">{module.level} - {module.lessons} {t('pelajaran')} - {module.completion}% {t('selesai')} · {t('urutan')} {index + 1}</span>
 					</div>
 					<div class="grid justify-items-end gap-2">
-						<Badge variant={toneVariant(statusTone(module.status))}>{module.status}</Badge>
+						<Badge variant={toneVariant(statusTone(module.status))}>{label(module.status)}</Badge>
 						<div class="flex flex-wrap justify-end gap-2">
 							<Button size="sm" variant="outline" disabled={index === 0} onclick={() => moveModule(index, -1)}>↑</Button>
 							<Button size="sm" variant="outline" disabled={index === modules.items.length - 1} onclick={() => moveModule(index, 1)}>↓</Button>

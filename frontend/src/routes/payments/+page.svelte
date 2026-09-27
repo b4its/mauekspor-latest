@@ -17,6 +17,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	const filters = ['All', 'Pending', 'Deposit Paid', 'Due Soon', 'Overdue', 'Settled'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -298,7 +299,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 				<Card class="grid gap-0 transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/payments/${payment.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(payment.status))}>{payment.status}</Badge>
+							<Badge variant={toneVariant(statusTone(payment.status))}>{label(payment.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{payment.amount ? Math.round((payment.paid / payment.amount) * 100) : 0}%</strong>
 						</div>
 						<h3 class="text-2xl font-bold tracking-tight">{payment.id}</h3>

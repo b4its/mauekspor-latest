@@ -19,6 +19,7 @@
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let selectedTab = $state('Compliance');
@@ -282,7 +283,7 @@
 								<strong class="block text-sm font-bold">{task.name}</strong>
 								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{task.owner} - {t('jatuh tempo')} {formatDate(task.due)}</span>
 							</div>
-							<Badge variant={toneVariant(statusTone(task.status))}>{task.status}</Badge>
+							<Badge variant={toneVariant(statusTone(task.status))}>{label(task.status)}</Badge>
 						</div>
 					{/each}
 				</div>
@@ -297,7 +298,7 @@
 								<strong class="block text-sm font-bold">{doc.name}</strong>
 								<Progress value={doc.score} class="mt-2.5" />
 							</div>
-							<Badge variant={toneVariant(statusTone(doc.status))}>{doc.status}</Badge>
+							<Badge variant={toneVariant(statusTone(doc.status))}>{label(doc.status)}</Badge>
 						</div>
 					{/each}
 				</div>
@@ -315,7 +316,7 @@
 							</div>
 							<div class="text-right">
 								<strong class="block text-sm font-bold text-foreground">{currency.format(quote.value)}</strong>
-								<Badge variant={toneVariant(statusTone(quote.status))}>{quote.status}</Badge>
+								<Badge variant={toneVariant(statusTone(quote.status))}>{label(quote.status)}</Badge>
 							</div>
 						</a>
 					{/each}
@@ -332,7 +333,7 @@
 								<strong class="block text-sm font-bold text-foreground">{primaryShipment.id} · {primaryShipment.route}</strong>
 								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{primaryShipment.forwarder} · ETA {formatDate(primaryShipment.eta)} · {primaryShipment.progress}%</span>
 							</div>
-							<Badge variant={toneVariant(statusTone(primaryShipment.status))}>{primaryShipment.status}</Badge>
+							<Badge variant={toneVariant(statusTone(primaryShipment.status))}>{label(primaryShipment.status)}</Badge>
 						</div>
 						{#if primaryShipment.milestones?.length}
 							<div class="grid gap-2.5 sm:grid-cols-3 lg:grid-cols-6">

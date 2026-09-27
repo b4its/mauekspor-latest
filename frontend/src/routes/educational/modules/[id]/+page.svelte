@@ -19,6 +19,7 @@
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import GraduationCapIcon from '@lucide/svelte/icons/graduation-cap';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 
@@ -101,7 +102,7 @@
 			<div class="min-w-0">
 				<div class="flex flex-wrap items-center gap-2">
 					<Badge variant="secondary">{data.module.level}</Badge>
-					<Badge variant="outline">{data.module.status}</Badge>
+					<Badge variant="outline">{label(data.module.status)}</Badge>
 				</div>
 				<CardTitle class="mt-3 font-display text-3xl font-black tracking-tight text-[#0b1d3a] sm:text-4xl dark:text-white">{data.module.title}</CardTitle>
 				<p class="mt-2 max-w-2xl text-sm text-muted-foreground">{data.module.summary}</p>

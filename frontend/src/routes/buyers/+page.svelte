@@ -11,6 +11,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -211,7 +212,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/buyers/${buyer.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(buyer.status))}>{buyer.status}</Badge>
+							<Badge variant={toneVariant(statusTone(buyer.status))}>{label(buyer.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{buyer.fitScore}%</strong>
 						</div>
 						<h3 class="text-2xl font-bold tracking-tight">{buyer.name}</h3>

@@ -12,6 +12,7 @@
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -173,7 +174,7 @@ import { page } from '$app/state';
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/catalogs/${catalog.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(catalog.status))}>{catalog.status}</Badge>
+							<Badge variant={toneVariant(statusTone(catalog.status))}>{label(catalog.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{catalog.readiness}%</strong>
 						</div>
 						<h3 class="mt-4 text-2xl font-bold tracking-tight">{catalog.title}</h3>

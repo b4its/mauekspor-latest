@@ -10,6 +10,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -194,7 +195,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Card class="grid gap-0 transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/reports/${report.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(report.status))}>{report.status}</Badge>
+							<Badge variant={toneVariant(statusTone(report.status))}>{label(report.status)}</Badge>
 							<strong class="text-sm font-bold tracking-tight">{report.type}</strong>
 						</div>
 						<h3 class="mt-3 text-2xl font-bold tracking-tight">{report.title}</h3>

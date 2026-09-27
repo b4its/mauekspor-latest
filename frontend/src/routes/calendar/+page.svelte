@@ -18,6 +18,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 
 	import { page } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	const filters = ['All', 'Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
 	const types = ['Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
@@ -296,7 +297,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 							<span class="text-xs text-muted-foreground">{event.time}</span>
 						</div>
 						<div class="min-w-0 flex-1">
-							<Badge variant={toneVariant(statusTone(event.status))}>{event.status}</Badge>
+							<Badge variant={toneVariant(statusTone(event.status))}>{label(event.status)}</Badge>
 							<h3 class="mt-2 text-lg font-bold tracking-tight">{event.title}</h3>
 							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
 							<small class="block text-xs text-muted-foreground">{event.type} · {projectName(event.projectId)} · {event.owner}</small>

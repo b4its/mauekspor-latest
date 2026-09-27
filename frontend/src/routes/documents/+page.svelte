@@ -13,6 +13,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -265,7 +266,7 @@ import { page } from '$app/state';
 				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
 					<div class="p-5">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(document.status))}>{document.status}</Badge>
+							<Badge variant={toneVariant(statusTone(document.status))}>{label(document.status)}</Badge>
 							<strong class="text-3xl font-bold tracking-tight">{document.validationScore}%</strong>
 						</div>
 						<a href={`/documents/${document.id}`} class="mt-4 block no-underline hover:underline">

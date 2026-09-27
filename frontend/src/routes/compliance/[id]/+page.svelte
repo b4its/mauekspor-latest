@@ -14,6 +14,7 @@
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let evidenceNote = $state('');
@@ -263,7 +264,7 @@
 					{t('Kategori')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.category}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Tingkat keparahan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.severity}</strong>
+					{t('Tingkat keparahan')} <strong class="mt-1 block text-sm font-bold text-foreground">{label(data.requirement.severity)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Pemilik')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.requirement.owner}</strong>

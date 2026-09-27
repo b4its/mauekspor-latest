@@ -14,6 +14,7 @@ import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -266,7 +267,7 @@ import { page } from '$app/state';
 						<div class="flex items-center justify-between gap-3">
 							<div class="flex items-center gap-2">
 								<Checkbox checked={selected.includes(scenario.id)} onCheckedChange={() => toggleSelect(scenario.id)} />
-								<Badge variant={toneVariant(statusTone(scenario.status))}>{scenario.status}</Badge>
+								<Badge variant={toneVariant(statusTone(scenario.status))}>{label(scenario.status)}</Badge>
 							</div>
 							<strong class="text-2xl font-bold tracking-tight">{scenario.confidence}%</strong>
 						</div>

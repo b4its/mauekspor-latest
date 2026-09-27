@@ -14,6 +14,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let articles = createRemoteList(listEducationalArticles, seedArticles);
 	let publishing = $state('');
@@ -190,7 +191,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} min read - {article.level} - {(article.tags ?? []).join(' · ')}</span>
 							</div>
 							<div class="grid justify-items-end gap-2">
-								<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>
+								<Badge variant={toneVariant(statusTone(article.status))}>{label(article.status)}</Badge>
 								<div class="flex items-center gap-2">
 									<Button variant="link" size="sm" href={`/educational/articles/${article.id}`}>{t('Lihat')}</Button>
 									<Button size="sm" variant="outline" onclick={() => {

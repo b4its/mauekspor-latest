@@ -11,6 +11,7 @@
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let verified = $state(false);
@@ -258,7 +259,7 @@
 				<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					{#each data.linkedProducts as product}
 						<a href={`/products/${product.id}`} class="grid gap-1.5 rounded-lg border bg-muted/30 p-3.5 no-underline transition-colors hover:border-ring/40">
-							<Badge variant={toneVariant(statusTone(product.status))} class="w-fit">{product.status}</Badge>
+							<Badge variant={toneVariant(statusTone(product.status))} class="w-fit">{label(product.status)}</Badge>
 							<strong class="text-sm font-bold text-foreground">{product.name}</strong>
 							<small class="text-sm text-muted-foreground">{product.packaging} · {product.readiness}% {t('siap')}</small>
 						</a>

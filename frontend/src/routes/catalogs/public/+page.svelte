@@ -10,6 +10,7 @@
 	import { currency } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import type { Catalog } from '$lib/data/trade';
+	import { label } from '$lib/utils/labels';
 
 	let catalogs = $state<Catalog[]>([]);
 	let loading = $state(true);
@@ -81,7 +82,7 @@
 				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
 					<div class="grid gap-3 p-5">
 						<div class="flex items-center justify-between gap-3">
-							<Badge>{catalog.status}</Badge>
+							<Badge>{label(catalog.status)}</Badge>
 							<span class="text-xs font-semibold text-muted-foreground">{catalog.targetMarket}</span>
 						</div>
 						<a href={`/catalogs/public/${catalog.id}`} class="block no-underline hover:underline">

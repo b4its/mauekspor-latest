@@ -19,6 +19,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	const filters = ['All', 'Booking Requested', 'Customs Submitted', 'Loaded', 'Exception'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -300,7 +301,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
 					<div class="grid gap-3 p-5">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(shipment.status))}>{shipment.status}</Badge>
+							<Badge variant={toneVariant(statusTone(shipment.status))}>{label(shipment.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{shipment.progress}%</strong>
 						</div>
 						<a href={`/shipments/${shipment.id}`} class="block no-underline hover:underline">

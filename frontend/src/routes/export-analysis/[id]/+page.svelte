@@ -13,6 +13,7 @@
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 
@@ -172,7 +173,7 @@
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<div class="flex flex-wrap gap-2">
-					<Badge variant={toneVariant(statusTone(data.analysis.status))}>{data.analysis.status}</Badge>
+					<Badge variant={toneVariant(statusTone(data.analysis.status))}>{label(data.analysis.status)}</Badge>
 					<Badge variant={gradeTone(grade)}>{gradeLabel}</Badge>
 				</div>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">

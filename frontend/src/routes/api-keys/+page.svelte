@@ -24,6 +24,7 @@
 	import BanIcon from '@lucide/svelte/icons/ban';
 	import XIcon from '@lucide/svelte/icons/x';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	const filters = ['All', 'Active', 'Expiring Soon', 'Revoked'];
 	const availableScopes = [
@@ -247,7 +248,7 @@
 				<Card class="flex flex-col justify-between gap-4 p-5 transition-shadow hover:shadow-md">
 					<div>
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(key.status))}>{key.status}</Badge>
+							<Badge variant={toneVariant(statusTone(key.status))}>{label(key.status)}</Badge>
 							<div class="flex items-center gap-1.5">
 								<code class="rounded bg-muted px-2 py-0.5 font-mono text-xs font-semibold text-muted-foreground">{key.prefix}...</code>
 								<Button

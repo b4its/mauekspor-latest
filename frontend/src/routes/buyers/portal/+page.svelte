@@ -14,6 +14,7 @@
 	import { seedCountries } from '$lib/data/trade';
 	import { fetchSession, getStatus, getUser } from '$lib/stores/session.svelte';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let allowed = $derived(
 		getStatus() === 'authenticated' && (getUser()?.role === 'Admin' || getUser()?.role === 'Buyer')
@@ -262,7 +263,7 @@
 					<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 						<a href={`/catalogs/public/${catalog.id}`} class="block h-full p-5 no-underline">
 							<div class="flex items-center justify-between gap-3">
-								<Badge variant={toneVariant(statusTone(catalog.status))}>{catalog.status}{#if catalog.relevanceScore} · {t('Relevansi')} {catalog.relevanceScore}%{/if}</Badge>
+								<Badge variant={toneVariant(statusTone(catalog.status))}>{label(catalog.status)}{#if catalog.relevanceScore} · {t('Relevansi')} {catalog.relevanceScore}%{/if}</Badge>
 								<strong class="text-2xl font-bold tracking-tight">{catalog.readiness}%</strong>
 							</div>
 							<h3 class="mt-4 text-2xl font-bold tracking-tight">{catalog.title}</h3>

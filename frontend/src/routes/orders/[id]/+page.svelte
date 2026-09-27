@@ -13,6 +13,7 @@
 	import { generateTradeDocument } from '$lib/api/documents';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 
 	let { data } = $props();
@@ -302,7 +303,7 @@
 				<div class="grid gap-2">
 					{#each data.order.checklist ?? [] as item}
 						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
-							<Badge variant={toneVariant(statusTone(item.status))}>{item.status}</Badge>
+							<Badge variant={toneVariant(statusTone(item.status))}>{label(item.status)}</Badge>
 							<strong class="text-sm font-bold">{item.label}</strong>
 						</div>
 					{:else}

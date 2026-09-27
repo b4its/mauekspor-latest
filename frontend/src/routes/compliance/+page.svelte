@@ -12,6 +12,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -256,8 +257,8 @@ import { page } from '$app/state';
 				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/compliance/${item.id}`} class="block p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(item.status))}>{item.status}</Badge>
-							<span class={item.severity.toLowerCase() === 'critical' ? 'rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive' : item.severity.toLowerCase() === 'major' ? 'rounded-full bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-600' : 'rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary'}>{item.severity}</span>
+							<Badge variant={toneVariant(statusTone(item.status))}>{label(item.status)}</Badge>
+							<span class={item.severity.toLowerCase() === 'critical' ? 'rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive' : item.severity.toLowerCase() === 'major' ? 'rounded-full bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-600' : 'rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary'}>{label(item.severity)}</span>
 						</div>
 						<h3 class="mt-4 text-2xl font-bold tracking-tight">{item.title}</h3>
 						<p class="mt-2 text-sm text-muted-foreground">{projectName(item.projectId)}</p>

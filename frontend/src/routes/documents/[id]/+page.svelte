@@ -11,6 +11,7 @@
 	import { t } from '$lib/i18n.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let approving = $state(false);
@@ -225,7 +226,7 @@
 			<CardContent class="grid gap-3 p-0 pt-4">
 					{#each data.document.checks ?? [] as check}
 					<div class="grid gap-2.5 rounded-lg border bg-muted/40 p-3">
-						<Badge variant={toneVariant(statusTone(check.status))} class="w-fit">{check.status}</Badge>
+						<Badge variant={toneVariant(statusTone(check.status))} class="w-fit">{label(check.status)}</Badge>
 						<div>
 							<strong class="block">{check.label}</strong>
 							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{check.detail}</p>

@@ -10,6 +10,7 @@
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -207,7 +208,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/rfq/${rfq.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(rfq.status))}>{rfq.status}</Badge>
+							<Badge variant={toneVariant(statusTone(rfq.status))}>{label(rfq.status)}</Badge>
 							<strong class="text-3xl font-bold tracking-tight">{rfq.matchScore}%</strong>
 						</div>
 						<h3 class="mt-4 text-xl font-bold tracking-tight">{rfq.product}</h3>

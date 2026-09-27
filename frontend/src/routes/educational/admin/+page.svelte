@@ -9,6 +9,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -109,7 +110,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<span class="mt-1 block text-xs font-semibold text-muted-foreground">{module.level} - {module.lessons} {t('pelajaran')}</span>
 						</div>
 						<div class="grid justify-items-end gap-2">
-							<Badge variant={toneVariant(statusTone(module.status))}>{module.status}</Badge>
+							<Badge variant={toneVariant(statusTone(module.status))}>{label(module.status)}</Badge>
 							<Button size="sm" variant={module.status === 'Published' ? 'outline' : 'default'} disabled={module.status === 'Published' || modulePublishing === module.id} onclick={() => publishModule(module.id)}>{modulePublishing === module.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
 						</div>
 					</div>
@@ -132,7 +133,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} min read - {article.level}</span>
 						</div>
 						<div class="grid justify-items-end gap-2">
-							<Badge variant={toneVariant(statusTone(article.status))}>{article.status}</Badge>
+							<Badge variant={toneVariant(statusTone(article.status))}>{label(article.status)}</Badge>
 							<Button variant="ghost" size="sm" disabled={article.status === 'Published' || articlePublishing === article.id} onclick={() => publishArticle(article.id)}>{articlePublishing === article.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
 						</div>
 					</div>

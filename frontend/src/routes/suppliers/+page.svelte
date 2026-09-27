@@ -11,6 +11,7 @@
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -227,7 +228,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Card class="grid gap-0 transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/suppliers/${supplier.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(supplier.status))}>{supplier.status}</Badge>
+							<Badge variant={toneVariant(statusTone(supplier.status))}>{label(supplier.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{supplier.capabilityScore}%</strong>
 						</div>
 						<h3 class="text-2xl font-bold tracking-tight">{supplier.name}</h3>

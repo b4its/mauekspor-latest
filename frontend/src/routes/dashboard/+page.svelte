@@ -18,6 +18,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import VillagePotentialMap from '$lib/components/VillagePotentialMap.svelte';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let profiles = createRemoteList(listBusinessProfiles, seedProfiles);
 	let projects = createRemoteList(listTradeProjects, seedProjects);
@@ -326,7 +327,7 @@
 							<span class="block text-sm text-muted-foreground">{analysis.destination} - HS {analysis.hsCode}</span>
 						</div>
 						<div class="grid justify-items-end gap-3 whitespace-nowrap">
-							<Badge variant={badgeVariant(analysis.status)}>{analysis.status}</Badge>
+							<Badge variant={badgeVariant(analysis.status)}>{label(analysis.status)}</Badge>
 							<b class="text-xl font-bold tracking-tight">{analysis.score}</b>
 						</div>
 					</a>

@@ -7,6 +7,7 @@
 	import { getRegulationRecommendations } from '$lib/api/export-analysis';
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let regs = $state<RegulationRecommendations | null>(null);
@@ -40,7 +41,7 @@
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<div class="flex flex-wrap items-center gap-2">
-				<Badge variant={toneVariant(statusTone(data.analysis.status))}>{data.analysis.status}</Badge>
+				<Badge variant={toneVariant(statusTone(data.analysis.status))}>{label(data.analysis.status)}</Badge>
 				{#if regs?.fromCache}
 					<Badge variant="outline">{t('From cache')}</Badge>
 				{/if}

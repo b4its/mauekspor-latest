@@ -11,6 +11,7 @@
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -210,7 +211,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/markets/${market.id}`} class="block h-full p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(market.status))}>{market.status}</Badge>
+							<Badge variant={toneVariant(statusTone(market.status))}>{label(market.status)}</Badge>
 							<strong class="text-3xl font-bold tracking-tight">{market.marketScore}%</strong>
 						</div>
 						<h3 class="mt-4 text-xl font-bold tracking-tight">{market.country}</h3>

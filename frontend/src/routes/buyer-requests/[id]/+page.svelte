@@ -11,6 +11,7 @@
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let matches = $state<MatchedItem[]>([]);
@@ -106,7 +107,7 @@
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(data.request.status))}>{data.request.status}</Badge>
+				<Badge variant={toneVariant(statusTone(data.request.status))}>{label(data.request.status)}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.request.subject}
 				</CardTitle>
@@ -160,7 +161,7 @@
 					{t('Batas waktu')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(data.request.deadline)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Status')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.request.status}</strong>
+					{t('Status')} <strong class="mt-1 block text-sm font-bold text-foreground">{label(data.request.status)}</strong>
 				</div>
 			</CardContent>
 		</Card>

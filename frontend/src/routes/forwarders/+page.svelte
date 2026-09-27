@@ -13,6 +13,7 @@
 	import { getForwarderRecommendations } from '$lib/api/forwarders';
 	import type { Forwarder } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -197,7 +198,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
 					<a href={`/forwarders/${forwarder.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3">
-							<Badge variant={toneVariant(statusTone(forwarder.status))}>{forwarder.status}</Badge>
+							<Badge variant={toneVariant(statusTone(forwarder.status))}>{label(forwarder.status)}</Badge>
 							<span class="text-sm text-muted-foreground">{forwarder.mode}</span>
 						</div>
 						<h3 class="text-2xl font-bold tracking-tight">{forwarder.name}</h3>

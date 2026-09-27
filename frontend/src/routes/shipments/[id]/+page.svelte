@@ -13,6 +13,7 @@
 	import { formatDate, formatDateTime } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let exceptionNote = $state('');
@@ -234,7 +235,7 @@
 						<div>
 							<div class="flex items-center justify-between gap-2.5">
 								<strong class="text-sm font-bold">{milestone.label}</strong>
-								<Badge variant={toneVariant(statusTone(milestone.status))}>{milestone.status}</Badge>
+								<Badge variant={toneVariant(statusTone(milestone.status))}>{label(milestone.status)}</Badge>
 							</div>
 							<p class="my-2 text-sm leading-relaxed text-muted-foreground">{milestone.note}</p>
 							<small class="text-sm text-muted-foreground">{formatDateTime(milestone.time)}</small>

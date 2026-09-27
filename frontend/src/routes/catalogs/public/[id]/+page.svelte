@@ -5,6 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
 	let catalog = $derived(data.catalog);
@@ -19,7 +20,7 @@
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<div class="flex flex-wrap items-center gap-2">
-				<Badge>{catalog.status}</Badge>
+				<Badge>{label(catalog.status)}</Badge>
 				<Badge variant="outline">{catalog.targetMarket}</Badge>
 			</div>
 			<CardTitle as="h1" class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{catalog.title}</CardTitle>

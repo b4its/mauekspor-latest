@@ -13,6 +13,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -190,7 +191,7 @@ import { page } from '$app/state';
 				</Button>
 				<a href={`/buyer-requests/${request.id}`} class="block p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(request.status))}>{request.status}</Badge>
+						<Badge variant={toneVariant(statusTone(request.status))}>{label(request.status)}</Badge>
 						<small class="text-xs font-semibold text-muted-foreground">{request.deadline}</small>
 					</div>
 					<h3 class="mt-4 text-2xl font-bold tracking-tight">{request.subject}</h3>

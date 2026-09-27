@@ -10,6 +10,7 @@
 	import { changePlan, downloadInvoice, invoicePdfUrl, getBilling } from '$lib/api/billing';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 	
 	let changed = $state(false);
 	let downloaded = $state(false);
@@ -74,7 +75,7 @@
 <AppShell title="Billing" eyebrow={t('Subscription and usage')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant={toneVariant(statusTone(billing.status))}>{billing.status}</Badge>
+			<Badge variant={toneVariant(statusTone(billing.status))}>{label(billing.status)}</Badge>
 			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 				{billing.plan} {t('plan for export operations.')}
 			</CardTitle>
