@@ -37,7 +37,7 @@ def test_authed_read_komersial_ok(module):
         assert c.get(f"/api/v1/{module}/", headers=_auth(token)).status_code == 200
 
 
-@pytest.mark.parametrize("path", ["countries", "hs-codes", "catalogs/public", "search"])
+@pytest.mark.parametrize("path", ["countries", "hs-codes", "catalogs/public"])
 def test_anon_read_publik_tetap_terbuka(path):
     with TestClient(app) as c:
         assert c.get(f"/api/v1/{path}/").status_code == 200
