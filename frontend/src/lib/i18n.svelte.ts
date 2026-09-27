@@ -2772,7 +2772,8 @@ const dictionary: Record<string, Entry> = {
 	'Cari nama tabel': { id: 'Cari nama tabel', en: 'Search table name' },
 	'Cari data di tabel ini': { id: 'Cari data di tabel ini', en: 'Search data in this table' },
 	'Cari audit log': { id: 'Cari audit log', en: 'Search audit log' },
-	'Pilih': { id: 'Pilih', en: 'Select' }
+	'Pilih': { id: 'Pilih', en: 'Select' },
+	'/bln': { id: '/bln', en: '/mo' }
 };
 
 let initial: Locale = 'id';

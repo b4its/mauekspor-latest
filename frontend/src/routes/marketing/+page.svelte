@@ -437,7 +437,7 @@
 										{#each Object.entries(pricing.pricingBreakdown) as [key, value]}
 											<div class="flex justify-between gap-3 border-b border-muted/40 py-1.5 last:border-0">
 												<span class="text-muted-foreground">{key}</span>
-												<b>{String(value)}</b>
+												<b>{typeof value === 'number' ? formatCurrency(value) : String(value)}</b>
 											</div>
 										{/each}
 									{/if}

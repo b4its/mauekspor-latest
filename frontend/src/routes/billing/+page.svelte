@@ -8,7 +8,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { changePlan, downloadInvoice, invoicePdfUrl, getBilling } from '$lib/api/billing';
-	import { currency, statusTone, toneVariant } from '$lib/utils/format';
+	import { currency, formatCurrencyAs, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
 	
@@ -95,9 +95,9 @@
 		{#if showPlanSelector}
 			<div class="mt-6 grid gap-4 rounded-xl border bg-muted/20 p-4 sm:grid-cols-3">
 				{#each [
-					{ name: 'Starter' as const, price: '$99/mo', desc: '50 projects, 500 AI credits, 3 team seats' },
-					{ name: 'Growth' as const, price: '$249/mo', desc: 'Unlimited projects, 2000 AI credits, 10 team seats' },
-					{ name: 'Enterprise' as const, price: '$599/mo', desc: 'Dedicated infra, unlimited AI, custom forwarder rates' }
+					{ name: 'Starter' as const, price: 99, desc: '50 projects, 500 AI credits, 3 team seats' },
+					{ name: 'Growth' as const, price: 249, desc: 'Unlimited projects, 2000 AI credits, 10 team seats' },
+					{ name: 'Enterprise' as const, price: 599, desc: 'Dedicated infra, unlimited AI, custom forwarder rates' }
 				] as plan}
 					<div class="flex flex-col justify-between rounded-lg border bg-background p-4 shadow-sm">
 						<div>
@@ -107,7 +107,7 @@
 									<Badge variant="default">{t('Aktif')}</Badge>
 								{/if}
 							</div>
-							<span class="mt-1 block text-lg font-black">{plan.price}</span>
+							<span class="mt-1 block text-lg font-black">{formatCurrencyAs(plan.price, 'USD')}{t('/bln')}</span>
 							<p class="mt-2 text-xs text-muted-foreground">{plan.desc}</p>
 						</div>
 						<Button

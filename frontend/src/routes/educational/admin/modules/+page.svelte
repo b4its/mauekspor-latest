@@ -167,6 +167,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						</div>
 					</div>
 				</div>
+			{:else}
+				<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 			{/each}
 		</CardContent>
 	</Card>

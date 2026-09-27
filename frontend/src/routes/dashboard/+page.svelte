@@ -307,6 +307,8 @@
 							<b class="text-xl font-bold tracking-tight">{project.readiness}%</b>
 						</div>
 					</a>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
@@ -331,6 +333,8 @@
 							<b class="text-xl font-bold tracking-tight">{analysis.score}</b>
 						</div>
 					</a>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
@@ -361,6 +365,8 @@
 						</div>
 						<strong class="mt-2 block text-sm">{step.label}</strong>
 					</a>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>

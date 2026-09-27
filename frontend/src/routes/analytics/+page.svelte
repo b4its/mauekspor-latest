@@ -233,6 +233,8 @@
 					<Progress value={lane.readiness} />
 					<small class="text-xs text-muted-foreground">{lane.risk}</small>
 				</a>
+			{:else}
+				<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 			{/each}
 		</CardContent>
 	</Card>

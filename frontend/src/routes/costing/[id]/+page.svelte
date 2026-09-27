@@ -230,6 +230,8 @@
 						<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{category}</span>
 						<strong class="text-sm font-bold">{currency.format(amount)}</strong>
 					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>

@@ -208,6 +208,8 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 								</div>
 								<span class="w-8 text-right text-muted-foreground">{percent}%</span>
 							</div>
+						{:else}
+							<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 						{/each}
 					</div>
 					<p class="mt-2 text-xs text-muted-foreground">
@@ -320,6 +322,8 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 			<CardContent class="grid gap-2.5">
 				{#each data.forwarder.lanes ?? [] as lane}
 					<div class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3.5"><Badge variant="outline">{t('Route')}</Badge><strong class="text-sm">{lane}</strong></div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>

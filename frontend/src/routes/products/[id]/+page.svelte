@@ -143,6 +143,8 @@
 			<CardContent class="flex flex-wrap gap-2.5 p-0 pt-4">
 				{#each data.product.certificates ?? [] as certificate}
 					<Badge variant="outline">{certificate}</Badge>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
