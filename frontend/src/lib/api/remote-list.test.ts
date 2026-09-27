@@ -14,7 +14,7 @@ describe('createRemoteList', () => {
 		expect(list.error).toBe('');
 	});
 
-	it('load() menggabungkan data remote (update + tambah) tanpa duplikasi', async () => {
+	it('load() mengganti seed dengan sumber data remote', async () => {
 		const fetcher = vi.fn().mockResolvedValue({
 			data: [
 				{ id: 'a', name: 'Seed A UPDATED' },
@@ -25,11 +25,18 @@ describe('createRemoteList', () => {
 		await list.load();
 
 		expect(fetcher).toHaveBeenCalledTimes(1);
-		expect(list.items).toHaveLength(3); // a (updated), b, c
+		expect(list.items).toHaveLength(2);
 		expect(list.items.find((i) => i.id === 'a')?.name).toBe('Seed A UPDATED');
 		expect(list.items.find((i) => i.id === 'c')?.name).toBe('Remote C');
+		expect(list.items.find((i) => i.id === 'b')).toBeUndefined();
 		expect(list.loading).toBe(false);
 		expect(list.error).toBe('');
+	});
+
+	it('load() menampilkan empty state sebenarnya saat server tidak punya data', async () => {
+		const list = createRemoteList(async () => ({ data: [] }), seed);
+		await list.load();
+		expect(list.items).toEqual([]);
 	});
 
 	it('load() menampilkan error dan tetap memakai seed saat fetcher gagal', async () => {

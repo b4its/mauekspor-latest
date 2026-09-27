@@ -55,7 +55,7 @@ export function createRemoteList<T extends { id: string }>(fetcher: Fetcher<T>, 
 	async function load() {
 		try {
 			const res = await fetcher();
-			mergeById(items, res.data);
+			setItems(res.data);
 			error = '';
 		} catch {
 			error = 'Tidak dapat memuat data dari server; menampilkan data lokal.';
@@ -100,13 +100,4 @@ export function createRemoteList<T extends { id: string }>(fetcher: Fetcher<T>, 
 		upsert,
 		setItems
 	};
-}
-
-function mergeById<T extends { id: string }>(target: T[], remote: T[]) {
-	const known = new Map(target.map((item) => [item.id, item]));
-	for (const item of remote) {
-		known.set(item.id, item);
-	}
-	target.length = 0;
-	target.push(...known.values());
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import AppShell from '$lib/components/AppShell.svelte';
+	import PublicShell from '$lib/components/PublicShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
@@ -15,7 +15,7 @@
 	<title>{catalog.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={catalog.title} eyebrow={catalog.targetMarket}>
+<PublicShell>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<div class="flex flex-wrap items-center gap-2">
@@ -61,12 +61,12 @@
 	{/if}
 
 	<div class="flex flex-wrap items-center gap-2.5">
-		<Button href={`/rfq?catalogId=${catalog.id}&product=${encodeURIComponent(catalog.productName || catalog.title)}&moq=${encodeURIComponent(catalog.moq || '')}`}>
+		<Button href={`/login?next=${encodeURIComponent(`/rfq?catalogId=${catalog.id}&product=${encodeURIComponent(catalog.productName || catalog.title)}&moq=${encodeURIComponent(catalog.moq || '')}`)}`}>
 			{t('Minta Penawaran (RFQ)')}
 		</Button>
-		<Button variant="outline" href={`/chat?q=${encodeURIComponent(`Saya tertarik dengan produk ekspor "${catalog.title}" (MOQ: ${catalog.moq}, Pasar: ${catalog.targetMarket}). Bagaimana spesifikasi dan ketersediaan pengirimannya?`)}`}>
+		<Button variant="outline" href={`/login?next=${encodeURIComponent(`/chat?q=${encodeURIComponent(`Saya tertarik dengan produk ekspor "${catalog.title}" (MOQ: ${catalog.moq}, Pasar: ${catalog.targetMarket}). Bagaimana spesifikasi dan ketersediaan pengirimannya?`)}`)}`}>
 			{t('Tanya AI tentang Produk Ini')}
 		</Button>
 		<Button href="/catalogs/public" variant="outline">{t('Kembali ke katalog publik')}</Button>
 	</div>
-</AppShell>
+</PublicShell>

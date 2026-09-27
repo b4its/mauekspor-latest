@@ -8,8 +8,8 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import Logo from '$lib/components/Logo.svelte';
-	import { navGroups, projects, userAccounts } from '$lib/data/trade';
-	import { allowedHrefs } from '$lib/roleAccess';
+	import { navGroups, projects } from '$lib/data/trade';
+	import { allowedHrefs, canViewPath } from '$lib/roleAccess';
 	import { t } from '$lib/i18n.svelte';
 	import { openAiAssistant } from '$lib/stores/aiAssistant.svelte';
 
@@ -64,18 +64,15 @@
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 
 	const sidebar = useSidebar();
-	const currentUser = $derived(getUser() ?? userAccounts[0]);
-	// SessionUser memakai `name`, seed userAccounts memakai `fullName`.
+	const currentUser = $derived(getUser());
 	const displayName = $derived(
-		(currentUser as { name?: string; fullName?: string }).name ??
-			(currentUser as { fullName?: string }).fullName ??
-			currentUser.email ??
-			'User'
+		currentUser?.name ?? currentUser?.email ?? t('Pengunjung')
 	);
 	let openRiskCount = $derived(projects.filter((project) => project.risk !== 'Low').length);
 
 	// Filter menu sesuai peran pengguna yang login. Admin melihat semua.
-	const userRole = $derived((currentUser as { role?: string }).role ?? '');
+	const userRole = $derived(currentUser?.role ?? '');
+	const canOpen = (href: string) => canViewPath(userRole, href);
 	const visibleNavGroups = $derived.by(() => {
 		const allowed = allowedHrefs(userRole);
 		if (allowed === '*') return navGroups;
@@ -148,7 +145,7 @@
 	};
 
 	function isActive(href: string) {
-		return page.url.pathname === href || (href !== '/' && page.url.pathname.startsWith(href));
+		return page.url.pathname === href || (href !== '/' && page.url.pathname.startsWith(href + '/'));
 	}
 
 	function groupIsActive(items: { href: string }[]) {
@@ -168,6 +165,7 @@
 
 <Sidebar.Root collapsible="icon" class="landing-font">
 	<Sidebar.Header>
+		{#if currentUser}
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton size="lg" tooltipContent={t('MauEkspor Dashboard')}>
@@ -179,6 +177,9 @@
 				</Sidebar.MenuButton>
 			</Sidebar.MenuItem>
 		</Sidebar.Menu>
+		{:else}
+			<a href="/login" class="flex min-h-10 items-center justify-center rounded-lg bg-primary px-3 text-sm font-bold text-primary-foreground">{t('Masuk ke workspace')}</a>
+		{/if}
 	</Sidebar.Header>
 
 	<Sidebar.Content>
@@ -286,7 +287,7 @@
 								</Avatar.Root>
 								<div class="grid flex-1 text-left text-sm leading-tight">
 									<span class="truncate font-medium">{displayName}</span>
-									<span class="truncate text-xs text-sidebar-foreground/60">{currentUser.email}</span>
+									<span class="truncate text-xs text-sidebar-foreground/60">{currentUser?.email}</span>
 								</div>
 								<ChevronsUpDownIcon class="ms-auto size-4" />
 							</Sidebar.MenuButton>
@@ -307,12 +308,13 @@
 								</Avatar.Root>
 								<div class="grid flex-1 text-left text-sm leading-tight">
 									<span class="truncate font-medium">{displayName}</span>
-									<span class="truncate text-xs text-muted-foreground">{currentUser.email}</span>
+									<span class="truncate text-xs text-muted-foreground">{currentUser?.email}</span>
 								</div>
 							</div>
 						</DropdownMenu.Label>
 						<DropdownMenu.Separator />
 						<DropdownMenu.Group>
+							{#if canOpen('/compliance')}
 							<DropdownMenu.Item>
 								{#snippet child({ props })}
 									<a {...props} href="/compliance">
@@ -321,9 +323,11 @@
 									</a>
 								{/snippet}
 							</DropdownMenu.Item>
+							{/if}
 						</DropdownMenu.Group>
 						<DropdownMenu.Separator />
 						<DropdownMenu.Group>
+							{#if canOpen('/users')}
 							<DropdownMenu.Item>
 								{#snippet child({ props })}
 									<a {...props} href="/users">
@@ -332,6 +336,8 @@
 									</a>
 								{/snippet}
 							</DropdownMenu.Item>
+							{/if}
+							{#if canOpen('/billing')}
 							<DropdownMenu.Item>
 								{#snippet child({ props })}
 									<a {...props} href="/billing">
@@ -340,6 +346,8 @@
 									</a>
 								{/snippet}
 							</DropdownMenu.Item>
+							{/if}
+							{#if canOpen('/notifications')}
 							<DropdownMenu.Item>
 								{#snippet child({ props })}
 									<a {...props} href="/notifications">
@@ -348,6 +356,7 @@
 									</a>
 								{/snippet}
 							</DropdownMenu.Item>
+							{/if}
 						</DropdownMenu.Group>
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item onclick={async () => { await logout(); await goto('/login'); }}>

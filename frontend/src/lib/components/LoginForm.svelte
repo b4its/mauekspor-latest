@@ -6,7 +6,8 @@
  	import { login } from '$lib/stores/session.svelte';
  	import { cn } from '$lib/utils.js';
  	import type { HTMLAttributes } from 'svelte/elements';
- 	import { goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 import { t } from '$lib/i18n.svelte';
  	import EyeIcon from '@lucide/svelte/icons/eye';
  	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
@@ -36,7 +37,8 @@ import { t } from '$lib/i18n.svelte';
  		loading = true;
  		try {
  			await login({ email, password });
- 			await goto('/dashboard');
+			const requested = page.url.searchParams.get('next');
+			await goto(requested?.startsWith('/') && !requested.startsWith('//') ? requested : '/dashboard');
  		} catch (err) {
  			error = err instanceof Error ? err.message : t('Gagal masuk. Silakan coba lagi.');
  		} finally {
@@ -61,7 +63,7 @@ import { t } from '$lib/i18n.svelte';
 				<FieldGroup>
 					<Field>
 						<FieldLabel for="email-{id}">{t('Email')}</FieldLabel>
-						<Input id="email-{id}" type="email" placeholder="you@company.com" bind:value={email} required />
+						<Input id="email-{id}" type="email" autocomplete="email" placeholder="you@company.com" bind:value={email} required />
 					</Field>
 					<Field>
 						<div class="flex items-center">
@@ -73,6 +75,7 @@ import { t } from '$lib/i18n.svelte';
 								<Input 
 									id="password-{id}" 
 									type={showPassword ? 'text' : 'password'} 
+									autocomplete="current-password"
 									placeholder={t('Minimum 8 karakter')} 
 									bind:value={password} 
 									required 
@@ -95,7 +98,7 @@ import { t } from '$lib/i18n.svelte';
 					</Field>
 
 					{#if error}
-						<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+						<p role="alert" class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 					{/if}
 					{#if message}
 						<p class="rounded-lg border border-[#0b3d91]/30 bg-[#0b3d91]/10 px-3 py-2 text-sm font-bold text-[#0b3d91] dark:border-[#5ea1ff]/30 dark:bg-[#5ea1ff]/10 dark:text-[#5ea1ff]">{message}</p>

@@ -111,6 +111,10 @@ const ROLE_READ_MODULES: Record<UserRole, Set<string>> = {
 	Finance: new Set([
 		'orders', 'quotations', 'payments', 'billing', 'costing', 'analytics', 'reports',
 		'messages', 'notifications', 'support'
+	]),
+	KepalaDesa: new Set([
+		'products', 'villages', 'compliance', 'documents', 'analytics', 'reports',
+		'messages', 'notifications', 'support', 'knowledge', 'educational'
 	])
 };
 

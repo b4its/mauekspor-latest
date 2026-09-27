@@ -13,7 +13,7 @@ import { t } from '$lib/i18n.svelte';
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 
-	const roleOptions: UserRole[] = ['Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance'];
+	const roleOptions: UserRole[] = ['Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance', 'KepalaDesa'];
 
 	let role = $state<UserRole>('Exporter');
 	let name = $state('');
@@ -75,11 +75,11 @@ import { t } from '$lib/i18n.svelte';
 				<Field.Group>
 					<Field.Field>
 						<Field.Label for="name">{t('Nama Lengkap')}</Field.Label>
-						<Input id="name" type="text" placeholder="Ayu Pratama" bind:value={name} required />
+						<Input id="name" type="text" autocomplete="name" placeholder="Ayu Pratama" bind:value={name} required />
 					</Field.Field>
 					<Field.Field>
 						<Field.Label for="organization">{t('Organisasi')}</Field.Label>
-						<Input id="organization" type="text" placeholder="PT Kopi Gayo Nusantara" bind:value={organization} required />
+						<Input id="organization" type="text" autocomplete="organization" placeholder="PT Kopi Gayo Nusantara" bind:value={organization} required />
 					</Field.Field>
 					<Field.Field>
 						<Field.Label for="role">{t('Peran Utama')}</Field.Label>
@@ -91,24 +91,26 @@ import { t } from '$lib/i18n.svelte';
 					</Field.Field>
 					<Field.Field>
 						<Field.Label for="email">{t('Email')}</Field.Label>
-						<Input id="email" type="email" placeholder="you@company.com" bind:value={email} required />
+						<Input id="email" type="email" autocomplete="email" placeholder="you@company.com" bind:value={email} required />
 					</Field.Field>
 					<Field.Field>
-						<Field.Field class="grid grid-cols-2 gap-4">
+						<Field.Field class="grid gap-4 sm:grid-cols-2">
 							<Field.Field>
 								<Field.Label for="password">{t('Kata sandi')}</Field.Label>
-								<Input id="password" type="password" bind:value={password} required />
+								<Input id="password" type={showPassword ? 'text' : 'password'} autocomplete="new-password" bind:value={password} required />
+								<button type="button" class="text-left text-xs font-semibold text-primary" onclick={() => (showPassword = !showPassword)} aria-label={showPassword ? t('Sembunyikan password') : t('Tampilkan password')}>{showPassword ? t('Sembunyikan') : t('Tampilkan')}</button>
 							</Field.Field>
 							<Field.Field>
 								<Field.Label for="confirm-password">{t('Konfirmasi Password')}</Field.Label>
-								<Input id="confirm-password" type="password" bind:value={confirmPassword} required />
+								<Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} autocomplete="new-password" bind:value={confirmPassword} required />
+								<button type="button" class="text-left text-xs font-semibold text-primary" onclick={() => (showConfirmPassword = !showConfirmPassword)} aria-label={showConfirmPassword ? t('Sembunyikan konfirmasi password') : t('Tampilkan konfirmasi password')}>{showConfirmPassword ? t('Sembunyikan') : t('Tampilkan')}</button>
 							</Field.Field>
 						</Field.Field>
 						<Field.Description>{t('Minimal 8 karakter.')}</Field.Description>
 					</Field.Field>
 
 					{#if error}
-						<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+						<p role="alert" class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 					{/if}
 					{#if message}
 						<p class="rounded-lg border border-[#0b3d91]/30 bg-[#0b3d91]/10 px-3 py-2 text-sm font-bold text-[#0b3d91] dark:border-[#5ea1ff]/30 dark:bg-[#5ea1ff]/10 dark:text-[#5ea1ff]">{message}</p>

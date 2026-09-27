@@ -50,13 +50,18 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 	let user = $derived(getUser());
 	let userStatus = $derived(getStatus());
+	let isPublicShellPath = $derived(page.url.pathname === '/about');
 
-	// Route guard: apakah peran pengguna boleh melihat halaman saat ini?
-	// Selama status masih loading kita jangan blokir (hindari kedip) — hanya
-	// blokir bila sudah terautentikasi dan perannya tidak berhak.
 	let canView = $derived(
-		userStatus !== 'authenticated' || canViewPath(user?.role, page.url.pathname)
+		isPublicShellPath || (userStatus === 'authenticated' && canViewPath(user?.role, page.url.pathname))
 	);
+
+	$effect(() => {
+		if (userStatus === 'unauthenticated' && !isPublicShellPath) {
+			const next = `${page.url.pathname}${page.url.search}`;
+			goto(`/login?next=${encodeURIComponent(next)}`, { replaceState: true });
+		}
+	});
 
 	async function handleLogout() {
 		loggingOut = true;
@@ -84,10 +89,12 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 		return t(map[g] ?? g);
 	}
 
-	let commands = $derived([
-		...navItems.map((item) => ({ label: item.label, href: item.href, group: 'Navigation' })),
-		{ label: 'Register Admin', href: '/register-admin', group: 'Navigation' },
-	]);
+	let commands = $derived(
+		navItems
+			.filter((item) => userStatus === 'authenticated' && canViewPath(user?.role, item.href))
+			.map((item) => ({ label: item.label, href: item.href, group: 'Navigation' }))
+	);
+	let canViewProjects = $derived(userStatus === 'authenticated' && canViewPath(user?.role, '/trade-projects'));
 	// Catatan: pencarian data live menggunakan API /search/?q= langsung (liveResults),
 	// sehingga data dari seed tidak perlu diimpor ke AppShell lagi.
 	let activityCount = $derived(activities.length);
@@ -166,7 +173,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				const res = await fetch(`${API_BASE}/search/?q=${encodeURIComponent(q)}`, { credentials: 'include', headers });
 				if (res.ok) {
 					const body = await res.json();
-					liveResults = (body.data ?? []) as typeof liveResults;
+					liveResults = ((body.data ?? []) as typeof liveResults).filter((item) => canViewPath(user?.role, item.href));
 				}
 			} catch {
 				liveResults = [];
@@ -192,10 +199,18 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	}}
 />
 
+{#if userStatus === 'loading' || (userStatus === 'unauthenticated' && !isPublicShellPath)}
+	<main class="landing-font grid min-h-svh place-items-center bg-background p-6" aria-busy="true" aria-live="polite">
+		<div class="grid justify-items-center gap-3 text-center">
+			<div class="size-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary"></div>
+			<p class="text-sm font-semibold text-muted-foreground">{t('Memeriksa sesi Anda...')}</p>
+		</div>
+	</main>
+{:else}
 <Sidebar.Provider>
-	{#if sidebar && (userStatus === 'loading' || user?.role === 'Admin')}
+	{#if sidebar && user?.role === 'Admin'}
 		{@render sidebar()}
-	{:else if page.url.pathname.startsWith('/admin') && (userStatus === 'loading' || user?.role === 'Admin')}
+	{:else if page.url.pathname.startsWith('/admin') && user?.role === 'Admin'}
 		<AdminSidebar />
 	{:else}
 		<AppSidebar />
@@ -215,7 +230,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 						</Breadcrumb.Item>
 						<Breadcrumb.Separator class="hidden sm:block" />
 						<Breadcrumb.Item>
-							<Breadcrumb.Page class="truncate font-display text-base font-black tracking-tight text-[#0b1d3a] sm:text-lg dark:text-white">{title}</Breadcrumb.Page>
+							<Breadcrumb.Page class="truncate font-display text-base font-black tracking-tight text-[#0b1d3a] sm:text-lg dark:text-white"><h1>{title}</h1></Breadcrumb.Page>
 						</Breadcrumb.Item>
 					</Breadcrumb.List>
 				</Breadcrumb.Root>
@@ -252,7 +267,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 							<ArrowLeftIcon class="size-3.5 me-1" />
 							<span>{t('Kembali ke aplikasi')}</span>
 						</Button>
-					{:else}
+					{:else if canViewProjects}
 						<Button href="/trade-projects" variant="outline" size="sm">{t('View projects')}</Button>
 						<Button href="/trade-projects/new" size="sm">
 							<span>{t('New trade project')}</span>
@@ -303,7 +318,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 										<ArrowLeftIcon class="size-4 mr-2" />
 										<span>{t('Kembali ke aplikasi')}</span>
 									</DropdownMenu.Item>
-								{:else}
+								{:else if canViewProjects}
 									<DropdownMenu.Item onclick={() => goto('/trade-projects')}>
 										<span>{t('View projects')}</span>
 									</DropdownMenu.Item>
@@ -425,3 +440,4 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 	<GlobalAiAssistant />
 </Sidebar.Provider>
+{/if}

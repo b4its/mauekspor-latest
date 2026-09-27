@@ -42,8 +42,17 @@ describe('roleAccess', () => {
 		}
 	});
 
+	it('KepalaDesa melihat komoditas dan kesiapan desa', () => {
+		for (const path of ['/products', '/villages', '/compliance', '/documents', '/analytics']) {
+			expect(canViewPath('KepalaDesa', path), path).toBe(true);
+		}
+		for (const path of ['/buyers', '/payments', '/team', '/settings']) {
+			expect(canViewPath('KepalaDesa', path), path).toBe(false);
+		}
+	});
+
 	it('Dashboard & About selalu boleh diakses peran apa pun', () => {
-		for (const role of ['Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance']) {
+		for (const role of ['Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance', 'KepalaDesa']) {
 			expect(canViewPath(role, '/dashboard'), role).toBe(true);
 			expect(canViewPath(role, '/about'), role).toBe(true);
 		}

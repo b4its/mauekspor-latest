@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import AppShell from '$lib/components/AppShell.svelte';
+	import PublicShell from '$lib/components/PublicShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -37,7 +37,7 @@
 	<title>{t('Katalog Publik')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={t('Katalog Publik')} eyebrow={t('Katalog terbuka untuk buyer & mitra')}>
+<PublicShell>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Katalog publik')}</Badge>
@@ -56,7 +56,10 @@
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<div role="alert" class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">
+			<p>{error}</p>
+			<Button variant="outline" size="sm" onclick={load}>{t('Coba lagi')}</Button>
+		</div>
 	{/if}
 
 	{#if loading}
@@ -99,4 +102,4 @@
 			{/each}
 		</div>
 	{/if}
-</AppShell>
+</PublicShell>

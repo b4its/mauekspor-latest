@@ -1,6 +1,6 @@
 import { apiFetch } from '$lib/api/client';
 
-export type UserRole = 'Admin' | 'Exporter' | 'Buyer' | 'Forwarder' | 'CustomsBroker' | 'Finance';
+export type UserRole = 'Admin' | 'Exporter' | 'Buyer' | 'Forwarder' | 'CustomsBroker' | 'Finance' | 'KepalaDesa';
 
 export type SessionUser = {
 	id: string;
