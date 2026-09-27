@@ -85,6 +85,11 @@ export type ComplianceRequirement = {
 	requiredEvidence: string;
 	currentEvidence: string;
 	confidence: number;
+	evidenceFile?: string;
+	evidenceFileId?: string;
+	evidenceFileUrl?: string;
+	evidenceUploadedAt?: string;
+	evidenceUploadedBy?: string;
 };
 
 export type TradeDocument = {

@@ -2664,7 +2664,14 @@ const dictionary: Record<string, Entry> = {
 	'Invited': { id: 'Diundang', en: 'Invited' },
 	'Tautan aktivasi tersalin.': { id: 'Tautan aktivasi tersalin.', en: 'Activation link copied.' },
 	'Salin tautan aktivasi': { id: 'Salin tautan aktivasi', en: 'Copy activation link' },
-	'Undangan dibuat. Teruskan tautan aktivasi ke anggota baru.': { id: 'Undangan dibuat. Teruskan tautan aktivasi ke anggota baru.', en: 'Invitation created. Forward the activation link to the new member.' }
+	'Undangan dibuat. Teruskan tautan aktivasi ke anggota baru.': { id: 'Undangan dibuat. Teruskan tautan aktivasi ke anggota baru.', en: 'Invitation created. Forward the activation link to the new member.' },
+	'Belum ada aktivitas tercatat.': { id: 'Belum ada aktivitas tercatat.', en: 'No activity recorded yet.' },
+	'Gagal menyalin tautan aktivasi.': { id: 'Gagal menyalin tautan aktivasi.', en: 'Failed to copy the activation link.' },
+	'Unggah Bukti': { id: 'Unggah Bukti', en: 'Upload Evidence' },
+	'Berkas bukti': { id: 'Berkas bukti', en: 'Evidence file' },
+	'Maks 25MB. PDF, gambar, dokumen, atau arsip. Nama file tetap bisa diisi manual bila hanya ingin mencatat referensi.': { id: 'Maks 25MB. PDF, gambar, dokumen, atau arsip. Nama file tetap bisa diisi manual bila hanya ingin mencatat referensi.', en: 'Max 25MB. PDF, image, document, or archive. The file name can still be typed manually if you only want to record a reference.' },
+	'Terpilih:': { id: 'Terpilih:', en: 'Selected:' },
+	'Buka berkas bukti terunggah': { id: 'Buka berkas bukti terunggah', en: 'Open uploaded evidence file' }
 };
 
 let initial: Locale = 'id';

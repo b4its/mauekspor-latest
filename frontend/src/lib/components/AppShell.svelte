@@ -12,7 +12,8 @@
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { activities, navItems } from '$lib/data/trade';
+	import { navItems } from '$lib/data/trade';
+	import type { AuditEvent } from '$lib/data/trade';
 
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import ActivityIcon from '@lucide/svelte/icons/activity';
@@ -26,6 +27,8 @@
 	import { page } from '$app/state';
 	import { canViewPath } from '$lib/roleAccess';
 	import { listNotifications } from '$lib/api/notifications';
+	import { listAuditEvents } from '$lib/api/audit';
+	import { formatRelative } from '$lib/utils/date';
 	import { getAccessToken } from '$lib/api/client';
 import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
@@ -97,7 +100,10 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 	let canViewProjects = $derived(userStatus === 'authenticated' && canViewPath(user?.role, '/trade-projects'));
 	// Catatan: pencarian data live menggunakan API /search/?q= langsung (liveResults),
 	// sehingga data dari seed tidak perlu diimpor ke AppShell lagi.
-	let activityCount = $derived(activities.length);
+	// Aktivitas nyata dari log audit (bukan lagi array statis) sehingga panel
+	// selalu mencerminkan kejadian terbaru di workspace.
+	let recentActivity = $state<AuditEvent[]>([]);
+	let activityCount = $derived(recentActivity.length);
 	let unreadCount = $state(0);
 	let liveResults = $state<{ label: string; href: string; group: string; sub?: string }[]>([]);
 	const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
@@ -154,6 +160,27 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				clearInterval(timer);
 				timer = undefined;
 			}
+		};
+	});
+
+	// Muat aktivitas terbaru dari log audit; refresh saat sheet dibuka.
+	$effect(() => {
+		const status = userStatus;
+		if (status !== 'authenticated') {
+			recentActivity = [];
+			return;
+		}
+		if (!activityOpen && recentActivity.length) return;
+		let cancelled = false;
+		listAuditEvents()
+			.then((res) => {
+				if (!cancelled) recentActivity = (res.data ?? []).slice(0, 8);
+			})
+			.catch(() => {
+				if (!cancelled) recentActivity = [];
+			});
+		return () => {
+			cancelled = true;
 		};
 	});
 
@@ -406,27 +433,26 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				<Sheet.Description>{t('Sinyal operasional di seluruh workspace ekspor Anda.')}</Sheet.Description>
 			</Sheet.Header>
 			<div class="flex flex-col gap-2 px-4 pb-4">
-				{#each activities as activity}
+				{#each recentActivity as activity (activity.id)}
+					{@const tone = activity.severity === 'Critical' ? 'red' : activity.severity === 'Warning' ? 'orange' : 'blue'}
 					<div class="rounded-md border border-border bg-secondary p-3">
 						<div class="flex items-start gap-2.5">
 							<span
 								class={`mt-1.5 size-2 shrink-0 rounded-full ${
-									activity.tone === 'green'
-										? 'bg-green-500'
-										: activity.tone === 'orange'
-											? 'bg-orange-500'
-											: activity.tone === 'red'
-												? 'bg-red-500'
-												: 'bg-primary'
+									tone === 'red' ? 'bg-red-500' : tone === 'orange' ? 'bg-orange-500' : 'bg-primary'
 								}`}
 							></span>
 							<div class="min-w-0">
-								<p class="text-sm font-medium text-foreground">{activity.title}</p>
-								<p class="mt-0.5 text-xs leading-snug text-muted-foreground">{activity.description}</p>
-								<p class="mt-1 text-[11px] font-medium text-muted-foreground">{activity.time}</p>
+								<p class="text-sm font-medium text-foreground">{activity.action || activity.entity || activity.module}</p>
+								<p class="mt-0.5 text-xs leading-snug text-muted-foreground">{activity.detail || activity.entity}</p>
+								<p class="mt-1 text-[11px] font-medium text-muted-foreground">
+									{formatRelative(activity.time)}{activity.actor ? ` · ${activity.actor}` : ''}
+								</p>
 							</div>
 						</div>
 					</div>
+				{:else}
+					<p class="px-1 py-4 text-center text-sm text-muted-foreground">{t('Belum ada aktivitas tercatat.')}</p>
 				{/each}
 			</div>
 			<Sheet.Footer class="px-4 sm:justify-start">

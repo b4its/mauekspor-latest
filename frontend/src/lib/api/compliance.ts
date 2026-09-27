@@ -5,6 +5,8 @@ export type EvidencePayload = {
 	requirementId: string;
 	note: string;
 	fileName?: string;
+	/** Id berkas yang sudah diunggah via `/files/upload/` untuk tautan unduhan nyata. */
+	fileId?: string;
 };
 
 export function listComplianceRequirements() {

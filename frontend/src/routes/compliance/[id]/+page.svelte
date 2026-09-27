@@ -8,6 +8,7 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { uploadComplianceEvidence, updateComplianceRequirement, deleteComplianceRequirement } from '$lib/api/compliance';
+	import { uploadFileBinary } from '$lib/api/files';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 	import { formatDate } from '$lib/utils/date';
@@ -15,6 +16,8 @@
 
 	let { data } = $props();
 	let evidenceNote = $state('');
+	let evidenceFile = $state<File | null>(null);
+	let evidenceFileUrl = $state('');
 	let fileName = $state('');
 	let uploaded = $state(false);
 	let uploading = $state(false);
@@ -81,19 +84,35 @@
 		}
 		uploading = true;
 		try {
+			// Bila pengguna memilih berkas, unggah bytes-nya lebih dulu agar bukti
+			// terhubung ke file nyata (bukan sekadar string nama file).
+			let fileId: string | undefined;
+			let uploadedName: string | undefined;
+			if (evidenceFile) {
+				const up = await uploadFileBinary(
+					evidenceFile,
+					'Compliance Evidence',
+					data.requirement.projectId ?? '',
+					['compliance']
+				);
+				fileId = up.data?.id;
+				uploadedName = up.data?.name;
+			}
 			const res = await uploadComplianceEvidence({
 				requirementId: data.requirement.id,
 				note: evidenceNote.trim(),
-				fileName: fileName.trim() || undefined
+				fileName: uploadedName || fileName.trim() || undefined,
+				fileId
 			});
 			uploaded = true;
 			if (res.data) {
 				savedStatus = res.data.status;
 				serverStatus = res.data.status;
+				evidenceFileUrl = res.data.evidenceFileUrl ?? '';
 			}
 			message = t('Bukti berhasil disimpan.');
-		} catch {
-			error = t('Gagal menyimpan bukti ke backend.');
+		} catch (err) {
+			error = err instanceof Error ? err.message : t('Gagal menyimpan bukti ke backend.');
 		} finally {
 			uploading = false;
 		}
@@ -312,25 +331,45 @@
 		</Card>
 
 		<Card>
-			<CardHeader class="p-0"><CardTitle>{t('Demo Unggah Bukti')}</CardTitle></CardHeader>
+			<CardHeader class="p-0"><CardTitle>{t('Unggah Bukti')}</CardTitle></CardHeader>
 			<CardContent class="p-0 pt-4">
 				<form class="grid gap-3.5" onsubmit={(event) => { event.preventDefault(); uploadEvidence(); }}>
 					<div class="grid gap-2">
-						<Label>{t('Catatan bukti')}</Label>
-						<Textarea bind:value={evidenceNote} placeholder={t('Label artwork Jepang diunggah, ditinjau oleh importir...')} rows={5} />
+						<Label for="evidence-note">{t('Catatan bukti')}</Label>
+						<Textarea id="evidence-note" bind:value={evidenceNote} placeholder={t('Label artwork Jepang diunggah, ditinjau oleh importir...')} rows={5} />
 					</div>
 					<div class="grid gap-2">
-						<Label>{t('Nama file')}</Label>
-						<Input bind:value={fileName} placeholder="jp-label-artwork-v2.pdf" />
+						<Label for="evidence-file">{t('Berkas bukti')}</Label>
+						<Input
+							id="evidence-file"
+							type="file"
+							accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip"
+							onchange={(e) => {
+								const input = e.currentTarget as HTMLInputElement;
+								evidenceFile = input.files?.[0] ?? null;
+								fileName = evidenceFile?.name ?? fileName;
+							}}
+						/>
+						<p class="text-xs text-muted-foreground">
+							{t('Maks 25MB. PDF, gambar, dokumen, atau arsip. Nama file tetap bisa diisi manual bila hanya ingin mencatat referensi.')}
+						</p>
 					</div>
+					{#if evidenceFile}
+						<p class="text-xs font-semibold text-foreground">{t('Terpilih:')} {evidenceFile.name}</p>
+					{/if}
 					{#if error}
-						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+						<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 					{/if}
 					{#if message}
-						<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+						<p role="status" class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+					{/if}
+					{#if evidenceFileUrl}
+						<a class="text-sm font-bold text-primary underline" href={evidenceFileUrl} target="_blank" rel="noopener noreferrer">
+							{t('Buka berkas bukti terunggah')}
+						</a>
 					{/if}
 					<div class="flex flex-wrap gap-2.5">
-						<Button variant="outline" type="submit" disabled={uploading}>{uploading ? t('Menyimpan...') : t('Simpan bukti')}</Button>
+						<Button variant="outline" type="submit" disabled={uploading}>{uploading ? t('Mengunggah...') : t('Simpan bukti')}</Button>
 						<Button disabled={!uploaded || verifying || verified} onclick={verifyEvidence}>
 							{verifying ? t('Memverifikasi...') : verified ? t('Terverifikasi') : t('Tandai terverifikasi')}
 						</Button>
