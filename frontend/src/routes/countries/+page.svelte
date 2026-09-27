@@ -10,6 +10,8 @@
 	import { t } from '$lib/i18n.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { page } from '$app/state';
 
 	import GlobeIcon from '@lucide/svelte/icons/globe';
 	import SearchIcon from '@lucide/svelte/icons/search';
@@ -25,9 +27,21 @@
 		},
 		seedCountries.map((c) => ({ id: c.country_code, ...c }))
 	);
-	let search = $state('');
-	let region = $state('');
-	let onlyDetailed = $state(false);
+	let search = $state(page.url.searchParams.get('query') ?? '');
+	let region = $state(page.url.searchParams.get('region') ?? '');
+	let onlyDetailed = $state(page.url.searchParams.get('detailed') === '1');
+
+	// Simpan filter ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query: search, region, detailed: onlyDetailed ? '1' : '' };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '', region: '', detailed: '' }, ['query', 'region', 'detailed']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
 
 	$effect(() => {
 		countries.load();
