@@ -2671,7 +2671,11 @@ const dictionary: Record<string, Entry> = {
 	'Berkas bukti': { id: 'Berkas bukti', en: 'Evidence file' },
 	'Maks 25MB. PDF, gambar, dokumen, atau arsip. Nama file tetap bisa diisi manual bila hanya ingin mencatat referensi.': { id: 'Maks 25MB. PDF, gambar, dokumen, atau arsip. Nama file tetap bisa diisi manual bila hanya ingin mencatat referensi.', en: 'Max 25MB. PDF, image, document, or archive. The file name can still be typed manually if you only want to record a reference.' },
 	'Terpilih:': { id: 'Terpilih:', en: 'Selected:' },
-	'Buka berkas bukti terunggah': { id: 'Buka berkas bukti terunggah', en: 'Open uploaded evidence file' }
+	'Buka berkas bukti terunggah': { id: 'Buka berkas bukti terunggah', en: 'Open uploaded evidence file' },
+	'Tidak tersedia': { id: 'Tidak tersedia', en: 'Unavailable' },
+	'Mode fallback': { id: 'Mode fallback', en: 'Fallback mode' },
+	'Mode demo': { id: 'Mode demo', en: 'Demo mode' },
+	'Asisten ekspor workspace': { id: 'Asisten ekspor workspace', en: 'Workspace export assistant' }
 };
 
 let initial: Locale = 'id';
