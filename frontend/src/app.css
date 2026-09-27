@@ -462,16 +462,19 @@ progress::-webkit-progress-value {
 	transition-duration: 200ms;
 }
 
-/* Button micro-interaction: lift on hover = "I'm clickable" */
-button:not(:disabled):hover {
-	transform: translateY(-1px);
-}
-button:not(:disabled):active {
-	transform: translateY(0);
-}
 button:disabled {
 	cursor: not-allowed;
 	opacity: 0.5;
+}
+
+/* Keep compact desktop controls while preserving usable touch targets. */
+@media (pointer: coarse) {
+	[data-slot="button"],
+	button,
+	[role="button"] {
+		min-height: 2.5rem;
+		min-width: 2.5rem;
+	}
 }
 
 /* Link micro-interaction: subtle scale */

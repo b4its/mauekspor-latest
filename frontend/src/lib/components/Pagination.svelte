@@ -16,8 +16,23 @@
 		pageSize?: number;
 		totalItems?: number;
 	} = $props();
+	const id = $props.id();
 
 	const pageSizes = [5, 8, 12, 20, 50, 100];
+	let previousPageSize = $state(pageSize);
+
+	$effect(() => {
+		if (pageSize !== previousPageSize) {
+			previousPageSize = pageSize;
+			page = 1;
+		}
+	});
+
+	$effect(() => {
+		const lastPage = Math.max(1, totalPages);
+		if (page > lastPage) page = lastPage;
+		if (page < 1) page = 1;
+	});
 
 	function goNext() { if (page < totalPages) page++; }
 	function goPrev() { if (page > 1) page--; }
@@ -43,9 +58,9 @@
 	<div class="flex items-center gap-2 text-sm text-muted-foreground">
 		<span>{t('Total')}: <strong class="text-foreground">{totalItems}</strong></span>
 		<span class="hidden sm:inline">—</span>
-		<label class="hidden items-center gap-1.5 sm:flex">
+		<label class="hidden items-center gap-1.5 sm:flex" for="pagination-page-size-{id}">
 			<span class="text-xs">{t('Per halaman')}</span>
-			<NativeSelect bind:value={pageSize} class="h-8 w-20 text-xs">
+			<NativeSelect id="pagination-page-size-{id}" bind:value={pageSize} class="h-8 w-20 text-xs">
 				{#each pageSizes as s}
 					<option value={s}>{s}</option>
 				{/each}
@@ -53,8 +68,8 @@
 		</label>
 	</div>
 
-	<nav class="flex items-center gap-1" aria-label="Pagination">
-		<Button variant="outline" size="sm" class="h-8 w-8 p-0" disabled={page <= 1} onclick={goPrev}>
+	<nav class="flex items-center gap-1" aria-label={t('Navigasi halaman')}>
+		<Button variant="outline" size="sm" class="h-10 w-10 p-0 sm:h-8 sm:w-8" aria-label={t('Halaman sebelumnya')} disabled={page <= 1} onclick={goPrev}>
 			<ChevronLeftIcon class="size-4" />
 		</Button>
 		{#each pages as p}
@@ -65,13 +80,15 @@
 					variant={p === page ? 'default' : 'outline'}
 					size="sm"
 					class="h-8 min-w-8 px-2"
+					aria-label={`${t('Halaman')} ${p}`}
+					aria-current={p === page ? 'page' : undefined}
 					onclick={() => goTo(p)}
 				>
 					{p}
 				</Button>
 			{/if}
 		{/each}
-		<Button variant="outline" size="sm" class="h-8 w-8 p-0" disabled={page >= totalPages} onclick={goNext}>
+		<Button variant="outline" size="sm" class="h-10 w-10 p-0 sm:h-8 sm:w-8" aria-label={t('Halaman berikutnya')} disabled={page >= totalPages} onclick={goNext}>
 			<ChevronRightIcon class="size-4" />
 		</Button>
 	</nav>
