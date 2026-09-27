@@ -20,14 +20,15 @@
 	import FilterIcon from '@lucide/svelte/icons/filter';
 	import XIcon from '@lucide/svelte/icons/x';
 	import SparklesIcon from '@lucide/svelte/icons/sparkles';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const filters = ['All', 'Ready', 'In Progress', 'Needs Review'];
 
 	function trStatus(s: string) {
 		return t(s === 'All' ? 'Semua' : s === 'Ready' ? 'Siap' : s === 'In Progress' ? 'Sedang berjalan' : 'Perlu tinjauan');
 	}
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 
 	let exportAnalyses = createRemoteList(listExportAnalyses, seedAnalyses);
 	$effect(() => {
@@ -87,6 +88,18 @@
 		countryParam;
 		productParam;
 		paginationPage = 1;
+	});
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
 	});
 </script>
 

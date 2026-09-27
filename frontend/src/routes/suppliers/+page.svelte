@@ -14,10 +14,12 @@
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const filters = ['All', 'Verified', 'In Review', 'Needs Evidence'];
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let error = $state('');
 	let message = $state('');
 	let busyId = $state('');
@@ -123,6 +125,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		paginationPage = 1;
 	});
 
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
 </script>
 
 <svelte:head>

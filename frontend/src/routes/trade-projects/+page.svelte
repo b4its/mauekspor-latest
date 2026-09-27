@@ -12,8 +12,10 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
-	let search = $state('');
+	let search = $state(page.url.searchParams.get('query') ?? '');
 	let error = $state('');
 	let message = $state('');
 	let showForm = $state(false);
@@ -101,6 +103,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		paginationPage = 1;
 	});
 
+
+	// Simpan pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query: search };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '' }, ['query']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
 </script>
 
 <svelte:head>

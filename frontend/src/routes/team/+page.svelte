@@ -300,7 +300,7 @@ import { page } from '$app/state';
 							class="h-10 rounded-md border bg-background px-3 text-sm"
 							aria-label={t('Ubah peran anggota')}
 							disabled={updatingRole === member.id}
-							value={member.role}
+							value={label(member.role)}
 							onchange={(e) => handleUpdateRole(member, (e.currentTarget as HTMLSelectElement).value as TeamMember['role'])}
 						>
 							{#each roles as role}

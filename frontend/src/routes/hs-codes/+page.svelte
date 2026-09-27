@@ -10,8 +10,10 @@
 	import { t } from '$lib/i18n.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
-	let query = $state('');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let codes = $state<HSCode[]>([]);
 	let loading = $state(true);
 	let error = $state('');
@@ -44,6 +46,18 @@
 		clearTimeout(searchTimer);
 		searchTimer = setTimeout(() => load(value.trim()), 300);
 	}
+
+	// Simpan pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query: query };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '' }, ['query']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
 </script>
 
 <svelte:head>

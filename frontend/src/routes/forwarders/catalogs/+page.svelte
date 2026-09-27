@@ -12,9 +12,11 @@
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const forwarder = seedForwarders[0];
-	let query = $state('');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let catalogs = createRemoteList<Catalog>(listForwarderCatalogs, seedCatalogs);
 	catalogs.load();
 
@@ -33,6 +35,24 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pagedItems = $derived(paginate(filteredCatalogs ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredCatalogs?.length ?? 0, paginationPageSize));
 
+
+	// Simpan pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query: query };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '' }, ['query']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
+
+	// Reset ke halaman pertama setiap pencarian berubah.
+	$effect(() => {
+		[query];
+		paginationPage = 1;
+	});
 </script>
 
 <svelte:head>

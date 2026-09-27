@@ -16,6 +16,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const filters = ['All', 'Unread', 'Read', 'Archived'];
 
@@ -26,8 +28,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	function trFilter(f: string) {
 		return t(f === 'All' ? 'Semua' : f === 'Unread' ? 'Belum dibaca' : f === 'Read' ? 'Dibaca' : 'Diarsipkan');
 	}
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let marked = $state(false);
 	let marking = $state(false);
 	let error = $state('');
@@ -122,6 +124,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	// Konfirmasi terpusat untuk aksi destruktif (pengganti aksi tanpa dialog).
 	const confirm = createConfirmController();
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
 </script>
 
 <svelte:head>

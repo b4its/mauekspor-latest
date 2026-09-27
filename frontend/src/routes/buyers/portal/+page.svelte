@@ -15,6 +15,8 @@
 	import { fetchSession, getStatus, getUser } from '$lib/stores/session.svelte';
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	let allowed = $derived(
 		getStatus() === 'authenticated' && (getUser()?.role === 'Admin' || getUser()?.role === 'Buyer')
@@ -31,7 +33,7 @@
 
 	let allCountries = $state<{ code: string; name: string }[]>([]);
 	let selectedCountry = $state('');
-	let query = $state('');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let items = $state<BuyerPortalItem[]>([]);
 	let meta = $state<BuyerPortalMeta>({});
 	let loading = $state(false);
@@ -114,6 +116,18 @@
 		selectedCountry;
 		query;
 		paginationPage = 1;
+	});
+
+	// Simpan pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query: query };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '' }, ['query']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
 	});
 </script>
 

@@ -11,11 +11,13 @@
 	import { t } from '$lib/i18n.svelte';
 	import type { Catalog } from '$lib/data/trade';
 	import { label } from '$lib/utils/labels';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	let catalogs = $state<Catalog[]>([]);
 	let loading = $state(true);
 	let error = $state('');
-	let query = $state('');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let tag = $state('');
 
 	async function load() {
@@ -32,6 +34,18 @@
 	}
 
 	onMount(load);
+
+	// Simpan pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query: query };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '' }, ['query']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
 </script>
 
 <svelte:head>

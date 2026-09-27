@@ -18,6 +18,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import PlayCircleIcon from '@lucide/svelte/icons/play-circle';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const levelFilters = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
@@ -29,7 +31,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return t(s === 'Published' ? 'Diterbitkan' : s === 'In Progress' ? 'Sedang berjalan' : 'Draf');
 	}
 	let levelFilter = $state('All');
-	let query = $state('');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 
 	let modules = createRemoteList(listEducationalModules, seedModules);
 	let articles = createRemoteList(listEducationalArticles, seedArticles);
@@ -71,8 +73,28 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		})
 	);
 	let pagedItems_articles = $derived(paginate(filteredArticles ?? [], paginationPage_articles, paginationPageSize_articles));
+
+	// Reset ke halaman pertama setiap pencarian/filter berubah agar tidak
+	// menampilkan halaman kosong setelah hasil menyusut.
+	$effect(() => {
+		[query, levelFilter];
+		paginationPage = 1;
+		paginationPage_articles = 1;
+	});
 	let paginationTotalPages_articles = $derived(calcTotalPages(filteredArticles?.length ?? 0, paginationPageSize_articles));
 
+
+	// Simpan pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query: query };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '' }, ['query']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
 </script>
 
 <svelte:head>

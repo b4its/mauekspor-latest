@@ -13,14 +13,16 @@
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const filters = ['All', 'Executive', 'Compliance', 'Financial', 'Shipment'];
 
 	function trType(x: string) {
 		return t(x === 'All' ? 'Semua' : x === 'Executive' ? 'Eksekutif' : x === 'Compliance' ? 'Kepatuhan' : x === 'Financial' ? 'Keuangan' : 'Pengiriman');
 	}
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let message = $state('');
 	let busyId = $state('');
 	let showForm = $state(false);
@@ -103,6 +105,25 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pagedItems = $derived(paginate(filteredReports ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredReports?.length ?? 0, paginationPageSize));
 
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
+
+	// Reset ke halaman pertama setiap filter/pencarian berubah agar tidak
+	// menampilkan halaman kosong setelah hasil menyusut.
+	$effect(() => {
+		[query, activeFilter];
+		paginationPage = 1;
+	});
 </script>
 
 <svelte:head>

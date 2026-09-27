@@ -32,6 +32,8 @@
 	import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
 	import XIcon from '@lucide/svelte/icons/x';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const filters = ['All', 'Email', 'WhatsApp', 'Portal', 'Internal'];
 
@@ -43,8 +45,8 @@
 		return t(f === 'All' ? 'Semua' : f);
 	}
 
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let error = $state('');
 	let successMessage = $state('');
 	let actionLoading = $state(false);
@@ -207,6 +209,25 @@
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredThreads ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredThreads?.length ?? 0, paginationPageSize));
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			250
+		);
+		return () => clearTimeout(syncTimer);
+	});
+
+	// Reset ke halaman pertama setiap filter/pencarian berubah agar tidak
+	// menampilkan halaman kosong setelah hasil menyusut.
+	$effect(() => {
+		[query, activeFilter];
+		paginationPage = 1;
+	});
 </script>
 
 <svelte:head>
