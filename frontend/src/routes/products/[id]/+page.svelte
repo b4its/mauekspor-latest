@@ -99,7 +99,7 @@
 	<title>{data.product.name} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.product.id} eyebrow={data.product.name}>
+<AppShell title={data.product.name || data.product.id} eyebrow={`${t('Product')} · ${data.product.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

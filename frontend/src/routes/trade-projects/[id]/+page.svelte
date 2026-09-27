@@ -178,7 +178,7 @@
 	<title>{localName} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.project.id} eyebrow={localName}>
+<AppShell title={localName || data.project.id} eyebrow={`${t('Trade Project')} · ${data.project.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

@@ -221,7 +221,7 @@
 	<title>{data.order.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.order.id} eyebrow={t('Sales order detail')}>
+<AppShell title={localBuyer || data.order.id} eyebrow={`${t('Order')} · ${data.order.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>

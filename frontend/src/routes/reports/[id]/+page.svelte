@@ -151,7 +151,7 @@
 	<title>{localTitle} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.report.id} eyebrow={t('Report detail')}>
+<AppShell title={localTitle || data.report.id} eyebrow={`${t('Report')} · ${data.report.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(displayStatus))} class="w-fit">{displayStatus}</Badge>

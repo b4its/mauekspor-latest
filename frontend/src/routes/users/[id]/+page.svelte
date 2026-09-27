@@ -71,7 +71,7 @@
 	<title>{data.user.fullName} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.user.id} eyebrow={t('User detail')}>
+<AppShell title={data.user.fullName || data.user.id} eyebrow={`${t('User')} · ${data.user.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

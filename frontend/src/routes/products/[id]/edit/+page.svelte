@@ -60,7 +60,7 @@
 	<title>{t('Edit product')} {data.product.name} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.product.id} eyebrow={t('Edit product')}>
+<AppShell title={data.product.name || data.product.id} eyebrow={`${t('Edit product')} · ${data.product.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Product master data')}</Badge>

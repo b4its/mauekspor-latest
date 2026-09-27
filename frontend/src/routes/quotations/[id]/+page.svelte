@@ -205,7 +205,7 @@
 	<title>{data.quotation.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.quotation.id} eyebrow={t('Quotation detail')}>
+<AppShell title={data.quotation.buyer || data.quotation.id} eyebrow={`${t('Quotation')} · ${data.quotation.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="flex-row flex-wrap items-end justify-between gap-3 p-0">
 			<div>

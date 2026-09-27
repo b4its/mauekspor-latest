@@ -160,7 +160,7 @@
 	<title>{data.shipment.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.shipment.id} eyebrow={t('Shipment tracking detail')}>
+<AppShell title={localRoute || data.shipment.id} eyebrow={`${t('Shipment')} · ${data.shipment.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

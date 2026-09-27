@@ -167,7 +167,7 @@
 	<title>{data.rfq.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.rfq.id} eyebrow="RFQ detail">
+<AppShell title={data.rfq.product || data.rfq.id} eyebrow={`${t('RFQ')} · ${data.rfq.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

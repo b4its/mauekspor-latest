@@ -51,7 +51,7 @@
 	<title>Edit {data.request.subject} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.request.id} eyebrow={t('Edit buyer request')}>
+<AppShell title={data.request.subject || data.request.id} eyebrow={`${t('Edit buyer request')} · ${data.request.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Permintaan inbound')}</Badge>

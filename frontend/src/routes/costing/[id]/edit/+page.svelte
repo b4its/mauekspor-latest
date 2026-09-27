@@ -55,7 +55,7 @@
 	<title>Edit {data.scenario.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.scenario.id} eyebrow={t('Edit costing scenario')}>
+<AppShell title={data.scenario.title || data.scenario.id} eyebrow={`${t('Edit costing')} · ${data.scenario.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Model harga')}</Badge>

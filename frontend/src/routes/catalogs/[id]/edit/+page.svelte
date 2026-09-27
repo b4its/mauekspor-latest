@@ -54,7 +54,7 @@
 	<title>Edit {data.catalog.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.catalog.id} eyebrow={t('Edit catalog')}>
+<AppShell title={data.catalog.title || data.catalog.id} eyebrow={t('Edit catalog')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Data master katalog')}</Badge>

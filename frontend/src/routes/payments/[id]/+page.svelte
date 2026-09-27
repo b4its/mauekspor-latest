@@ -163,7 +163,7 @@
 	<title>{data.payment.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.payment.id} eyebrow={t('Payment detail')}>
+<AppShell title={localBuyer || data.payment.id} eyebrow={`${t('Payment')} · ${data.payment.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

@@ -2675,7 +2675,15 @@ const dictionary: Record<string, Entry> = {
 	'Tidak tersedia': { id: 'Tidak tersedia', en: 'Unavailable' },
 	'Mode fallback': { id: 'Mode fallback', en: 'Fallback mode' },
 	'Mode demo': { id: 'Mode demo', en: 'Demo mode' },
-	'Asisten ekspor workspace': { id: 'Asisten ekspor workspace', en: 'Workspace export assistant' }
+	'Asisten ekspor workspace': { id: 'Asisten ekspor workspace', en: 'Workspace export assistant' },
+	'Catalog': { id: 'Katalog', en: 'Catalog' },
+	'Quotation': { id: 'Kutipan', en: 'Quotation' },
+	'Shipment': { id: 'Pengiriman', en: 'Shipment' },
+	'Task': { id: 'Tugas', en: 'Task' },
+	'Report': { id: 'Laporan', en: 'Report' },
+	'Buyer Request': { id: 'Permintaan Pembeli', en: 'Buyer Request' },
+	'Trade Project': { id: 'Proyek Dagang', en: 'Trade Project' },
+	'Edit costing': { id: 'Ubah costing', en: 'Edit costing' }
 };
 
 let initial: Locale = 'id';

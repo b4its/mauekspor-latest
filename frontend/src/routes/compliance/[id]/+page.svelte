@@ -197,7 +197,7 @@
 	<title>{localTitle} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.requirement.id} eyebrow={t('Compliance requirement detail')}>
+<AppShell title={localTitle || data.requirement.id} eyebrow={`${t('Compliance')} · ${data.requirement.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

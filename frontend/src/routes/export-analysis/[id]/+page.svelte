@@ -203,7 +203,7 @@
 	<title>{data.analysis.productName} Export Analysis | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.analysis.id} eyebrow={t('Market & compliance analysis detail')}>
+<AppShell title={data.analysis.productName || data.analysis.id} eyebrow={`${t("Export Analysis")} · ${data.analysis.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
