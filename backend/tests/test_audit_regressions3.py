@@ -80,6 +80,24 @@ def test_chat_session_tidak_bocor_antar_user():
         assert all(s["id"] != "CHS-OTHER" for s in listed), "sesi user lain bocor"
         assert c.get("/api/v1/chat/sessions/CHS-OTHER/", headers=_auth(buyer_token)).status_code == 404
         assert c.delete("/api/v1/chat/sessions/CHS-OTHER/", headers=_auth(buyer_token)).status_code == 404
+        assert c.post(
+            "/api/v1/chat/sessions/CHS-OTHER/messages/",
+            json={"text": "coba akses"},
+            headers=_auth(buyer_token),
+        ).status_code == 404
+
+
+def test_notification_tidak_bocor_antar_user():
+    with TestClient(app) as c:
+        buyer_token = _login(c, BUYER)
+        db.insert("notifications", {
+            "id": "NTF-OTHER", "title": "rahasia", "status": "Unread", "ownerId": "U-999",
+        })
+        listed = c.get("/api/v1/notifications/", headers=_auth(buyer_token)).json()["data"]
+        assert all(item["id"] != "NTF-OTHER" for item in listed)
+        assert c.post("/api/v1/notifications/NTF-OTHER/read/", headers=_auth(buyer_token)).status_code == 404
+        assert c.post("/api/v1/notifications/NTF-OTHER/archive/", headers=_auth(buyer_token)).status_code == 404
+        assert c.delete("/api/v1/notifications/NTF-OTHER/", headers=_auth(buyer_token)).status_code == 404
 
 
 def test_chat_session_create_menyimpan_userId():

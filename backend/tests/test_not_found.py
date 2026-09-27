@@ -87,3 +87,9 @@ def test_global_search_query_kosong():
         _login(c)
         res = c.get("/api/v1/search/?q=")
         assert res.status_code == 200
+
+
+def test_global_search_memerlukan_login():
+    with TestClient(app) as c:
+        res = c.get("/api/v1/search/?q=kopi")
+        assert res.status_code == 401

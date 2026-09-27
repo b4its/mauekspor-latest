@@ -30,6 +30,7 @@ from app.core.security import (
     get_current_user,
     decode_token,
 )
+from app.core.permissions import can_read_path
 from app.schemas import models as sc
 
 router = APIRouter(prefix="/api/v1")
@@ -2962,7 +2963,7 @@ def download_trade_document_pdf(document_id: str):
     record = db.get("documents", document_id)
     if not record:
         raise HTTPException(404, "Document not found")
-    project = db.get("trade_projects", record.get("projectId", "")) if record.get("projectId") else None
+    project = db.get("projects", record.get("projectId", "")) if record.get("projectId") else None
     from app.services.pricing import build_trade_document_pdf
     pdf_bytes = build_trade_document_pdf(record, project)
     safe_type = str(record.get("type", "document")).lower().replace(" ", "-")
@@ -3438,8 +3439,26 @@ def analytics_ai_summary(current_user: dict = Depends(get_current_user)):
 # NOTIFICATIONS / AUDIT / TEAM / TEMPLATES / AUTOMATIONS / INTEGRATIONS
 # ----------------------------------------------------------------------------
 @router.get("/notifications/")
-def list_notifications():
-    return _list_query("notifications")
+def list_notifications(current_user: dict = Depends(get_current_user)):
+    records = [
+        _serialize(record)
+        for record in db.all("notifications")
+        if _notification_owned(record, current_user)
+    ]
+    return {"data": records, "meta": {}}
+
+
+def _notification_owned(record: dict, user: dict) -> bool:
+    """Notifikasi tanpa owner tetap dibagikan untuk data demo/workspace lama."""
+    owner = record.get("ownerId")
+    return user.get("role") == "Admin" or owner is None or owner == user["id"]
+
+
+def _owned_notification(notification_id: str, current_user: dict) -> dict:
+    record = db.get("notifications", notification_id)
+    if not record or not _notification_owned(record, current_user):
+        raise HTTPException(404, "Notification not found")
+    return record
 
 
 @router.get("/notifications/stream/")
@@ -3491,28 +3510,22 @@ def stream_notifications(request: Request):
 
 
 @router.post("/notifications/{notification_id}/read/")
-def mark_notification_read(notification_id: str):
-    record = db.get("notifications", notification_id)
-    if not record:
-        raise HTTPException(404, "Notification not found")
+def mark_notification_read(notification_id: str, current_user: dict = Depends(get_current_user)):
+    record = _owned_notification(notification_id, current_user)
     record["status"] = "Read"
     return _save_one(record)
 
 
 @router.post("/notifications/{notification_id}/archive/")
-def archive_notification(notification_id: str):
-    record = db.get("notifications", notification_id)
-    if not record:
-        raise HTTPException(404, "Notification not found")
+def archive_notification(notification_id: str, current_user: dict = Depends(get_current_user)):
+    record = _owned_notification(notification_id, current_user)
     record["status"] = "Archived"
     return _save_one(record)
 
 
 @router.delete("/notifications/{notification_id}/")
-def delete_notification(notification_id: str):
-    record = db.get("notifications", notification_id)
-    if not record:
-        raise HTTPException(404, "Notification not found")
+def delete_notification(notification_id: str, current_user: dict = Depends(get_current_user)):
+    _owned_notification(notification_id, current_user)
     db.delete("notifications", notification_id)
     return {"data": {"status": "deleted", "id": notification_id}, "meta": {}}
 
@@ -4666,7 +4679,7 @@ def _build_workspace_context(owner_id: str | None = None, page_context: str | No
             )
         parts.append("- Katalog Produk Workspace:\n" + "\n".join(prod_lines))
 
-    projects = db.all("trade_projects")
+    projects = db.all("projects")
     if projects:
         proj_lines = []
         for proj in projects[:5]:
@@ -4713,9 +4726,13 @@ def _build_workspace_context(owner_id: str | None = None, page_context: str | No
 
 
 @router.post("/chat/sessions/{session_id}/messages/")
-def send_session_message(session_id: str, payload: sc.SendChatPayload):
+def send_session_message(
+    session_id: str,
+    payload: sc.SendChatPayload,
+    current_user: dict = Depends(get_current_user),
+):
     record = db.get("chat_sessions", session_id)
-    if not record:
+    if not record or not _chat_session_owned(record, current_user):
         raise HTTPException(404, "Chat session not found")
     record.setdefault("messages", []).append({"role": "user", "text": payload.text})
     history = "\n".join(f"{m.get('role', '')}: {m.get('text', '')}" for m in record["messages"][-8:])
@@ -5681,7 +5698,7 @@ def set_display_currency(payload: dict):
 # PENCARIAN GLOBAL (command palette)
 # ----------------------------------------------------------------------------
 @router.get("/search/")
-def global_search(q: str = ""):
+def global_search(q: str = "", current_user: dict = Depends(get_current_user)):
     """Cari di seluruh entitas workspace (produk, buyer, proyek, analisis, katalog, forwarder)."""
     query = q.strip().lower()
     if not query:
@@ -5705,4 +5722,5 @@ def global_search(q: str = ""):
     for f in db.all("forwarders"):
         if query in str(f.get("name", "")).lower() or query in str(f.get("coverage", "")).lower():
             results.append({"label": f.get("name"), "href": f"/forwarders/{f.get('id')}", "group": "Forwarder", "sub": f.get("coverage", "")})
-    return {"data": results[:20], "meta": {"count": len(results)}}
+    visible = [result for result in results if can_read_path(current_user.get("role", ""), f"/api/v1{result['href']}")]
+    return {"data": visible[:20], "meta": {"count": len(visible)}}

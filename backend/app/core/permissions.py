@@ -11,7 +11,7 @@ ADMIN_ONLY_MODULES = {"users", "audit", "api-keys", "settings", "admin"}
 # Modules yang butuh login untuk DIBACA (data komersial/privasi tinggi).
 # Sebelumnya semua read terbuka untuk anonim (kebocoran email/telepon buyer,
 # nominal pembayaran, isi pesan). Halaman terkait semuanya AppShell-guarded.
-# Read publik yang tetap dibuka: /auth/me, /countries, /hs-codes, /search,
+# Read publik yang tetap dibuka: /auth/me, /countries, /hs-codes,
 # /catalogs/public, /health.
 AUTH_REQUIRED_READ_MODULES = {
     "products",
@@ -50,6 +50,7 @@ AUTH_REQUIRED_READ_MODULES = {
     "billing",
     "support",
     "villages",
+    "search",
 }
 
 # Modules each role may mutate (writes). Reads stay open unless in ADMIN_ONLY_MODULES.
