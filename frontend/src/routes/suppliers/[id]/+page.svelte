@@ -19,6 +19,8 @@
 	let message = $state('');
 	let editing = $state(false);
 	let saving = $state(false);
+	let verifying = $state(false);
+	let requestingEvidence = $state(false);
 	let deleting = $state(false);
 	let editName = $state('');
 	let editLocation = $state('');
@@ -35,7 +37,9 @@
 
 
 	async function handleVerify() {
+		if (verifying) return;
 		error = '';
+		verifying = true;
 		try {
 			const res = await verifySupplier(data.supplier.id);
 			verified = true;
@@ -47,10 +51,15 @@
 		} catch {
 			error = t('Gagal memverifikasi supplier.');
 		}
+		finally {
+			verifying = false;
+		}
 	}
 
 	async function handleRequestEvidence() {
+		if (requestingEvidence) return;
 		error = '';
+		requestingEvidence = true;
 		try {
 			const res = await requestSupplierEvidence(data.supplier.id);
 			evidenceRequested = true;
@@ -58,6 +67,9 @@
 			message = t('Permintaan bukti dikirim.');
 		} catch {
 			error = t('Gagal meminta evidence.');
+		}
+		finally {
+			requestingEvidence = false;
 		}
 	}
 
@@ -184,8 +196,8 @@
 					<CardDescription>{t('Kesiapan supplier untuk pencocokan ekspor, costing, perencanaan produksi, dan pengumpulan bukti kepatuhan.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" onclick={handleRequestEvidence}>{evidenceRequested ? t('Bukti diminta') : t('Minta bukti')}</Button>
-					<Button onclick={handleVerify}>{verified ? t('Terverifikasi') : t('Verifikasi supplier')}</Button>
+					<Button variant="outline" disabled={requestingEvidence || evidenceRequested} onclick={handleRequestEvidence}>{evidenceRequested ? t('Bukti diminta') : t('Minta bukti')}</Button>
+					<Button disabled={verifying || verified} onclick={handleVerify}>{verified ? t('Terverifikasi') : t('Verifikasi supplier')}</Button>
 				</div>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>

@@ -319,7 +319,7 @@
 									<ReplyIcon class="size-3.5" />
 									<span class="ms-1">{t('Balas')}</span>
 								</Button>
-								<Button size="sm" variant={thread.status === 'Resolved' ? 'secondary' : 'default'} onclick={() => handleToggleResolve(thread)}>
+								<Button size="sm" variant={thread.status === 'Resolved' ? 'secondary' : 'default'} disabled={actionLoading} onclick={() => handleToggleResolve(thread)}>
 									{thread.status === 'Resolved' ? t('Buka Kembali') : t('Selesai')}
 								</Button>
 								<button

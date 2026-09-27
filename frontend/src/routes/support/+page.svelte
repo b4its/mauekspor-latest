@@ -27,6 +27,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let error = $state('');
 	let message = $state('');
 	let busyId = $state('');
+	let resolvingId = $state('');
 	let resolvedId = $state('');
 	let creating = $state(false);
 	let showForm = $state(false);
@@ -101,7 +102,9 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleResolve(ticketId: string) {
+		if (resolvingId) return;
 		error = '';
+		resolvingId = ticketId;
 		try {
 			const res = await resolveSupportTicket(ticketId);
 			resolvedId = ticketId;
@@ -113,6 +116,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			}
 		} catch {
 			error = t('Gagal menyelesaikan tiket.');
+		} finally {
+			resolvingId = '';
 		}
 	}
 
@@ -245,7 +250,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					</div>
 					<aside class="grid justify-items-start gap-2 whitespace-nowrap md:justify-items-end">
 						<strong class="text-xl font-bold tracking-tight">{ticket.priority}</strong>
-						<Button variant="outline" size="sm" onclick={() => handleResolve(ticket.id)}>{resolvedId === ticket.id ? t('Resolved') : t('Resolve')}</Button>
+						<Button variant="outline" size="sm" disabled={resolvingId === ticket.id} onclick={() => handleResolve(ticket.id)}>{resolvedId === ticket.id ? t('Resolved') : t('Resolve')}</Button>
 						<div class="flex gap-2">
 							<Button variant="outline" size="sm" disabled={busyId === ticket.id} onclick={() => openEdit(ticket)}>{t('Edit')}</Button>
 							<Button variant="outline" size="sm" class="text-destructive" disabled={busyId === ticket.id} onclick={() =>

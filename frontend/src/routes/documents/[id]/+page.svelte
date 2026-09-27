@@ -14,6 +14,7 @@
 
 	let { data } = $props();
 	let approving = $state(false);
+	let regenerating = $state(false);
 	let approved = $state(false);
 	let regenerated = $state(false);
 	let error = $state('');
@@ -39,7 +40,9 @@
 	let displayScore = $derived(regenerated || approved ? Math.max(data.document.validationScore, 94) : data.document.validationScore);
 
 	async function regenerate() {
+		if (regenerating) return;
 		error = '';
+		regenerating = true;
 		try {
 			const res = await generateTradeDocument({ projectId: data.document.projectId, type: data.document.type });
 			regenerated = true;
@@ -47,6 +50,8 @@
 			message = t('Dokumen diregenerasi di backend.');
 		} catch {
 			error = t('Gagal regenerate dokumen.');
+		} finally {
+			regenerating = false;
 		}
 	}
 
@@ -196,7 +201,7 @@
 						<DownloadIcon class="size-4" />
 						{t('Unduh PDF')}
 					</Button>
-					<Button variant="outline" onclick={regenerate}>{t('Regenerasi')}</Button>
+					<Button variant="outline" disabled={regenerating || regenerated} onclick={regenerate}>{t('Regenerasi')}</Button>
 					<Button disabled={approving || approved || displayScore < 90} onclick={approve}>
 						{approving ? t('Menyetujui...') : approved ? t('Disetujui') : t('Setujui dokumen')}
 					</Button>

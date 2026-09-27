@@ -37,8 +37,13 @@
 	const confirm = createConfirmController();
 
 
+	let markingReceived = $state(false);
+	let reminding = $state(false);
+
 	async function handleReceived() {
+		if (markingReceived) return;
 		error = '';
+		markingReceived = true;
 		try {
 			const res = await markPaymentReceived(data.payment.id);
 			received = true;
@@ -50,11 +55,15 @@
 			message = t('Pembayaran ditandai diterima.');
 		} catch {
 			error = t('Gagal menandai pembayaran diterima.');
+		} finally {
+			markingReceived = false;
 		}
 	}
 
 	async function handleReminder() {
+		if (reminding) return;
 		error = '';
+		reminding = true;
 		try {
 			const res = await sendPaymentReminder(data.payment.id);
 			reminded = true;
@@ -65,6 +74,8 @@
 			message = t('Pengingat pembayaran berhasil dikirim.');
 		} catch {
 			error = t('Gagal mengirim pengingat.');
+		} finally {
+			reminding = false;
 		}
 	}
 
@@ -206,8 +217,8 @@
 					<CardDescription>{t('Payment status is connected to order release, document handoff, and shipment readiness.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" onclick={handleReminder}>{reminded ? t('Reminder sent') : t('Send reminder')}</Button>
-					<Button onclick={handleReceived}>{received ? t('Received') : t('Mark received')}</Button>
+					<Button variant="outline" disabled={reminding || reminded} onclick={handleReminder}>{reminded ? t('Reminder sent') : t('Send reminder')}</Button>
+					<Button disabled={markingReceived || received} onclick={handleReceived}>{received ? t('Received') : t('Mark received')}</Button>
 				</div>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>

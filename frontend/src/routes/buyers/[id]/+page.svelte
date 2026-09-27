@@ -20,6 +20,8 @@
 	let message = $state('');
 	let editing = $state(false);
 	let saving = $state(false);
+	let qualifying = $state(false);
+	let loggingContact = $state(false);
 	let deleting = $state(false);
 	let editName = $state('');
 	let editCountry = $state('');
@@ -42,7 +44,9 @@
 
 
 	async function handleQualify() {
+		if (qualifying) return;
 		error = '';
+		qualifying = true;
 		try {
 			const res = await qualifyBuyer(data.buyer.id);
 			qualified = true;
@@ -54,10 +58,15 @@
 		} catch {
 			error = t('Gagal mengkualifikasi buyer.');
 		}
+		finally {
+			qualifying = false;
+		}
 	}
 
 	async function handleLogContact() {
+		if (loggingContact) return;
 		error = '';
+		loggingContact = true;
 		try {
 			const res = await logBuyerContact(data.buyer.id, `Follow-up call recorded (${new Date().toISOString().slice(0, 10)})`);
 			logged = true;
@@ -68,6 +77,9 @@
 			message = t('Kontak dicatat.');
 		} catch {
 			error = t('Gagal mencatat kontak.');
+		}
+		finally {
+			loggingContact = false;
 		}
 	}
 
@@ -198,8 +210,8 @@
 						contactName={data.buyer.contact?.name ?? localName}
 						company={localName}
 					/>
-					<Button variant="outline" onclick={handleLogContact}>{logged ? t('Logged') : t('Log contact')}</Button>
-					<Button onclick={handleQualify}>{qualified ? t('Qualified') : t('Qualify buyer')}</Button>
+					<Button variant="outline" disabled={loggingContact} onclick={handleLogContact}>{logged ? t('Logged') : t('Log contact')}</Button>
+					<Button disabled={qualifying} onclick={handleQualify}>{qualified ? t('Qualified') : t('Qualify buyer')}</Button>
 				</div>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>

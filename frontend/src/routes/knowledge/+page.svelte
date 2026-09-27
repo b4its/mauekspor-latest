@@ -170,7 +170,7 @@ import { page } from '$app/state';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Publish practical playbooks for product readiness, HS review, Incoterms, shipment exceptions, finance, and platform usage.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button onclick={() => handlePublish()}>{published ? t('Article published') : t('Publish article')}</Button>
+			<Button disabled={!!busyId} onclick={() => handlePublish()}>{published ? t('Article published') : t('Publish article')}</Button>
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Buat artikel')}</Button>
 			<Badge>{t('Published')} {publishedCount}</Badge>
 		</CardContent>
