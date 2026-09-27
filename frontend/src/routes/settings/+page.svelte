@@ -8,6 +8,8 @@
 	import { getSettings, updateSettings } from '$lib/api/settings';
 	import type { WorkspaceSettings } from '$lib/api/settings';
 	import { getCurrencyInfo, setDisplayCurrency, type CurrencySettings } from '$lib/api/currency';
+	import { displayCurrency } from '$lib/stores/currency.svelte';
+	import { setDisplayCurrency as applyDisplayCurrency } from '$lib/utils/format';
 	import { NativeSelect, NativeSelectOption } from '$lib/components/ui/native-select/index.js';
 	import { t } from '$lib/i18n.svelte';
 
@@ -28,7 +30,12 @@
 
 	$effect(() => {
 		getCurrencyInfo()
-			.then((res) => { currency = res.data; })
+			.then((res) => {
+				currency = res.data;
+				// Sinkronkan formatter global dengan mata uang tersimpan di backend
+				// agar semua halaman langsung memakai format yang benar.
+				if (res.data.displayCurrency) displayCurrency.set(res.data.displayCurrency);
+			})
 			.catch(() => { /* diamkan — kartu opsional */ });
 	});
 
@@ -38,12 +45,16 @@
 		currencySaving = true;
 		try {
 			const res = await setDisplayCurrency(code);
+			// Terapkan seketika ke formatter global + store reaktif.
+			applyDisplayCurrency(code);
 			if (currency) {
 				currency = { ...currency, displayCurrency: res.data.displayCurrency, exchangeRate: res.data.exchangeRate, exchangeSource: res.data.exchangeSource };
 			}
 			currencySaved = t('Mata uang tampilan diperbarui.');
+			setTimeout(() => (currencySaved = ''), 3000);
 		} catch {
 			currencyError = t('Gagal memperbarui mata uang.');
+			setTimeout(() => (currencyError = ''), 4000);
 		} finally {
 			currencySaving = false;
 		}
@@ -76,6 +87,7 @@
 				taxId = res.data.taxId ?? taxId;
 			}
 			saved = true;
+			setTimeout(() => (saved = false), 3000);
 		} catch {
 			error = t('Gagal menyimpan pengaturan.');
 		} finally {
