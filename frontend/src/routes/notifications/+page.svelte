@@ -167,7 +167,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trFilter(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Cari notifikasi, modul, tingkat keparahan...')} class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Cari notifikasi, modul, tingkat keparahan...')} placeholder={t('Cari notifikasi, modul, tingkat keparahan...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	{#if notifications.loading}

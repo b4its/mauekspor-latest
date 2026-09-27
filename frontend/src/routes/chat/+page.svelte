@@ -263,7 +263,7 @@
 				<div class="border-b px-3 py-2">
 					<div class="flex items-center gap-2 rounded-md border bg-muted/30 px-2 py-1.5 text-sm">
 						<SearchIcon class="size-3.5 shrink-0 text-muted-foreground" />
-						<input type="text" placeholder={t('Cari sesi...')} bind:value={searchQuery}
+						<input type="text" aria-label={t('Cari sesi')} placeholder={t('Cari sesi...')} bind:value={searchQuery}
 							class="w-full bg-transparent outline-none placeholder:text-muted-foreground" />
 						{#if searchQuery}
 							<button onclick={() => (searchQuery = '')} class="shrink-0 text-muted-foreground hover:text-foreground"><XIcon class="size-3" /></button>

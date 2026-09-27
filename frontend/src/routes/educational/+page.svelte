@@ -110,7 +110,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Cari modul atau artikel...')} class="max-w-xs" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Cari modul atau artikel...')} placeholder={t('Cari modul atau artikel...')} class="max-w-xs" />
 	</div>
 
 	{#if modules.error}

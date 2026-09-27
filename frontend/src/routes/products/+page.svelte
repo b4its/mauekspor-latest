@@ -279,6 +279,7 @@
 						type="checkbox"
 						class="size-4"
 						checked={selected.has(product.id)}
+						aria-label={`${t('Pilih')} ${product.name}`}
 						onchange={() => toggleSelected(product.id)}
 						onclick={(e) => e.stopPropagation()}
 					/>

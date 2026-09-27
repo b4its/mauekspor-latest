@@ -263,7 +263,8 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Search payment, buyer, order...')} class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Search payment, buyer, order...')} placeholder={t('Search payment, buyer, order...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

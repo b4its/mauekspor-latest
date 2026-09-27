@@ -177,7 +177,7 @@ import { page } from '$app/state';
 					</label>
 					<label class="grid gap-1 text-sm font-semibold">
 						{t('Peran')}
-						<select bind:value={inviteRole} class="h-10 rounded-md border bg-background px-3 text-sm">
+						<select bind:value={inviteRole} aria-label={t('Peran undangan')} class="h-10 rounded-md border bg-background px-3 text-sm">
 							{#each roles as role}
 								<option value={role}>{role}</option>
 							{/each}
@@ -222,7 +222,8 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Search member, role, permission...')} class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Search member, role, permission...')} placeholder={t('Search member, role, permission...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -297,6 +298,7 @@ import { page } from '$app/state';
 						</div>
 						<select
 							class="h-10 rounded-md border bg-background px-3 text-sm"
+							aria-label={t('Ubah peran anggota')}
 							disabled={updatingRole === member.id}
 							value={member.role}
 							onchange={(e) => handleUpdateRole(member, (e.currentTarget as HTMLSelectElement).value as TeamMember['role'])}

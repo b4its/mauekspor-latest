@@ -267,7 +267,8 @@
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Cari thread, pihak, partisipan...')} class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Cari thread, pihak, partisipan...')} placeholder={t('Cari thread, pihak, partisipan...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	{#if threads.loading}

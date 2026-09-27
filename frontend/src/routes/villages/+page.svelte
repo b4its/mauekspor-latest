@@ -369,6 +369,7 @@
 
 			<NativeSelect
 				bind:value={selectedProvince}
+				aria-label={t('Filter provinsi')}
 				class="h-8 text-xs font-semibold"
 			>
 				<NativeSelectOption value="All">{t('Semua Provinsi')}</NativeSelectOption>
@@ -379,6 +380,7 @@
 
 			<NativeSelect
 				bind:value={selectedGroup}
+				aria-label={t('Filter kelompok komoditas')}
 				class="h-8 text-xs font-semibold"
 			>
 				<NativeSelectOption value="All">{t('Kelompok Komoditas')}: {t('Semua')}</NativeSelectOption>
@@ -392,7 +394,7 @@
 			<SearchIcon class="size-3.5 text-muted-foreground" />
 			<input
 				type="text"
-				placeholder={t('Cari nama desa, komoditas, atau BUMDes...')}
+				aria-label={t('Cari desa')} placeholder={t('Cari nama desa, komoditas, atau BUMDes...')}
 				bind:value={query}
 				class="w-48 bg-transparent text-xs outline-none sm:w-64"
 			/>

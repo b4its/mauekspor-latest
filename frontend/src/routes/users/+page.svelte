@@ -128,6 +128,7 @@
 		<Input
 			bind:value={query}
 			type="search"
+			aria-label={t('Search email or name...')}
 			placeholder={t('Search email or name...')}
 			class="max-w-xs"
 			oninput={() => (page = 1)}

@@ -165,7 +165,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trType(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Cari laporan, pemilik, jenis...')} class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Cari laporan, pemilik, jenis...')} placeholder={t('Cari laporan, pemilik, jenis...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	{#if reports.loading}

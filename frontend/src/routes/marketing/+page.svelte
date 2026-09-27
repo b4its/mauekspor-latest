@@ -186,6 +186,7 @@
 					<Input placeholder={t('Cari produk...')} bind:value={search} class="w-56" />
 					<select
 						class="h-10 rounded-md border bg-background px-3 text-sm"
+						aria-label={t('Filter kategori')}
 						bind:value={category}
 					>
 						{#each categories as c}

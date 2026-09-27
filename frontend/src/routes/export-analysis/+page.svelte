@@ -174,6 +174,7 @@
 			<Input
 				bind:value={query}
 				type="search"
+			aria-label={t('Cari produk, tujuan, HS...')}
 				placeholder={t('Cari produk, tujuan, HS...')}
 				class="max-w-xs"
 			/>

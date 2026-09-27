@@ -49,7 +49,8 @@
 			</CardDescription>
 		</CardHeader>
 		<div class="mt-6 flex flex-wrap items-center gap-2">
-			<Input bind:value={query} type="search" placeholder={t('Cari judul atau deskripsi...')} class="w-[min(320px,100%)]" />
+			<Input bind:value={query} type="search"
+			aria-label={t('Cari judul atau deskripsi...')} placeholder={t('Cari judul atau deskripsi...')} class="w-[min(320px,100%)]" />
 			<Input bind:value={tag} placeholder={t('Filter tag...')} class="w-[min(200px,100%)]" />
 			<Button variant="outline" onclick={load} disabled={loading}>{loading ? t('Memuat...') : t('Cari')}</Button>
 		</div>

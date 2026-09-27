@@ -64,6 +64,7 @@
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<Input
 			type="search"
+			aria-label={t('Cari kode atau deskripsi...')}
 			placeholder={t('Cari kode atau deskripsi...')}
 			value={query}
 			oninput={(e) => onSearch((e.currentTarget as HTMLInputElement).value)}

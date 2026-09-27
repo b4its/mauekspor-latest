@@ -216,7 +216,7 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder="Search document, owner, project..." class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search" aria-label={t('Cari dokumen, pemilik, proyek...')} placeholder={t('Cari dokumen, pemilik, proyek...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

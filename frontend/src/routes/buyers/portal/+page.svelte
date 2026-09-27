@@ -155,7 +155,8 @@
 						{/each}
 					</NativeSelect>
 				</div>
-				<Input bind:value={query} type="search" placeholder={t('Cari katalog, produk, pasar...')} class="max-w-xs" />
+				<Input bind:value={query} type="search"
+			aria-label={t('Cari katalog, produk, pasar...')} placeholder={t('Cari katalog, produk, pasar...')} class="max-w-xs" />
 				{#if effectiveCountry}
 					<Badge variant="outline" class="text-sm">
 						{flagEmoji(effectiveCode)} {t('Negara asal terdeteksi')}: {effectiveCountry}

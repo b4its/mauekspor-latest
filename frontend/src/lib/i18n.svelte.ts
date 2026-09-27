@@ -2752,7 +2752,27 @@ const dictionary: Record<string, Entry> = {
 	'Operasional': { id: 'Operasional', en: 'Operations' },
 	'Penjualan': { id: 'Penjualan', en: 'Sales' },
 	'Bea Cukai': { id: 'Bea Cukai', en: 'Customs Broker' },
-	'Kepala Desa': { id: 'Kepala Desa', en: 'Village Head' }
+	'Kepala Desa': { id: 'Kepala Desa', en: 'Village Head' },
+	'Cari dokumen, pemilik, proyek...': { id: 'Cari dokumen, pemilik, proyek...', en: 'Search document, owner, project...' },
+	'Negara tujuan rekomendasi': { id: 'Negara tujuan rekomendasi', en: 'Recommendation destination country' },
+	'Filter kategori': { id: 'Filter kategori', en: 'Filter category' },
+	'Filter kawasan': { id: 'Filter kawasan', en: 'Filter region' },
+	'Peran undangan': { id: 'Peran undangan', en: 'Invitation role' },
+	'Ubah peran anggota': { id: 'Ubah peran anggota', en: 'Change member role' },
+	'Filter provinsi': { id: 'Filter provinsi', en: 'Filter province' },
+	'Filter kelompok komoditas': { id: 'Filter kelompok komoditas', en: 'Filter commodity group' },
+	'Baris per halaman': { id: 'Baris per halaman', en: 'Rows per page' },
+	'Filter aksi audit': { id: 'Filter aksi audit', en: 'Filter audit action' },
+	'Pilih skenario': { id: 'Pilih skenario', en: 'Select scenario' },
+	'Tulis pesan untuk asisten AI': { id: 'Tulis pesan untuk asisten AI', en: 'Write a message for the AI assistant' },
+	'Cari profil': { id: 'Cari profil', en: 'Search profile' },
+	'Cari sesi': { id: 'Cari sesi', en: 'Search session' },
+	'Cari negara': { id: 'Cari negara', en: 'Search country' },
+	'Cari desa': { id: 'Cari desa', en: 'Search village' },
+	'Cari nama tabel': { id: 'Cari nama tabel', en: 'Search table name' },
+	'Cari data di tabel ini': { id: 'Cari data di tabel ini', en: 'Search data in this table' },
+	'Cari audit log': { id: 'Cari audit log', en: 'Search audit log' },
+	'Pilih': { id: 'Pilih', en: 'Select' }
 };
 
 let initial: Locale = 'id';

@@ -113,7 +113,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<div class="flex flex-wrap items-end gap-3">
 				<div class="grid gap-1.5">
 					<span class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Rekomendasi Forwarder')}</span>
-					<select class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={recDest}>
+					<select class="h-10 rounded-md border bg-background px-3 text-sm" aria-label={t('Negara tujuan rekomendasi')} bind:value={recDest}>
 						{#each DEST_OPTIONS as opt}
 							<option value={opt.code}>{opt.name} ({opt.code})</option>
 						{/each}
@@ -162,7 +162,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Search forwarder, lane, coverage...')} class="max-w-xs" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Search forwarder, lane, coverage...')} placeholder={t('Search forwarder, lane, coverage...')} class="max-w-xs" />
 	</div>
 
 	{#if forwarders.error}

@@ -133,7 +133,8 @@ import { page } from '$app/state';
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Search subject, destination, product...')} class="max-w-xs" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Search subject, destination, product...')} placeholder={t('Search subject, destination, product...')} class="max-w-xs" />
 	</div>
 
 	{#if requests.error}

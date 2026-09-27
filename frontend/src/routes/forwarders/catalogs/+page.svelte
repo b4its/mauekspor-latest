@@ -50,7 +50,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	<div class="flex flex-wrap items-center justify-end gap-3">
-		<Input bind:value={query} type="search" placeholder={t('Cari katalog yang diterbitkan...')} class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Cari katalog yang diterbitkan...')} placeholder={t('Cari katalog yang diterbitkan...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

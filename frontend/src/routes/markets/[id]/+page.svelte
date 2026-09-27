@@ -206,7 +206,7 @@
 					<CardDescription>{data.market.entryStrategy ?? '—'}</CardDescription>
 				</div>
 				<div class="flex flex-wrap items-center gap-2.5">
-					<NativeSelect bind:value={selectedScenario} class="w-40">
+					<NativeSelect bind:value={selectedScenario} aria-label={t('Pilih skenario')} class="w-40">
 						{#each scenarios as scenario}
 							<option value={scenario}>{trScenario(scenario)}</option>
 						{/each}

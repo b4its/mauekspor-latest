@@ -119,7 +119,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				</CardDescription>
 			</div>
 			<div class="grid gap-2">
-				<Input bind:value={search} type="search" placeholder={t('Search buyer, product, country...')} class="min-w-[min(380px,100%)]" />
+				<Input bind:value={search} type="search"
+			aria-label={t('Search buyer, product, country...')} placeholder={t('Search buyer, product, country...')} class="min-w-[min(380px,100%)]" />
 				<Button variant="outline" class="w-fit" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create project')}</Button>
 			</div>
 		</CardHeader>

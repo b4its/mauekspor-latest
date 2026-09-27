@@ -186,7 +186,7 @@
 						<SearchIcon class="size-4 shrink-0 text-muted-foreground" />
 						<input
 							type="text"
-							placeholder={t('Cari profil...')}
+							aria-label={t('Cari profil')} placeholder={t('Cari profil...')}
 							bind:value={searchQuery}
 							class="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
 						/>

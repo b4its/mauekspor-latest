@@ -176,7 +176,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Search buyer, country, segment...')} class="max-w-xs" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Search buyer, country, segment...')} placeholder={t('Search buyer, country, segment...')} class="max-w-xs" />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

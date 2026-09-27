@@ -1050,7 +1050,7 @@
 							<SearchIcon class="size-3.5 text-muted-foreground" />
 							<input
 								type="text"
-								placeholder={t('Cari nama tabel...')}
+								aria-label={t('Cari nama tabel')} placeholder={t('Cari nama tabel...')}
 								bind:value={tableSearch}
 								class="w-40 bg-transparent text-xs outline-none sm:w-56"
 							/>
@@ -1105,7 +1105,7 @@
 									<SearchIcon class="size-3.5 text-muted-foreground" />
 									<input
 										type="text"
-										placeholder={t('Cari data di tabel ini...')}
+										aria-label={t('Cari data di tabel ini')} placeholder={t('Cari data di tabel ini...')}
 										bind:value={search}
 										oninput={() => (page = 1)}
 										class="w-32 bg-transparent text-xs outline-none sm:w-44"
@@ -1120,6 +1120,7 @@
 								<div class="flex items-center gap-1 text-xs text-muted-foreground">
 									<span>{t('Baris per halaman:')}</span>
 									<NativeSelect
+										aria-label={t('Baris per halaman')}
 										value={String(pageSize)}
 										onchange={(e) => {
 											pageSize = Number((e.target as HTMLSelectElement).value);
@@ -1388,7 +1389,7 @@
 							<SearchIcon class="size-3.5 text-muted-foreground" />
 							<input
 								type="text"
-								placeholder={t('Cari audit log...')}
+								aria-label={t('Cari audit log')} placeholder={t('Cari audit log...')}
 								bind:value={auditSearch}
 								class="w-32 bg-transparent text-xs outline-none sm:w-44"
 							/>
@@ -1400,6 +1401,7 @@
 						</div>
 
 						<NativeSelect
+							aria-label={t('Filter aksi audit')}
 							value={auditActionFilter}
 							onchange={(e) => {
 								auditActionFilter = (e.target as HTMLSelectElement).value;

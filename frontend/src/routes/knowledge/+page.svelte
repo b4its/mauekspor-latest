@@ -234,7 +234,8 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search" placeholder={t('Search article, step, category...')} class="w-[min(390px,100%)]" />
+		<Input bind:value={query} type="search"
+			aria-label={t('Search article, step, category...')} placeholder={t('Search article, step, category...')} class="w-[min(390px,100%)]" />
 	</div>
 
 	{#if articles.loading}

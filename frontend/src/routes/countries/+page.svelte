@@ -110,12 +110,12 @@
 				<SearchIcon class="size-4 text-muted-foreground" />
 				<input
 					type="text"
-					placeholder={t('Cari negara atau kode ISO...')}
+					aria-label={t('Cari negara')} placeholder={t('Cari negara atau kode ISO...')}
 					bind:value={search}
 					class="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
 				/>
 			</div>
-			<select bind:value={region} class="h-10 rounded-lg border border-border bg-white px-3 text-sm dark:bg-[#0a1730]">
+			<select bind:value={region} aria-label={t('Filter kawasan')} class="h-10 rounded-lg border border-border bg-white px-3 text-sm dark:bg-[#0a1730]">
 				<option value="">{t('Semua region')}</option>
 				{#each allRegions as r}
 					<option value={r}>{r}</option>

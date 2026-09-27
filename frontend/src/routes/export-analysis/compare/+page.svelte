@@ -312,7 +312,7 @@
 							<input
 								type="text"
 								bind:value={countrySearch}
-								placeholder={t('Cari nama atau kode negara...')}
+								aria-label={t('Cari negara')} placeholder={t('Cari nama atau kode negara...')}
 								class="h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-xs placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
 							/>
 						</div>
