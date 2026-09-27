@@ -10,6 +10,7 @@
 	
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { createTradeProject } from '$lib/api/trade-projects';
+	import { formatCurrencyAs } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
 	const projectTypes = ['Exporter-led', 'Buyer RFQ', 'Forwarder-supported'];
@@ -124,7 +125,7 @@
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Produk')}<strong class="mt-1 block text-sm font-bold text-foreground">{product || '-'}</strong></div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Pembeli')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyer || '-'}</strong></div>
 					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{incoterm || '-'}</strong></div>
-					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Target')}<strong class="mt-1 block text-sm font-bold text-foreground">{targetValue ? `$${Number(targetValue).toLocaleString('en-US')}` : '-'}</strong></div>
+					<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Target')}<strong class="mt-1 block text-sm font-bold text-foreground">{targetValue ? formatCurrencyAs(Number(targetValue), 'USD') : '-'}</strong></div>
 				</div>
 			</Card>
 		</div>

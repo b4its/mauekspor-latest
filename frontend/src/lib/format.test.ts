@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currency, formatCurrency, setDisplayCurrency, statusTone, taskSummary } from './utils/format';
+import { currency, formatCurrency, formatNumber, setDisplayCurrency, statusTone, taskSummary } from './utils/format';
 import type { ComplianceTask } from './data/trade';
 
 describe('currency formatter', () => {
@@ -24,6 +24,14 @@ describe('currency formatter', () => {
 	it('formatCurrency helper bekerja', () => {
 		setDisplayCurrency('IDR');
 		expect(formatCurrency(50000)).toMatch(/Rp.*50.*000/);
+	});
+
+	it('formatNumber memakai pemisah ribuan sesuai locale', () => {
+		setDisplayCurrency('IDR');
+		expect(formatNumber(1234567)).toBe('1.234.567');
+		setDisplayCurrency('USD');
+		expect(formatNumber(1234567)).toBe('1,234,567');
+		setDisplayCurrency('IDR'); // reset
 	});
 
 	it('getDisplayCurrency return code aktif', () => {

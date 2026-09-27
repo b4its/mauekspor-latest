@@ -311,17 +311,17 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 
 				<!-- Mobile/Tablet (<lg): hamburger menu -->
 				<div class="flex items-center lg:hidden">
-					<Button variant="ghost" size="sm" onclick={() => (commandOpen = true)} class="h-8 w-8 p-0" title={t('Search')}>
+					<Button variant="ghost" size="sm" onclick={() => (commandOpen = true)} class="h-8 w-8 p-0" title={t('Search')} aria-label={t('Search')}>
 						<SearchIcon class="size-4" />
 					</Button>
-					<Button href="/notifications" variant="ghost" size="sm" class="relative h-8 w-8 p-0" title={t('Notifications')}>
+					<Button href="/notifications" variant="ghost" size="sm" class="relative h-8 w-8 p-0" title={t('Notifications')} aria-label={unreadCount > 0 ? `${t('Notifications')} (${unreadCount} ${t('belum dibaca')})` : t('Notifications')}>
 						<BellIcon class="size-4" />
 						{#if unreadCount > 0}
 							<span class="absolute -right-0.5 -top-0.5 rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">{unreadCount}</span>
 						{/if}
 					</Button>
 					<DropdownMenu.Root>
-						<DropdownMenu.Trigger class="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" title={t('Menu')}>
+						<DropdownMenu.Trigger class="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" title={t('Menu')} aria-label={t('Menu')}>
 							<MenuIcon class="size-4" />
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end" class="w-56">

@@ -49,6 +49,18 @@ export const currency = {
 	format: formatCurrency,
 };
 
+/** Format jumlah angka dengan pemisah ribuan sesuai locale aktif. */
+const _numberLocaleMap: Record<string, string> = {
+	IDR: 'id-ID', USD: 'en-US', EUR: 'de-DE', JPY: 'ja-JP', GBP: 'en-GB',
+	SGD: 'en-SG', AUD: 'en-AU', CNY: 'zh-CN', KRW: 'ko-KR', MYR: 'ms-MY',
+	THB: 'th-TH', AED: 'ar-AE', SAR: 'ar-SA'
+};
+
+export function formatNumber(value: number): string {
+	const locale = _numberLocaleMap[_displayCurrency] ?? 'id-ID';
+	return new Intl.NumberFormat(locale).format(value);
+}
+
 // ─── Status tone ─────────────────────────────────────────────────────────────
 export function statusTone(status: TaskStatus | RiskLevel | DocumentItem['status'] | string) {
 	if (['Verified', 'Ready', 'Approved', 'Passed', 'Done', 'Delivered', 'Low', 'Enriched', 'Qualified', 'Active', 'Settled', 'Deposit Paid', 'Info', 'Read', 'Connected', 'Resolved', 'Complete', 'Published', 'Matched'].includes(status)) return 'green';

@@ -25,6 +25,7 @@
 		type AiTestResult
 	} from '$lib/api/admin';
 	import { t } from '$lib/i18n.svelte';
+	import { formatNumber } from '$lib/utils/format';
 	import { getStatus, getUser } from '$lib/stores/session.svelte';
 
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
@@ -693,7 +694,7 @@
 					<AlertCircleIcon class="size-4" />
 					<span>{error}</span>
 				</div>
-				<button onclick={() => (error = '')} class="text-destructive hover:opacity-80"><XIcon class="size-4" /></button>
+				<button onclick={() => (error = '')} class="text-destructive hover:opacity-80" aria-label={t('Tutup pesan error')}><XIcon class="size-4" /></button>
 			</div>
 		{/if}
 
@@ -703,13 +704,17 @@
 					<CheckCircle2Icon class="size-4" />
 					<span>{successMessage}</span>
 				</div>
-				<button onclick={() => (successMessage = '')} class="hover:opacity-80"><XIcon class="size-4" /></button>
+				<button onclick={() => (successMessage = '')} class="hover:opacity-80" aria-label={t('Tutup pesan sukses')}><XIcon class="size-4" /></button>
 			</div>
 		{/if}
 
 		<!-- Navigation Tabs -->
-		<div class="mb-6 flex flex-wrap items-center gap-2 border-b pb-3">
+		<div class="mb-6 flex flex-wrap items-center gap-2 border-b pb-3" role="tablist" aria-label={t('Tab admin')}>
 			<button
+				id="admin-tab-dashboard"
+				role="tab"
+				aria-selected={activeTab === 'dashboard'}
+				aria-controls="admin-panel-dashboard"
 				onclick={() => switchTab('dashboard')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'dashboard' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
@@ -718,6 +723,10 @@
 			</button>
 
 			<button
+				id="admin-tab-crud"
+				role="tab"
+				aria-selected={activeTab === 'crud'}
+				aria-controls="admin-panel-crud"
 				onclick={() => switchTab('crud')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'crud' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
@@ -729,6 +738,10 @@
 			</button>
 
 			<button
+				id="admin-tab-diagnostics"
+				role="tab"
+				aria-selected={activeTab === 'diagnostics'}
+				aria-controls="admin-panel-diagnostics"
 				onclick={() => switchTab('diagnostics')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'diagnostics' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
@@ -737,6 +750,10 @@
 			</button>
 
 			<button
+				id="admin-tab-audit"
+				role="tab"
+				aria-selected={activeTab === 'audit'}
+				aria-controls="admin-panel-audit"
 				onclick={() => switchTab('audit')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'audit' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
@@ -749,7 +766,7 @@
 		<!-- TAB 1: EXECUTIVE DASHBOARD                                           -->
 		<!-- ==================================================================== -->
 		{#if activeTab === 'dashboard'}
-			<div class="space-y-6">
+			<div id="admin-panel-dashboard" role="tabpanel" aria-labelledby="admin-tab-dashboard" tabindex="0" class="space-y-6">
 				<!-- High Level KPI Cards -->
 				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					<Card>
@@ -761,7 +778,7 @@
 								</div>
 							</div>
 							<div class="mt-3">
-								<h3 class="text-2xl font-bold tracking-tight text-foreground">{totalRecordsCount.toLocaleString()}</h3>
+								<h3 class="text-2xl font-bold tracking-tight text-foreground">{formatNumber(totalRecordsCount)}</h3>
 								<p class="mt-1 text-xs text-muted-foreground">{t('Di seluruh tabel database')}</p>
 							</div>
 						</CardContent>
@@ -906,7 +923,7 @@
 								</div>
 								<div class="rounded-lg border bg-muted/30 p-3">
 									<p class="text-xs font-semibold text-muted-foreground">{t('Total Baris Data')}</p>
-									<p class="mt-1 text-base font-bold text-foreground">{totalRecordsCount.toLocaleString()} {t('record')}</p>
+									<p class="mt-1 text-base font-bold text-foreground">{formatNumber(totalRecordsCount)} {t('record')}</p>
 								</div>
 							</div>
 							<div class="mt-4 flex items-center justify-between border-t pt-3">
@@ -1002,7 +1019,7 @@
 		<!-- TAB 2: DATABASE CRUD STUDIO                                          -->
 		<!-- ==================================================================== -->
 		{#if activeTab === 'crud'}
-			<div class="space-y-4">
+			<div id="admin-panel-crud" role="tabpanel" aria-labelledby="admin-tab-crud" tabindex="0" class="space-y-4">
 				<!-- Category Filter Pills -->
 				<div class="flex flex-wrap items-center gap-1.5 rounded-xl border bg-card p-2 shadow-sm">
 					{#each TABLE_CATEGORIES as cat}
@@ -1038,7 +1055,7 @@
 								class="w-40 bg-transparent text-xs outline-none sm:w-56"
 							/>
 							{#if tableSearch}
-								<button onclick={() => (tableSearch = '')} class="text-muted-foreground hover:text-foreground">
+								<button onclick={() => (tableSearch = '')} class="text-muted-foreground hover:text-foreground" aria-label={t('Bersihkan pencarian tabel')}>
 									<XIcon class="size-3" />
 								</button>
 							{/if}
@@ -1094,7 +1111,7 @@
 										class="w-32 bg-transparent text-xs outline-none sm:w-44"
 									/>
 									{#if search}
-										<button onclick={() => { search = ''; page = 1; }} class="text-muted-foreground hover:text-foreground">
+										<button onclick={() => { search = ''; page = 1; }} class="text-muted-foreground hover:text-foreground" aria-label={t('Bersihkan pencarian data')}>
 											<XIcon class="size-3" />
 										</button>
 									{/if}
@@ -1225,7 +1242,7 @@
 		<!-- TAB 3: DIAGNOSTICS & SYSTEM STATUS                                   -->
 		<!-- ==================================================================== -->
 		{#if activeTab === 'diagnostics'}
-			<div class="space-y-6">
+			<div id="admin-panel-diagnostics" role="tabpanel" aria-labelledby="admin-tab-diagnostics" tabindex="0" class="space-y-6">
 				<div class="grid gap-6 lg:grid-cols-2">
 					<!-- AI Copilot Diagnostic Card -->
 					<Card>
@@ -1335,7 +1352,7 @@
 								</div>
 								<div class="flex items-center justify-between border-b pb-2 text-xs">
 									<span class="text-muted-foreground">{t('Total Baris Data')}</span>
-									<span class="font-semibold text-foreground">{totalRecordsCount.toLocaleString()}</span>
+									<span class="font-semibold text-foreground">{formatNumber(totalRecordsCount)}</span>
 								</div>
 							</div>
 
@@ -1359,7 +1376,7 @@
 		<!-- TAB 4: AUDIT ACTIVITY LOG                                            -->
 		<!-- ==================================================================== -->
 		{#if activeTab === 'audit'}
-			<Card>
+			<Card id="admin-panel-audit" role="tabpanel" aria-labelledby="admin-tab-audit" tabindex={0}>
 				<CardHeader class="flex-row flex-wrap items-center justify-between gap-3 p-4">
 					<div>
 						<CardTitle class="text-base font-semibold">{t('Log Aktivitas Audit')}</CardTitle>
@@ -1376,7 +1393,7 @@
 								class="w-32 bg-transparent text-xs outline-none sm:w-44"
 							/>
 							{#if auditSearch}
-								<button onclick={() => (auditSearch = '')} class="text-muted-foreground hover:text-foreground">
+								<button onclick={() => (auditSearch = '')} class="text-muted-foreground hover:text-foreground" aria-label={t('Bersihkan pencarian audit')}>
 									<XIcon class="size-3" />
 								</button>
 							{/if}

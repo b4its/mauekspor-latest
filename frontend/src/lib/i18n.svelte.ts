@@ -2683,7 +2683,14 @@ const dictionary: Record<string, Entry> = {
 	'Report': { id: 'Laporan', en: 'Report' },
 	'Buyer Request': { id: 'Permintaan Pembeli', en: 'Buyer Request' },
 	'Trade Project': { id: 'Proyek Dagang', en: 'Trade Project' },
-	'Edit costing': { id: 'Ubah costing', en: 'Edit costing' }
+	'Edit costing': { id: 'Ubah costing', en: 'Edit costing' },
+	'Tab admin': { id: 'Tab admin', en: 'Admin tabs' },
+	'belum dibaca': { id: 'belum dibaca', en: 'unread' },
+	'Tutup pesan error': { id: 'Tutup pesan error', en: 'Dismiss error message' },
+	'Tutup pesan sukses': { id: 'Tutup pesan sukses', en: 'Dismiss success message' },
+	'Bersihkan pencarian tabel': { id: 'Bersihkan pencarian tabel', en: 'Clear table search' },
+	'Bersihkan pencarian data': { id: 'Bersihkan pencarian data', en: 'Clear record search' },
+	'Bersihkan pencarian audit': { id: 'Bersihkan pencarian audit', en: 'Clear audit search' }
 };
 
 let initial: Locale = 'id';
