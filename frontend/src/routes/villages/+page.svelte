@@ -111,6 +111,8 @@
 	let fProduction = $state('');
 	let fOrganization = $state('');
 	let fReadiness = $state(75);
+	let fLat = $state('');
+	let fLng = $state('');
 
 	let deleteOpen = $state(false);
 	let deleteTarget = $state<Village | null>(null);
@@ -158,6 +160,8 @@
 		fProduction = '';
 		fOrganization = '';
 		fReadiness = 75;
+		fLat = '';
+		fLng = '';
 		error = '';
 		formOpen = true;
 	}
@@ -173,6 +177,8 @@
 		fProduction = v.production;
 		fOrganization = v.organization;
 		fReadiness = v.readiness ?? 75;
+		fLat = v.lat != null ? String(v.lat) : '';
+		fLng = v.lng != null ? String(v.lng) : '';
 		error = '';
 		formOpen = true;
 	}
@@ -195,6 +201,12 @@
 				organization: fOrganization.trim(),
 				readiness: Number(fReadiness)
 			};
+			// Koordinat opsional: hanya dikirim bila diisi & valid, agar peta
+			// potensi desa ikut memperbarui titiknya.
+			const lat = Number(fLat);
+			const lng = Number(fLng);
+			if (fLat.trim() !== '' && Number.isFinite(lat) && Math.abs(lat) <= 90) payload.lat = lat;
+			if (fLng.trim() !== '' && Number.isFinite(lng) && Math.abs(lng) <= 180) payload.lng = lng;
 
 			if (isEdit && editingId) {
 				const res = await updateVillage(editingId, payload);
@@ -567,6 +579,20 @@
 					<label for="village-readiness" class="mb-1 block font-semibold text-foreground">{t('Nilai Kesiapan Ekspor (0-100)')}</label>
 					<Input id="village-readiness" type="number" min="0" max="100" bind:value={fReadiness} class="text-xs" />
 				</div>
+
+				<div class="grid grid-cols-2 gap-3">
+					<div>
+						<label for="village-lat" class="mb-1 block font-semibold text-foreground">{t('Latitude (peta)')}</label>
+						<Input id="village-lat" type="number" step="0.0001" min="-90" max="90" bind:value={fLat} placeholder="-6.2000" class="text-xs" />
+					</div>
+					<div>
+						<label for="village-lng" class="mb-1 block font-semibold text-foreground">{t('Longitude (peta)')}</label>
+						<Input id="village-lng" type="number" step="0.0001" min="-180" max="180" bind:value={fLng} placeholder="106.8000" class="text-xs" />
+					</div>
+				</div>
+				<p class="text-xs text-muted-foreground">
+					{t('Koordinat opsional. Isi agar desa muncul di peta potensi desa pada dasbor.')}
+				</p>
 			</div>
 
 			<Dialog.Footer>

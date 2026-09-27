@@ -11,6 +11,9 @@ export type Village = {
 	organization: string;
 	readiness: number;
 	status: 'Siap Ekspor' | 'Butuh Pendampingan' | string;
+	/** Koordinat opsional untuk peta potensi desa. */
+	lat?: number;
+	lng?: number;
 	createdAt?: string;
 	products?: Array<Record<string, unknown>>;
 };
@@ -46,4 +49,21 @@ export function deleteVillage(villageId: string) {
 	return apiFetch<{ status: string; id: string }>(`/villages/${villageId}/`, {
 		method: 'DELETE'
 	});
+}
+
+export type VillageMapPoint = {
+	id: string;
+	name: string;
+	region: string;
+	commodity: string;
+	production: string;
+	readiness: number;
+	status: string;
+	lat: number;
+	lng: number;
+};
+
+/** Titik peta desa (hanya desa berkoordinat) untuk komponen peta potensi. */
+export function getVillageMapPoints() {
+	return apiFetch<VillageMapPoint[]>('/villages/map/');
 }

@@ -2703,7 +2703,20 @@ const dictionary: Record<string, Entry> = {
 	'Belum ada sinyal buyer.': { id: 'Belum ada sinyal buyer.', en: 'No buyer signals yet.' },
 	'Belum ada produk diminati.': { id: 'Belum ada produk diminati.', en: 'No interested products yet.' },
 	'Belum ada catatan akun.': { id: 'Belum ada catatan akun.', en: 'No account notes yet.' },
-	'Belum ada proyek tertaut.': { id: 'Belum ada proyek tertaut.', en: 'No linked projects yet.' }
+	'Belum ada proyek tertaut.': { id: 'Belum ada proyek tertaut.', en: 'No linked projects yet.' },
+	'Komoditas Unggulan Desa': { id: 'Komoditas Unggulan Desa', en: 'Village Flagship Commodities' },
+	'Peta Sebaran Desa': { id: 'Peta Sebaran Desa', en: 'Village Distribution Map' },
+	'Lokasi desa mitra di seluruh Indonesia, diambil dari data potensi desa.': { id: 'Lokasi desa mitra di seluruh Indonesia, diambil dari data potensi desa.', en: 'Locations of partner villages across Indonesia, sourced from village potential data.' },
+	'Menampilkan data contoh (API desa tidak terjangkau).': { id: 'Menampilkan data contoh (API desa tidak terjangkau).', en: 'Showing sample data (village API unreachable).' },
+	'Memuat peta...': { id: 'Memuat peta...', en: 'Loading map...' },
+	'Daftar Desa Mitra': { id: 'Daftar Desa Mitra', en: 'Partner Village List' },
+	'Lihat di peta:': { id: 'Lihat di peta:', en: 'View on map:' },
+	'Memuat data desa...': { id: 'Memuat data desa...', en: 'Loading village data...' },
+	'Belum ada desa dengan koordinat peta.': { id: 'Belum ada desa dengan koordinat peta.', en: 'No villages with map coordinates yet.' },
+	'Klik nama desa untuk zoom ke lokasi di peta, atau klik pin untuk detail.': { id: 'Klik nama desa untuk zoom ke lokasi di peta, atau klik pin untuk detail.', en: 'Click a village name to zoom to its location, or click a pin for details.' },
+	'Latitude (peta)': { id: 'Latitude (peta)', en: 'Latitude (map)' },
+	'Longitude (peta)': { id: 'Longitude (peta)', en: 'Longitude (map)' },
+	'Koordinat opsional. Isi agar desa muncul di peta potensi desa pada dasbor.': { id: 'Koordinat opsional. Isi agar desa muncul di peta potensi desa pada dasbor.', en: 'Coordinates are optional. Fill them in so the village appears on the village potential map on the dashboard.' }
 };
 
 let initial: Locale = 'id';

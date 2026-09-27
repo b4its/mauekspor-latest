@@ -4,29 +4,32 @@
 	import SproutIcon from '@lucide/svelte/icons/sprout';
 	import { t } from '$lib/i18n.svelte';
 	import { onMount, onDestroy } from 'svelte';
-	
+	import { getVillageMapPoints } from '$lib/api/villages';
+
 	// Import Leaflet CSS
 	import 'leaflet/dist/leaflet.css';
-	
+
 	let mapContainer: HTMLDivElement | null = null;
 	let mapInstance: any = null;
 	let markers: Array<any> = [];
 	let isLoading = $state(true);
+	let loadFailed = $state(false);
 
-	type VillagePotensi = {
+	type VillagePoint = {
 		id: string;
 		name: string;
 		commodity: string;
 		region: string;
 		production: string;
 		readiness: number;
-		status: 'Siap Ekspor' | 'Butuh Pendampingan';
+		status: 'Siap Ekspor' | 'Butuh Pendampingan' | string;
 		lat: number;
 		lng: number;
 	};
 
-	// Koordinat Indonesia + posisi 9 desa (real GPS coordinates)
-	const villages: VillagePotensi[] = [
+	// Fallback offline: dipakai hanya bila API desa tidak dapat dijangkau,
+	// agar peta tidak kosong. Sumber utama tetap tabel `villages`.
+	const seedPoints: VillagePoint[] = [
 		{ id: 'DES-GAYO', name: 'Desa Kopi Gayo', commodity: 'Kopi Arabika', region: 'Aceh Tengah, Aceh', production: '8 ton / bulan', readiness: 86, status: 'Siap Ekspor', lat: 4.5074, lng: 96.8557 },
 		{ id: 'DES-VANILI-BALI', name: 'Desa Vanili Bali', commodity: 'Vanili Planifolia', region: 'Tabanan, Bali', production: '50 kg / bulan', readiness: 77, status: 'Butuh Pendampingan', lat: -8.5955, lng: 115.1121 },
 		{ id: 'DES-SITUBONDO', name: 'Desa Manggis Situbondo', commodity: 'Manggis Premium', region: 'Situbondo, Jawa Timur', production: '600 kg / musim', readiness: 68, status: 'Butuh Pendampingan', lat: -7.4091, lng: 114.1161 },
@@ -38,11 +41,29 @@
 		{ id: 'DES-KERINCI', name: 'Desa Kayu Manis Kerinci', commodity: 'Kayu Manis (Kassia)', region: 'Kerinci, Jambi', production: '1 ton bale / bulan', readiness: 74, status: 'Butuh Pendampingan', lat: -1.5786, lng: 101.3261 },
 	];
 
+	// Daftar desa yang ditampilkan: dari API, atau fallback bila gagal.
+	let villages = $state<VillagePoint[]>([]);
+	let dataSource = $state<'api' | 'fallback'>('api');
+
+	async function loadVillages() {
+		try {
+			const res = await getVillageMapPoints();
+			const points = (res.data ?? []) as VillagePoint[];
+			villages = points.length > 0 ? points : seedPoints;
+			dataSource = points.length > 0 ? 'api' : 'fallback';
+		} catch {
+			villages = seedPoints;
+			dataSource = 'fallback';
+			loadFailed = true;
+		}
+	}
+
 	function getStatusColor(status: string): string {
 		return status === 'Siap Ekspor' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white';
 	}
 
 	onMount(async () => {
+		await loadVillages();
 		if (import.meta.env.SSR) return;
 
 		try {
@@ -79,32 +100,74 @@
 				popupAnchor: [0, -12]
 			});
 			
-			// Add markers for each village
-			markers = villages.map(village => {
-				const popupContent = `<div class="p-2" style="min-width:200px;">
-					<h4 class="font-bold text-sm mb-1">${village.name}</h4>
-					<p class="text-xs opacity-75">${village.region.replace(/['\n]/g, '')}</p>
-					<p class="text-xs font-semibold mt-2">${village.commodity}</p>
-					<p class="text-xs opacity-75">Produksi: ${village.production}</p>
-					<span class="inline-block mt-2 px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(village.status)}">${village.status}</span>
+			// Gunakan flag untuk mencegah injeksi HTML dari data backend.
+			const escapeHtml = (value: unknown) =>
+				String(value ?? '').replace(/[&<>"']/g, (ch) =>
+					({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] as string
+				);
+			function renderMarkers() {
+				for (const existing of markers) existing.remove();
+				markers = villages
+					.filter((v) => Number.isFinite(v.lat) && Number.isFinite(v.lng))
+					.map((village) => {
+						const popupContent = `<div class="p-2" style="min-width:200px;">
+					<h4 class="font-bold text-sm mb-1">${escapeHtml(village.name)}</h4>
+					<p class="text-xs opacity-75">${escapeHtml(village.region)}</p>
+					<p class="text-xs font-semibold mt-2">${escapeHtml(village.commodity)}</p>
+					<p class="text-xs opacity-75">Produksi: ${escapeHtml(village.production)}</p>
+					<span class="inline-block mt-2 px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(village.status)}">${escapeHtml(village.status)}</span>
 				</div>`;
-				
-				const marker = L.marker([village.lat, village.lng], { icon: pinIcon })
-					.bindPopup(popupContent)
-					.addTo(mapInstance);
+						return L.marker([village.lat, village.lng], { icon: pinIcon })
+							.bindPopup(popupContent)
+							.addTo(mapInstance);
+					});
+				if (markers.length > 0) {
+					const group = L.featureGroup(markers);
+					mapInstance.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 6 });
+				}
+			}
+			renderMarkers();
 
-				return marker;
-			});
-
-			// Fit bounds to show all villages
-			const group = L.featureGroup(markers);
-			mapInstance.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 6 });
-			
 			isLoading = false;
 			
 		} catch {
 			isLoading = false;
 		}
+	});
+
+	// Muat ulang marker setiap daftar desa berubah (mis. setelah CRUD di halaman desa).
+	$effect(() => {
+		const list = villages;
+		if (!mapInstance || list.length === 0) return;
+		if (typeof window === 'undefined') return;
+		import('leaflet').then((L) => {
+			const escapeHtml = (value: unknown) =>
+				String(value ?? '').replace(/[&<>"']/g, (ch) =>
+					({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] as string
+				);
+			for (const existing of markers) existing.remove();
+			const pinIcon = L.divIcon({
+				className: 'village-marker custom-village-marker',
+				html: '<div class="marker-inner" style="background: linear-gradient(135deg, #1e63d6, #1e40af); width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.4);"></div>',
+				iconSize: [20, 20],
+				iconAnchor: [10, 10],
+				popupAnchor: [0, -12]
+			});
+			markers = list
+				.filter((v) => Number.isFinite(v.lat) && Number.isFinite(v.lng))
+				.map((village) =>
+					L.marker([village.lat, village.lng], { icon: pinIcon })
+						.bindPopup(
+							`<div class="p-2"><h4 class="font-bold text-sm">${escapeHtml(village.name)}</h4>` +
+								`<p class="text-xs opacity-75">${escapeHtml(village.region)}</p>` +
+								`<p class="text-xs font-semibold mt-2">${escapeHtml(village.commodity)}</p></div>`
+						)
+						.addTo(mapInstance)
+				);
+			if (markers.length > 0) {
+				mapInstance.fitBounds(L.featureGroup(markers).getBounds(), { padding: [50, 50], maxZoom: 6 });
+			}
+		});
 	});
 
 	onDestroy(() => {
@@ -120,11 +183,16 @@
 <Card>
 	<CardHeader class="flex-row flex-wrap items-start justify-between gap-3">
 		<div>
-			<Badge variant="secondary" class="gap-1"><SproutIcon class="size-3" />Komoditas Unggulan Desa</Badge>
-			<CardTitle class="mt-2 text-xl font-bold tracking-tight">Peta Sebaran Desa</CardTitle>
-			<CardDescription>Interaktif menunjukkan lokasi 9 desa mitra di seluruh Indonesia.</CardDescription>
+			<Badge variant="secondary" class="gap-1"><SproutIcon class="size-3" />{t('Komoditas Unggulan Desa')}</Badge>
+			<CardTitle class="mt-2 text-xl font-bold tracking-tight">{t('Peta Sebaran Desa')}</CardTitle>
+			<CardDescription>{t('Lokasi desa mitra di seluruh Indonesia, diambil dari data potensi desa.')}</CardDescription>
 		</div>
-		<span class="text-xs font-semibold text-muted-foreground">{villages.length} desa mitra</span>
+		<div class="flex flex-col items-end gap-1">
+			<span class="text-xs font-semibold text-muted-foreground">{villages.length} {t('desa mitra')}</span>
+			{#if dataSource === 'fallback'}
+				<span class="text-[11px] font-medium text-amber-600 dark:text-amber-400">{t('Menampilkan data contoh (API desa tidak terjangkau).')}</span>
+			{/if}
+		</div>
 	</CardHeader>
 	<CardContent class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,350px)]">
 		<!-- Interactive Map with Leaflet -->
@@ -132,15 +200,15 @@
 			<div bind:this={mapContainer} id="village-map-container" class="w-full h-full"></div>
 			
 			{#if isLoading && !import.meta.env.SSR}
-				<div class="absolute inset-0 flex items-center justify-center bg-muted">
-					<p class="text-sm text-muted-foreground">Memuat peta...</p>
+				<div class="absolute inset-0 flex items-center justify-center bg-muted" role="status" aria-live="polite">
+					<p class="text-sm text-muted-foreground">{t('Memuat peta...')}</p>
 				</div>
 			{/if}
 		</div>
 
 		<!-- Village List -->
 		<div class="flex flex-col gap-2">
-			<h3 class="font-bold text-sm">Daftar Desa Mitra</h3>
+			<h3 class="text-sm font-bold">{t('Daftar Desa Mitra')}</h3>
 			{#each villages as village (village.id)}
 				<button
 					type="button"
@@ -154,7 +222,8 @@
 							markers[idx].openPopup();
 						}
 					}}
-					title={`Klik untuk melihat ${village.name} di peta`}
+					title={`${t('Lihat di peta:')} ${village.name}`}
+					aria-label={`${t('Lihat di peta:')} ${village.name}`}
 				>
 					<div class="min-w-0 flex-1">
 						<span class="truncate font-medium">{village.name}</span>
@@ -166,12 +235,14 @@
 				</button>
 			{:else}
 				{#if isLoading}
-					<p class="text-sm text-muted-foreground">Memuat data desa...</p>
+					<p class="text-sm text-muted-foreground">{t('Memuat data desa...')}</p>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada desa dengan koordinat peta.')}</p>
 				{/if}
 			{/each}
-			
-			<p class="text-xs leading-snug text-muted-foreground mt-2">
-				Klik nama desa untuk zoom ke lokasi di peta, atau klik pin untuk detail.
+
+			<p class="mt-2 text-xs leading-snug text-muted-foreground">
+				{t('Klik nama desa untuk zoom ke lokasi di peta, atau klik pin untuk detail.')}
 			</p>
 		</div>
 	</CardContent>

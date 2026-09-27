@@ -4,7 +4,8 @@ import {
 	getVillage,
 	createVillage,
 	updateVillage,
-	deleteVillage
+	deleteVillage,
+	getVillageMapPoints
 } from './villages';
 
 function jsonResponse(status: number, data: unknown) {
@@ -71,5 +72,15 @@ describe('villages API client contract', () => {
 		const init = fetchMock.mock.calls[0][1] as RequestInit;
 		expect(init.method).toBe('DELETE');
 		expect(res.data.status).toBe('deleted');
+	});
+
+	it('getVillageMapPoints -> GET /villages/map/ dengan koordinat', async () => {
+		const fetchMock = mockApi([
+			{ id: 'DES-GAYO', name: 'Desa Kopi Gayo', commodity: 'Kopi', lat: 4.5, lng: 96.8 }
+		]);
+		const res = await getVillageMapPoints();
+		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/villages\/map\/$/);
+		expect(res.data[0].lat).toBe(4.5);
+		expect(res.data[0].commodity).toBe('Kopi');
 	});
 });

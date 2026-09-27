@@ -5419,8 +5419,12 @@ def create_hs_code(payload: sc.CreateHSCodePayload):
 # DESA & KOMODITAS UNGGULAN
 # ----------------------------------------------------------------------------
 @router.get("/villages/")
-def list_villages(search: str = "", province: str = "", readiness: str = ""):
-    """Daftar potensi desa unggulan ekspor beserta komoditas dan tingkat kesiapan."""
+def list_villages(search: str = "", province: str = "", readiness: str = "", with_coords: str = ""):
+    """Daftar potensi desa unggulan ekspor beserta komoditas dan tingkat kesiapan.
+
+    `with_coords=1` menyaring hanya desa yang sudah punya koordinat, sehingga
+    peta potensi desa dapat memakai data nyata dari tabel (bukan hardcode).
+    """
     items = db.all("villages")
     if province:
         items = [v for v in items if v.get("province", "").lower() == province.lower()]
@@ -5429,8 +5433,36 @@ def list_villages(search: str = "", province: str = "", readiness: str = ""):
     if search:
         q = search.lower()
         items = [v for v in items if q in json.dumps(v, ensure_ascii=False).lower()]
+    if with_coords and with_coords.lower() in {"1", "true", "yes"}:
+        items = [v for v in items if v.get("lat") is not None and v.get("lng") is not None]
     return {"data": [_serialize(dict(v)) for v in items], "meta": {"total": len(items)}}
 
+
+@router.get("/villages/map/")
+def village_map_points():
+    """Titik peta desa (nama, komoditas, kesiapan, koordinat) untuk komponen peta.
+
+    Didefinisikan sebelum `/villages/{village_id}/` agar tidak tertutup rute
+    parameter. Hanya desa berkoordinat yang dikembalikan.
+    """
+    points = []
+    for v in db.all("villages"):
+        lat, lng = v.get("lat"), v.get("lng")
+        if lat is None or lng is None:
+            continue
+        points.append({
+            "id": v.get("id"),
+            "name": v.get("name"),
+            "region": v.get("region") or v.get("province", ""),
+            "commodity": v.get("flagshipCommodity", ""),
+            "production": v.get("production", ""),
+            "readiness": v.get("readiness", 0),
+            "status": v.get("status", ""),
+            "lat": float(lat),
+            "lng": float(lng),
+        })
+    points.sort(key=lambda p: str(p.get("name", "")))
+    return {"data": points, "meta": {"total": len(points)}}
 
 @router.get("/villages/{village_id}/")
 def get_village(village_id: str):
@@ -5452,6 +5484,16 @@ def create_village(payload: dict):
         payload["status"] = "Siap Ekspor" if readiness >= 80 else "Butuh Pendampingan"
     if "createdAt" not in payload:
         payload["createdAt"] = "2026-08-01"
+    # Validasi koordinat opsional agar peta tidak menerima titik di luar bumi.
+    for field, bound in (("lat", 90), ("lng", 180)):
+        if payload.get(field) not in (None, ""):
+            try:
+                value = float(payload[field])
+            except (TypeError, ValueError):
+                raise HTTPException(422, f"{field} harus berupa angka")
+            if abs(value) > bound:
+                raise HTTPException(422, f"{field} di luar rentang yang valid")
+            payload[field] = value
     record = db.insert("villages", payload)
     return _one(record)
 
@@ -5461,6 +5503,15 @@ def update_village(village_id: str, payload: dict):
     record = db.get("villages", village_id)
     if not record:
         raise HTTPException(404, "Village not found")
+    for field, bound in (("lat", 90), ("lng", 180)):
+        if field in payload and payload[field] not in (None, ""):
+            try:
+                value = float(payload[field])
+            except (TypeError, ValueError):
+                raise HTTPException(422, f"{field} harus berupa angka")
+            if abs(value) > bound:
+                raise HTTPException(422, f"{field} di luar rentang yang valid")
+            payload[field] = value
     record.update(payload)
     if "readiness" in payload and "status" not in payload:
         readiness = int(record.get("readiness", 70) or 70)
