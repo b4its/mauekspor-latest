@@ -1785,11 +1785,15 @@ def update_forwarder_review(
         raise HTTPException(422, "Rating must be 1-5")
     review["rating"] = payload.rating
     review["reviewText"] = payload.review_text
-    review["updatedAt"] = "now"
+    review["updatedAt"] = datetime.now(timezone.utc).isoformat()
+    # `db.get` mengembalikan dict in-memory hidup; tanpa db.save perubahan
+    # hilang saat restart. Simpan review lebih dulu, lalu hitung ulang rating.
+    db.save(review)
     record = db.get("forwarders", forwarder_id)
     if record:
         from app.services.forwarders import recalculate_rating
         recalculate_rating(record)
+        db.save(record)
     return _one(review)
 
 
@@ -3475,7 +3479,38 @@ def analytics_overview():
 
 @router.post("/analytics/refresh/")
 def analytics_refresh():
-    return {"data": analytics_overview()["data"], "meta": {}}
+    """Hitung ulang metrik analitik dari store saat ini.
+
+    Sebelumnya endpoint ini hanya mengembalikan hasil `analytics_overview()`
+    yang sama dengan GET, sehingga tombol "Refresh" terasa tidak berefek.
+    Sekarang menyertakan ringkasan agregat + stempel waktu agar klien dapat
+    menampilkan bahwa perhitungan benar-benar dijalankan.
+    """
+    projects = db.all("projects")
+    orders = db.all("orders")
+    payments = db.all("payments")
+    shipments = db.all("shipments")
+    pipeline = sum(p.get("value", 0) or 0 for p in projects)
+    booked = sum(o.get("value", 0) or 0 for o in orders)
+    receivable = sum(
+        (p.get("amount", 0) or 0)
+        for p in payments
+        if str(p.get("status", "")).lower() not in {"settled", "paid"}
+    )
+    in_transit = sum(1 for s in shipments if str(s.get("status", "")).lower() == "in transit")
+    return {
+        "data": analytics_overview()["data"],
+        "meta": {
+            "refreshed_at": datetime.now(timezone.utc).isoformat(),
+            "summary": {
+                "projects": len(projects),
+                "pipeline_value": pipeline,
+                "booked_value": booked,
+                "receivable": receivable,
+                "shipments_in_transit": in_transit,
+            },
+        },
+    }
 
 
 @router.get("/analytics/lanes/")
@@ -4908,8 +4943,10 @@ def send_session_message(
         record["messages"].append({"role": "ai", "text": reply})
     if record.get("title") in ("", "Percakapan baru") and payload.text:
         record["title"] = payload.text[:40]
-    record["updatedAt"] = "now"
+    record["updatedAt"] = datetime.now(timezone.utc).isoformat()
     record["messageCount"] = len(record["messages"])
+    # Persist agar riwayat percakapan tidak hilang saat proses restart.
+    db.save(record)
     return {"data": record, "meta": meta}
 
 

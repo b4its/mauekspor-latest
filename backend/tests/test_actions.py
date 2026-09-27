@@ -125,3 +125,55 @@ def test_market_refresh():
             mid = markets[0]["id"]
             ref = c.post(f"/api/v1/markets/{mid}/refresh/", headers=_headers(token))
             assert ref.status_code == 200
+
+
+def test_forwarder_review_update_tersimpan_ke_disk():
+    """Update review harus di-persist, bukan hanya mengubah dict in-memory."""
+    from app import db as _db
+    with TestClient(app) as c:
+        token = _login(c)
+        fid = c.get("/api/v1/forwarders/", headers=_headers(token)).json()["data"][0]["id"]
+        created = c.post(
+            f"/api/v1/forwarders/{fid}/reviews/",
+            json={"rating": 5, "review_text": "awal"},
+            headers=_headers(token),
+        ).json()["data"]
+        rid = created["id"]
+        before = _db.get("forwarder_reviews", rid).get("updatedAt")
+        r = c.put(
+            f"/api/v1/forwarders/{fid}/reviews/{rid}/",
+            json={"rating": 2, "review_text": "diperbarui"},
+            headers=_headers(token),
+        )
+        assert r.status_code == 200, r.text
+        stored = _db.get("forwarder_reviews", rid)
+        assert stored["rating"] == 2 and stored["reviewText"] == "diperbarui"
+        # updatedAt harus berupa timestamp nyata, bukan literal "now"
+        assert stored["updatedAt"] != before
+        assert stored["updatedAt"] != "now"
+
+
+def test_chat_message_tersimpan_ke_disk():
+    """Pesan chat harus di-persist agar riwayat tidak hilang saat restart."""
+    from app import db as _db
+    with TestClient(app) as c:
+        token = _login(c)
+        sid = c.post("/api/v1/chat/sessions/", json={"title": "persist"}, headers=_headers(token)).json()["data"]["id"]
+        r = c.post(f"/api/v1/chat/sessions/{sid}/messages/", json={"text": "halo"}, headers=_headers(token))
+        assert r.status_code == 200, r.text
+        stored = _db.get("chat_sessions", sid)
+        assert len(stored.get("messages", [])) >= 2  # user + ai
+        assert stored.get("messageCount") == len(stored["messages"])
+        assert stored.get("updatedAt") != "now"
+
+
+def test_analytics_refresh_mengembalikan_ringkasan():
+    with TestClient(app) as c:
+        token = _login(c)
+        r = c.post("/api/v1/analytics/refresh/", headers=_headers(token))
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["data"], "metrik kosong"
+        meta = body["meta"]
+        assert "refreshed_at" in meta
+        assert {"projects", "pipeline_value", "booked_value", "receivable", "shipments_in_transit"} <= set(meta["summary"])
