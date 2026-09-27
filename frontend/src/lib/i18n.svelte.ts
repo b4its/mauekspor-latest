@@ -2692,7 +2692,18 @@ const dictionary: Record<string, Entry> = {
 	'Bersihkan pencarian data': { id: 'Bersihkan pencarian data', en: 'Clear record search' },
 	'Bersihkan pencarian audit': { id: 'Bersihkan pencarian audit', en: 'Clear audit search' },
 	'Cari opsi': { id: 'Cari opsi', en: 'Search options' },
-	'Bersihkan pencarian': { id: 'Bersihkan pencarian', en: 'Clear search' }
+	'Bersihkan pencarian': { id: 'Bersihkan pencarian', en: 'Clear search' },
+	'Tutup pesan': { id: 'Tutup pesan', en: 'Dismiss message' },
+	'Hapus sesi': { id: 'Hapus sesi', en: 'Delete session' },
+	'Salin pesan': { id: 'Salin pesan', en: 'Copy message' },
+	'Buka sidebar': { id: 'Buka sidebar', en: 'Open sidebar' },
+	'Tutup sidebar': { id: 'Tutup sidebar', en: 'Close sidebar' },
+	'Buka sesi': { id: 'Buka sesi', en: 'Open sessions' },
+	'Belum ada data.': { id: 'Belum ada data.', en: 'No data yet.' },
+	'Belum ada sinyal buyer.': { id: 'Belum ada sinyal buyer.', en: 'No buyer signals yet.' },
+	'Belum ada produk diminati.': { id: 'Belum ada produk diminati.', en: 'No interested products yet.' },
+	'Belum ada catatan akun.': { id: 'Belum ada catatan akun.', en: 'No account notes yet.' },
+	'Belum ada proyek tertaut.': { id: 'Belum ada proyek tertaut.', en: 'No linked projects yet.' }
 };
 
 let initial: Locale = 'id';

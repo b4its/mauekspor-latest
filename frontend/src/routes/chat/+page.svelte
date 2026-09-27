@@ -250,10 +250,10 @@
 			<div class="flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5">
 				<h3 class="truncate text-sm font-bold">{t('Riwayat Sesi')}</h3>
 				<div class="flex items-center gap-0.5 shrink-0">
-					<Button variant="ghost" size="sm" onclick={newSession} title={t('Sesi baru')} class="h-8 w-8 p-0">
+					<Button variant="ghost" size="sm" onclick={newSession} title={t('Sesi baru')} aria-label={t('Sesi baru')} class="h-8 w-8 p-0">
 						<MessageSquarePlusIcon class="size-4" />
 					</Button>
-					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = false)} class="h-8 w-8 p-0" title={t('Tutup')}>
+					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = false)} class="h-8 w-8 p-0" title={t('Tutup')} aria-label={t('Tutup')}>
 						<ChevronLeftIcon class="size-4" />
 					</Button>
 				</div>
@@ -289,8 +289,8 @@
 										<small class="text-muted-foreground">{session.messageCount ?? session.messages.length} {t('pesan')}</small>
 									</button>
 									<div class="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-										<button class="rounded p-1 text-muted-foreground/50 hover:bg-accent hover:text-foreground" onclick={() => openRename(session)} title={t('Ganti nama')}><PencilIcon class="size-3" /></button>
-										<button class="rounded p-1 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive" onclick={() => openDelete(session)} title={t('Hapus')}><Trash2Icon class="size-3" /></button>
+										<button class="rounded p-1 text-muted-foreground/50 hover:bg-accent hover:text-foreground" onclick={() => openRename(session)} title={t('Ganti nama')} aria-label={t('Ganti nama')}><PencilIcon class="size-3" /></button>
+										<button class="rounded p-1 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive" onclick={() => openDelete(session)} title={t('Hapus')} aria-label={t('Hapus sesi')}><Trash2Icon class="size-3" /></button>
 									</div>
 								</div>
 							{/each}
@@ -306,8 +306,8 @@
 										<small class="text-muted-foreground">{session.messageCount ?? session.messages.length} {t('pesan')}</small>
 									</button>
 									<div class="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-										<button class="rounded p-1 text-muted-foreground/50 hover:bg-accent hover:text-foreground" onclick={() => openRename(session)} title={t('Ganti nama')}><PencilIcon class="size-3" /></button>
-										<button class="rounded p-1 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive" onclick={() => openDelete(session)} title={t('Hapus')}><Trash2Icon class="size-3" /></button>
+										<button class="rounded p-1 text-muted-foreground/50 hover:bg-accent hover:text-foreground" onclick={() => openRename(session)} title={t('Ganti nama')} aria-label={t('Ganti nama')}><PencilIcon class="size-3" /></button>
+										<button class="rounded p-1 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive" onclick={() => openDelete(session)} title={t('Hapus')} aria-label={t('Hapus sesi')}><Trash2Icon class="size-3" /></button>
 									</div>
 								</div>
 							{/each}
@@ -342,6 +342,7 @@
 			style="left: {sidebarOpen ? '288px' : '0'}"
 			onclick={() => (sidebarOpen = !sidebarOpen)}
 			title={sidebarOpen ? t('Tutup sidebar') : t('Buka sidebar')}
+			aria-label={sidebarOpen ? t('Tutup sidebar') : t('Buka sidebar')}
 		>
 			<ChevronLeftIcon class="size-4 transition-transform {sidebarOpen ? '' : 'rotate-180'}" />
 		</button>
@@ -351,7 +352,7 @@
 			<!-- Header -->
 			<div class="flex items-center justify-between gap-3 border-b px-3 py-2.5 md:px-4">
 				<div class="flex items-center gap-2 min-w-0">
-					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = true)} class="-ml-1.5 h-8 w-8 shrink-0 p-0 lg:hidden" title={t('Buka sesi')}>
+					<Button variant="ghost" size="sm" onclick={() => (sidebarOpen = true)} class="-ml-1.5 h-8 w-8 shrink-0 p-0 lg:hidden" title={t('Buka sesi')} aria-label={t('Buka sesi')}>
 						<PanelRightOpenIcon class="size-4" />
 					</Button>
 					<div class="min-w-0">
@@ -361,7 +362,7 @@
 				</div>
 				<div class="flex items-center gap-2 shrink-0">
 					<Badge variant="secondary" class="hidden sm:inline-flex"><BotIcon class="mr-1 size-3" />{t('AI')}</Badge>
-					<Button variant="ghost" size="sm" onclick={newSession} class="h-8 w-8 p-0" title={t('Sesi baru')}><MessageSquarePlusIcon class="size-4" /></Button>
+					<Button variant="ghost" size="sm" onclick={newSession} class="h-8 w-8 p-0" title={t('Sesi baru')} aria-label={t('Sesi baru')}><MessageSquarePlusIcon class="size-4" /></Button>
 				</div>
 			</div>
 
@@ -389,7 +390,7 @@
 								<div class="flex items-center gap-2">
 									<span class="text-xs font-bold text-muted-foreground">{isUser(message.role) ? t('Anda') : t('Asisten')}</span>
 									{#if !isUser(message.role)}
-										<button onclick={() => copyText(message.text, msgIdx)} class="text-muted-foreground/50 hover:text-foreground transition-colors" title={t('Salin')}>
+										<button onclick={() => copyText(message.text, msgIdx)} class="text-muted-foreground/50 hover:text-foreground transition-colors" title={t('Salin')} aria-label={t('Salin pesan')}>
 											{#if copiedId === `copy-${msgIdx}`}
 												<CheckIcon class="size-3 text-emerald-500" />
 											{:else}
@@ -428,7 +429,7 @@
 			<form class="flex items-end gap-2 border-t bg-card px-3 py-3 md:px-4" onsubmit={(e) => { e.preventDefault(); send(); }}>
 				<Input bind:value={input} placeholder={t('Tanya tentang kepatuhan, freight, pricing...')}
 					class="min-h-[44px] flex-1 resize-none text-sm" disabled={!active} onkeydown={handleKeydown} />
-				<Button type="submit" disabled={sending || !active || !input.trim()} class="h-[44px] w-[44px] shrink-0 p-0" title={t('Kirim')}>
+				<Button type="submit" disabled={sending || !active || !input.trim()} class="h-[44px] w-[44px] shrink-0 p-0" title={t('Kirim')} aria-label={t('Kirim pesan')}>
 					{#if sending}
 						<span class="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
 					{:else}

@@ -227,7 +227,7 @@
 							class="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
 						/>
 						{#if searchQuery}
-							<button onclick={() => (searchQuery = '')} class="text-muted-foreground hover:text-foreground"><XIcon class="size-3.5" /></button>
+							<button onclick={() => (searchQuery = '')} class="text-muted-foreground hover:text-foreground" aria-label={t('Bersihkan pencarian')}><XIcon class="size-3.5" /></button>
 						{/if}
 					</div>
 

@@ -385,7 +385,7 @@
 				class="w-48 bg-transparent text-xs outline-none sm:w-64"
 			/>
 			{#if query}
-				<button onclick={() => (query = '')} class="text-muted-foreground hover:text-foreground">
+				<button onclick={() => (query = '')} class="text-muted-foreground hover:text-foreground" aria-label={t('Bersihkan pencarian')}>
 					<XIcon class="size-3" />
 				</button>
 			{/if}

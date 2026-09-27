@@ -239,7 +239,7 @@
 	{#if message}
 		<div role="status" class="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
 			<span>{message}</span>
-			<button onclick={() => (message = '')} class="text-muted-foreground hover:text-foreground">
+			<button onclick={() => (message = '')} class="text-muted-foreground hover:text-foreground" aria-label={t('Tutup pesan')}>
 				<XIcon class="size-4" />
 			</button>
 		</div>

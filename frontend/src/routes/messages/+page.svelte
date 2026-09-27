@@ -251,7 +251,7 @@
 				<AlertCircleIcon class="size-4" />
 				<span>{error}</span>
 			</div>
-			<button onclick={() => (error = '')}><XIcon class="size-4" /></button>
+			<button onclick={() => (error = '')} aria-label={t('Tutup pesan error')}><XIcon class="size-4" /></button>
 		</div>
 	{/if}
 
@@ -261,7 +261,7 @@
 				<CheckCircle2Icon class="size-4" />
 				<span>{successMessage}</span>
 			</div>
-			<button onclick={() => (successMessage = '')}><XIcon class="size-4" /></button>
+			<button onclick={() => (successMessage = '')} aria-label={t('Tutup pesan sukses')}><XIcon class="size-4" /></button>
 		</div>
 	{/if}
 

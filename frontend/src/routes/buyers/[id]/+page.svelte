@@ -272,6 +272,8 @@
 						<strong class="block text-sm font-bold">{signal.label}</strong>
 						<p class="mt-1.5 text-sm text-muted-foreground">{signal.detail}</p>
 					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">{t('Belum ada sinyal buyer.')}</p>
 				{/each}
 			</CardContent>
 		</Card>
@@ -282,11 +284,17 @@
 				<div class="flex flex-wrap gap-2.5">
 					{#each data.buyer.interestedProducts as product}
 						<Badge variant="outline">{product}</Badge>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada produk diminati.')}</p>
 					{/each}
 				</div>
 				<h3 class="mt-5 mb-2 text-lg font-bold tracking-tight">{t('Account Notes')}</h3>
 				<ul class="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
-					{#each data.buyer.notes as note}<li>{note}</li>{/each}
+					{#each data.buyer.notes as note}
+						<li>{note}</li>
+					{:else}
+						<li>{t('Belum ada catatan akun.')}</li>
+					{/each}
 				</ul>
 			</CardContent>
 		</Card>
@@ -304,6 +312,8 @@
 							<strong class="text-sm font-bold text-foreground">{project.name}</strong>
 							<small class="text-sm text-muted-foreground">{project.product} · {currency.format(project.value)}</small>
 						</a>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada proyek tertaut.')}</p>
 					{/each}
 				</div>
 				{#if logged}
