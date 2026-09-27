@@ -8,7 +8,7 @@
 	import type { TeamMember } from '$lib/data/trade';
 	import { listTeamMembers, inviteTeamMember, updateTeamMemberRole, updateTeamMember, removeTeamMember } from '$lib/api/team';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
@@ -91,12 +91,6 @@ import { page } from '$app/state';
 	let activeCount = $derived(teamMembers.items.filter((member) => member.status === 'Active').length);
 	let avgWorkload = $derived(Math.round(teamMembers.items.reduce((sum, member) => sum + member.workload, 0) / (teamMembers.items.length || 1)));
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	async function handleInvite() {
 		error = '';

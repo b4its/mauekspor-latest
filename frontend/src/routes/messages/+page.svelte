@@ -8,7 +8,7 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { messageThreads } from '$lib/data/trade';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import {
 		listMessages,
 		sendMessage,
@@ -81,12 +81,6 @@
 
 	let openCount = $derived(threads.items.filter((thread) => ['Open', 'Waiting Reply', 'Escalated'].includes(thread.status)).length);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	function openCompose() {
 		composeSubject = '';
@@ -246,7 +240,7 @@
 	</Card>
 
 	{#if error}
-		<div class="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
+		<div class="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive" role="alert">
 			<div class="flex items-center gap-2">
 				<AlertCircleIcon class="size-4" />
 				<span>{error}</span>
@@ -256,7 +250,7 @@
 	{/if}
 
 	{#if successMessage}
-		<div class="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+		<div class="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300" role="status">
 			<div class="flex items-center gap-2">
 				<CheckCircle2Icon class="size-4" />
 				<span>{successMessage}</span>

@@ -5,7 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { createQuotation } from '$lib/api/quotations';
 	import { shortlistRFQMatch, updateRFQ, deleteRFQ } from '$lib/api/rfq';
 	import { goto } from '$app/navigation';
@@ -68,12 +68,6 @@
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	async function handleShortlist(supplier: string) {
 		error = '';
@@ -223,7 +217,7 @@
 			</div>
 		{/if}
 		{#if message}
-			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 		{/if}
 	</Card>
 
@@ -280,7 +274,7 @@
 			<CardContent class="grid gap-3 pt-4">
 				<p class="text-muted-foreground">{shortlisted ? t('{} is shortlisted for quotation.').replace('{}', shortlisted) : t('Shortlist a supplier match before creating quotation.')}</p>
 				{#if error}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 				{/if}
 				{#if quoteCreated}
 					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Quotation draft tersimpan di backend.')}</p>

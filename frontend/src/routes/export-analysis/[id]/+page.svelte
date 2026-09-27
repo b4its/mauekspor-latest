@@ -7,7 +7,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { reanalyzeExportAnalysis, deleteExportAnalysis, getRegulationRecommendations, runRegulationCheck, analysisPdfUrl } from '$lib/api/export-analysis';
 	import { updateProduct, getProduct } from '$lib/api/products';
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
@@ -123,12 +123,6 @@
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	function gradeTone(g: string) {
 		if (g === 'Ready') return 'default';
@@ -264,7 +258,7 @@
 				</div>
 			</CardHeader>
 			{#if error}
-				<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+				<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 			{/if}
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
@@ -321,7 +315,7 @@
 							{t('Perbaiki data produk lalu klik "Simpan & Re-Analyze" agar snapshot dan skor diperbarui.')}
 						</p>
 						{#if editError}
-							<p class="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{editError}</p>
+							<p class="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{editError}</p>
 						{/if}
 						{#if editSaved}
 							<p class="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Produk diperbarui. Jalankan Re-analyze untuk skor terbaru.')}</p>

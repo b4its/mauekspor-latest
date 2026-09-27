@@ -9,8 +9,9 @@
 	import { listNotifications, markNotificationRead, archiveNotification, deleteNotification } from '$lib/api/notifications';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -45,12 +46,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	);
 	let unread = $derived(notifications.items.filter((item) => item.status === 'Unread').length);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	let deletingId = $state('');
 
@@ -122,6 +117,40 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		paginationPage = 1;
 	});
 
+
+	// Konfirmasi terpusat untuk aksi destruktif (pengganti aksi tanpa dialog).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -146,11 +175,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 	{/if}
 
 	{#if notifications.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{notifications.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{notifications.error}</p>
 	{/if}
 
 	{#if marked}
@@ -212,7 +241,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							{#if item.status !== 'Archived'}
 								<Button variant="ghost" size="sm" onclick={() => handleArchive(item.id)}>{t('Arsip')}</Button>
 							{/if}
-							<Button variant="ghost" size="sm" class="text-destructive hover:bg-destructive/10" disabled={deletingId === item.id} onclick={() => handleDelete(item.id)}>
+							<Button variant="ghost" size="sm" class="text-destructive hover:bg-destructive/10" disabled={deletingId === item.id} onclick={() =>
+							askConfirm({
+								title: t('Hapus notifikasi'),
+								description: t('Notifikasi ini akan dihapus permanen.'),
+								detail: item.title,
+								action: () => handleDelete(item.id)
+							}
+						)}>
 								{deletingId === item.id ? t('Menghapus...') : t('Hapus notifikasi')}
 							</Button>
 						</div>
@@ -225,4 +261,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredNotifications?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

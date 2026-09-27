@@ -140,7 +140,7 @@
 				/>
 			</div>
 
-			{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive sm:col-span-2">{error}</p>{/if}
+			{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive sm:col-span-2" role="alert">{error}</p>{/if}
 
 			<div class="flex gap-2.5 sm:col-span-2">
 				<Button variant="outline" href="/export-analysis">{t('Batal')}</Button>

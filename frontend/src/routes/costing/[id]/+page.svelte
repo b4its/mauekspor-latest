@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { recalculateCostingScenario, costingPdfUrl, getExchangeRate, updateExchangeRate, refreshExchangeRate, deleteCostingScenario } from '$lib/api/costing';
 	import type { ExchangeRate } from '$lib/api/costing';
 	import { goto } from '$app/navigation';
@@ -72,12 +72,6 @@
 		)
 	);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	async function handleRecalculate() {
 		error = '';
@@ -210,7 +204,7 @@
 					</div>
 				{/if}
 				{#if error}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 				{/if}
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

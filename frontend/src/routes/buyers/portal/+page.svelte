@@ -8,7 +8,7 @@
 	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { listBuyerPortal, type BuyerPortalItem, type BuyerPortalMeta } from '$lib/api/buyers';
 	import { listCountries, getCountry, type Country } from '$lib/api/export-analysis';
 	import { seedCountries } from '$lib/data/trade';
@@ -99,12 +99,6 @@
 		High: 'destructive'
 	};
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	let avgReadiness = $derived(
 		Math.round(items.reduce((sum, item) => sum + (item.readiness ?? 0), 0) / (items.length || 1))
@@ -171,7 +165,7 @@
 		</Card>
 
 		{#if error}
-			<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+			<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 		{/if}
 
 		<div class="grid gap-4 sm:grid-cols-3">

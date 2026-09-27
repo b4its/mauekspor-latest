@@ -8,7 +8,7 @@
 	import { educationalArticles as seedArticles, educationalModules as seedModules } from '$lib/data/trade';
 	import { listEducationalArticles, publishEducationalArticle, createEducationalArticle, deleteEducationalArticle, updateEducationalArticle, uploadEducationalFile } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -161,12 +161,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 	let paginationPage_articles = $state(1);
 	let paginationPageSize_articles = $state(5);
 	let pagedItems_articles = $derived(paginate(articles.items ?? [], paginationPage_articles, paginationPageSize_articles));
@@ -212,7 +206,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<Input placeholder={t('Judul artikel...')} bind:value={editTitle} />
 							<Textarea placeholder={t('Konten (Markdown)...')} bind:value={editContent} rows={3} />
 							{#if editError}
-								<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{editError}</p>
+								<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{editError}</p>
 							{/if}
 							<div class="flex gap-2">
 								<Button size="sm" disabled={savingEdit} onclick={() => saveArticle(article.id)}>{savingEdit ? t('Menyimpan...') : t('Simpan')}</Button>
@@ -261,7 +255,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			{/each}
 		</CardContent>
 	</Card>
-{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
+{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>{/if}
 	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
 
 	<ConfirmDialog

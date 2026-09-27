@@ -7,7 +7,7 @@
 	import { educationalModules as seedModules } from '$lib/data/trade';
 	import { listEducationalModules, publishEducationalModule, createEducationalModule, deleteEducationalModule, updateEducationalModule } from '$lib/api/educational';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -129,12 +129,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 	let paginationPage_modules = $state(1);
 	let paginationPageSize_modules = $state(5);
 	let pagedItems_modules = $derived(paginate(modules.items ?? [], paginationPage_modules, paginationPageSize_modules));
@@ -205,7 +199,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			{/each}
 		</CardContent>
 	</Card>
-{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
+{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>{/if}
 	<Pagination bind:page={paginationPage_modules} bind:pageSize={paginationPageSize_modules} totalPages={paginationTotalPages_modules} totalItems={modules.items?.length ?? 0} />
 
 	<ConfirmDialog

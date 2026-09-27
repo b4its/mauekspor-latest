@@ -4,7 +4,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { fileDownloadUrl } from '$lib/api/files';
 	import { deleteEducationalArticle } from '$lib/api/educational-articles';
 	import { goto } from '$app/navigation';
@@ -59,12 +59,6 @@
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	// Konten: backend `content` (markdown) atau fallback `body`
 	let content = $derived((data.article.content || data.article.body || '') as string);
@@ -146,7 +140,7 @@
 			</Button>
 		</CardContent>
 		{#if error}
-			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 		{/if}
 	</Card>
 

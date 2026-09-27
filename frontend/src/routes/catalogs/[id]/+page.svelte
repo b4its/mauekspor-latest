@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { statusTone, formatCurrency } from '$lib/utils/format';
+	import { statusTone, formatCurrency, toneVariant } from '$lib/utils/format';
 	import {
 		generateCatalogDescription,
 		publishCatalog,
@@ -330,12 +330,6 @@
 		return t(s === 'Published' ? 'Diterbitkan' : s === 'Draft' ? 'Draf' : s);
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 </script>
 
 <svelte:head>
@@ -382,7 +376,7 @@
 				</div>
 			</CardHeader>
 			{#if error}
-				<p class="rounded-lg bg-destructive/10 px-4 py-2 text-sm font-bold text-destructive">{error}</p>
+				<p class="rounded-lg bg-destructive/10 px-4 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 			{/if}
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
@@ -460,7 +454,7 @@
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				{#if error}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 				{/if}
 				<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
 					{t('Unggah file')}
@@ -560,7 +554,7 @@
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				{#if variantError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{variantError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{variantError}</p>
 				{/if}
 				<div class="flex gap-2">
 					<input
@@ -629,7 +623,7 @@
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				{#if aiError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{aiError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{aiError}</p>
 				{/if}
 				{#if aiLoading}
 					<p class="text-xs font-semibold text-muted-foreground">{t('Menganalisis...')}</p>

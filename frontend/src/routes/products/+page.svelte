@@ -7,7 +7,7 @@
 	import { products as seedProducts } from '$lib/data/trade';
 	import { listProducts, deleteProduct, batchEnrichProducts, batchDeleteProducts } from '$lib/api/products';
 	import { csvExportUrl } from '$lib/api/client';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import type { Product } from '$lib/data/trade';
@@ -162,12 +162,6 @@
 		})
 	);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredProducts ?? [], paginationPage, paginationPageSize));

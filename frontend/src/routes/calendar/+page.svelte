@@ -10,7 +10,7 @@
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { listCalendarEvents } from '$lib/api/calendar';
 	import { listTradeProjects } from '$lib/api/trade-projects';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createCalendarEvent, markCalendarEventDone, updateCalendarEvent, deleteCalendarEvent } from '$lib/api/calendar';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -120,12 +120,6 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 		return projects.items.find((project) => project.id === id)?.name ?? id;
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	async function handleCreate() {
 		error = '';

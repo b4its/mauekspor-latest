@@ -324,7 +324,7 @@
 
 	<!-- Feedback Alerts -->
 	{#if error}
-		<div class="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
+		<div class="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive" role="alert">
 			<div class="flex items-center gap-2">
 				<AlertCircleIcon class="size-4" />
 				<span>{error}</span>
@@ -334,7 +334,7 @@
 	{/if}
 
 	{#if successMessage}
-		<div class="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+		<div class="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300" role="status">
 			<div class="flex items-center gap-2">
 				<CheckCircle2Icon class="size-4" />
 				<span>{successMessage}</span>

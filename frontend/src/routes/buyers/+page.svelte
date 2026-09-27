@@ -9,7 +9,7 @@ import { listBuyers, createBuyer } from '$lib/api/buyers';
 import { csvExportUrl } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -91,12 +91,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredBuyers ?? [], paginationPage, paginationPageSize));
@@ -150,7 +144,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					</label>
 				</div>
 				{#if formError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{formError}</p>
 				{/if}
 				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Adding...') : t('Simpan buyer')}</Button>
 			</CardContent>
@@ -158,15 +152,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 	{/if}
 
 	{#if buyers.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{buyers.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{buyers.error}</p>
 	{/if}
 
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">

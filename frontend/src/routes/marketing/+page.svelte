@@ -271,7 +271,7 @@
 					{:else if miLoading && !mi}
 						<p class="text-sm font-semibold text-muted-foreground">{t('Menganalisis pasar dengan AI...')}</p>
 					{:else if miError}
-						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{miError}</p>
+						<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{miError}</p>
 					{:else if mi}
 						<div class="grid gap-4">
 							<div>
@@ -342,7 +342,7 @@
 										<h4 class="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{t('Negara dihindari')}</h4>
 										<div class="grid gap-2">
 											{#each mi.countriesToAvoid ?? [] as avoid}
-												<div class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs">
+												<div class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs" role="alert">
 													<b>{avoid.country} ({avoid.code})</b> — {avoid.reason}
 												</div>
 											{/each}
@@ -410,7 +410,7 @@
 						</Button>
 
 						{#if pricingError}
-							<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{pricingError}</p>
+							<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{pricingError}</p>
 						{/if}
 
 						{#if pricing}

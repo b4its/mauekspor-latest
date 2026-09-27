@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { qualifyBuyer, logBuyerContact, updateBuyer, deleteBuyer } from '$lib/api/buyers';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
@@ -70,12 +70,6 @@
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	async function handleQualify() {
 		error = '';
@@ -217,7 +211,7 @@
 			</div>
 		{/if}
 		{#if message}
-			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 		{/if}
 	</Card>
 
@@ -238,7 +232,7 @@
 					<Button onclick={handleQualify}>{qualified ? t('Qualified') : t('Qualify buyer')}</Button>
 				</div>
 				{#if error}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 				{/if}
 			</CardHeader>
 			<CardContent class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

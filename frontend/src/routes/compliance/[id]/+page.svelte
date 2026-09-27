@@ -6,7 +6,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { uploadComplianceEvidence, updateComplianceRequirement, deleteComplianceRequirement } from '$lib/api/compliance';
 	import { uploadFileBinary } from '$lib/api/files';
 	import { goto } from '$app/navigation';
@@ -185,12 +185,6 @@
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 </script>
 
 <svelte:head>
@@ -287,7 +281,7 @@
 			</div>
 		{/if}
 		{#if message}
-			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 		{/if}
 	</Card>
 

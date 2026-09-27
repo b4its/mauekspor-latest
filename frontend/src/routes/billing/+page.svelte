@@ -8,7 +8,7 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { changePlan, downloadInvoice, invoicePdfUrl, getBilling } from '$lib/api/billing';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	
 	let changed = $state(false);
@@ -20,12 +20,6 @@
 	let billings = createRemoteList(getBilling, seedBillingRecords);
 	let billing = $derived(billings.items[0] ?? seedBillingRecords[0]);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	$effect(() => {
 		billings.load();
@@ -131,15 +125,15 @@
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 	{/if}
 
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 	{/if}
 
 	{#if billings.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{billings.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{billings.error}</p>
 	{/if}
 
 	{#if changed}

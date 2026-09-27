@@ -495,7 +495,7 @@
 	{:else}
 		<!-- Toast notifications -->
 		{#if noticeMessage}
-			<div class="mb-4 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+			<div class="mb-4 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300" role="status">
 				<div class="flex items-center gap-2">
 					<CheckCircle2Icon class="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
 					<span>{noticeMessage}</span>
@@ -504,7 +504,7 @@
 			</div>
 		{/if}
 		{#if errorMessage}
-			<div class="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
+			<div class="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive" role="alert">
 				<div class="flex items-center gap-2">
 					<ShieldAlertIcon class="size-4 shrink-0" />
 					<span>{errorMessage}</span>
@@ -896,7 +896,7 @@
 			</Dialog.Header>
 			<div class="grid gap-3 py-3">
 				{#if cError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{cError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">{cError}</p>
 				{/if}
 				<div class="grid gap-1">
 					<label for="c-code" class="text-xs font-bold text-muted-foreground">{t('Kode Negara (ISO-2)')}</label>
@@ -947,7 +947,7 @@
 			</Dialog.Header>
 			<div class="grid gap-3 py-3">
 				{#if eError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{eError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">{eError}</p>
 				{/if}
 				<div class="grid gap-1">
 					<label for="e-name" class="text-xs font-bold text-muted-foreground">{t('Nama Negara')}</label>
@@ -986,7 +986,7 @@
 				</Dialog.Description>
 			</Dialog.Header>
 			{#if deleteCountryError}
-				<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{deleteCountryError}</p>
+				<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">{deleteCountryError}</p>
 			{/if}
 			<Dialog.Footer>
 				<Button variant="outline" onclick={() => (deleteCountryOpen = false)}>{t('Batal')}</Button>
@@ -1012,7 +1012,7 @@
 			</Dialog.Header>
 			<div class="grid gap-3 py-3">
 				{#if rError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{rError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">{rError}</p>
 				{/if}
 				<div class="grid gap-1">
 					<label for="r-cat" class="text-xs font-bold text-muted-foreground">{t('Kategori Aturan')}</label>
@@ -1070,7 +1070,7 @@
 			</Dialog.Header>
 			<div class="grid gap-3 py-3">
 				{#if erError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{erError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">{erError}</p>
 				{/if}
 				<div class="grid gap-1">
 					<label for="er-cat" class="text-xs font-bold text-muted-foreground">{t('Kategori Aturan')}</label>
@@ -1117,7 +1117,7 @@
 				</Dialog.Description>
 			</Dialog.Header>
 			{#if deleteRegError}
-				<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{deleteRegError}</p>
+				<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">{deleteRegError}</p>
 			{/if}
 			<Dialog.Footer>
 				<Button variant="outline" onclick={() => (deleteRegOpen = false)}>{t('Batal')}</Button>
@@ -1141,10 +1141,10 @@
 			</Dialog.Header>
 			<div class="grid gap-4 py-3">
 				{#if importError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">{importError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">{importError}</p>
 				{/if}
 				{#if importResult}
-					<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+					<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400" role="status">
 						{importResult}
 					</p>
 				{/if}

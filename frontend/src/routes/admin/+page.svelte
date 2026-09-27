@@ -689,7 +689,7 @@
 
 		<!-- Feedback Alerts -->
 		{#if error}
-			<div class="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
+			<div class="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive" role="alert">
 				<div class="flex items-center gap-2">
 					<AlertCircleIcon class="size-4" />
 					<span>{error}</span>
@@ -699,7 +699,7 @@
 		{/if}
 
 		{#if successMessage}
-			<div class="mb-4 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+			<div class="mb-4 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300" role="status">
 				<div class="flex items-center gap-2">
 					<CheckCircle2Icon class="size-4" />
 					<span>{successMessage}</span>
@@ -788,7 +788,7 @@
 						<CardContent class="p-5">
 							<div class="flex items-center justify-between">
 								<p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t('Total Tabel Aktif')}</p>
-								<div class="rounded-lg bg-emerald-500/10 p-2 text-emerald-700 dark:text-emerald-400">
+								<div class="rounded-lg bg-emerald-500/10 p-2 text-emerald-700 dark:text-emerald-400" role="status">
 									<DatabaseIcon class="size-4" />
 								</div>
 							</div>
@@ -1306,7 +1306,7 @@
 								{/if}
 
 								{#if aiTestResult}
-									<div class="mt-3 rounded-lg border p-3 {aiTestResult.success ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-destructive/30 bg-destructive/10'}">
+									<div class="mt-3 rounded-lg border p-3 {aiTestResult.success ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-destructive/30 bg-destructive/10'}" role={aiTestResult.success ? 'status' : 'alert'}>
 										<div class="flex items-center gap-2">
 											{#if aiTestResult.success}
 												<CheckCircle2Icon class="size-4 text-emerald-600 dark:text-emerald-400" />
@@ -1575,7 +1575,7 @@
 				{/if}
 
 				{#if editError}
-					<div class="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
+					<div class="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">
 						<AlertCircleIcon class="size-4 shrink-0" />
 						<span>{editError}</span>
 					</div>

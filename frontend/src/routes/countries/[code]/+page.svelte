@@ -66,7 +66,7 @@
 	{#if loading}
 		<p class="py-16 text-center text-sm text-muted-foreground">{t('Memuat...')}</p>
 	{:else if error}
-		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{error}</p>
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive" role="alert">{error}</p>
 		<Button href="/countries" variant="outline" size="sm" class="mt-3">
 			<ArrowLeftIcon class="size-3.5" />
 			{t('Kembali')}

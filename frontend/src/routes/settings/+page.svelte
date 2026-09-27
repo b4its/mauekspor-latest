@@ -114,7 +114,7 @@
 					<p class="rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary">{t('Pengaturan tersimpan di backend.')}</p>
 				{/if}
 				{#if error}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 				{/if}
 
 				<form class="grid gap-3" onsubmit={(event) => { event.preventDefault(); save(); }}>
@@ -171,10 +171,10 @@
 			</CardHeader>
 			<CardContent class="grid gap-3">
 				{#if currencyError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{currencyError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{currencyError}</p>
 				{/if}
 				{#if currencySaved}
-					<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{currencySaved}</p>
+					<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{currencySaved}</p>
 				{/if}
 				{#if currency}
 					<div class="grid gap-2">

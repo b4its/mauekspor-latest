@@ -9,9 +9,10 @@
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { listSupportTickets } from '$lib/api/support';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { createSupportTicket, resolveSupportTicket, updateSupportTicket, deleteSupportTicket } from '$lib/api/support';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
@@ -43,12 +44,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	);
 	let openCount = $derived(tickets.items.filter((ticket) => ticket.status !== 'Resolved').length);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	$effect(() => {
 		tickets.load();
@@ -138,6 +133,40 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let pagedItems = $derived(paginate(filteredTickets ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredTickets?.length ?? 0, paginationPageSize));
 
+
+	// Konfirmasi terpusat untuk aksi destruktif (pengganti aksi tanpa dialog).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -189,14 +218,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 	{/if}
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 	{/if}
 
 	{#if tickets.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{tickets.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{tickets.error}</p>
 	{/if}
 
 	{#if created}
@@ -249,7 +278,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<Button variant="outline" size="sm" onclick={() => handleResolve(ticket.id)}>{resolvedId === ticket.id ? t('Resolved') : t('Resolve')}</Button>
 						<div class="flex gap-2">
 							<Button variant="outline" size="sm" disabled={busyId === ticket.id} onclick={() => openEdit(ticket)}>{t('Edit')}</Button>
-							<Button variant="outline" size="sm" class="text-destructive" disabled={busyId === ticket.id} onclick={() => handleDelete(ticket)}>{t('Hapus')}</Button>
+							<Button variant="outline" size="sm" class="text-destructive" disabled={busyId === ticket.id} onclick={() =>
+							askConfirm({
+								title: t('Hapus tiket dukungan'),
+								description: t('Tiket ini akan dihapus permanen dari workspace.'),
+								detail: ticket.subject,
+								action: () => handleDelete(ticket)
+							}
+						)}>{t('Hapus')}</Button>
 						</div>
 					</aside>
 				</Card>
@@ -260,4 +296,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredTickets?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

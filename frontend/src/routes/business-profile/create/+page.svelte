@@ -107,7 +107,7 @@
 					</div>
 				</fieldset>
 
-				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive sm:col-span-2">{error}</p>{/if}
+				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive sm:col-span-2" role="alert">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-3 sm:col-span-2">
 					<Button variant="outline" href="/business-profile">{t('Batal')}</Button>

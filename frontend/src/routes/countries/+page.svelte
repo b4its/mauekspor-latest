@@ -150,7 +150,7 @@
 	{#if countries.loading}
 		<p class="py-12 text-center text-sm text-muted-foreground">{t('Memuat direktori...')}</p>
 	{:else if countries.error}
-		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive" role="alert">
 			{countries.error}
 		</p>
 	{:else if filtered.length === 0}

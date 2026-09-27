@@ -136,7 +136,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 					<Input id="cost-margin" bind:value={targetMargin} inputmode="decimal" />
 				</div>
 
-				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
+				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-3">
 					<Button variant="outline" href="/costing">{t('Batal')}</Button>

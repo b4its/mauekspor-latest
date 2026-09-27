@@ -6,6 +6,7 @@
 	import { getMyBuyerProfile } from '$lib/api/buyers';
 	import type { BuyerProfile } from '$lib/api/buyers';
 	import { t } from '$lib/i18n.svelte';
+	import { toneVariant } from '$lib/utils/format';
 
 	let profile = $state<BuyerProfile | null>(null);
 
@@ -15,12 +16,6 @@
 			.catch(() => (profile = null));
 	});
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 </script>
 
 <svelte:head>

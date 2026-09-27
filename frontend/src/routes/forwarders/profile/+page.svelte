@@ -107,7 +107,7 @@
 					<Textarea id="f-services" bind:value={serviceTypes} rows={3} />
 				</div>
 
-				{#if error}<p class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive sm:col-span-2">{error}</p>{/if}
+				{#if error}<p class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive sm:col-span-2" role="alert">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-2 sm:col-span-2">
 					<Button variant="outline" href="/forwarders/my-profile">{t('Batal')}</Button>

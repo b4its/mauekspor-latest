@@ -9,7 +9,7 @@
 	import { listForwarders } from '$lib/api/forwarders';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { getForwarderRecommendations } from '$lib/api/forwarders';
 	import type { Forwarder } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
@@ -81,12 +81,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredForwarders ?? [], paginationPage, paginationPageSize));
@@ -134,7 +128,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			{/if}
 		</CardContent>
 		{#if recsError}
-			<CardContent class="pt-0"><p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{recsError}</p></CardContent>
+			<CardContent class="pt-0"><p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{recsError}</p></CardContent>
 		{/if}
 		{#if recs.length > 0}
 			<CardContent class="grid gap-2.5 pt-0 md:grid-cols-2">
@@ -172,7 +166,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</div>
 
 	{#if forwarders.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{forwarders.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{forwarders.error}</p>
 	{/if}
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

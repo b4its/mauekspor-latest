@@ -378,7 +378,7 @@
 				</div>
 
 				{#if error}
-					<div class="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-sm font-semibold text-destructive">
+					<div class="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-sm font-semibold text-destructive" role="alert">
 						<AlertTriangleIcon class="size-4 shrink-0" />
 						<span>{error}</span>
 					</div>

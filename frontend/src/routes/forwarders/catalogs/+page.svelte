@@ -7,7 +7,7 @@
 	import { listForwarderCatalogs } from '$lib/api/catalogs';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import type { Catalog } from '$lib/data/trade';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -27,12 +27,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		})
 	);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredCatalogs ?? [], paginationPage, paginationPageSize));

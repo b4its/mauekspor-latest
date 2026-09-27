@@ -95,7 +95,7 @@
 								<p class="mt-1 text-xs text-muted-foreground">{t('Kode bootstrap dari file .env (MAUEKSPOR_ADMIN_CODE).')}</p>
 							</Field>
 							{#if error}
-								<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+								<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 							{/if}
 							<Button type="submit" disabled={loading} class="mt-2 w-full bg-[#0b3d91] text-white hover:bg-[#0b3d91]/85">
 								{loading ? t('Memproses...') : t('Daftarkan Admin')}

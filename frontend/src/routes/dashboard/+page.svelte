@@ -159,7 +159,7 @@
 
 <AppShell title="Dashboard" eyebrow={t('Export workspace home')}>
 	{#if summaryError}
-		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{summaryError}</p>
+		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive" role="alert">{summaryError}</p>
 	{/if}
 	<Card class="panel-hero p-5 sm:p-6 md:p-8">
 		<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start">

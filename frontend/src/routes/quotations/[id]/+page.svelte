@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { acceptQuotation, updateQuotation, deleteQuotation } from '$lib/api/quotations';
 	import { createOrder } from '$lib/api/orders';
 	import { goto } from '$app/navigation';
@@ -70,12 +70,6 @@
 		}
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	async function handleAccept() {
 		error = '';
@@ -259,7 +253,7 @@
 			</div>
 		{/if}
 		{#if message}
-			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 		{/if}
 	</Card>
 
@@ -281,10 +275,10 @@
 				</div>
 
 				{#if error}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 				{/if}
 				{#if message}
-					<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+					<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 				{/if}
 			</div>
 			<div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -313,8 +307,8 @@
 			<Badge variant="secondary">{t('Decision guardrail')}</Badge>
 			<h3 class="mt-3 text-2xl font-bold tracking-tight">{t('Before acceptance')}</h3>
 			<p class="mt-1 leading-relaxed text-muted-foreground">{t('Confirm Incoterm named place, rate validity, compliance blockers, and document readiness before converting to order.')}</p>
-			{#if revised}<p class="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 font-bold text-emerald-600">{t('Revision diterapkan.')}</p>{/if}
-			{#if accepted}<p class="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 font-bold text-emerald-600">{t('Kuotasi diterima di backend.')}</p>{/if}
+			{#if revised}<p class="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 font-bold text-emerald-600" role="status">{t('Revision diterapkan.')}</p>{/if}
+			{#if accepted}<p class="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 font-bold text-emerald-600" role="status">{t('Kuotasi diterima di backend.')}</p>{/if}
 		</Card>
 	</div>
 

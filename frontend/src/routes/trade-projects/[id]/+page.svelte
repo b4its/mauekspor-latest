@@ -15,7 +15,7 @@
 	import type { ComplianceRequirement, TradeDocument, Quotation, Shipment } from '$lib/data/trade';
 	import { t } from '$lib/i18n.svelte';
 	import { goto } from '$app/navigation';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
@@ -116,12 +116,6 @@
 		return t(x === 'Compliance' ? 'Kepatuhan' : x === 'Quotation' ? 'Kutipan' : x === 'Documents' ? 'Dokumen' : 'Pengiriman');
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	function openEdit() {
 		editName = data.project.name;

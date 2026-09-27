@@ -109,7 +109,7 @@
 					</div>
 				</div>
 
-				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>{/if}
+				{#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-3">
 					<Button variant="outline" href={`/costing/${data.scenario.id}`}>{t('Batal')}</Button>

@@ -4,13 +4,14 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import { requestForwarderQuote, listForwarderQuotes, getForwarderStatistics, createForwarderReview, updateForwarderReview, deleteForwarderReview } from '$lib/api/forwarders';
 import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/api/forwarders';
 	import WhatsAppDialog from '$lib/components/WhatsAppDialog.svelte';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { formatDate } from '$lib/utils/date';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { data } = $props();
 	let quoteRequested = $state(false);
@@ -44,12 +45,6 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 			.catch(() => {});
 	});
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	function openQuote() {
 		quoteLane = data.forwarder.coverage ?? '';
@@ -122,6 +117,40 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 			editError = t('Gagal menghapus review.');
 		} finally {
 			deletingId = '';
+		}
+	}
+
+	// Konfirmasi terpusat untuk aksi destruktif (pengganti aksi tanpa dialog).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
 		}
 	}
 </script>
@@ -233,7 +262,14 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 											editingRating = review.rating;
 											editingText = review.reviewText ?? '';
 										}}>{t('Ubah')}</Button>
-										<Button size="sm" variant="outline" class="text-destructive hover:text-destructive" disabled={deletingId !== ''} onclick={() => handleDeleteReview(review)}>
+										<Button size="sm" variant="outline" class="text-destructive hover:text-destructive" disabled={deletingId !== ''} onclick={() =>
+							askConfirm({
+								title: t('Hapus ulasan'),
+								description: t('Ulasan ini akan dihapus permanen dan rating forwarder dihitung ulang.'),
+								detail: review.reviewText ?? data.forwarder.name,
+								action: () => handleDeleteReview(review)
+							}
+						)}>
 											{deletingId === review.id ? t('Menghapus...') : t('Hapus')}
 										</Button>
 									</div>
@@ -245,7 +281,7 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 										</select>
 										<Input placeholder={t('Tulis ulasan...')} bind:value={editingText} />
 										{#if editError}
-											<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{editError}</p>
+											<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{editError}</p>
 										{/if}
 										<div class="flex gap-2">
 											<Button size="sm" disabled={savingEdit} onclick={() => handleEditReview(review)}>{savingEdit ? t('Menyimpan...') : t('Simpan')}</Button>
@@ -350,4 +386,13 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 			</Dialog.Footer>
 		</Dialog.Content>
 	</Dialog.Root>
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

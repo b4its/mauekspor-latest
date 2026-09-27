@@ -162,7 +162,7 @@
 			</Button>
 		</div>
 		{#if error}
-			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 		{/if}
 	</Card>
 

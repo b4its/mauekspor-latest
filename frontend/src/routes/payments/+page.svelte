@@ -8,7 +8,7 @@
 	import { listPayments, sendPaymentReminder, createPayment, markPaymentReceived, deletePayment } from '$lib/api/payments';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -115,12 +115,6 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	let collected = $derived(payments.items.reduce((sum, payment) => sum + payment.paid, 0));
 	let highRisk = $derived(payments.items.filter((payment) => payment.risk !== 'Low').length);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	async function handleReminder(paymentId: string, buyer: string) {
 		error = '';
@@ -274,7 +268,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 					</label>
 				</div>
 				{#if formError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{formError}</p>
 				{/if}
 				<Button class="w-fit" disabled={saving} onclick={handleCreate}>{saving ? t('Menyimpan...') : t('Simpan pembayaran')}</Button>
 			</CardContent>

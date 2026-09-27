@@ -2716,7 +2716,12 @@ const dictionary: Record<string, Entry> = {
 	'Klik nama desa untuk zoom ke lokasi di peta, atau klik pin untuk detail.': { id: 'Klik nama desa untuk zoom ke lokasi di peta, atau klik pin untuk detail.', en: 'Click a village name to zoom to its location, or click a pin for details.' },
 	'Latitude (peta)': { id: 'Latitude (peta)', en: 'Latitude (map)' },
 	'Longitude (peta)': { id: 'Longitude (peta)', en: 'Longitude (map)' },
-	'Koordinat opsional. Isi agar desa muncul di peta potensi desa pada dasbor.': { id: 'Koordinat opsional. Isi agar desa muncul di peta potensi desa pada dasbor.', en: 'Coordinates are optional. Fill them in so the village appears on the village potential map on the dashboard.' }
+	'Koordinat opsional. Isi agar desa muncul di peta potensi desa pada dasbor.': { id: 'Koordinat opsional. Isi agar desa muncul di peta potensi desa pada dasbor.', en: 'Coordinates are optional. Fill them in so the village appears on the village potential map on the dashboard.' },
+	'Notifikasi ini akan dihapus permanen.': { id: 'Notifikasi ini akan dihapus permanen.', en: 'This notification will be permanently deleted.' },
+	'Hapus tiket dukungan': { id: 'Hapus tiket dukungan', en: 'Delete support ticket' },
+	'Tiket ini akan dihapus permanen dari workspace.': { id: 'Tiket ini akan dihapus permanen dari workspace.', en: 'This ticket will be permanently deleted from the workspace.' },
+	'Hapus ulasan': { id: 'Hapus ulasan', en: 'Delete review' },
+	'Ulasan ini akan dihapus permanen dan rating forwarder dihitung ulang.': { id: 'Ulasan ini akan dihapus permanen dan rating forwarder dihitung ulang.', en: 'This review will be permanently deleted and the forwarder rating recalculated.' }
 };
 
 let initial: Locale = 'id';

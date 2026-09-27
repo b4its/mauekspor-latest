@@ -422,7 +422,7 @@
 
 			<!-- Error -->
 			{#if error}
-				<div class="mx-3 mb-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-bold text-destructive md:mx-4">{error}</div>
+				<div class="mx-3 mb-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-bold text-destructive md:mx-4" role="alert">{error}</div>
 			{/if}
 
 			<!-- Input -->

@@ -10,7 +10,7 @@
 	import { listEducationalArticles } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
 	import GraduationCapIcon from '@lucide/svelte/icons/graduation-cap';
@@ -53,12 +53,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return educationalLessons.filter((lesson) => lesson.moduleId === moduleId).length;
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredModules ?? [], paginationPage, paginationPageSize));
@@ -120,7 +114,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</div>
 
 	{#if modules.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{modules.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{modules.error}</p>
 	{/if}
 
 	{#if modules.loading}
@@ -177,7 +171,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 
 	{#if articles.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{articles.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{articles.error}</p>
 	{/if}
 
 	<Card class="mt-4">

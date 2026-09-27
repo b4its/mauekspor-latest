@@ -69,6 +69,21 @@ export function statusTone(status: TaskStatus | RiskLevel | DocumentItem['status
 	return 'blue';
 }
 
+export type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
+
+/**
+ * Petakan "tone" dari `statusTone()` ke varian Badge UI.
+ *
+ * Sebelumnya fungsi identik ini disalin ke 63 berkas rute; sekarang menjadi
+ * satu sumber agar palet status konsisten di seluruh aplikasi.
+ */
+export function toneVariant(tone: string): BadgeVariant {
+	if (tone === 'green') return 'default';
+	if (tone === 'red') return 'destructive';
+	if (tone === 'orange') return 'outline';
+	return 'secondary';
+}
+
 export function taskSummary(tasks: ComplianceTask[]) {
 	return {
 		verified: tasks.filter((task) => task.status === 'Verified').length,

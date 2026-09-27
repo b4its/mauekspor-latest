@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { fileAssets, projects as seedProjects } from '$lib/data/trade';
-	import { statusTone } from '$lib/utils/format';
+	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { uploadFileAsset, uploadFileBinary, verifyFileAsset, listFiles, fileDownloadUrl, updateFileAsset, deleteFileAsset } from '$lib/api/files';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -51,12 +51,6 @@ import { page } from '$app/state';
 		return projects.items.find((project) => project.id === id)?.name ?? id;
 	}
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 
 	async function handleUpload(event: Event) {
 		const input = event.target as HTMLInputElement;

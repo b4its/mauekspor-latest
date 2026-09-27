@@ -8,7 +8,7 @@
 	import { listTradeProjects, createTradeProject } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { currency, statusTone } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -43,12 +43,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		})
 	);
 
-	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (tone === 'green') return 'default';
-		if (tone === 'red') return 'destructive';
-		if (tone === 'orange') return 'outline';
-		return 'secondary';
-	}
 	function openCreate() {
 		formError = '';
 		fName = '';
@@ -171,22 +165,22 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					</label>
 				</div>
 				{#if formError}
-					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{formError}</p>
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{formError}</p>
 				{/if}
 				<Button class="w-fit" disabled={creating} onclick={handleCreate}>{creating ? t('Creating...') : t('Simpan proyek')}</Button>
 			</CardContent>
 		{/if}
 
 		{#if error}
-			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+			<p class="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
 		{/if}
 		{#if message}
-			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+			<p class="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 		{/if}
 
 		<CardContent class="mt-6 grid gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
 			{#if projects.error}
-				<p class="col-span-full rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{projects.error}</p>
+				<p class="col-span-full rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{projects.error}</p>
 			{/if}
 			{#if projects.loading}
 				{#each Array(6) as _}

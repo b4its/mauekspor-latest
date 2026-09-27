@@ -132,7 +132,7 @@
 					</div>
 				</div>
 
-				{#if error}<p class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p>{/if}
+				{#if error}<p class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive" role="alert">{error}</p>{/if}
 
 				<div class="flex flex-wrap gap-2">
 					<Button variant="outline" href="/buyers/my-profile">{t('Batal')}</Button>
