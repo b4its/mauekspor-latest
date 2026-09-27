@@ -12,6 +12,7 @@
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 
 	let modules = createRemoteList(listEducationalModules, seedModules);
 	let publishing = $state('');
@@ -19,38 +20,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let error = $state('');
 	let newTitle = $state('');
 	let creating = $state(false);
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 
 	$effect(() => {
 		modules.load();
@@ -184,7 +154,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								variant="destructive"
 								disabled={deleting === module.id}
 								onclick={() =>
-									askConfirm({
+									confirm.ask({
 										title: t('Hapus modul'),
 										description: t('Modul ini akan dihapus permanen dari workspace.'),
 										detail: module.title,
@@ -203,12 +173,12 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<Pagination bind:page={paginationPage_modules} bind:pageSize={paginationPageSize_modules} totalPages={paginationTotalPages_modules} totalItems={modules.items?.length ?? 0} />
 
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>

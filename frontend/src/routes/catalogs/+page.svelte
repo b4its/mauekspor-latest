@@ -11,6 +11,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -24,38 +25,7 @@ import { page } from '$app/state';
 	let error = $state('');
 
 	// Konfirmasi terpusat untuk hapus katalog (pengganti window.confirm).
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
@@ -229,7 +199,7 @@ import { page } from '$app/state';
 								disabled={deleting === catalog.id}
 								onclick={(e) => {
 									e.preventDefault();
-									askConfirm({
+									confirm.ask({
 										title: t('Hapus katalog'),
 										description: t('Katalog ini akan dihapus permanen dari workspace.'),
 										detail: catalog.title,
@@ -255,12 +225,12 @@ import { page } from '$app/state';
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredCatalogs?.length ?? 0} />
 
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>

@@ -65,6 +65,7 @@
 
 	// Tutup dropdown saat klik di luar
 	import { onMount } from 'svelte';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	let dropdownEl = $state<HTMLDivElement | null>(null);
 	onMount(() => {
 		function handleClick(e: MouseEvent) {
@@ -135,38 +136,7 @@
 
 	let deleting = $state(false);
 	let deleteError = $state('');
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 
 	async function handleDelete() {
 		const target = profile;
@@ -320,7 +290,7 @@
 						variant="destructive"
 						disabled={deleting}
 						onclick={() =>
-							askConfirm({
+							confirm.ask({
 								title: t('Hapus profil bisnis'),
 								description: t('Profil bisnis ini akan dihapus permanen dari workspace.'),
 								detail: profile.companyName,
@@ -395,12 +365,12 @@
 	</div>
 
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>

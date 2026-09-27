@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 
 	let { data } = $props();
 	let shortlisted = $state('');
@@ -35,38 +36,7 @@
 	let localQuantity = $derived(savedQuantity || data.rfq.quantity);
 	let localDeadline = $derived(savedDeadline || data.rfq.deadline);
 	let localStatus = $derived(savedStatus || data.rfq.status);
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 
 
 	async function handleShortlist(supplier: string) {
@@ -183,7 +153,7 @@
 				class="text-destructive"
 				disabled={deleting}
 				onclick={() =>
-					askConfirm({
+					confirm.ask({
 						title: t('Hapus RFQ'),
 						description: t('RFQ ini akan dihapus permanen dari workspace.'),
 						detail: data.rfq.id,
@@ -293,12 +263,12 @@
 	</div>
 
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>

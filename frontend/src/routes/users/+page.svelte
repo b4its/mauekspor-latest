@@ -13,6 +13,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { page as appPage } from '$app/state';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 
 	const roleFilters = ['All', 'Admin', 'Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance'];
 	const PAGE_SIZE = 5;
@@ -51,38 +52,7 @@
 	const totalPages = $derived(Math.max(1, Math.ceil(total / PAGE_SIZE)));
 
 	// Konfirmasi terpusat untuk hapus akun (pengganti window.confirm).
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
@@ -195,7 +165,7 @@
 					<span class="grid justify-end">
 						<Button size="sm" variant="ghost" href={`/users/${user.id}`}>{t('Buka')}</Button>
 						<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() =>
-							askConfirm({
+							confirm.ask({
 								title: t('Hapus akun'),
 								description: t('Akun ini beserta data terkaitnya akan dihapus permanen.'),
 								detail: user.fullName,
@@ -224,12 +194,12 @@
 	</Card>
 
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>

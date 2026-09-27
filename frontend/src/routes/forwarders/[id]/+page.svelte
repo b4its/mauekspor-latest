@@ -12,6 +12,7 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 
 	let { data } = $props();
 	let quoteRequested = $state(false);
@@ -121,38 +122,7 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 	}
 
 	// Konfirmasi terpusat untuk aksi destruktif (pengganti aksi tanpa dialog).
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 </script>
 
 <svelte:head>
@@ -263,7 +233,7 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 											editingText = review.reviewText ?? '';
 										}}>{t('Ubah')}</Button>
 										<Button size="sm" variant="outline" class="text-destructive hover:text-destructive" disabled={deletingId !== ''} onclick={() =>
-							askConfirm({
+							confirm.ask({
 								title: t('Hapus ulasan'),
 								description: t('Ulasan ini akan dihapus permanen dan rating forwarder dihitung ulang.'),
 								detail: review.reviewText ?? data.forwarder.name,
@@ -387,12 +357,12 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 		</Dialog.Content>
 	</Dialog.Root>
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>

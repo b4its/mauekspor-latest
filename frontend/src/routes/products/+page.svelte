@@ -16,6 +16,7 @@
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { page } from '$app/state';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 
 	let filter = $state(page.url.searchParams.get('status') ?? 'All');
 	// Terima deep-link dari halaman lain (mis. villages → /products?query=Kopi).
@@ -31,38 +32,7 @@
 	let batchDeleting = $state(false);
 	// Konfirmasi terpusat: satu dialog melayani hapus tunggal, batch, &
 	// batch-enrich agar tidak lagi memakai window.confirm() yang memblokir.
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 
 	let pendingCount = $derived(products.filter((p) => p.status !== 'Enriched').length);
 
@@ -209,7 +179,7 @@
 				variant="secondary"
 				disabled={batching === 'enrich'}
 				onclick={() =>
-					askConfirm({
+					confirm.ask({
 						title: t('Jalankan AI enrichment batch'),
 						description: t('AI akan melengkapi HS code dan SKU untuk produk yang belum lengkap.'),
 						detail: `${pendingCount} ${t('produk')}`,
@@ -249,7 +219,7 @@
 					variant="destructive"
 					disabled={batchDeleting}
 					onclick={() =>
-						askConfirm({
+						confirm.ask({
 							title: t('Hapus produk terpilih'),
 							description: t('Produk terpilih akan dihapus permanen dari workspace.'),
 							detail: `${selected.size} ${t('produk')}`,
@@ -350,7 +320,7 @@
 							aria-label={`${t('Hapus')} ${product.name}`}
 							onclick={(e) => {
 								e.preventDefault();
-								askConfirm({
+								confirm.ask({
 									title: t('Hapus produk'),
 									description: t('Produk ini akan dihapus permanen dari workspace.'),
 									detail: product.name,
@@ -372,12 +342,12 @@
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredProducts?.length ?? 0} />
 
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>

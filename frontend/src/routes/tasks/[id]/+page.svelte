@@ -10,6 +10,7 @@
 	import { t } from '$lib/i18n.svelte';
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	let { data } = $props();
 	let completed = $state(false);
 	let reassigned = $state(false);
@@ -35,38 +36,7 @@
 	let localOwner = $derived(serverOwner || savedOwner || data.task.owner);
 	let localPriority = $derived(savedPriority || data.task.priority);
 	let displayStatus = $derived(serverStatus || (completed ? 'Done' : savedStatus || data.task.status));
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 
 
 	async function handleComplete() {
@@ -186,7 +156,7 @@
 				class="text-destructive"
 				disabled={deleting}
 				onclick={() =>
-					askConfirm({
+					confirm.ask({
 						title: t('Hapus tugas'),
 						description: t('Tugas ini akan dihapus permanen dari workspace.'),
 						detail: localTitle,
@@ -279,12 +249,12 @@
 	</div>
 
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>

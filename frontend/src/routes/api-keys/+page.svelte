@@ -23,6 +23,7 @@
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 	import BanIcon from '@lucide/svelte/icons/ban';
 	import XIcon from '@lucide/svelte/icons/x';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 
 	const filters = ['All', 'Active', 'Expiring Soon', 'Revoked'];
 	const availableScopes = [
@@ -57,38 +58,7 @@
 	let activeCount = $derived(keys.items.filter((key) => key.status === 'Active').length);
 
 	// Konfirmasi terpusat untuk hapus kunci API (pengganti window.confirm).
-	let confirmOpen = $state(false);
-	let confirmTitle = $state('');
-	let confirmDescription = $state('');
-	let confirmDetail = $state('');
-	let confirmLabel = $state('');
-	let confirmAction = $state<() => void | Promise<void>>(() => {});
-	let confirmLoading = $state(false);
-
-	function askConfirm(opts: {
-		title: string;
-		description: string;
-		detail?: string;
-		label?: string;
-		action: () => void | Promise<void>;
-	}) {
-		confirmTitle = opts.title;
-		confirmDescription = opts.description;
-		confirmDetail = opts.detail ?? '';
-		confirmLabel = opts.label ?? t('Hapus');
-		confirmAction = opts.action;
-		confirmOpen = true;
-	}
-
-	async function runConfirmed() {
-		confirmLoading = true;
-		try {
-			await confirmAction();
-			confirmOpen = false;
-		} finally {
-			confirmLoading = false;
-		}
-	}
+	const confirm = createConfirmController();
 
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
@@ -335,7 +305,7 @@
 								size="sm"
 								class="gap-1 text-destructive hover:bg-destructive/10"
 								onclick={() =>
-									askConfirm({
+									confirm.ask({
 										title: t('Hapus Kunci API'),
 										description: t('Kunci API ini akan dihapus permanen dari workspace.'),
 										detail: key.name,
@@ -407,12 +377,12 @@
 	{/if}
 
 	<ConfirmDialog
-		bind:open={confirmOpen}
-		title={confirmTitle}
-		description={confirmDescription}
-		detail={confirmDetail}
-		confirmLabel={confirmLabel}
-		loading={confirmLoading}
-		onconfirm={runConfirmed}
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
 	/>
 </AppShell>
