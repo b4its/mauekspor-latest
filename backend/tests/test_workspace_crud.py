@@ -189,6 +189,37 @@ def test_team_member_update_dan_remove():
         assert c.delete(f"/api/v1/team/{mid}/", headers=_auth(t)).status_code == 404
 
 
+def test_team_invite_menghasilkan_token_aktivasi():
+    """Undangan harus memberi cara bergabung, bukan hanya baris berstatus Invited."""
+    with TestClient(app) as c:
+        t = _login(c)
+        r = c.post("/api/v1/team/invite/",
+                   json={"email": "anggota.baru@kopigayo.example", "role": "Finance"},
+                   headers=_auth(t))
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["meta"]["invite_token"], "token aktivasi tidak dibuat"
+        assert "/login?invite=" in body["meta"]["activation_path"]
+        member = body["data"]
+        assert member["status"] == "Invited"
+        assert db.get("team_members", member["id"]).get("inviteToken") == body["meta"]["invite_token"]
+
+
+def test_team_invite_email_invalid_422():
+    with TestClient(app) as c:
+        t = _login(c)
+        assert c.post("/api/v1/team/invite/", json={"email": "bukan-email"},
+                      headers=_auth(t)).status_code == 422
+
+
+def test_team_invite_duplikat_409():
+    with TestClient(app) as c:
+        t = _login(c)
+        payload = {"email": "duplikat@kopigayo.example", "role": "Operations"}
+        assert c.post("/api/v1/team/invite/", json=payload, headers=_auth(t)).status_code == 200
+        assert c.post("/api/v1/team/invite/", json=payload, headers=_auth(t)).status_code == 409
+
+
 # ---------- CALENDAR ----------
 def test_calendar_event_update_dan_delete():
     with TestClient(app) as c:

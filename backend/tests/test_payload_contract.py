@@ -46,6 +46,36 @@ def test_compliance_evidence_accepts_note_key():
         data = res.json()["data"]
         assert data["currentEvidence"] == "Lab report QR uploaded"
         assert data["evidenceFile"] == "lab.pdf"
+        # Bukti kini mencatat waktu unggah agar dapat diaudit.
+        assert data.get("evidenceUploadedAt")
+
+
+def test_compliance_evidence_menautkan_file_id_nyata():
+    """Bukti dengan fileId harus menunjuk berkas yang benar-benar tersimpan."""
+    with TestClient(app) as c:
+        _login(c)
+        req_id = c.get("/api/v1/compliance/requirements/").json()["data"][0]["id"]
+        db.insert("files", {"id": "FIL-EVID-1", "name": "coa.pdf", "storageName": "123-coa.pdf"})
+        res = c.post(
+            f"/api/v1/compliance/requirements/{req_id}/evidence/",
+            json={"fileId": "FIL-EVID-1", "note": "CoA terverifikasi"},
+        )
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["evidenceFileId"] == "FIL-EVID-1"
+        assert data["evidenceFileUrl"] == "/api/v1/files/FIL-EVID-1/download/"
+        assert data["evidenceFile"] == "coa.pdf"
+
+
+def test_compliance_evidence_file_id_tidak_ada_404():
+    with TestClient(app) as c:
+        _login(c)
+        req_id = c.get("/api/v1/compliance/requirements/").json()["data"][0]["id"]
+        res = c.post(
+            f"/api/v1/compliance/requirements/{req_id}/evidence/",
+            json={"fileId": "FIL-TIDAK-ADA"},
+        )
+        assert res.status_code == 404
 
 
 def test_shipment_exception_resolve_persists_note_and_owner():

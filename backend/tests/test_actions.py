@@ -47,11 +47,50 @@ def test_forwarder_request_quote_dan_statistik():
         token = _login(c)
         fwds = c.get("/api/v1/forwarders/", headers=_headers(token)).json()["data"]
         fid = fwds[0]["id"]
-        req = c.post(f"/api/v1/forwarders/{fid}/request-quote/", headers=_headers(token))
+        req = c.post(
+            f"/api/v1/forwarders/{fid}/request-quote/",
+            json={"lane": "Belawan → Tokyo", "incoterm": "FOB", "cargo": "Kopi Arabika 20ft"},
+            headers=_headers(token),
+        )
         assert req.status_code == 200
+        # Alur utuh: kuotasi benar-benar dibuat, bukan hanya status.
+        quote = req.json()["data"]["quote"]
+        assert quote["status"] == "Requested"
+        assert quote["forwarderId"] == fid
+        assert quote["lane"] == "Belawan → Tokyo"
+        listed = c.get(f"/api/v1/forwarders/{fid}/quotes/", headers=_headers(token)).json()["data"]
+        assert any(q["id"] == quote["id"] for q in listed)
+        # Forwarder mencatat hitungan permintaan.
+        refreshed = c.get(f"/api/v1/forwarders/{fid}/", headers=_headers(token)).json()["data"]
+        assert refreshed["quoteRequestCount"] >= 1
         stats = c.get(f"/api/v1/forwarders/{fid}/statistics/", headers=_headers(token))
         assert stats.status_code == 200
         assert "ratingDistribution" in stats.json()["data"]
+
+
+def test_forwarder_quote_dan_notifikasi_antar_modul():
+    """Permintaan kuotasi harus memunculkan notifikasi & thread pesan terkait."""
+    with TestClient(app) as c:
+        token = _login(c)
+        fid = c.get("/api/v1/forwarders/", headers=_headers(token)).json()["data"][0]["id"]
+        before_notif = len(c.get("/api/v1/notifications/", headers=_headers(token)).json()["data"])
+        c.post(f"/api/v1/forwarders/{fid}/request-quote/", json={"lane": "Tanjung Priok → Hamburg"}, headers=_headers(token))
+        notifs = c.get("/api/v1/notifications/", headers=_headers(token)).json()["data"]
+        assert len(notifs) > before_notif
+        threads = c.get("/api/v1/messages/", headers=_headers(token)).json()["data"]
+        assert any(t.get("relatedModule") == "forwarders" and t.get("relatedId") == fid for t in threads)
+
+
+def test_payment_send_reminder_tercatat():
+    with TestClient(app) as c:
+        token = _login(c)
+        payments = c.get("/api/v1/payments/", headers=_headers(token)).json()["data"]
+        pid = payments[0]["id"]
+        res = c.post(f"/api/v1/payments/{pid}/send-reminder/", headers=_headers(token))
+        assert res.status_code == 200, res.text
+        data = res.json()["data"]
+        assert data["remindersSent"] >= 1
+        assert data.get("lastReminderAt")
 
 
 def test_dokumen_generate_dan_approve():

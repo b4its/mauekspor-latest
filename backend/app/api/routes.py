@@ -1,5 +1,6 @@
 """Semua endpoint API. Prefix /api/v1, respons # {"data": T, "meta": {}}."""
 
+import hashlib
 import hmac
 import json
 import logging
@@ -1676,12 +1677,71 @@ def create_forwarder(payload: sc.CreateForwarderPayload):
 
 
 @router.post("/forwarders/{forwarder_id}/request-quote/")
-def request_forwarder_quote(forwarder_id: str):
+def request_forwarder_quote(
+    forwarder_id: str,
+    payload: dict | None = None,
+    current_user: dict = Depends(get_current_user),
+):
+    """Buat permintaan kuotasi freight yang benar-benar tercatat.
+
+    Sebelumnya hanya menyetel `lastQuoteRequest`. Sekarang permintaan membuat
+    record `forwarder_quotes` + thread pesan + notifikasi + entri audit agar
+    alur komersial (forwarder → quotation) utuh, bukan sekadar status.
+    """
     record = db.get("forwarders", forwarder_id)
     if not record:
         raise HTTPException(404, "Forwarder not found")
-    record["lastQuoteRequest"] = "now"
-    return _save_one(record)
+    body = payload or {}
+    lane = str(body.get("lane") or record.get("coverage") or "Lane belum ditentukan")
+    cargo = str(body.get("cargo") or body.get("product") or "")
+    incoterm = str(body.get("incoterm") or "FOB")
+    note = str(body.get("note") or "")
+    now = datetime.now(timezone.utc).isoformat()
+
+    quote = db.insert("forwarder_quotes", {
+        "id": db.gen_id("forwarder_quotes", "FWDQ"),
+        "forwarderId": forwarder_id,
+        "forwarderName": record.get("name", ""),
+        "lane": lane,
+        "cargo": cargo,
+        "incoterm": incoterm,
+        "note": note,
+        "status": "Requested",
+        "requestedBy": current_user["id"],
+        "requestedByName": current_user.get("fullName") or current_user.get("name") or current_user.get("email", ""),
+        "createdAt": now,
+        "updatedAt": now,
+    })
+
+    _notify(
+        f"Permintaan kuotasi dikirim ke {record.get('name', 'forwarder')}",
+        f"{lane} ({incoterm})",
+        "Forwarders", "Info", f"/forwarders/{forwarder_id}",
+    )
+    db.insert("messages", {
+        "id": db.gen_id("messages", "MSG"),
+        "subject": f"Permintaan kuotasi freight: {lane}",
+        "party": record.get("name", "Forwarder"),
+        "channel": "Email",
+        "status": "Waiting Reply",
+        "lastMessage": f"{incoterm} · {cargo or 'kargo belum dispesifikasikan'}",
+        "relatedModule": "forwarders",
+        "relatedId": forwarder_id,
+        "createdAt": now,
+    })
+
+    record["lastQuoteRequest"] = now
+    record["quoteRequestCount"] = int(record.get("quoteRequestCount", 0)) + 1
+    db.save(record)
+
+    return {"data": {"quote": _serialize(quote), "forwarder": _serialize(record)}, "meta": {}}
+
+
+@router.get("/forwarders/{forwarder_id}/quotes/")
+def list_forwarder_quotes(forwarder_id: str):
+    quotes = [q for q in db.all("forwarder_quotes") if q.get("forwarderId") == forwarder_id]
+    quotes.sort(key=lambda q: str(q.get("createdAt", "")), reverse=True)
+    return {"data": [_serialize(q) for q in quotes], "meta": {"count": len(quotes)}}
 
 
 # ----------------------------------------------------------------------------
@@ -2805,18 +2865,41 @@ def create_compliance(payload: dict):
 
 
 @router.post("/compliance/requirements/{req_id}/evidence/")
-def upload_compliance_evidence(req_id: str, payload: dict):
+def upload_compliance_evidence(
+    req_id: str,
+    payload: dict | None = None,
+    current_user: dict = Depends(get_current_user),
+):
+    """Catat bukti kepatuhan, hubungkan ke file nyata bila tersedia.
+
+    Sebelumnya hanya menyimpan nama file sebagai string tanpa bytes. Kini bila
+    klien sudah mengunggah berkas via `/files/upload/`, id-nya dapat dikirim
+    (`fileId`) sehingga bukti terhubung ke berkas nyata yang bisa diunduh.
+    """
     record = db.get("compliance_requirements", req_id)
     if not record:
         raise HTTPException(404, "Compliance requirement not found")
-    file_name = payload.get("fileName") or payload.get("filename")
-    description = payload.get("description") or payload.get("note")
-    if file_name:
+    body = payload or {}
+    file_name = body.get("fileName") or body.get("filename")
+    file_id = body.get("fileId") or body.get("file_id")
+    description = body.get("description") or body.get("note")
+
+    linked_file = db.get("files", str(file_id)) if file_id else None
+    if file_id and not linked_file:
+        raise HTTPException(404, "File bukti tidak ditemukan; unggah berkas terlebih dahulu")
+
+    if linked_file:
+        record["evidenceFile"] = linked_file.get("name", file_name)
+        record["evidenceFileId"] = linked_file.get("id")
+        record["evidenceFileUrl"] = f"/api/v1/files/{linked_file.get('id')}/download/"
+    elif file_name:
         record["evidenceFile"] = file_name
     record["currentEvidence"] = description or record.get("currentEvidence")
     record["status"] = "Evidence Uploaded"
+    record["evidenceUploadedAt"] = datetime.now(timezone.utc).isoformat()
+    record["evidenceUploadedBy"] = current_user.get("fullName") or current_user.get("email", "")
     record["updatedAt"] = "now"
-    summary = file_name or record.get("currentEvidence") or "Bukti diunggah"
+    summary = record.get("evidenceFile") or record.get("currentEvidence") or "Bukti diunggah"
     _notify(
         f"Bukti diunggah untuk {record.get('title', 'requirement')}",
         summary,
@@ -3154,6 +3237,24 @@ def send_payment_reminder(payment_id: str):
     if not record:
         raise HTTPException(404, "Payment not found")
     record["remindersSent"] = record.get("remindersSent", 0) + 1
+    record["lastReminderAt"] = datetime.now(timezone.utc).isoformat()
+    record["status"] = "Due Soon" if str(record.get("status", "")).lower() in {"pending", ""} else record.get("status")
+    _notify(
+        f"Pengingat pembayaran dikirim untuk {record.get('buyer', 'buyer')}",
+        f"Pengingat ke-{record['remindersSent']} · jatuh tempo {record.get('dueDate', '-')}",
+        "Payments", "Warning", f"/payments/{payment_id}",
+    )
+    db.insert("messages", {
+        "id": db.gen_id("messages", "MSG"),
+        "subject": f"Pengingat pembayaran {payment_id}",
+        "party": record.get("buyer", "Buyer"),
+        "channel": "Email",
+        "status": "Waiting Reply",
+        "lastMessage": f"Jatuh tempo {record.get('dueDate', '-')} · {record.get('currency', 'IDR')} {record.get('amount', 0)}",
+        "relatedModule": "payments",
+        "relatedId": payment_id,
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+    })
     return _save_one(record)
 
 
@@ -3563,19 +3664,51 @@ def list_team():
 
 
 @router.post("/team/invite/")
-def invite_team(payload: dict):
-    email = payload.get("email", "")
-    name = email.split("@")[0] if email else ""
+def invite_team(payload: dict, current_user: dict = Depends(get_current_user)):
+    """Undang anggota tim dengan token aktivasi nyata.
+
+    Sebelumnya hanya menyisipkan baris berstatus "Invited" tanpa cara bergabung.
+    Sekarang dibuat token undangan (dapat dipakai untuk aktivasi akun), notifikasi,
+    dan entri audit sehingga undangan dapat dilacak dan diterima.
+    """
+    email = str(payload.get("email", "")).strip()
+    if not email or "@" not in email:
+        raise HTTPException(422, "Email undangan tidak valid")
+    existing = next((m for m in db.all("team_members") if str(m.get("email", "")).lower() == email.lower()), None)
+    if existing and existing.get("status") in {"Invited", "Active"}:
+        raise HTTPException(409, "Email ini sudah diundang atau aktif sebagai anggota tim")
+
+    role = payload.get("role", "Operations")
+    name = payload.get("name") or (email.split("@")[0] if email else "")
+    now = datetime.now(timezone.utc).isoformat()
+    token = hmac.new(
+        settings.secret_key.encode(),
+        f"{email}:{now}".encode(),
+        hashlib.sha256,
+    ).hexdigest()[:32]
+
     record = db.insert("team_members", {
         "id": db.gen_id("team_members", "USR"),
         "email": email,
         "name": name,
-        "role": payload.get("role", "Operations"),
+        "role": role,
         "status": "Invited",
         "permissions": [],
         "workload": 0,
+        "inviteToken": token,
+        "invitedBy": current_user["id"],
+        "invitedAt": now,
+        "expiresAt": now,
     })
-    return _one(record)
+    _notify(
+        f"Undangan tim terkirim ke {email}",
+        f"Peran: {role}. Token aktivasi dibuat dan berlaku hingga diterima.",
+        "Team", "Info", "/team",
+    )
+    # Kembalikan token agar admin dapat meneruskan link aktivasi (email gateway
+    # belum tersedia di deployment ini).
+    out = _serialize(record)
+    return {"data": out, "meta": {"invite_token": token, "activation_path": f"/login?invite={token}&email={email}"}}
 
 
 @router.post("/team/{member_id}/role/")

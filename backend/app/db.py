@@ -31,6 +31,8 @@ _TABLES = [
     "lesson_progress",
     # --- Modul desa (komoditas unggulan & peta potensi desa) ---
     "villages",
+    # --- Permintaan kuotasi freight (alur forwarder → quotation) ---
+    "forwarder_quotes",
 ]
 
 _STORE: dict[str, list[dict[str, Any]]] = {}
