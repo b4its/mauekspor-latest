@@ -2563,7 +2563,31 @@ const dictionary: Record<string, Entry> = {
 	'Memfilter analisis untuk:': { id: 'Memfilter analisis untuk:', en: 'Filtering analysis for:' },
 	'Tampilkan Semua': { id: 'Tampilkan Semua', en: 'Show All' },
 	'Reset Filter': { id: 'Reset Filter', en: 'Reset Filter' },
-	'Buat Analisis Baru': { id: 'Buat Analisis Baru', en: 'Create New Analysis' }
+	'Buat Analisis Baru': { id: 'Buat Analisis Baru', en: 'Create New Analysis' },
+	'Konfirmasi': { id: 'Konfirmasi', en: 'Confirm' },
+	'Jalankan': { id: 'Jalankan', en: 'Run' },
+	'Cari produk': { id: 'Cari produk', en: 'Search product' },
+	'Cari produk, asal, HS...': { id: 'Cari produk, asal, HS...', en: 'Search product, origin, HS...' },
+	'Hapus produk': { id: 'Hapus produk', en: 'Delete product' },
+	'Hapus produk terpilih': { id: 'Hapus produk terpilih', en: 'Delete selected products' },
+	'Produk terpilih akan dihapus permanen dari workspace.': { id: 'Produk terpilih akan dihapus permanen dari workspace.', en: 'The selected products will be permanently removed from the workspace.' },
+	'Produk ini akan dihapus permanen dari workspace.': { id: 'Produk ini akan dihapus permanen dari workspace.', en: 'This product will be permanently removed from the workspace.' },
+	'Jalankan AI enrichment batch': { id: 'Jalankan AI enrichment batch', en: 'Run AI enrichment batch' },
+	'AI akan melengkapi HS code dan SKU untuk produk yang belum lengkap.': { id: 'AI akan melengkapi HS code dan SKU untuk produk yang belum lengkap.', en: 'AI will complete the HS code and SKU for incomplete products.' },
+	'Halaman sebelumnya': { id: 'Halaman sebelumnya', en: 'Previous page' },
+	'Halaman berikutnya': { id: 'Halaman berikutnya', en: 'Next page' },
+	'Navigasi halaman': { id: 'Navigasi halaman', en: 'Page navigation' },
+	'Per halaman': { id: 'Per halaman', en: 'Per page' },
+	'Halaman': { id: 'Halaman', en: 'Page' },
+	'Memeriksa sesi Anda...': { id: 'Memeriksa sesi Anda...', en: 'Checking your session...' },
+	'Pengunjung': { id: 'Pengunjung', en: 'Visitor' },
+	'Masuk ke workspace': { id: 'Masuk ke workspace', en: 'Sign in to workspace' },
+	'Navigasi publik': { id: 'Navigasi publik', en: 'Public navigation' },
+	'Katalog': { id: 'Katalog', en: 'Catalog' },
+	'Buka dashboard': { id: 'Buka dashboard', en: 'Open dashboard' },
+	'MauEkspor Beranda': { id: 'MauEkspor Beranda', en: 'MauEkspor Home' },
+	'MauEkspor - menghubungkan komoditas Indonesia dengan pasar global.': { id: 'MauEkspor - menghubungkan komoditas Indonesia dengan pasar global.', en: 'MauEkspor - connecting Indonesian commodities with global markets.' },
+	'Coba lagi': { id: 'Coba lagi', en: 'Try again' }
 };
 
 let initial: Locale = 'id';

@@ -11,11 +11,13 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import type { Product } from '$lib/data/trade';
-import Pagination from '$lib/components/Pagination.svelte';
-import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import Pagination from '$lib/components/Pagination.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { page } from '$app/state';
 
-	let filter = $state('All');
+	let filter = $state(page.url.searchParams.get('status') ?? 'All');
 	// Terima deep-link dari halaman lain (mis. villages → /products?query=Kopi).
 	let query = $state(page.url.searchParams.get('query') ?? '');
 	const filters = ['All', 'Ready', 'Enriched', 'Needs HS Review'];
@@ -27,11 +29,53 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let batchMessage = $state('');
 	let selected = $state<Set<string>>(new Set());
 	let batchDeleting = $state(false);
+	// Konfirmasi terpusat: satu dialog melayani hapus tunggal, batch, &
+	// batch-enrich agar tidak lagi memakai window.confirm() yang memblokir.
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
 
 	let pendingCount = $derived(products.filter((p) => p.status !== 'Enriched').length);
 
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: filter === 'All' ? '' : filter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
+
 	async function runBatchEnrich() {
-		if (!confirm(`Enrich ${pendingCount} produk yang belum lengkap? (AI HS code + SKU otomatis)`)) return;
 		error = '';
 		batchMessage = '';
 		batching = 'enrich';
@@ -59,7 +103,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	});
 
 	async function removeProduct(id: string, name: string) {
-		if (!confirm(`Hapus produk "${name}"?`)) return;
 		error = '';
 		deleting = id;
 		try {
@@ -92,7 +135,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	async function removeSelected() {
 		if (selected.size === 0) return;
-		if (!confirm(`Hapus ${selected.size} produk terpilih?`)) return;
 		error = '';
 		batchMessage = '';
 		batchDeleting = true;
@@ -168,13 +210,25 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<div class="text-sm font-semibold text-muted-foreground">
 				{pendingCount} {t('produk masih butuh AI enrichment')}.
 			</div>
-			<Button size="sm" variant="secondary" disabled={batching === 'enrich'} onclick={runBatchEnrich}>
+			<Button
+				size="sm"
+				variant="secondary"
+				disabled={batching === 'enrich'}
+				onclick={() =>
+					askConfirm({
+						title: t('Jalankan AI enrichment batch'),
+						description: t('AI akan melengkapi HS code dan SKU untuk produk yang belum lengkap.'),
+						detail: `${pendingCount} ${t('produk')}`,
+						label: t('Jalankan'),
+						action: runBatchEnrich
+					})}
+			>
 				{batching === 'enrich' ? t('Enriching...') : `Enrich semua (${pendingCount})`}
 			</Button>
 		</div>
 	{/if}
 	{#if batchMessage}
-		<p class="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{batchMessage}</p>
+		<p role="status" class="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{batchMessage}</p>
 	{/if}
 </Card>
 
@@ -196,15 +250,27 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				{t('Pilih semua')}
 			</label>
 			{#if selected.size > 0}
-				<Button size="sm" variant="destructive" disabled={batchDeleting} onclick={removeSelected}>
+				<Button
+					size="sm"
+					variant="destructive"
+					disabled={batchDeleting}
+					onclick={() =>
+						askConfirm({
+							title: t('Hapus produk terpilih'),
+							description: t('Produk terpilih akan dihapus permanen dari workspace.'),
+							detail: `${selected.size} ${t('produk')}`,
+							action: removeSelected
+						})}
+				>
 					{batchDeleting ? t('Menghapus...') : `${t('Hapus terpilih')} (${selected.size})`}
 				</Button>
 			{/if}
 			<Input
 				bind:value={query}
 				type="search"
-				placeholder="Search product, origin, HS..."
+				placeholder={t('Cari produk, asal, HS...')}
 				class="max-w-xs"
+				aria-label={t('Cari produk')}
 			/>
 		</div>
 	</div>
@@ -283,8 +349,22 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					</div>
 					<div class="mt-3 flex items-center justify-end gap-2">
 						<Button size="sm" variant="outline" href={`/products/${product.id}/edit`}>{t('Edit')}</Button>
-						<Button size="sm" variant="destructive" disabled={deleting === product.id} onclick={(e) => { e.preventDefault(); removeProduct(product.id, product.name); }}>
-							{deleting === product.id ? '...' : 'Hapus'}
+						<Button
+							size="sm"
+							variant="destructive"
+							disabled={deleting === product.id}
+							aria-label={`${t('Hapus')} ${product.name}`}
+							onclick={(e) => {
+								e.preventDefault();
+								askConfirm({
+									title: t('Hapus produk'),
+									description: t('Produk ini akan dihapus permanen dari workspace.'),
+									detail: product.name,
+									action: () => removeProduct(product.id, product.name)
+								});
+							}}
+						>
+							{deleting === product.id ? '...' : t('Hapus')}
 						</Button>
 					</div>
 				</a>
@@ -293,8 +373,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		{/if}
 	</div>
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredProducts?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>
