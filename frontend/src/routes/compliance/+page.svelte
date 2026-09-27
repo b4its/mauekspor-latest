@@ -12,11 +12,14 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { page } from '$app/state';
 
 	const filters = ['All', 'Blocked', 'In Review', 'Evidence Uploaded', 'Verified'];
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let message = $state('');
 	let showForm = $state(false);
 	let saving = $state(false);
@@ -74,6 +77,49 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let busyId = $state('');
 
+	// Konfirmasi terpusat untuk hapus persyaratan (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
+
 	async function handleCreate() {
 		formError = '';
 		if (!fTitle.trim()) {
@@ -117,7 +163,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(item: ComplianceRequirement) {
-		if (!confirm(`Hapus persyaratan kepatuhan "${item.title}"?`)) return;
 		error = '';
 		busyId = item.id;
 		try {
@@ -200,15 +245,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p role="status" class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if complianceRequirements.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{complianceRequirements.error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{complianceRequirements.error}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
@@ -275,7 +320,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							size="sm"
 							class="text-destructive hover:bg-destructive/10"
 							disabled={busyId === item.id}
-							onclick={() => handleDelete(item)}
+							onclick={() =>
+								askConfirm({
+									title: t('Hapus persyaratan kepatuhan'),
+									description: t('Persyaratan ini akan dihapus permanen dari workspace.'),
+									detail: item.title,
+									action: () => handleDelete(item)
+								})}
 						>
 							{t('Hapus')}
 						</Button>
@@ -288,4 +339,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredRequirements?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

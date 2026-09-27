@@ -12,13 +12,59 @@
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { page } from '$app/state';
 
 	const filters = ['All', 'Published', 'Draft', 'Needs Review'];
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let deleting = $state('');
 	let error = $state('');
+
+	// Konfirmasi terpusat untuk hapus katalog (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
 
 	let catalogs = createRemoteList(listCatalogs, seedCatalogs);
 	let products = createRemoteList(listProducts, seedProducts);
@@ -28,7 +74,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	});
 
 	async function removeCatalog(id: string, title: string) {
-		if (!confirm(`${t('Hapus katalog "')}${title}"?`)) return;
 		error = '';
 		deleting = id;
 		try {
@@ -137,7 +182,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</div>
 
 	{#if catalogs.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{catalogs.error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{catalogs.error}</p>
 	{/if}
 
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -184,8 +229,21 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						</div>
 						<div class="mt-3 flex items-center justify-end gap-2">
 							<Button size="sm" variant="outline" href={`/catalogs/${catalog.id}/edit`}>{t('Edit')}</Button>
-							<Button size="sm" variant="destructive" disabled={deleting === catalog.id} onclick={(e) => { e.preventDefault(); removeCatalog(catalog.id, catalog.title); }}>
-								{deleting === catalog.id ? '...' : 'Hapus'}
+							<Button
+								size="sm"
+								variant="destructive"
+								disabled={deleting === catalog.id}
+								onclick={(e) => {
+									e.preventDefault();
+									askConfirm({
+										title: t('Hapus katalog'),
+										description: t('Katalog ini akan dihapus permanen dari workspace.'),
+										detail: catalog.title,
+										action: () => removeCatalog(catalog.id, catalog.title)
+									});
+								}}
+							>
+								{deleting === catalog.id ? '...' : t('Hapus')}
 							</Button>
 						</div>
 					</a>
@@ -198,8 +256,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		{/if}
 	</div>
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredCatalogs?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

@@ -13,12 +13,14 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
 	const filters = ['All', 'New', 'Matched', 'Quoted', 'Closed'];
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let queryParamProcessed = $state(false);
 
 	$effect(() => {
@@ -42,8 +44,50 @@ import { page } from '$app/state';
 	let deletingId = $state('');
 	let deleteError = $state('');
 
+	// Konfirmasi terpusat untuk hapus permintaan buyer (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
+
 	async function handleDelete(id: string) {
-		if (!confirm(t('Hapus permintaan buyer ini?'))) return;
 		deleteError = '';
 		deletingId = id;
 		try {
@@ -129,11 +173,11 @@ import { page } from '$app/state';
 	</div>
 
 	{#if requests.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{requests.error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{requests.error}</p>
 	{/if}
 
 	{#if deleteError}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{deleteError}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{deleteError}</p>
 	{/if}
 
 	{#if requests.loading}
@@ -169,7 +213,13 @@ import { page } from '$app/state';
 					size="sm"
 					class="absolute top-3 right-3 z-10 text-destructive hover:bg-destructive/10"
 					disabled={deletingId === request.id}
-					onclick={() => handleDelete(request.id)}
+					onclick={() =>
+						askConfirm({
+							title: t('Hapus permintaan buyer'),
+							description: t('Permintaan ini akan dihapus permanen dari workspace.'),
+							detail: request.subject,
+							action: () => handleDelete(request.id)
+						})}
 				>
 					{deletingId === request.id ? t('Menghapus...') : t('Hapus')}
 				</Button>
@@ -200,4 +250,13 @@ import { page } from '$app/state';
 {/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredRequests?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

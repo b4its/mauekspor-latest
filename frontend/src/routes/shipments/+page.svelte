@@ -13,13 +13,15 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
 
 	const filters = ['All', 'Booking Requested', 'Customs Submitted', 'Loaded', 'Exception'];
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let message = $state('');
 	let showForm = $state(false);
 	let saving = $state(false);
@@ -32,6 +34,49 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let fOrderId = $state('');
 	let error = $state('');
 	let paramProcessed = $state(false);
+
+	// Konfirmasi terpusat untuk hapus pengiriman (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
 
 	let shipments = createRemoteList(listShipments, seedShipments);
 	let remoteProjects = createRemoteList(listTradeProjects, projects);
@@ -147,7 +192,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(shipment: { id: string; route: string }) {
-		if (!confirm(`Hapus pengiriman "${shipment.route}" (${shipment.id})?`)) return;
 		error = '';
 		actionId = shipment.id;
 		try {
@@ -239,15 +283,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
 	{#if shipments.error}
-		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{shipments.error}</p>
+		<p role="alert" class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{shipments.error}</p>
 	{/if}
 
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p role="status" class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
@@ -330,7 +374,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								size="sm"
 								class="h-7 text-xs text-destructive hover:bg-destructive/10"
 								disabled={actionId === shipment.id}
-								onclick={() => handleDelete(shipment)}
+								onclick={() =>
+									askConfirm({
+										title: t('Hapus pengiriman'),
+										description: t('Pengiriman ini akan dihapus permanen dari workspace.'),
+										detail: `${shipment.route} · ${shipment.id}`,
+										action: () => handleDelete(shipment)
+									})}
 							>
 								{t('Hapus')}
 							</Button>
@@ -344,4 +394,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredShipments?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

@@ -11,12 +11,15 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { page } from '$app/state';
 
 	const filters = ['All', 'Compliance', 'Documents', 'Payments', 'Shipments', 'Reports'];
 	const modules = ['Compliance', 'Documents', 'Payments', 'Shipments', 'Reports'];
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let rules = createRemoteList(listAutomations, seedRules);
 	let error = $state('');
 	let message = $state('');
@@ -50,6 +53,49 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	);
 	let activeCount = $derived(rules.items.filter((rule) => rule.status === 'Active').length);
 	let totalRuns = $derived(rules.items.reduce((sum, rule) => sum + rule.runs, 0));
+
+	// Konfirmasi terpusat untuk hapus aturan (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -142,7 +188,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(rule: { id: string; name: string }) {
-		if (!confirm(`Hapus aturan automasi "${rule.name}"?`)) return;
 		error = '';
 		message = '';
 		busyId = rule.id;
@@ -258,14 +303,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p role="status" class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if rules.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{rules.error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{rules.error}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
@@ -336,7 +381,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					</div>
 					<div class="grid grid-cols-2 gap-2">
 						<Button variant="outline" disabled={busyId === rule.id} onclick={() => openEdit(rule)}>{t('Edit')}</Button>
-						<Button variant="outline" class="text-destructive" disabled={busyId === rule.id} onclick={() => handleDelete(rule)}>{t('Hapus')}</Button>
+						<Button variant="outline" class="text-destructive" disabled={busyId === rule.id} onclick={() =>
+							askConfirm({
+								title: t('Hapus aturan automasi'),
+								description: t('Aturan ini akan dihapus permanen dari workspace.'),
+								detail: rule.name,
+								action: () => handleDelete(rule)
+							})}>{t('Hapus')}</Button>
 					</div>
 				</Card>
 			{:else}
@@ -346,4 +397,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredRules?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

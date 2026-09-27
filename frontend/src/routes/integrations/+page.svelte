@@ -11,7 +11,10 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { page } from '$app/state';
 
 	const filters = ['All', 'Logistics', 'Finance', 'Compliance', 'Commerce', 'AI'];
 	const categories = ['Logistics', 'Finance', 'Compliance', 'Commerce', 'AI'];
@@ -23,8 +26,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	function trStatus(s: string) {
 		return t(s === 'Connected' ? 'Terhubung' : s === 'Needs Auth' ? 'Butuh otorisasi' : 'Terputus');
 	}
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let synced = $state(false);
 	let syncing = $state(false);
 	let error = $state('');
@@ -52,6 +55,49 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		)
 	);
 	let connectedCount = $derived(items.items.filter((item) => item.status === 'Connected').length);
+
+	// Konfirmasi terpusat untuk hapus integrasi (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
 
 	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		if (tone === 'green') return 'default';
@@ -173,7 +219,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(item: { id: string; name: string }) {
-		if (!confirm(`Hapus integrasi "${item.name}"?`)) return;
 		error = '';
 		busyId = item.id;
 		try {
@@ -252,14 +297,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p role="status" class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if items.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{items.error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{items.error}</p>
 	{/if}
 
 	{#if synced}
@@ -338,7 +383,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					{/if}
 					<div class="grid grid-cols-2 gap-2">
 						<Button variant="outline" disabled={busyId === item.id} onclick={() => openEdit(item)}>{t('Edit')}</Button>
-						<Button variant="outline" class="text-destructive" disabled={busyId === item.id} onclick={() => handleDelete(item)}>{t('Hapus')}</Button>
+						<Button variant="outline" class="text-destructive" disabled={busyId === item.id} onclick={() =>
+							askConfirm({
+								title: t('Hapus integrasi'),
+								description: t('Integrasi ini akan dihapus permanen dari workspace.'),
+								detail: item.name,
+								action: () => handleDelete(item)
+							})}>{t('Hapus')}</Button>
 					</div>
 				</Card>
 			{:else}
@@ -348,4 +399,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredIntegrations?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

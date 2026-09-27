@@ -10,11 +10,14 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import type { UserAccount } from '$lib/data/trade';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { page as appPage } from '$app/state';
 
 	const roleFilters = ['All', 'Admin', 'Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance'];
 	const PAGE_SIZE = 5;
-	let roleFilter = $state('All');
-	let query = $state('');
+	let roleFilter = $state(appPage.url.searchParams.get('status') ?? 'All');
+	let query = $state(appPage.url.searchParams.get('query') ?? '');
 	let deleting = $state('');
 	let error = $state('');
 	let users = $state<UserAccount[]>(seedUsers);
@@ -47,8 +50,50 @@
 
 	const totalPages = $derived(Math.max(1, Math.ceil(total / PAGE_SIZE)));
 
+	// Konfirmasi terpusat untuk hapus akun (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: roleFilter === 'All' ? '' : roleFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(appPage.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
+
 	async function removeUser(id: string, name: string) {
-		if (!confirm(`${t('Hapus akun "')}${name}" ${t('beserta data terkaitnya?')}`)) return;
 		error = '';
 		deleting = id;
 		try {
@@ -155,7 +200,13 @@
 					<span class="hidden text-muted-foreground md:block">{user.createdAt}</span>
 					<span class="grid justify-end">
 						<Button size="sm" variant="ghost" href={`/users/${user.id}`}>{t('Buka')}</Button>
-						<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() => removeUser(user.id, user.fullName)}>
+						<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() =>
+							askConfirm({
+								title: t('Hapus akun'),
+								description: t('Akun ini beserta data terkaitnya akan dihapus permanen.'),
+								detail: user.fullName,
+								action: () => removeUser(user.id, user.fullName)
+							})}>
 							{deleting === user.id ? '...' : t('Hapus')}
 						</Button>
 					</span>
@@ -165,7 +216,7 @@
 			{/each}
 		{/if}
 		{#if error}
-			<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+			<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 		{/if}
 		{#if totalPages > 1}
 			<div class="flex items-center justify-between gap-3 border-t p-3">
@@ -177,4 +228,14 @@
 			</div>
 		{/if}
 	</Card>
+
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

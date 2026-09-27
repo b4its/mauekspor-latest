@@ -12,12 +12,15 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { page } from '$app/state';
 
 	const filters = ['All', 'Admin', 'Operations', 'Compliance', 'Finance', 'Sales'];
 	const roles: TeamMember['role'][] = ['Admin', 'Operations', 'Compliance', 'Finance', 'Sales'];
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let invited = $state(false);
 	let error = $state('');
 	let message = $state('');
@@ -26,6 +29,49 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let inviteEmail = $state('');
 	let inviteRole = $state<TeamMember['role']>('Operations');
 	let busyId = $state('');
+
+	// Konfirmasi terpusat untuk hapus anggota tim (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
 
 	let teamMembers = createRemoteList(listTeamMembers, seedMembers);
 	$effect(() => {
@@ -102,7 +148,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleRemove(member: TeamMember) {
-		if (!confirm(`Hapus ${member.name} dari tim?`)) return;
 		error = '';
 		busyId = member.id;
 		try {
@@ -163,14 +208,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p role="status" class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	{#if teamMembers.error}
-		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{teamMembers.error}</p>
+		<p role="alert" class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">{teamMembers.error}</p>
 	{/if}
 
 	{#if invited}
@@ -274,7 +319,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<Button variant="outline" disabled={busyId === member.id} onclick={() => handleToggleStatus(member)}>
 								{member.status === 'Active' ? t('Suspend') : t('Aktifkan')}
 							</Button>
-							<Button variant="outline" class="text-destructive" disabled={busyId === member.id} onclick={() => handleRemove(member)}>{t('Hapus')}</Button>
+							<Button variant="outline" class="text-destructive" disabled={busyId === member.id} onclick={() =>
+								askConfirm({
+									title: t('Hapus anggota tim'),
+									description: t('Anggota ini akan dihapus permanen dari workspace.'),
+									detail: member.name,
+									action: () => handleRemove(member)
+								})}>{t('Hapus')}</Button>
 						</div>
 					</CardContent>
 				</Card>
@@ -287,4 +338,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredMembers?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>

@@ -11,13 +11,15 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
 
 	const filters = ['All', 'Pending', 'Deposit Paid', 'Due Soon', 'Overdue', 'Settled'];
-	let activeFilter = $state('All');
-	let query = $state('');
+	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	let query = $state(page.url.searchParams.get('query') ?? '');
 	let message = $state('');
 	let busyId = $state('');
 	let showForm = $state(false);
@@ -31,6 +33,49 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let fMethod = $state('Bank Transfer');
 	let error = $state('');
 	let paramProcessed = $state(false);
+
+	// Konfirmasi terpusat untuk hapus pembayaran (pengganti window.confirm).
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmDescription = $state('');
+	let confirmDetail = $state('');
+	let confirmLabel = $state('');
+	let confirmAction = $state<() => void | Promise<void>>(() => {});
+	let confirmLoading = $state(false);
+
+	function askConfirm(opts: {
+		title: string;
+		description: string;
+		detail?: string;
+		label?: string;
+		action: () => void | Promise<void>;
+	}) {
+		confirmTitle = opts.title;
+		confirmDescription = opts.description;
+		confirmDetail = opts.detail ?? '';
+		confirmLabel = opts.label ?? t('Hapus');
+		confirmAction = opts.action;
+		confirmOpen = true;
+	}
+
+	async function runConfirmed() {
+		confirmLoading = true;
+		try {
+			await confirmAction();
+			confirmOpen = false;
+		} finally {
+			confirmLoading = false;
+		}
+	}
+
+	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
 
 	let payments = createRemoteList(listPayments, seedPayments);
 	$effect(() => {
@@ -110,7 +155,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 
 	async function handleDelete(payment: { id: string; buyer: string }) {
-		if (!confirm(`Hapus pembayaran ${payment.id} untuk "${payment.buyer}"?`)) return;
 		error = '';
 		busyId = payment.id;
 		try {
@@ -238,15 +282,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	</Card>
 
 	{#if error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
 
 	{#if payments.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{payments.error}</p>
+		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{payments.error}</p>
 	{/if}
 
 	{#if message}
-		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
+		<p role="status" class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
@@ -331,7 +375,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								size="sm"
 								class="h-7 text-xs text-destructive hover:bg-destructive/10"
 								disabled={busyId === payment.id}
-								onclick={() => handleDelete(payment)}
+								onclick={() =>
+									askConfirm({
+										title: t('Hapus pembayaran'),
+										description: t('Pembayaran ini akan dihapus permanen dari workspace.'),
+										detail: `${payment.id} · ${payment.buyer}`,
+										action: () => handleDelete(payment)
+									})}
 							>
 								{t('Hapus')}
 							</Button>
@@ -345,4 +395,13 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredPayments?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirmOpen}
+		title={confirmTitle}
+		description={confirmDescription}
+		detail={confirmDetail}
+		confirmLabel={confirmLabel}
+		loading={confirmLoading}
+		onconfirm={runConfirmed}
+	/>
 </AppShell>
