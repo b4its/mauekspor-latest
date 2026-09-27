@@ -55,13 +55,6 @@
 		</div>
 	</Card>
 
-	{#if error}
-		<div role="alert" class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">
-			<p>{error}</p>
-			<Button variant="outline" size="sm" onclick={load}>{t('Coba lagi')}</Button>
-		</div>
-	{/if}
-
 	{#if loading}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each Array(6) as _}
@@ -71,6 +64,11 @@
 					<Skeleton class="mt-4 h-16 w-full rounded-lg" />
 				</Card>
 			{/each}
+		</div>
+	{:else if error}
+		<div role="alert" class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-destructive/10 px-3 py-3 text-sm font-bold text-destructive">
+			<p>{error}</p>
+			<Button variant="outline" size="sm" onclick={load}>{t('Coba lagi')}</Button>
 		</div>
 	{:else if catalogs.length === 0}
 		<div class="rounded-xl border border-dashed p-8 text-center font-semibold text-muted-foreground">
