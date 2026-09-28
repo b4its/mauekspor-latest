@@ -211,9 +211,10 @@ def test_educational_file_upload_produces_downloadable_url():
         )
         assert res.status_code == 200, res.text
         data = res.json()["data"]
-        assert data["fileUrl"].startswith("/files/")
+        # URL harus menyertakan prefix /api/v1 agar tautan unduh valid apa adanya.
+        assert data["fileUrl"].startswith("/api/v1/files/")
         assert data["fileUrl"].endswith("/download/")
-        dl = c.get(f"/api/v1{data['fileUrl']}")
+        dl = c.get(data["fileUrl"])
         assert dl.status_code == 200, dl.text
         assert dl.content == b"hello world"
 

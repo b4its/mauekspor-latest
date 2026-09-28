@@ -493,3 +493,53 @@ def test_admin_hs_code_rejects_non_numeric():
         headers = _login(c)
         res = c.post("/api/v1/hs-codes/", json={"hs_code": "ABC", "description": "x", "section": "I"}, headers=headers)
         assert res.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# PRD G-16: upload magic-byte validation & safe storage names
+# ---------------------------------------------------------------------------
+def test_upload_rejects_extension_mismatch():
+    with TestClient(app) as c:
+        headers = _login(c)
+        # .png dengan isi teks → ditolak (magic bytes tidak cocok).
+        res = c.post(
+            "/api/v1/files/upload/",
+            files={"file": ("logo.png", b"not an image", "image/png")},
+            data={"type": "Image"},
+            headers=headers,
+        )
+        assert res.status_code == 400
+        assert "tidak" in res.text.lower()
+
+
+def test_upload_accepts_real_png_and_stores_uuid_name():
+    import base64
+    with TestClient(app) as c:
+        headers = _login(c)
+        png = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mPgYQAAAAMAAeVZK6kAAAAASUVORK5CYII="
+        )
+        res = c.post(
+            "/api/v1/files/upload/",
+            files={"file": ("dot.png", png, "image/png")},
+            data={"type": "Image"},
+            headers=headers,
+        )
+        assert res.status_code == 200, res.text
+        name = res.json()["data"]["storageName"]
+        # Nama penyimpanan acak (UUID hex) + ekstensi, bukan timestamp+nama asli.
+        assert name.endswith(".png")
+        assert "dot" not in name
+        assert len(name.split(".")[0]) == 32
+
+
+def test_upload_rejects_unsupported_extension():
+    with TestClient(app) as c:
+        headers = _login(c)
+        res = c.post(
+            "/api/v1/files/upload/",
+            files={"file": ("evil.exe", b"MZ\x90\x00", "application/octet-stream")},
+            data={"type": "Document"},
+            headers=headers,
+        )
+        assert res.status_code == 400

@@ -33,6 +33,7 @@ from app.core.security import (
 )
 from app.core.permissions import can_read_module, can_read_path, module_for_data_table
 from app.services import document_types as doc_types
+from app.services import uploads
 from app.schemas import models as sc
 
 router = APIRouter(prefix="/api/v1")
@@ -4727,10 +4728,11 @@ def upload_educational_file(article_id: str, file: UploadFile = File(...)):
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(413, "File terlalu besar (maks 10MB)")
     safe_name = os.path.basename(file.filename or "file.bin")
-    ext = os.path.splitext(safe_name)[1].lower()
-    if ext not in _ALLOWED_EXTENSIONS:
-        raise HTTPException(400, f"Tipe file '{ext}' tidak diizinkan.")
-    stored_name = f"{int(time.time() * 1000)}-{safe_name}"
+    try:
+        uploads.validate_upload(safe_name, content)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    stored_name = uploads.stored_filename(safe_name)
     with open(os.path.join(UPLOAD_DIR, stored_name), "wb") as out:
         out.write(content)
     # Daftarkan juga sebagai file asset agar endpoint /files/{id}/download/ valid
@@ -4747,7 +4749,9 @@ def upload_educational_file(article_id: str, file: UploadFile = File(...)):
         "contentType": file.content_type or "application/octet-stream",
         "updatedAt": "now",
     })
-    record["fileUrl"] = f"/files/{file_record['id']}/download/"
+    # Path unduh harus menyertakan prefix /api/v1 agar tautan valid (bug lama
+    # hanya "/files/..." sehingga selalu 404 di klien).
+    record["fileUrl"] = f"/api/v1/files/{file_record['id']}/download/"
     record["fileId"] = file_record["id"]
     record["fileName"] = safe_name
     record["updatedAt"] = "now"
@@ -4847,10 +4851,12 @@ def upload_file_binary(
     if len(content) > MAX_UPLOAD_MB * 1024 * 1024:
         raise HTTPException(413, "File terlalu besar (maks 25MB)")
     safe_name = os.path.basename(file.filename or "file.bin")
-    ext = os.path.splitext(safe_name)[1].lower()
-    if ext not in _ALLOWED_EXTENSIONS:
-        raise HTTPException(400, f"Tipe file '{ext}' tidak diizinkan. Tipe yang diperbolehkan: {', '.join(sorted(_ALLOWED_EXTENSIONS))}")
-    stored_name = f"{int(time.time() * 1000)}-{safe_name}"
+    # Validasi ekstensi + magic bytes, dan pakai nama penyimpanan acak (G-16).
+    try:
+        uploads.validate_upload(safe_name, content)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    stored_name = uploads.stored_filename(safe_name)
     storage_path = os.path.join(UPLOAD_DIR, stored_name)
     with open(storage_path, "wb") as out:
         out.write(content)
