@@ -256,8 +256,21 @@ Commit atomik yang sudah masuk (audit → perbaikan):
 3. **`fix(security): sanitize markdown rendering to prevent stored XSS`**
    - `escapeHtml` sebelum parse Markdown + `sanitizeGeneratedHtml` (buang `on*`, `javascript:`/`data:`, tag berbahaya); halaman artikel edukasi memakai `renderSafeInlineMarkdown`.
 4. **`docs(env): document MAUEKSPOR_SEED_DEMO_DATA and de-fang production example`**
+5. **`feat(prd): provenance, document types, and workflow gates (PRD Phase 3/4)`**
+   - Provenance service (sumber, effective date, review status) + AI provenance yang
+     selalu menandai *advisory* & fallback mock; blok `trust` per analisis + disclaimer.
+   - Tipe dokumen terpusat (tambah Proforma, Phytosanitary, Health, Insurance, B/L);
+     `GET /documents/types/`; `/documents/generate/` menolak tipe tak didukung (422).
+   - Gate publikasi katalog (deskripsi + pasar + harga + 1 gambar).
+   - State machine quotation→order (hanya Accepted/In-Review; warisi terms).
+6. **`feat(prd): surface document types and analysis provenance in the UI`**
+7. **`feat(prd): authenticated downloads and scoped exports (FR-EXP-1/2/3)`**
+   - `downloadFile` mendukung POST/body + pesan error; `exportPath()` ber-scope;
+     tombol export di 9 halaman mengikuti filter/pencarian/pilihan; tombol PDF di
+     halaman dokumen/costing/analisis memakai unduhan terautentikasi.
+8. **`feat(prd): admin HS codes feed the runtime search pipeline (FR-ADMIN-1)`**
 
-Verifikasi: backend 480 test hijau; frontend 348 test hijau; `svelte-check` 0 error.
+Verifikasi terkini: backend 490 test hijau; frontend 348 test hijau; `svelte-check` 0 error.
 
 Sisa temuan P0/P1 dari audit yang **belum** ditangani menjadi backlog di §8.
 
@@ -275,20 +288,20 @@ Tabel ringkas. Status: ✅ selesai · 🟡 sebagian · ❌ belum.
 | G-04 | Stored XSS (Markdown/edukasi) | Curi token | P0 | ✅ |
 | G-05 | Tanpa isolasi tenant | Kebocoran lintas-org | P0 | ❌ |
 | G-06 | ID non-atomik → overwrite | Kehilangan data | P0 | ❌ |
-| G-07 | Unduhan PDF/file via `<a href>` | 401 / tidak dapat unduh | P0 | 🟡 |
+| G-07 | Unduhan PDF/file via `<a href>` | 401 / tidak dapat unduh | P0 | ✅ |
 | G-08 | PDF kustom tak valid | Dokumen klaim gagal | P0 | ❌ |
 | G-09 | Truth in UI: seed fallback | Keputusan salah | P1 | ❌ |
-| G-10 | Export abaikan filter/scope | Data tak sesuai tinjauan | P1 | ❌ |
-| G-11 | Nilai hardcode (42800, L/C, 30 hari) | Record komersial salah | P1 | ❌ |
-| G-12 | AI fallback menyamar | Nasihat kepatuhan keliru | P0/P1 | ❌ |
-| G-13 | Regulasi HS/admin tak terhubung runtime | Master data sia-sia | P1 | ❌ |
+| G-10 | Export abaikan filter/scope | Data tak sesuai tinjauan | P1 | ✅ |
+| G-11 | Nilai hardcode (42800, L/C, 30 hari) | Record komersial salah | P1 | 🟡 (order mewarisi terms; wizard shipment/payment belum) |
+| G-12 | AI fallback menyamar | Nasihat kepatuhan keliru | P0/P1 | ✅ (ditandai advisory + fallback) |
+| G-13 | Regulasi HS/admin tak terhubung runtime | Master data sia-sia | P1 | 🟡 (HS ✅; regulasi admin → analisis parsial) |
 | G-14 | CSRF off + cookie auth | Risiko CSRF | P1 | ❌ |
 | G-15 | Trust proxy default | Bypass rate-limit | P1 | ❌ |
 | G-16 | Upload extension-only, buffer penuh | Malware/DoS | P1 | ❌ |
 | G-17 | Multi-worker tidak aman | Stale/duplikasi | P1 | ❌ |
 | G-18 | Operasi: TLS/backup/monitoring/CI | Risiko produksi | P1 | ❌ |
 | G-19 | Rahasia bocor (ngrok token di Makefile.backup) | Kompromi tunnel | P0 | ❌ |
-| G-20 | Klaim regulasi tanpa sitasi | Risiko hukum | P0/P1 | 🟡 |
+| G-20 | Klaim regulasi tanpa sitasi | Risiko hukum | P0/P1 | ✅ (sumber+review status di analisis; sumber primer perlu diverifikasi) |
 | G-21 | Tanpa alur/dossier kanonik | Nilai inti tak tercapai | P0 | ❌ |
 | G-22 | i18n kunci hilang | UX campur bahasa | P2 | 🟡 |
 
