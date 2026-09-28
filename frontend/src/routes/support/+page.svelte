@@ -16,7 +16,9 @@
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { formatDateTime } from '$lib/utils/date';
@@ -26,6 +28,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const priorities = ['Low', 'Medium', 'High', 'Critical'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'priority', label: t('Prioritas') },
+		{ value: 'subject', label: t('Subjek') },
+		{ value: 'category', label: t('Kategori') },
+		{ value: 'status', label: t('Status') }
+	];
 	let created = $state(false);
 	let resolved = $state(false);
 	let error = $state('');
@@ -42,10 +52,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let fPriority = $state<SupportTicket['priority']>('Medium');
 	let tickets = createRemoteList(listSupportTickets, seedTickets);
 	let filteredTickets = $derived(
-		tickets.items.filter(
-			(ticket) =>
-				(activeFilter === 'All' || ticket.category === activeFilter) &&
-				[ticket.subject, ticket.category, ticket.status, ticket.priority, ticket.owner, ticket.description].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		sortBy(
+			tickets.items.filter(
+				(ticket) =>
+					(activeFilter === 'All' || ticket.category === activeFilter) &&
+					[ticket.subject, ticket.category, ticket.status, ticket.priority, ticket.owner, ticket.description].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let openCount = $derived(tickets.items.filter((ticket) => ticket.status !== 'Resolved').length);
@@ -150,10 +164,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
 		syncTimer = setTimeout(
-			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']),
 			250
 		);
 		return () => clearTimeout(syncTimer);
@@ -162,7 +176,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	// Reset ke halaman pertama setiap filter/pencarian berubah agar tidak
 	// menampilkan halaman kosong setelah hasil menyusut.
 	$effect(() => {
-		[query, activeFilter];
+		[query, activeFilter, sortKey, sortDir];
 		paginationPage = 1;
 	});
 </script>
@@ -239,8 +253,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search ticket, owner, issue...')} placeholder={t('Search ticket, owner, issue...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search ticket, owner, issue...')} placeholder={t('Search ticket, owner, issue...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if tickets.loading}

@@ -2834,6 +2834,14 @@ const dictionary: Record<string, Entry> = {
 	'Keparahan': { id: 'Keparahan', en: 'Severity' },
 	'Beban kerja': { id: 'Beban kerja', en: 'Workload' },
 	'Terakhir aktif': { id: 'Terakhir aktif', en: 'Last active' },
+	'Jumlah dipakai': { id: 'Jumlah dipakai', en: 'Usage count' },
+	'Pihak': { id: 'Pihak', en: 'Party' },
+	'Periode': { id: 'Periode', en: 'Period' },
+	'Skop': { id: 'Skop', en: 'Scopes' },
+	'Awalan': { id: 'Awalan', en: 'Prefix' },
+	'Terakhir digunakan': { id: 'Terakhir digunakan', en: 'Last used' },
+	'Jumlah dijalankan': { id: 'Jumlah dijalankan', en: 'Run count' },
+	'Terakhir dijalankan': { id: 'Terakhir dijalankan', en: 'Last run' },
 	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 

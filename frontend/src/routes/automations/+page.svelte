@@ -13,7 +13,9 @@
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
@@ -21,6 +23,15 @@ import { page } from '$app/state';
 	const modules = ['Compliance', 'Documents', 'Payments', 'Shipments', 'Reports'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'name', label: t('Nama') },
+		{ value: 'runs', label: t('Jumlah dijalankan') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'module', label: t('Modul') },
+		{ value: 'lastRun', label: t('Terakhir dijalankan') }
+	];
 	let rules = createRemoteList(listAutomations, seedRules);
 	let error = $state('');
 	let message = $state('');
@@ -43,13 +54,17 @@ import { page } from '$app/state';
 	});
 
 	let filteredRules = $derived(
-		rules.items.filter(
-			(rule) =>
-				(activeFilter === 'All' || rule.module === activeFilter) &&
-				[rule.name, rule.module, rule.status, rule.trigger, rule.action, rule.description]
-					.join(' ')
-					.toLowerCase()
-					.includes(query.trim().toLowerCase())
+		sortBy(
+			rules.items.filter(
+				(rule) =>
+					(activeFilter === 'All' || rule.module === activeFilter) &&
+					[rule.name, rule.module, rule.status, rule.trigger, rule.action, rule.description]
+						.join(' ')
+						.toLowerCase()
+						.includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let activeCount = $derived(rules.items.filter((rule) => rule.status === 'Active').length);
@@ -61,9 +76,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -204,6 +219,15 @@ import { page } from '$app/state';
 	let pagedItems = $derived(paginate(filteredRules ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredRules?.length ?? 0, paginationPageSize));
 
+	// Reset ke halaman pertama saat filter/pencarian/pengurutan berubah.
+	$effect(() => {
+		activeFilter;
+		query;
+		sortKey;
+		sortDir;
+		paginationPage = 1;
+	});
+
 </script>
 
 <svelte:head>
@@ -283,8 +307,11 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Cari aturan, pemicu, aksi...')} placeholder={t('Cari aturan, pemicu, aksi...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Cari aturan, pemicu, aksi...')} placeholder={t('Cari aturan, pemicu, aksi...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -13,7 +13,9 @@
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
@@ -29,6 +31,14 @@ import { page } from '$app/state';
 	}
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'name', label: t('Nama') },
+		{ value: 'category', label: t('Kategori') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'lastSync', label: t('Sinkronisasi terakhir') }
+	];
 	let synced = $state(false);
 	let syncing = $state(false);
 	let error = $state('');
@@ -49,10 +59,14 @@ import { page } from '$app/state';
 	});
 
 	let filteredIntegrations = $derived(
-		items.items.filter(
-			(item) =>
-				(activeFilter === 'All' || item.category === activeFilter) &&
-				[item.name, item.category, item.status, item.description, ...(item.scopes ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		sortBy(
+			items.items.filter(
+				(item) =>
+					(activeFilter === 'All' || item.category === activeFilter) &&
+					[item.name, item.category, item.status, item.description, ...(item.scopes ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let connectedCount = $derived(items.items.filter((item) => item.status === 'Connected').length);
@@ -63,9 +77,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -203,6 +217,8 @@ import { page } from '$app/state';
 	$effect(() => {
 		activeFilter;
 		query;
+		sortKey;
+		sortDir;
 		paginationPage = 1;
 	});
 
@@ -286,8 +302,11 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trCat(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Cari integrasi, lingkup, status...')} placeholder={t('Cari integrasi, lingkup, status...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Cari integrasi, lingkup, status...')} placeholder={t('Cari integrasi, lingkup, status...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if items.loading}

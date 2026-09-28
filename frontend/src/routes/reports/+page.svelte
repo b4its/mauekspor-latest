@@ -12,7 +12,9 @@
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { formatDateTime } from '$lib/utils/date';
@@ -24,6 +26,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	}
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'title', label: t('Judul') },
+		{ value: 'type', label: t('Tipe') },
+		{ value: 'period', label: t('Periode') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'updatedAt', label: t('Terakhir diperbarui') }
+	];
 	let message = $state('');
 	let busyId = $state('');
 	let showForm = $state(false);
@@ -40,10 +51,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	});
 
 	let filteredReports = $derived(
-		reports.items.filter(
-			(report) =>
-				(activeFilter === 'All' || report.type === activeFilter) &&
-				[report.title, report.type, report.status, report.owner].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		sortBy(
+			reports.items.filter(
+				(report) =>
+					(activeFilter === 'All' || report.type === activeFilter) &&
+					[report.title, report.type, report.status, report.owner].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let readyCount = $derived(reports.items.filter((report) => report.status === 'Ready').length);
@@ -110,10 +125,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
 		syncTimer = setTimeout(
-			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']),
 			250
 		);
 		return () => clearTimeout(syncTimer);
@@ -122,7 +137,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	// Reset ke halaman pertama setiap filter/pencarian berubah agar tidak
 	// menampilkan halaman kosong setelah hasil menyusut.
 	$effect(() => {
-		[query, activeFilter];
+		[query, activeFilter, sortKey, sortDir];
 		paginationPage = 1;
 	});
 </script>
@@ -188,8 +203,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trType(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Cari laporan, pemilik, jenis...')} placeholder={t('Cari laporan, pemilik, jenis...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Cari laporan, pemilik, jenis...')} placeholder={t('Cari laporan, pemilik, jenis...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if reports.loading}

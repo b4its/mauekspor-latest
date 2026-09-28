@@ -14,7 +14,9 @@
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 	import { formatDateTime } from '$lib/utils/date';
@@ -23,6 +25,14 @@ import { page } from '$app/state';
 	const categories = ['Export Basics', 'Compliance', 'Logistics', 'Finance', 'Platform'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'title', label: t('Judul') },
+		{ value: 'category', label: t('Kategori') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'updatedAt', label: t('Terakhir diperbarui') }
+	];
 	let published = $state(false);
 	let articles = createRemoteList(listKnowledgeArticles, seedArticles);
 	let error = $state('');
@@ -39,10 +49,14 @@ import { page } from '$app/state';
 	let fSteps = $state('');
 	let fReadTime = $state('5 min');
 	let filteredArticles = $derived(
-		articles.items.filter(
-			(article) =>
-				(activeFilter === 'All' || article.category === activeFilter) &&
-				[article.title, article.category, article.status, article.summary, ...(article.steps ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		sortBy(
+			articles.items.filter(
+				(article) =>
+					(activeFilter === 'All' || article.category === activeFilter) &&
+					[article.title, article.category, article.status, article.summary, ...(article.steps ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let publishedCount = $derived(articles.items.filter((article) => article.status === 'Published').length);
@@ -53,9 +67,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -158,6 +172,15 @@ import { page } from '$app/state';
 	let pagedItems = $derived(paginate(filteredArticles ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredArticles?.length ?? 0, paginationPageSize));
 
+	// Reset ke halaman pertama saat filter/pencarian/pengurutan berubah.
+	$effect(() => {
+		activeFilter;
+		query;
+		sortKey;
+		sortDir;
+		paginationPage = 1;
+	});
+
 </script>
 
 <svelte:head>
@@ -236,8 +259,11 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search article, step, category...')} placeholder={t('Search article, step, category...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search article, step, category...')} placeholder={t('Search article, step, category...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if articles.loading}

@@ -12,7 +12,9 @@
 	import { t } from '$lib/i18n.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import SortSelect from '$lib/components/SortSelect.svelte';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { sortBy, type SortDir } from '$lib/utils/sort';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { formatDate } from '$lib/utils/date';
 	import { page } from '$app/state';
@@ -39,6 +41,15 @@
 
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'name', label: t('Nama') },
+		{ value: 'prefix', label: t('Awalan') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'lastUsed', label: t('Terakhir digunakan') },
+		{ value: 'createdAt', label: t('Dibuat') }
+	];
 	let showCreateModal = $state(false);
 	let newKeyName = $state('');
 	let selectedScopes = $state<string[]>(['catalogs:read', 'quotations:read']);
@@ -51,10 +62,14 @@
 
 	let keys = createRemoteList(listApiKeys, seedApiKeys);
 	let filteredKeys = $derived(
-		keys.items.filter(
-			(key) =>
-				(activeFilter === 'All' || key.status === activeFilter) &&
-				[key.name, key.prefix, key.status, key.owner, ...(key.scopes ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		sortBy(
+			keys.items.filter(
+				(key) =>
+					(activeFilter === 'All' || key.status === activeFilter) &&
+					[key.name, key.prefix, key.status, key.owner, ...(key.scopes ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let activeCount = $derived(keys.items.filter((key) => key.status === 'Active').length);
@@ -65,9 +80,9 @@
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -167,6 +182,15 @@
 	let paginationPageSize = $state(6);
 	let pagedItems = $derived(paginate(filteredKeys ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredKeys?.length ?? 0, paginationPageSize));
+
+	// Reset ke halaman pertama saat filter/pencarian/pengurutan berubah.
+	$effect(() => {
+		activeFilter;
+		query;
+		sortKey;
+		sortDir;
+		paginationPage = 1;
+	});
 </script>
 
 <svelte:head>
@@ -217,8 +241,11 @@
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search key, scope, owner...')} placeholder={t('Search key, scope, owner...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search key, scope, owner...')} placeholder={t('Search key, scope, owner...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if keys.loading}

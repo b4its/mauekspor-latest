@@ -14,7 +14,9 @@
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { formatDateTime } from '$lib/utils/date';
 import { page } from '$app/state';
@@ -23,6 +25,15 @@ import { page } from '$app/state';
 	const filters = ['All', 'Document', 'Email', 'Workflow', 'Catalog'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'title', label: t('Judul') },
+		{ value: 'category', label: t('Kategori') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'usedCount', label: t('Jumlah dipakai') },
+		{ value: 'updatedAt', label: t('Terakhir diperbarui') }
+	];
 	let used = $state(false);
 	let templates = createRemoteList(listTemplates, seedTemplates);
 	let error = $state('');
@@ -37,10 +48,14 @@ import { page } from '$app/state';
 	let message = $state('');
 	let busyId = $state('');
 	let filteredTemplates = $derived(
-		templates.items.filter(
-			(item) =>
-				(activeFilter === 'All' || item.category === activeFilter) &&
-				[item.title, item.category, item.status, item.description, item.usedBy, ...(item.fields ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		sortBy(
+			templates.items.filter(
+				(item) =>
+					(activeFilter === 'All' || item.category === activeFilter) &&
+					[item.title, item.category, item.status, item.description, item.usedBy, ...(item.fields ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let readyCount = $derived(templates.items.filter((item) => item.status === 'Ready').length);
@@ -51,9 +66,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -139,6 +154,15 @@ import { page } from '$app/state';
 	let pagedItems = $derived(paginate(filteredTemplates ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredTemplates?.length ?? 0, paginationPageSize));
 
+	// Reset ke halaman pertama saat filter/pencarian/pengurutan berubah.
+	$effect(() => {
+		activeFilter;
+		query;
+		sortKey;
+		sortDir;
+		paginationPage = 1;
+	});
+
 </script>
 
 <svelte:head>
@@ -214,8 +238,11 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search template, field, module...')} placeholder={t('Search template, field, module...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search template, field, module...')} placeholder={t('Search template, field, module...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if templates.loading}
