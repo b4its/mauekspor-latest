@@ -231,7 +231,7 @@ import { createConfirmController } from '$lib/utils/confirm.svelte';
 					size="sm"
 					onclick={() => (activeFilter = filter)}
 				>
-					{filter}
+					{filter === 'All' ? t('Semua') : label(filter)}
 				</Button>
 			{/each}
 		</div>

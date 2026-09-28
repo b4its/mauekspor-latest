@@ -43,4 +43,12 @@ describe('label()', () => {
 		expect(label(undefined)).toBe('—');
 		expect(label('')).toBe('—');
 	});
+
+	it('menerjemahkan status alur ekspor (kunci baru)', () => {
+		// Kunci baru tetap melewati t(); pastikan nilainya TIDAK lagi mentah.
+		for (const raw of ['Confirmed', 'In Shipment', 'Settled', 'Overdue', 'Revoked', 'Exception']) {
+			expect(label(raw)).not.toBe(raw);
+		}
+		expect(label('Draft')).toBe('Draf');
+	});
 });

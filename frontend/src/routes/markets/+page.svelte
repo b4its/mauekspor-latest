@@ -179,7 +179,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">
 			{#each filters as filter}
-				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
+				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter === 'All' ? t('Semua') : label(filter)}</Button>
 			{/each}
 		</div>
 		<Input bind:value={query} type="search"

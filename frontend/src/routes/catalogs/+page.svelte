@@ -134,7 +134,7 @@ import { page } from '$app/state';
 					size="sm"
 					onclick={() => (activeFilter = filter)}
 				>
-					{filter}
+					{filter === 'All' ? t('Semua') : label(filter)}
 				</Button>
 			{/each}
 		</div>
