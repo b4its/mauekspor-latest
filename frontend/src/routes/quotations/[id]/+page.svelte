@@ -8,6 +8,7 @@
 	import { acceptQuotation, updateQuotation, deleteQuotation, convertQuotationToOrder } from '$lib/api/quotations';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
@@ -166,11 +167,11 @@
 	<title>{data.quotation.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.quotation.buyer || data.quotation.id} eyebrow={`${t('Quotation')} · ${data.quotation.id}`}>
+<AppShell back="/quotations" title={data.quotation.buyer || data.quotation.id} eyebrow={`${t('Quotation')} · ${data.quotation.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="flex-row flex-wrap items-end justify-between gap-3 p-0">
 			<div>
-				<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>
+				<Badge variant={toneVariant(statusTone(displayStatus))}>{label(displayStatus)}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{localIncoterm}</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl leading-relaxed">{data.quotation.supplier} to {data.quotation.buyer}</CardDescription>
 			</div>

@@ -8,6 +8,7 @@
 	import { generateReport, scheduleReport, updateReport, deleteReport } from '$lib/api/reports';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 	import { formatDateTime } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
@@ -115,10 +116,10 @@
 	<title>{localTitle} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={localTitle || data.report.id} eyebrow={`${t('Report')} · ${data.report.id}`}>
+<AppShell back="/reports" title={localTitle || data.report.id} eyebrow={`${t('Report')} · ${data.report.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant={toneVariant(statusTone(displayStatus))} class="w-fit">{displayStatus}</Badge>
+			<Badge variant={toneVariant(statusTone(displayStatus))} class="w-fit">{label(displayStatus)}</Badge>
 			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{localTitle}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{data.report.type} · {localPeriod} · {data.report.owner}</CardDescription>
 		</CardHeader>

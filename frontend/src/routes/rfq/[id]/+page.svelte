@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -131,11 +132,11 @@
 	<title>{data.rfq.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.rfq.product || data.rfq.id} eyebrow={`${t('RFQ')} · ${data.rfq.id}`}>
+<AppShell back="/rfq" title={data.rfq.product || data.rfq.id} eyebrow={`${t('RFQ')} · ${data.rfq.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(localStatus))}>{localStatus}</Badge>
+				<Badge variant={toneVariant(statusTone(localStatus))}>{label(localStatus)}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.rfq.product}
 				</CardTitle>

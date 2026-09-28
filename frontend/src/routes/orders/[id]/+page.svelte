@@ -186,10 +186,10 @@
 	<title>{data.order.id} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={localBuyer || data.order.id} eyebrow={`${t('Order')} · ${data.order.id}`}>
+<AppShell back="/orders" title={localBuyer || data.order.id} eyebrow={`${t('Order')} · ${data.order.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
-			<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>
+			<Badge variant={toneVariant(statusTone(displayStatus))}>{label(displayStatus)}</Badge>
 			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{localSupplier} to {localBuyer}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{data.project?.name ?? data.order.projectId}</CardDescription>
 		</CardHeader>

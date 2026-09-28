@@ -124,11 +124,11 @@
 	<title>{data.supplier.name} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={localName} eyebrow={t('Supplier detail')}>
+<AppShell back="/suppliers" title={localName} eyebrow={t('Supplier detail')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(displayStatus))}>{displayStatus}</Badge>
+				<Badge variant={toneVariant(statusTone(displayStatus))}>{label(displayStatus)}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{data.supplier.category}
 				</CardTitle>

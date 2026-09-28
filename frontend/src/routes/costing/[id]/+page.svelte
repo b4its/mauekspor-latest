@@ -110,7 +110,7 @@
 	<title>{data.scenario.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.scenario.title || data.scenario.id} eyebrow={`${t('Costing')} · ${data.scenario.id}`}>
+<AppShell back="/costing" title={data.scenario.title || data.scenario.id} eyebrow={`${t('Costing')} · ${data.scenario.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

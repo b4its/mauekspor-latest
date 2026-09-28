@@ -130,7 +130,7 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 	<title>{data.forwarder.name} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.forwarder.name || data.forwarder.id} eyebrow={`${t('Forwarder')} · ${data.forwarder.id}`}>
+<AppShell back="/forwarders" title={data.forwarder.name || data.forwarder.id} eyebrow={`${t('Forwarder')} · ${data.forwarder.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

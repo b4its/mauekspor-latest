@@ -103,7 +103,7 @@
 	<title>{data.request.subject} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={data.request.subject || data.request.id} eyebrow={`${t('Buyer Request')} · ${data.request.id}`}>
+<AppShell back="/buyer-requests" title={data.request.subject || data.request.id} eyebrow={`${t('Buyer Request')} · ${data.request.id}`}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

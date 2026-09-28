@@ -9,6 +9,7 @@
 	import { refreshMarketInsight, updateMarketInsight, deleteMarketInsight } from '$lib/api/markets';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
+	import { label } from '$lib/utils/labels';
 	import { formatDate } from '$lib/utils/date';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
@@ -120,11 +121,11 @@
 	<title>{localCountry} Market | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={localCountry} eyebrow={t('Market insight detail')}>
+<AppShell back="/markets" title={localCountry} eyebrow={t('Market insight detail')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
-				<Badge variant={toneVariant(statusTone(localStatus))}>{localStatus}</Badge>
+				<Badge variant={toneVariant(statusTone(localStatus))}>{label(localStatus)}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
 					{#if data.market.productId}
 						<a href={`/products/${data.market.productId}`} class="hover:underline">{data.product?.name ?? data.market.productId}</a>
