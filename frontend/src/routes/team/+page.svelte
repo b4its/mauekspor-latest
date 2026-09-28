@@ -15,7 +15,9 @@
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
@@ -23,6 +25,15 @@ import { page } from '$app/state';
 	const roles: TeamMember['role'][] = ['Admin', 'Operations', 'Compliance', 'Finance', 'Sales'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'name', label: t('Nama') },
+		{ value: 'role', label: t('Peran') },
+		{ value: 'workload', label: t('Beban kerja') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'lastActive', label: t('Terakhir aktif') }
+	];
 	let invited = $state(false);
 	let error = $state('');
 	let message = $state('');
@@ -41,9 +52,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -53,10 +64,14 @@ import { page } from '$app/state';
 	});
 
 	let filteredMembers = $derived(
-		teamMembers.items.filter(
-			(member) =>
-				(activeFilter === 'All' || member.role === activeFilter) &&
-				[member.name, member.email, member.role, member.status, ...(member.permissions ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		sortBy(
+			teamMembers.items.filter(
+				(member) =>
+					(activeFilter === 'All' || member.role === activeFilter) &&
+					[member.name, member.email, member.role, member.status, ...(member.permissions ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let activeCount = $derived(teamMembers.items.filter((member) => member.status === 'Active').length);
@@ -147,6 +162,15 @@ import { page } from '$app/state';
 	let pagedItems = $derived(paginate(filteredMembers ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredMembers?.length ?? 0, paginationPageSize));
 
+	// Reset ke halaman pertama saat filter/pencarian/pengurutan berubah.
+	$effect(() => {
+		activeFilter;
+		query;
+		sortKey;
+		sortDir;
+		paginationPage = 1;
+	});
+
 </script>
 
 <svelte:head>
@@ -222,8 +246,11 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search member, role, permission...')} placeholder={t('Search member, role, permission...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search member, role, permission...')} placeholder={t('Search member, role, permission...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

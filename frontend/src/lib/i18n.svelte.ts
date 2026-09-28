@@ -2832,6 +2832,8 @@ const dictionary: Record<string, Entry> = {
 	'Progres': { id: 'Progres', en: 'Progress' },
 	'Nilai tahunan': { id: 'Nilai tahunan', en: 'Annual value' },
 	'Keparahan': { id: 'Keparahan', en: 'Severity' },
+	'Beban kerja': { id: 'Beban kerja', en: 'Workload' },
+	'Terakhir aktif': { id: 'Terakhir aktif', en: 'Last active' },
 	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 
