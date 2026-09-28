@@ -2815,7 +2815,20 @@ const dictionary: Record<string, Entry> = {
 	'Urutkan': { id: 'Urutkan', en: 'Sort' },
 	'Urutkan berdasarkan': { id: 'Urutkan berdasarkan', en: 'Sort by' },
 	'Urutan menaik': { id: 'Urutan menaik', en: 'Ascending order' },
-	'Urutan menurun': { id: 'Urutan menurun', en: 'Descending order' }
+	'Urutan menurun': { id: 'Urutan menurun', en: 'Descending order' },
+	// Label umum untuk kontrol pengurutan & tabel
+	'Berlaku sampai': { id: 'Berlaku sampai', en: 'Valid until' },
+	'Lokasi': { id: 'Lokasi', en: 'Location' },
+	'Tenggat': { id: 'Tenggat', en: 'Due' },
+	'Terakhir diperbarui': { id: 'Terakhir diperbarui', en: 'Last updated' },
+	'Dibuat': { id: 'Dibuat', en: 'Created' },
+	'Kanal': { id: 'Kanal', en: 'Channel' },
+	'Plafon': { id: 'Plafon', en: 'Limit' },
+	'Tingkat': { id: 'Tingkat', en: 'Level' },
+	'Skor kecocokan': { id: 'Skor kecocokan', en: 'Fit score' },
+	'Pelabuhan': { id: 'Pelabuhan', en: 'Port' },
+	'Jumlah dibayar': { id: 'Jumlah dibayar', en: 'Paid amount' },
+	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 
 let initial: Locale = 'id';

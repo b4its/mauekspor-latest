@@ -14,7 +14,9 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 	import { formatDate } from '$lib/utils/date';
@@ -22,6 +24,16 @@ import { page } from '$app/state';
 	const filters = ['All', 'In Review', 'Revision Needed', 'Accepted'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'value', label: t('Nilai') },
+		{ value: 'margin', label: t('Margin') },
+		{ value: 'buyer', label: t('Buyer') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'validUntil', label: t('Berlaku sampai') },
+		{ value: 'id', label: 'ID' }
+	];
 	let error = $state('');
 	let message = $state('');
 	let showForm = $state(false);
@@ -41,14 +53,18 @@ import { page } from '$app/state';
 	});
 
 	let filteredQuotations = $derived(
-		quotations.items.filter((quote) => {
-			const matchesFilter = activeFilter === 'All' || quote.status === activeFilter;
-			const matchesQuery = [quote.id, quote.buyer, quote.supplier, quote.incoterm, quote.rfqId]
-				.join(' ')
-				.toLowerCase()
-				.includes(query.trim().toLowerCase());
-			return matchesFilter && matchesQuery;
-		})
+		sortBy(
+			quotations.items.filter((quote) => {
+				const matchesFilter = activeFilter === 'All' || quote.status === activeFilter;
+				const matchesQuery = [quote.id, quote.buyer, quote.supplier, quote.incoterm, quote.rfqId]
+					.join(' ')
+					.toLowerCase()
+					.includes(query.trim().toLowerCase());
+				return matchesFilter && matchesQuery;
+			}),
+			sortKey,
+			sortDir
+		)
 	);
 	let totalValue = $derived(quotations.items.reduce((sum, quote) => sum + quote.value, 0));
 
@@ -61,9 +77,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -154,6 +170,8 @@ import { page } from '$app/state';
 	$effect(() => {
 		activeFilter;
 		query;
+		sortKey;
+		sortDir;
 		paginationPage = 1;
 	});
 
@@ -244,8 +262,11 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search quotation, buyer, incoterm...')} placeholder={t('Search quotation, buyer, incoterm...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search quotation, buyer, incoterm...')} placeholder={t('Search quotation, buyer, incoterm...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if quotations.loading}

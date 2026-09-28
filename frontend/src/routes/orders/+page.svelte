@@ -15,13 +15,24 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
 	const filters = ['All', 'Draft', 'Confirmed', 'Document Prep', 'In Shipment'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'value', label: t('Nilai') },
+		{ value: 'readiness', label: t('Kesiapan') },
+		{ value: 'buyer', label: t('Buyer') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'id', label: 'ID' }
+	];
 	let error = $state('');
 	let message = $state('');
 	let showForm = $state(false);
@@ -42,14 +53,18 @@ import { page } from '$app/state';
 	});
 
 	let filteredOrders = $derived(
-		orders.items.filter((order) => {
-			const matchesFilter = activeFilter === 'All' || order.status === activeFilter;
-			const matchesQuery = [order.id, order.buyer, order.supplier, order.incoterm, order.quotationId]
-				.join(' ')
-				.toLowerCase()
-				.includes(query.trim().toLowerCase());
-			return matchesFilter && matchesQuery;
-		})
+		sortBy(
+			orders.items.filter((order) => {
+				const matchesFilter = activeFilter === 'All' || order.status === activeFilter;
+				const matchesQuery = [order.id, order.buyer, order.supplier, order.incoterm, order.quotationId]
+					.join(' ')
+					.toLowerCase()
+					.includes(query.trim().toLowerCase());
+				return matchesFilter && matchesQuery;
+			}),
+			sortKey,
+			sortDir
+		)
 	);
 
 	let totalValue = $derived(orders.items.reduce((sum, order) => sum + order.value, 0));
@@ -64,9 +79,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -150,6 +165,8 @@ import { page } from '$app/state';
 	$effect(() => {
 		activeFilter;
 		query;
+		sortKey;
+		sortDir;
 		paginationPage = 1;
 	});
 
@@ -245,6 +262,7 @@ import { page } from '$app/state';
 		</div>
 		<Input bind:value={query} type="search"
 			aria-label={t('Search order, buyer, supplier...')} placeholder={t('Search order, buyer, supplier...')} class="w-[min(390px,100%)]" />
+		<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
