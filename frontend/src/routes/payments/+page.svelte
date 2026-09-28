@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { payments as seedPayments } from '$lib/data/trade';
-	import { listPayments, sendPaymentReminder, createPayment, markPaymentReceived, deletePayment } from '$lib/api/payments';
+	import { listPayments, sendPaymentReminder, createPayment, markPaymentReceived, deletePayment, batchDeletePayments } from '$lib/api/payments';
 	import { downloadFile } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -14,8 +14,10 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
@@ -204,6 +206,26 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 		paginationPage = 1;
 	});
 
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeletePayments(bulk.ids);
+			bulk.clear();
+			await payments.load();
+			message = `${res.data.deletedCount} ${t('pembayaran dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus pembayaran terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -287,11 +309,28 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search"
 				aria-label={t('Search payment, buyer, order...')} placeholder={t('Search payment, buyer, order...')} class="w-[min(390px,100%)]" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('pembayaran')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus pembayaran terpilih'),
+			description: t('Pembayaran terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('pembayaran')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Collected')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{currency.format(collected)}</strong></CardContent></Card>
@@ -321,9 +360,12 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as payment}
-				<Card class="grid gap-0 transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class={`relative grid gap-0 transition-all hover:border-ring/40 hover:shadow-md ${bulk.has(payment.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="absolute top-4 right-4 z-10">
+						<input type="checkbox" class="size-4" checked={bulk.has(payment.id)} aria-label={`${t('Pilih')} ${payment.id}`} onchange={() => bulk.toggle(payment.id)} onclick={(e) => e.stopPropagation()} />
+					</div>
 					<a href={`/payments/${payment.id}`} class="grid h-full gap-3 p-5 no-underline">
-						<div class="flex items-center justify-between gap-3">
+						<div class="flex items-center justify-between gap-3 pr-6">
 							<Badge variant={toneVariant(statusTone(payment.status))}>{label(payment.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{payment.amount ? Math.round((payment.paid / payment.amount) * 100) : 0}%</strong>
 						</div>

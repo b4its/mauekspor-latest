@@ -6,7 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, tradeDocuments as seedDocuments } from '$lib/data/trade';
 	import type { TradeDocument } from '$lib/data/trade';
-	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument, documentPdfUrl } from '$lib/api/documents';
+	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument, documentPdfUrl, batchDeleteDocuments } from '$lib/api/documents';
 	import { downloadFile } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -18,8 +18,10 @@
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 	import { formatDateTime } from '$lib/utils/date';
@@ -168,6 +170,26 @@ import { page } from '$app/state';
 		paginationPage = 1;
 	});
 
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteDocuments(bulk.ids);
+			bulk.clear();
+			await tradeDocuments.load();
+			message = `${res.data.deletedCount} ${t('dokumen dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus dokumen terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -239,10 +261,27 @@ import { page } from '$app/state';
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search" aria-label={t('Cari dokumen, pemilik, proyek...')} placeholder={t('Cari dokumen, pemilik, proyek...')} class="w-[min(390px,100%)]" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('dokumen')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus dokumen terpilih'),
+			description: t('Dokumen terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('dokumen')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card>
@@ -287,9 +326,12 @@ import { page } from '$app/state';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as document}
-				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class={`relative flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md ${bulk.has(document.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="absolute top-4 right-4 z-10">
+						<input type="checkbox" class="size-4" checked={bulk.has(document.id)} aria-label={`${t('Pilih')} ${document.id}`} onchange={() => bulk.toggle(document.id)} onclick={(e) => e.stopPropagation()} />
+					</div>
 					<div class="p-5">
-						<div class="flex items-center justify-between gap-3">
+						<div class="flex items-center justify-between gap-3 pr-6">
 							<Badge variant={toneVariant(statusTone(document.status))}>{label(document.status)}</Badge>
 							<strong class="text-3xl font-bold tracking-tight">{document.validationScore}%</strong>
 						</div>

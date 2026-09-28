@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts, suppliers as seedSuppliers } from '$lib/data/trade';
-	import { listSuppliers, requestSupplierEvidence, createSupplier } from '$lib/api/suppliers';
+	import { listSuppliers, requestSupplierEvidence, createSupplier, batchDeleteSuppliers } from '$lib/api/suppliers';
 	import { downloadFile } from '$lib/api/client';
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -15,11 +15,18 @@
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
+import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { formatDate } from '$lib/utils/date';
+
+	// Konfirmasi terpusat untuk hapus massal supplier.
+	const confirm = createConfirmController();
 
 	const filters = ['All', 'Verified', 'In Review', 'Needs Evidence'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -157,12 +164,31 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 		);
 		return () => clearTimeout(syncTimer);
 	});
+
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteSuppliers(bulk.ids);
+			bulk.clear();
+			await suppliers.load();
+			message = `${res.data.deletedCount} ${t('supplier dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus supplier terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>{t('Pemasok')} | MauEkspor</title>
 </svelte:head>
-
 <AppShell title={t('Unit Pengolahan Hasil Desa')} eyebrow={t('Exporter and supplier network')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
@@ -230,11 +256,28 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search"
 				aria-label={t('Search supplier, product, location...')} placeholder={t('Search supplier, product, location...')} class="w-[min(390px,100%)]" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('supplier')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus supplier terpilih'),
+			description: t('Supplier terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('supplier')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Suppliers')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{suppliers.items.length}</strong></CardContent></Card>
@@ -264,9 +307,12 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as supplier}
-				<Card class="grid gap-0 transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class={`relative grid gap-0 transition-all hover:border-ring/40 hover:shadow-md ${bulk.has(supplier.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="absolute top-4 right-4 z-10">
+						<input type="checkbox" class="size-4" checked={bulk.has(supplier.id)} aria-label={`${t('Pilih')} ${supplier.name}`} onchange={() => bulk.toggle(supplier.id)} onclick={(e) => e.stopPropagation()} />
+					</div>
 					<a href={`/suppliers/${supplier.id}`} class="grid h-full gap-3 p-5 no-underline">
-						<div class="flex items-center justify-between gap-3">
+						<div class="flex items-center justify-between gap-3 pr-6">
 							<Badge variant={toneVariant(statusTone(supplier.status))}>{label(supplier.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{supplier.capabilityScore}%</strong>
 						</div>
@@ -291,4 +337,13 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredSuppliers?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
+	/>
 </AppShell>

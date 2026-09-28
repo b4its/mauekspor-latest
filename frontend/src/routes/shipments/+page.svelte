@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { projects, shipments as seedShipments } from '$lib/data/trade';
-	import { listShipments, createShipment, updateShipmentMilestone, deleteShipment } from '$lib/api/shipments';
+	import { listShipments, createShipment, updateShipmentMilestone, deleteShipment, batchDeleteShipments } from '$lib/api/shipments';
 	import { downloadFile } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -16,8 +16,10 @@
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
@@ -200,6 +202,26 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 		paginationPage = 1;
 	});
 
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteShipments(bulk.ids);
+			bulk.clear();
+			await shipments.load();
+			message = `${res.data.deletedCount} ${t('pengiriman dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus pengiriman terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -288,11 +310,28 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search"
 				aria-label={t('Search route, forwarder, booking...')} placeholder={t('Search route, forwarder, booking...')} class="w-[min(390px,100%)]" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('pengiriman')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus pengiriman terpilih'),
+			description: t('Pengiriman terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('pengiriman')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Active shipments')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{shipments.items.length}</strong></CardContent></Card>
@@ -323,9 +362,12 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as shipment}
-				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class={`relative flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md ${bulk.has(shipment.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="absolute top-4 right-4 z-10">
+						<input type="checkbox" class="size-4" checked={bulk.has(shipment.id)} aria-label={`${t('Pilih')} ${shipment.id}`} onchange={() => bulk.toggle(shipment.id)} onclick={(e) => e.stopPropagation()} />
+					</div>
 					<div class="grid gap-3 p-5">
-						<div class="flex items-center justify-between gap-3">
+						<div class="flex items-center justify-between gap-3 pr-6">
 							<Badge variant={toneVariant(statusTone(shipment.status))}>{label(shipment.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{shipment.progress}%</strong>
 						</div>

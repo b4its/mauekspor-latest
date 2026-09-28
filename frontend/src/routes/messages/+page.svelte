@@ -11,11 +11,11 @@
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import {
 		listMessages,
-		sendMessage,
-		resolveMessageThread,
+		sendMessage,		resolveMessageThread,
 		updateMessageThread,
 		createMessageThread,
-		deleteMessageThread
+		deleteMessageThread,
+		batchDeleteMessageThreads
 	} from '$lib/api/messages';
 	import type { MessageThread } from '$lib/data/trade';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -23,8 +23,12 @@
 	import { t } from '$lib/i18n.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import SortSelect from '$lib/components/SortSelect.svelte';
+	import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { sortBy, type SortDir } from '$lib/utils/sort';
+	import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
+	import { createConfirmController } from '$lib/utils/confirm.svelte';
 
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import MessageSquareIcon from '@lucide/svelte/icons/message-square';
@@ -243,6 +247,27 @@
 		[query, activeFilter, sortKey, sortDir];
 		paginationPage = 1;
 	});
+
+	// Konfirmasi terpusat + aksi massal untuk hapus thread.
+	const confirm = createConfirmController();
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteMessageThreads(bulk.ids);
+			bulk.clear();
+			await threads.load();
+			successMessage = `${res.data.deletedCount} ${t('pesan dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus pesan terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -304,11 +329,28 @@
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search"
 				aria-label={t('Cari thread, pihak, partisipan...')} placeholder={t('Cari thread, pihak, partisipan...')} class="w-[min(390px,100%)]" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('pesan')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus pesan terpilih'),
+			description: t('Thread pesan terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('pesan')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	{#if threads.loading}
 		<div class="grid gap-4">
@@ -333,20 +375,23 @@
 	{:else}
 		<div class="grid gap-4">
 			{#each pagedItems as thread (thread.id)}
-				<Card class="transition-shadow hover:shadow-md">
+				<Card class={`transition-shadow hover:shadow-md ${bulk.has(thread.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
 					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
-						<div class="min-w-0 flex-1">
-							<div class="flex items-center gap-2">
-								<Badge variant={toneVariant(statusTone(thread.status))}>
-									{trStatus(thread.status)}
-								</Badge>
-								<Badge variant="outline" class="text-xs">{thread.channel}</Badge>
+						<div class="flex min-w-0 flex-1 items-start gap-3">
+							<input type="checkbox" class="mt-1 size-4 shrink-0" checked={bulk.has(thread.id)} aria-label={`${t('Pilih')} ${thread.subject}`} onchange={() => bulk.toggle(thread.id)} />
+							<div class="min-w-0 flex-1">
+								<div class="flex items-center gap-2">
+									<Badge variant={toneVariant(statusTone(thread.status))}>
+										{trStatus(thread.status)}
+									</Badge>
+									<Badge variant="outline" class="text-xs">{thread.channel}</Badge>
+								</div>
+								<h3 class="mt-2 text-lg font-bold tracking-tight text-foreground">{thread.subject}</h3>
+								<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{thread.lastMessage}</p>
+								<small class="mt-2 block text-xs text-muted-foreground">
+									<strong>{thread.party}</strong> · {thread.time || t('baru saja')}
+								</small>
 							</div>
-							<h3 class="mt-2 text-lg font-bold tracking-tight text-foreground">{thread.subject}</h3>
-							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{thread.lastMessage}</p>
-							<small class="mt-2 block text-xs text-muted-foreground">
-								<strong>{thread.party}</strong> · {thread.time || 'now'}
-							</small>
 						</div>
 						<aside class="flex flex-col items-end gap-2 whitespace-nowrap">
 							{#if thread.linkedTo}
@@ -524,3 +569,13 @@
 		</Dialog.Content>
 	</Dialog.Root>
 {/if}
+
+<ConfirmDialog
+	bind:open={confirm.open}
+	title={confirm.title}
+	description={confirm.description}
+	detail={confirm.detail}
+	confirmLabel={confirm.label}
+	loading={confirm.loading}
+	onconfirm={confirm.run}
+/>

@@ -11,14 +11,16 @@
 	import { listSupportTickets } from '$lib/api/support';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
-	import { createSupportTicket, resolveSupportTicket, updateSupportTicket, deleteSupportTicket } from '$lib/api/support';
+	import { createSupportTicket, resolveSupportTicket, updateSupportTicket, deleteSupportTicket, batchDeleteSupportTickets } from '$lib/api/support';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { formatDateTime } from '$lib/utils/date';
@@ -179,6 +181,26 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 		[query, activeFilter, sortKey, sortDir];
 		paginationPage = 1;
 	});
+
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteSupportTickets(bulk.ids);
+			bulk.clear();
+			await tickets.load();
+			message = `${res.data.deletedCount} ${t('tiket dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus tiket terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -254,11 +276,28 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search"
 				aria-label={t('Search ticket, owner, issue...')} placeholder={t('Search ticket, owner, issue...')} class="w-[min(390px,100%)]" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('tiket')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus tiket terpilih'),
+			description: t('Tiket terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('tiket')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	{#if tickets.loading}
 		<div class="grid gap-3">
@@ -282,12 +321,15 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 	{:else}
 		<div class="grid gap-3">
 			{#each pagedItems as ticket}
-				<Card class="flex flex-col items-stretch justify-between gap-4 p-5 md:flex-row md:items-center">
-					<div>
-						<Badge variant={toneVariant(statusTone(resolved || resolvedId === ticket.id ? 'Resolved' : ticket.status))}>{resolved || resolvedId === ticket.id ? 'Resolved' : ticket.status}</Badge>
-						<h3 class="mt-3 text-2xl font-bold tracking-tight">{ticket.subject}</h3>
-						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{ticket.description}</p>
-						<small class="mt-2 block text-sm text-muted-foreground">{ticket.category} · {ticket.owner} · {formatDateTime(ticket.createdAt)}</small>
+				<Card class={`flex flex-col items-stretch justify-between gap-4 p-5 md:flex-row md:items-center ${bulk.has(ticket.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="flex items-start gap-3">
+						<input type="checkbox" class="mt-1 size-4 shrink-0" checked={bulk.has(ticket.id)} aria-label={`${t('Pilih')} ${ticket.subject}`} onchange={() => bulk.toggle(ticket.id)} />
+						<div>
+							<Badge variant={toneVariant(statusTone(resolved || resolvedId === ticket.id ? 'Resolved' : ticket.status))}>{label(resolved || resolvedId === ticket.id ? 'Resolved' : ticket.status)}</Badge>
+							<h3 class="mt-3 text-2xl font-bold tracking-tight">{ticket.subject}</h3>
+							<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{ticket.description}</p>
+							<small class="mt-2 block text-sm text-muted-foreground">{ticket.category} · {ticket.owner} · {formatDateTime(ticket.createdAt)}</small>
+						</div>
 					</div>
 					<aside class="grid justify-items-start gap-2 whitespace-nowrap md:justify-items-end">
 						<strong class="text-xl font-bold tracking-tight">{label(ticket.priority)}</strong>

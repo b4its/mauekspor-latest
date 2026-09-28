@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { buyers as seedBuyers } from '$lib/data/trade';
-import { listBuyers, createBuyer } from '$lib/api/buyers';
+import { listBuyers, createBuyer, batchDeleteBuyers } from '$lib/api/buyers';
 	import { downloadFile } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -14,10 +14,17 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
+import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+
+	// Konfirmasi terpusat untuk hapus massal buyer.
+	const confirm = createConfirmController();
 
 	const filters = ['All', 'Lead', 'Qualified', 'Negotiating', 'Active', 'At Risk'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -122,6 +129,26 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 		paginationPage = 1;
 	});
 
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteBuyers(bulk.ids);
+			bulk.clear();
+			await buyers.load();
+			message = `${res.data.deletedCount} ${t('buyer dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus buyer terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
+
 
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
@@ -209,11 +236,28 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search"
 				aria-label={t('Search buyer, country, segment...')} placeholder={t('Search buyer, country, segment...')} class="max-w-xs" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('buyer')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus buyer terpilih'),
+			description: t('Buyer terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('buyer')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Buyer accounts')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{buyers.items.length}</strong></CardContent></Card>
@@ -243,9 +287,12 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as buyer}
-				<Card class="transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class={`relative transition-all hover:border-ring/40 hover:shadow-md ${bulk.has(buyer.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="absolute top-4 right-4 z-10">
+						<input type="checkbox" class="size-4" checked={bulk.has(buyer.id)} aria-label={`${t('Pilih')} ${buyer.name}`} onchange={() => bulk.toggle(buyer.id)} onclick={(e) => e.stopPropagation()} />
+					</div>
 					<a href={`/buyers/${buyer.id}`} class="grid h-full gap-3 p-5 no-underline">
-						<div class="flex items-center justify-between gap-3">
+						<div class="flex items-center justify-between gap-3 pr-6">
 							<Badge variant={toneVariant(statusTone(buyer.status))}>{label(buyer.status)}</Badge>
 							<strong class="text-2xl font-bold tracking-tight">{buyer.fitScore}%</strong>
 						</div>
@@ -266,4 +313,13 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 	{/if}
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredBuyers?.length ?? 0} />
 
+	<ConfirmDialog
+		bind:open={confirm.open}
+		title={confirm.title}
+		description={confirm.description}
+		detail={confirm.detail}
+		confirmLabel={confirm.label}
+		loading={confirm.loading}
+		onconfirm={confirm.run}
+	/>
 </AppShell>
