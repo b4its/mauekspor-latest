@@ -161,3 +161,103 @@ def test_quotation_to_order_404_for_unknown():
         headers = _login(c)
         res = c.post("/api/v1/quotations/Q-DOES-NOT-EXIST/to-order/", headers=headers)
         assert res.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Every collection list endpoint exposes search/status/sort/pagination meta
+# ---------------------------------------------------------------------------
+# (path, a status value that exists in seed data)
+_LIST_ENDPOINTS = [
+    "/api/v1/trade-projects/", "/api/v1/business-profiles/", "/api/v1/compliance/requirements/",
+    "/api/v1/audit/", "/api/v1/team/", "/api/v1/templates/", "/api/v1/automations/", "/api/v1/integrations/",
+    "/api/v1/knowledge/", "/api/v1/educational/articles/", "/api/v1/calendar/", "/api/v1/files/",
+    "/api/v1/messages/", "/api/v1/reports/", "/api/v1/billing/", "/api/v1/support/", "/api/v1/api-keys/",
+    "/api/v1/buyers/", "/api/v1/buyer-requests/", "/api/v1/catalogs/", "/api/v1/export-analysis/",
+    "/api/v1/orders/", "/api/v1/quotations/", "/api/v1/shipments/", "/api/v1/payments/", "/api/v1/tasks/", "/api/v1/suppliers/",
+]
+
+
+def test_all_collection_lists_expose_pagination_meta():
+    with TestClient(app) as c:
+        headers = _login(c)
+        for path in _LIST_ENDPOINTS:
+            res = c.get(path, params={"limit": 2}, headers=headers)
+            assert res.status_code == 200, path
+            body = res.json()
+            assert "data" in body and "meta" in body, path
+            assert "total" in body["meta"], path
+            assert body["meta"]["total"] >= len(body["data"]), path
+
+
+def test_all_collection_lists_accept_sort_params():
+    with TestClient(app) as c:
+        headers = _login(c)
+        for path in _LIST_ENDPOINTS:
+            res = c.get(path, params={"sort_by": "id", "sort_dir": "asc"}, headers=headers)
+            assert res.status_code == 200, path
+
+
+def test_all_collection_lists_accept_status_filter():
+    with TestClient(app) as c:
+        headers = _login(c)
+        for path in _LIST_ENDPOINTS:
+            res = c.get(path, params={"status": "nonexistent-status"}, headers=headers)
+            assert res.status_code == 200, path
+            # Filter status yang tidak ada harus menghasilkan koleksi kosong, bukan 500.
+            assert res.json()["data"] == [], path
+
+
+def test_search_narrows_trade_projects():
+    with TestClient(app) as c:
+        headers = _login(c)
+        all_rows = c.get("/api/v1/trade-projects/", headers=headers).json()["data"]
+        if not all_rows:
+            return
+        needle = str(all_rows[0]["name"])[:6]
+        filtered = c.get("/api/v1/trade-projects/", params={"search": needle}, headers=headers).json()["data"]
+        assert filtered
+        assert all(needle.lower() in str(r.get("name", "")).lower() for r in filtered)
+
+
+def test_sort_dir_desc_reverses_order():
+    with TestClient(app) as c:
+        headers = _login(c)
+        asc = c.get("/api/v1/team/", params={"sort_by": "name", "sort_dir": "asc"}, headers=headers).json()["data"]
+        desc = c.get("/api/v1/team/", params={"sort_by": "name", "sort_dir": "desc"}, headers=headers).json()["data"]
+        if len(asc) > 1:
+            assert [str(r.get("name", "")).lower() for r in asc] == sorted(
+                str(r.get("name", "")).lower() for r in asc
+            )
+            assert [str(r.get("name", "")).lower() for r in desc] == sorted(
+                (str(r.get("name", "")).lower() for r in desc), reverse=True
+            )
+
+
+# ---------------------------------------------------------------------------
+# Export registry now covers every upgraded module
+# ---------------------------------------------------------------------------
+def test_export_registry_covers_more_modules():
+    with TestClient(app) as c:
+        headers = _login(c)
+        res = c.get("/api/v1/exports/tables/", headers=headers)
+        assert res.status_code == 200
+        tables = set(res.json()["data"])
+        for expected in (
+            "projects", "team_members", "templates", "automations",
+            "integrations", "knowledge_articles", "calendar_events",
+            "files", "messages", "reports", "billing_records",
+            "support_tickets", "api_keys",
+        ):
+            assert expected in tables, expected
+
+
+def test_upgraded_module_export_has_header_and_rows():
+    with TestClient(app) as c:
+        headers = _login(c)
+        for module in ("projects", "team-members", "reports", "support-tickets"):
+            res = c.get(f"/api/v1/{module}/export.csv", headers=headers)
+            assert res.status_code == 200, module
+            assert "text/csv" in res.headers["content-type"], module
+            first_line = res.text.strip().splitlines()[0]
+            assert first_line, module
+

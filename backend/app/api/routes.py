@@ -58,10 +58,6 @@ def _serialize(record):
 _MAX_LIMIT = 500
 
 
-def _list_query(table: str) -> dict:
-    return {"data": [_serialize(r) for r in db.all(table)], "meta": {}}
-
-
 def _filtered_query(
     table: str,
     search: str = "",
@@ -578,6 +574,63 @@ _EXPORTS: dict[str, list] = {
         ("id", "id"), ("name", "name"), ("mode", "mode"), ("coverage", "coverage"),
         ("status", "status"), ("rating", "rating"), ("quoteSpeed", "quoteSpeed"),
     ],
+    "projects": [
+        ("id", "id"), ("name", "name"), ("buyer", "buyer"), ("country", "country"),
+        ("product", "product"), ("stage", "stage"), ("readiness", "readiness"),
+        ("value", "value"), ("risk", "risk"), ("eta", "eta"), ("incoterm", "incoterm"),
+    ],
+    "team_members": [
+        ("id", "id"), ("name", "name"), ("role", "role"), ("status", "status"),
+        ("email", "email"), ("lastActive", "lastActive"), ("workload", "workload"),
+    ],
+    "templates": [
+        ("id", "id"), ("title", "title"), ("category", "category"), ("status", "status"),
+        ("description", "description"), ("updatedAt", "updatedAt"),
+    ],
+    "automations": [
+        ("id", "id"), ("name", "name"), ("trigger", "trigger"), ("action", "action"),
+        ("status", "status"), ("module", "module"), ("runs", "runs"), ("lastRun", "lastRun"),
+    ],
+    "integrations": [
+        ("id", "id"), ("name", "name"), ("category", "category"), ("status", "status"),
+        ("description", "description"), ("lastSync", "lastSync"),
+    ],
+    "knowledge_articles": [
+        ("id", "id"), ("title", "title"), ("category", "category"), ("status", "status"),
+        ("readTime", "readTime"), ("summary", "summary"), ("updatedAt", "updatedAt"),
+    ],
+    "educational_articles": [
+        ("id", "id"), ("title", "title"), ("moduleId", "moduleId"), ("level", "level"),
+        ("status", "status"), ("readMinutes", "readMinutes"), ("summary", "summary"),
+    ],
+    "calendar_events": [
+        ("id", "id"), ("title", "title"), ("date", "date"), ("time", "time"),
+        ("type", "type"), ("status", "status"), ("projectId", "projectId"), ("owner", "owner"),
+    ],
+    "files": [
+        ("id", "id"), ("name", "name"), ("type", "type"), ("status", "status"),
+        ("projectId", "projectId"), ("owner", "owner"), ("size", "size"), ("updatedAt", "updatedAt"),
+    ],
+    "messages": [
+        ("id", "id"), ("subject", "subject"), ("party", "party"), ("channel", "channel"),
+        ("status", "status"), ("lastMessage", "lastMessage"), ("time", "time"), ("linkedTo", "linkedTo"),
+    ],
+    "reports": [
+        ("id", "id"), ("title", "title"), ("type", "type"), ("status", "status"),
+        ("period", "period"), ("owner", "owner"), ("updatedAt", "updatedAt"),
+    ],
+    "billing_records": [
+        ("id", "id"), ("plan", "plan"), ("status", "status"), ("amount", "amount"),
+        ("currency", "currency"), ("period", "period"), ("dueDate", "dueDate"),
+    ],
+    "support_tickets": [
+        ("id", "id"), ("subject", "subject"), ("category", "category"), ("status", "status"),
+        ("priority", "priority"), ("owner", "owner"), ("createdAt", "createdAt"),
+    ],
+    "api_keys": [
+        ("id", "id"), ("name", "name"), ("prefix", "prefix"), ("status", "status"),
+        ("owner", "owner"), ("createdAt", "createdAt"), ("lastUsed", "lastUsed"),
+    ],
 }
 
 # Alias path -> key agar URL lama (mis. /export-analysis/export.csv) tetap hidup.
@@ -1071,8 +1124,8 @@ def generate_product_catalog_description(product_id: str, payload: dict | None =
 # TRADE PROJECTS
 # ----------------------------------------------------------------------------
 @router.get("/trade-projects/")
-def list_projects():
-    return _list_query("projects")
+def list_projects(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("projects", search=search, search_fields=("id", "name", "product", "destination", "buyer",), status=status, status_field="stage", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/trade-projects/{project_id}/")
@@ -1127,8 +1180,8 @@ def delete_project(project_id: str):
 # BUSINESS PROFILES
 # ----------------------------------------------------------------------------
 @router.get("/business-profiles/")
-def list_profiles():
-    return _list_query("business_profiles")
+def list_profiles(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("business_profiles", search=search, search_fields=("id", "company_name", "companyName", "business_type", "businessType", "contact_info", "contactInfo",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/business-profiles/{profile_id}/")
@@ -1289,8 +1342,8 @@ def update_buyer_profile(
 
 
 @router.get("/buyers/")
-def list_buyers(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
-    return _filtered_query("buyers", search=search, search_fields=("name", "country", "segment"), status=status, limit=limit, offset=offset)
+def list_buyers(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("buyers", search=search, search_fields=("name", "country", "segment"), status=status, limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/buyers/portal/")
@@ -1510,8 +1563,8 @@ def delete_buyer(buyer_id: str):
 # BUYER REQUESTS
 # ----------------------------------------------------------------------------
 @router.get("/buyer-requests/")
-def list_buyer_requests(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
-    return _filtered_query("buyer_requests", search=search, search_fields=("subject", "destination", "buyerId"), status=status, limit=limit, offset=offset)
+def list_buyer_requests(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("buyer_requests", search=search, search_fields=("subject", "destination", "buyerId"), status=status, limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/buyer-requests/{request_id}/")
@@ -1922,8 +1975,8 @@ def forwarder_statistics(forwarder_id: str):
 # CATALOGS
 # ----------------------------------------------------------------------------
 @router.get("/catalogs/")
-def list_catalogs(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
-    return _filtered_query("catalogs", search=search, search_fields=("title", "targetMarket", "productId"), status=status, limit=limit, offset=offset)
+def list_catalogs(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("catalogs", search=search, search_fields=("title", "targetMarket", "productId"), status=status, limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/catalogs/forwarder/")
@@ -2976,8 +3029,8 @@ def delete_order(order_id: str):
 # COMPLIANCE
 # ----------------------------------------------------------------------------
 @router.get("/compliance/requirements/")
-def list_compliance():
-    return _list_query("compliance_requirements")
+def list_compliance(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("compliance_requirements", search=search, search_fields=("id", "title", "projectId", "category", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/compliance/requirements/{req_id}/")
@@ -3811,8 +3864,8 @@ def delete_notification(notification_id: str, current_user: dict = Depends(get_c
 
 
 @router.get("/audit/")
-def list_audit():
-    return _list_query("audit_events")
+def list_audit(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("audit_events", search=search, search_fields=("id", "actor", "action", "module", "entity", "detail",), status=status, status_field="severity", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/audit/export.csv")
@@ -3838,8 +3891,8 @@ def export_audit_csv():
 
 
 @router.get("/team/")
-def list_team():
-    return _list_query("team_members")
+def list_team(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("team_members", search=search, search_fields=("id", "name", "role", "email",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/team/invite/")
@@ -3922,8 +3975,8 @@ def remove_team_member(member_id: str):
 
 
 @router.get("/templates/")
-def list_templates():
-    return _list_query("templates")
+def list_templates(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("templates", search=search, search_fields=("id", "title", "category", "description",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/templates/")
@@ -3981,8 +4034,8 @@ def use_template(template_id: str):
 
 
 @router.get("/automations/")
-def list_automations():
-    return _list_query("automations")
+def list_automations(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("automations", search=search, search_fields=("id", "name", "trigger", "action", "module",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/automations/")
@@ -4078,8 +4131,8 @@ def run_automation(automation_id: str):
 
 
 @router.get("/integrations/")
-def list_integrations():
-    return _list_query("integrations")
+def list_integrations(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("integrations", search=search, search_fields=("id", "name", "category", "description",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/integrations/")
@@ -4158,8 +4211,8 @@ def sync_integration(integration_id: str):
 # KNOWLEDGE / EDUCATIONAL / CALENDAR / FILES / MESSAGES / REPORTS / BILLING
 # ----------------------------------------------------------------------------
 @router.get("/knowledge/")
-def list_knowledge():
-    return _list_query("knowledge_articles")
+def list_knowledge(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("knowledge_articles", search=search, search_fields=("id", "title", "category", "summary",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/knowledge/")
@@ -4345,8 +4398,8 @@ def complete_lesson(
 
 
 @router.get("/educational/articles/")
-def list_educational_articles():
-    return _list_query("educational_articles")
+def list_educational_articles(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("educational_articles", search=search, search_fields=("id", "title", "level", "summary",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/educational/articles/")
@@ -4445,8 +4498,8 @@ def publish_educational_article(article_id: str):
 
 
 @router.get("/calendar/")
-def list_calendar():
-    return _list_query("calendar_events")
+def list_calendar(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("calendar_events", search=search, search_fields=("id", "title", "type", "projectId", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/calendar/")
@@ -4490,8 +4543,8 @@ def delete_calendar_event(event_id: str):
 
 
 @router.get("/files/")
-def list_files():
-    return _list_query("files")
+def list_files(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("files", search=search, search_fields=("id", "name", "type", "projectId", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/files/")
@@ -4608,8 +4661,8 @@ def delete_file(file_id: str):
 
 
 @router.get("/messages/")
-def list_messages():
-    return _list_query("messages")
+def list_messages(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("messages", search=search, search_fields=("id", "subject", "party", "channel", "lastMessage", "linkedTo",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/messages/")
@@ -4667,8 +4720,8 @@ def delete_message(message_id: str):
 
 
 @router.get("/reports/")
-def list_reports():
-    return _list_query("reports")
+def list_reports(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("reports", search=search, search_fields=("id", "title", "type", "period", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/reports/")
@@ -4765,8 +4818,8 @@ def delete_report(report_id: str):
 
 
 @router.get("/billing/")
-def list_billing():
-    return _list_query("billing_records")
+def list_billing(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("billing_records", search=search, search_fields=("id", "plan", "period",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/billing/change-plan/")
@@ -4810,8 +4863,8 @@ def download_invoice_pdf(billing_id: str):
 # SUPPORT / API KEYS / CHAT
 # ----------------------------------------------------------------------------
 @router.get("/support/")
-def list_support():
-    return _list_query("support_tickets")
+def list_support(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("support_tickets", search=search, search_fields=("id", "subject", "category", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/support/")
@@ -4861,8 +4914,8 @@ def delete_support(ticket_id: str):
 
 
 @router.get("/api-keys/")
-def list_api_keys():
-    return _list_query("api_keys")
+def list_api_keys(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("api_keys", search=search, search_fields=("id", "name", "prefix", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.post("/api-keys/")
@@ -5153,8 +5206,8 @@ def ai_test(current_user: dict = Depends(get_current_user)):
 # EXPORT ANALYSIS
 # ----------------------------------------------------------------------------
 @router.get("/export-analysis/")
-def list_analyses(search: str = "", status: str = "", limit: int = 0, offset: int = 0):
-    return _filtered_query("export_analyses", search=search, search_fields=("productName", "destination", "hsCode"), status=status, limit=limit, offset=offset)
+def list_analyses(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("export_analyses", search=search, search_fields=("productName", "destination", "hsCode"), status=status, limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/export-analysis/{analysis_id}/")
