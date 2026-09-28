@@ -1,0 +1,119 @@
+{
+  "$comment": "Registry sumber regulasi/perdagangan primer untuk MauEkspor. Dipakai sebagai dasar provenance (source_url, retrieved_at, effective dates, review_status). WAJIB diverifikasi ke dokumen resmi sebelum dipakai sebagai nasihat kepatuhan. Lihat PRD-MauEkspor.md §11.",
+  "schema_version": "1.0.0",
+  "generated_by": "audit+research",
+  "review_policy": {
+    "requires_source_url": true,
+    "requires_retrieved_at": true,
+    "requires_review_status": true,
+    "human_review_for_compliance_advice": true,
+    "revalidation_interval_days": 90,
+    "disclaimer": "Materi regulasi bersifat indikatif dan bukan nasihat hukum. Selalu verifikasi ke sumber resmi terkait sebelum keputusan ekspor."
+  },
+  "sources": [
+    {
+      "id": "id-bpk-jdih",
+      "publisher": "Badan Pemeriksa Keuangan (JDIH BPK)",
+      "jurisdiction": "ID",
+      "topic": "peraturan",
+      "url": "https://peraturan.bpk.go.id/",
+      "notes": "Teks resmi UU/PP/Perpres/Permen + metadata status & tanggal berlaku. Ganti semua tautan peraturan di README dengan pencarian di sini."
+    },
+    {
+      "id": "id-djbc-beacukai",
+      "publisher": "Direktorat Jenderal Bea dan Cukai (DJBC)",
+      "jurisdiction": "ID",
+      "topic": "kepabeanan-ekspor",
+      "url": "https://www.beacukai.go.id/",
+      "notes": "Tata Laksana Ekspor, FAQ Ekspor, BTKI, larangan/pembatasan, kurs. Dasar prosedur PEB & klasifikasi."
+    },
+    {
+      "id": "id-insw",
+      "publisher": "Indonesia National Single Window (INSW)",
+      "jurisdiction": "ID",
+      "topic": "perizinan-lartas",
+      "url": "https://www.insw.go.id/",
+      "notes": "Larangan/pembatasan dan perizinan ekspor; acuan integrasi masa depan."
+    },
+    {
+      "id": "id-barantin",
+      "publisher": "Badan Karantina Indonesia (Barantin)",
+      "jurisdiction": "ID",
+      "topic": "karantina",
+      "url": "https://karantinaindonesia.go.id/",
+      "notes": "PTK Online, Phyto-req, IKH/IKI/IKT. Dasar sertifikat fitosanitari & kesehatan. CATATAN: klaim 'PP 28/2024 Karantina' di README tidak terverifikasi dan harus divalidasi/dihapus."
+    },
+    {
+      "id": "id-kemendag",
+      "publisher": "Kementerian Perdagangan RI",
+      "jurisdiction": "ID",
+      "topic": "perdagangan-luar-negeri",
+      "url": "https://www.kemendag.go.id/",
+      "notes": "Kebijakan & persyaratan ekspor; acuan klaim Permendag."
+    },
+    {
+      "id": "id-bpom",
+      "publisher": "Badan Pengawas Obat dan Makanan (BPOM)",
+      "jurisdiction": "ID",
+      "topic": "keamanan-pangan",
+      "url": "https://www.pom.go.id/",
+      "notes": "Registrasi & keamanan pangan untuk produk olahan."
+    },
+    {
+      "id": "id-bps",
+      "publisher": "Badan Pusat Statistik (BPS)",
+      "jurisdiction": "ID",
+      "topic": "statistik",
+      "url": "https://www.bps.go.id/",
+      "notes": "Data ekspor per HS/negara untuk analitik."
+    },
+    {
+      "id": "intl-icc-incoterms",
+      "publisher": "International Chamber of Commerce (ICC)",
+      "jurisdiction": "INTL",
+      "topic": "incoterms",
+      "url": "https://iccwbo.org/business-solutions/incoterms-rules/",
+      "notes": "Incoterms® 2020, berlaku 1 Januari 2020; 11 istilah alokasi biaya/risiko."
+    },
+    {
+      "id": "intl-wto-tariffs",
+      "publisher": "World Trade Organization (WTO)",
+      "jurisdiction": "INTL",
+      "topic": "tarif",
+      "url": "https://www.wto.org/english/tratop_e/tariffs_e/tariffs_e.htm",
+      "notes": "Bound vs applied rates, jadwal komitmen; acuan mesin bea/tarif."
+    },
+    {
+      "id": "intl-wco-hs",
+      "publisher": "World Customs Organization (WCO)",
+      "jurisdiction": "INTL",
+      "topic": "hs-code",
+      "url": "https://www.wcoomd.org/",
+      "notes": "Nomenklatur Harmonized System; acuan struktur HS."
+    },
+    {
+      "id": "intl-un-comtrade",
+      "publisher": "United Nations Comtrade",
+      "jurisdiction": "INTL",
+      "topic": "statistik-dagang",
+      "url": "https://comtradeplus.un.org/",
+      "notes": "Statistik arus perdagangan lintas negara."
+    },
+    {
+      "id": "intl-codex",
+      "publisher": "FAO/WHO Codex Alimentarius",
+      "jurisdiction": "INTL",
+      "topic": "standar-pangan",
+      "url": "https://www.fao.org/fao-who-codexalimentarius/en/",
+      "notes": "Standar pangan internasional."
+    },
+    {
+      "id": "intl-ippc",
+      "publisher": "International Plant Protection Convention (IPPC)",
+      "jurisdiction": "INTL",
+      "topic": "fitosanitari",
+      "url": "https://www.ippc.int/",
+      "notes": "Standar fitosanitari internasional; dasar ePhyto."
+    }
+  ]
+}

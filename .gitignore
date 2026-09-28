@@ -18,9 +18,10 @@ backend/data/
 backend/uploads/
 uploads/
 
-guideline
-/guideline
-guideline/
+# Dokumen produk/PRD di guideline/plana/ tetap dilacak; sisanya diabaikan.
+/guideline/*
+!/guideline/plana/
+!/guideline/plana/**
 
 # Env & secrets
 .env
