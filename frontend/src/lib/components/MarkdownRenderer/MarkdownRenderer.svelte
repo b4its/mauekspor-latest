@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { marked } from 'marked';
+	import { escapeHtml, sanitizeGeneratedHtml } from '$lib/utils/sanitize';
 
 	let { text = '' }: { text?: string } = $props();
 
@@ -8,7 +9,9 @@
 	$effect(() => {
 		if (text) {
 			marked.setOptions({ breaks: true, gfm: true });
-			html = marked.parse(text, { async: false }) as string;
+			// Escape HTML mentah sebelum parsing; Markdown tetap diproses, tetapi
+			// payload seperti <script>, event handler, atau iframe menjadi teks.
+			html = sanitizeGeneratedHtml(marked.parse(escapeHtml(text), { async: false }) as string);
 		}
 	});
 </script>

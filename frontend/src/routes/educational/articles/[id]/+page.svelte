@@ -11,6 +11,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { label } from '$lib/utils/labels';
+	import { renderSafeInlineMarkdown } from '$lib/utils/sanitize';
 
 	let { data } = $props();
 	let error = $state('');
@@ -60,10 +61,7 @@
 	);
 
 	function renderInline(text: string): string {
-		return text
-			.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-			.replace(/\*(.+?)\*/g, '<em>$1</em>')
-			.replace(/`(.+?)`/g, '<code class="rounded bg-muted px-1 py-0.5 font-mono text-xs">$1</code>');
+		return renderSafeInlineMarkdown(text);
 	}
 </script>
 
