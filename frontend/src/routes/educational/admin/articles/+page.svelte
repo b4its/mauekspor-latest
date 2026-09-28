@@ -16,6 +16,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { label } from '$lib/utils/labels';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	let articles = createRemoteList(listEducationalArticles, seedArticles);
 	let publishing = $state('');
@@ -30,7 +32,27 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	let savingEdit = $state(false);
 	let uploadingId = $state('');
 	let editError = $state('');
+	let query = $state(page.url.searchParams.get('query') ?? '');
+	let statusFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	const statusFilters = ['All', 'Published', 'Draft'];
 	const confirm = createConfirmController();
+
+	let filteredArticles = $derived(
+		articles.items.filter(
+			(article) =>
+				(statusFilter === 'All' || article.status === statusFilter) &&
+				[article.title, article.level, article.summary, ...(article.tags ?? [])].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		)
+	);
+
+	// Simpan pencarian & filter ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: statusFilter === 'All' ? '' : statusFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
 
 	$effect(() => {
 		articles.load();
@@ -135,8 +157,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let paginationPage_articles = $state(1);
 	let paginationPageSize_articles = $state(5);
-	let pagedItems_articles = $derived(paginate(articles.items ?? [], paginationPage_articles, paginationPageSize_articles));
-	let paginationTotalPages_articles = $derived(calcTotalPages(articles.items?.length ?? 0, paginationPageSize_articles));
+	let pagedItems_articles = $derived(paginate(filteredArticles ?? [], paginationPage_articles, paginationPageSize_articles));
+	let paginationTotalPages_articles = $derived(calcTotalPages(filteredArticles?.length ?? 0, paginationPageSize_articles));
+
+	// Reset ke halaman pertama saat pencarian/filter berubah.
+	$effect(() => {
+		query;
+		statusFilter;
+		paginationPage_articles = 1;
+	});
 
 </script>
 
@@ -163,8 +192,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<Card class="mt-4">
 		<CardHeader class="flex-row items-center justify-between gap-3">
 			<CardTitle>{t('Artikel')}</CardTitle>
-			<Badge variant="secondary">{articles.items.length} {t('total')}</Badge>
+			<Badge variant="secondary">{filteredArticles.length} {t('total')}</Badge>
 		</CardHeader>
+		<CardContent class="flex flex-wrap items-center justify-between gap-3">
+			<div class="flex flex-wrap gap-2">
+				{#each statusFilters as filter}
+					<Button variant={statusFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (statusFilter = filter)}>{filter === 'All' ? t('Semua') : label(filter)}</Button>
+				{/each}
+			</div>
+			<Input bind:value={query} type="search" aria-label={t('Cari artikel...')} placeholder={t('Cari artikel...')} class="w-[min(300px,100%)]" />
+		</CardContent>
 		<CardContent class="grid gap-3">
 			<form class="grid gap-2" onsubmit={(event) => { event.preventDefault(); createArticle(); }}>
 				<Input placeholder={t('Judul artikel baru...')} aria-label={t('Judul artikel baru')} bind:value={newTitle} />
@@ -240,7 +277,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardContent>
 	</Card>
 {#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>{/if}
-	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
+	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={filteredArticles?.length ?? 0} />
 
 	<ConfirmDialog
 		bind:open={confirm.open}

@@ -9,20 +9,30 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
+	import SortSelect from '$lib/components/SortSelect.svelte';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { sortBy, type SortDir } from '$lib/utils/sort';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'hs_code', label: t('Kode HS') },
+		{ value: 'description', label: t('Deskripsi') },
+		{ value: 'level', label: t('Tingkat') }
+	];
 	let codes = $state<HSCode[]>([]);
 	let loading = $state(true);
 	let error = $state('');
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
+	let sortedCodes = $derived(sortBy(codes ?? [], sortKey, sortDir));
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
-	let pagedItems = $derived(paginate(codes ?? [], paginationPage, paginationPageSize));
-	let paginationTotalPages = $derived(calcTotalPages(codes?.length ?? 0, paginationPageSize));
+	let pagedItems = $derived(paginate(sortedCodes ?? [], paginationPage, paginationPageSize));
+	let paginationTotalPages = $derived(calcTotalPages(sortedCodes?.length ?? 0, paginationPageSize));
 
 	async function load(search = '') {
 		error = '';
@@ -50,13 +60,20 @@
 	// Simpan pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query: query };
+		const state = { query: query, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
 		syncTimer = setTimeout(
-			() => syncFiltersToUrl(page.url, state, { query: '' }, ['query']),
+			() => syncFiltersToUrl(page.url, state, { query: '', sort: '', dir: '' }, ['query', 'sort', 'dir']),
 			250
 		);
 		return () => clearTimeout(syncTimer);
+	});
+
+	// Reset ke halaman pertama saat pengurutan berubah.
+	$effect(() => {
+		sortKey;
+		sortDir;
+		paginationPage = 1;
 	});
 </script>
 
@@ -84,7 +101,10 @@
 			oninput={(e) => onSearch((e.currentTarget as HTMLInputElement).value)}
 			class="w-[min(390px,100%)]"
 		/>
-		<span class="text-xs font-semibold text-muted-foreground">{codes.length} {t('kode')}</span>
+		<div class="flex flex-wrap items-center gap-2">
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+			<span class="text-xs font-semibold text-muted-foreground">{codes.length} {t('kode')}</span>
+		</div>
 	</div>
 
 	{#if error}

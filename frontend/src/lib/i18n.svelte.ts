@@ -2842,6 +2842,10 @@ const dictionary: Record<string, Entry> = {
 	'Terakhir digunakan': { id: 'Terakhir digunakan', en: 'Last used' },
 	'Jumlah dijalankan': { id: 'Jumlah dijalankan', en: 'Run count' },
 	'Terakhir dijalankan': { id: 'Terakhir dijalankan', en: 'Last run' },
+	'Cari modul...': { id: 'Cari modul...', en: 'Search modules...' },
+	'Cari artikel...': { id: 'Cari artikel...', en: 'Search articles...' },
+	'Naikkan urutan': { id: 'Naikkan urutan', en: 'Move up' },
+	'Turunkan urutan': { id: 'Turunkan urutan', en: 'Move down' },
 	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 

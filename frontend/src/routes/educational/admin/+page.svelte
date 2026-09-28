@@ -2,6 +2,7 @@
 	import AppShell from '$lib/components/AppShell.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { educationalArticles as seedArticles, educationalModules as seedModules } from '$lib/data/trade';
 	import { listEducationalModules, publishEducationalModule } from '$lib/api/educational';
@@ -11,14 +12,43 @@
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
-import Pagination from '$lib/components/Pagination.svelte';
-import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import Pagination from '$lib/components/Pagination.svelte';
+	import { paginate, calcTotalPages } from '$lib/utils/pagination';
+	import { page } from '$app/state';
+	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	let modules = createRemoteList(listEducationalModules, seedModules);
 	let articles = createRemoteList(listEducationalArticles, seedArticles);
 	let modulePublishing = $state('');
 	let articlePublishing = $state('');
 	let error = $state('');
+	let query = $state(page.url.searchParams.get('query') ?? '');
+	let statusFilter = $state(page.url.searchParams.get('status') ?? 'All');
+	const statusFilters = ['All', 'Published', 'Draft'];
+
+	let filteredModules = $derived(
+		modules.items.filter(
+			(module) =>
+				(statusFilter === 'All' || module.status === statusFilter) &&
+				[module.title, module.level, module.summary].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		)
+	);
+	let filteredArticles = $derived(
+		articles.items.filter(
+			(article) =>
+				(statusFilter === 'All' || article.status === statusFilter) &&
+				[article.title, article.level, article.summary].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		)
+	);
+
+	// Simpan pencarian & filter ke URL agar tahan refresh/back/dibagikan.
+	let syncTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const state = { query, status: statusFilter === 'All' ? '' : statusFilter };
+		clearTimeout(syncTimer);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		return () => clearTimeout(syncTimer);
+	});
 
 	$effect(() => {
 		modules.load();
@@ -63,13 +93,21 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 
 	let paginationPage_modules = $state(1);
 	let paginationPageSize_modules = $state(5);
-	let pagedItems_modules = $derived(paginate(modules.items ?? [], paginationPage_modules, paginationPageSize_modules));
-	let paginationTotalPages_modules = $derived(calcTotalPages(modules.items?.length ?? 0, paginationPageSize_modules));
+	let pagedItems_modules = $derived(paginate(filteredModules ?? [], paginationPage_modules, paginationPageSize_modules));
+	let paginationTotalPages_modules = $derived(calcTotalPages(filteredModules?.length ?? 0, paginationPageSize_modules));
 
 	let paginationPage_articles = $state(1);
 	let paginationPageSize_articles = $state(5);
-	let pagedItems_articles = $derived(paginate(articles.items ?? [], paginationPage_articles, paginationPageSize_articles));
-	let paginationTotalPages_articles = $derived(calcTotalPages(articles.items?.length ?? 0, paginationPageSize_articles));
+	let pagedItems_articles = $derived(paginate(filteredArticles ?? [], paginationPage_articles, paginationPageSize_articles));
+	let paginationTotalPages_articles = $derived(calcTotalPages(filteredArticles?.length ?? 0, paginationPageSize_articles));
+
+	// Reset ke halaman pertama saat pencarian/filter berubah.
+	$effect(() => {
+		query;
+		statusFilter;
+		paginationPage_modules = 1;
+		paginationPage_articles = 1;
+	});
 
 </script>
 
@@ -97,11 +135,21 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</div>
 	</Card>
 
+	<div class="flex flex-wrap items-center justify-between gap-3">
+		<div class="flex flex-wrap gap-2">
+			{#each statusFilters as filter}
+				<Button variant={statusFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (statusFilter = filter)}>{filter === 'All' ? t('Semua') : label(filter)}</Button>
+			{/each}
+		</div>
+		<Input bind:value={query} type="search"
+			aria-label={t('Cari modul atau artikel...')} placeholder={t('Cari modul atau artikel...')} class="w-[min(390px,100%)]" />
+	</div>
+
 	<div class="grid gap-4 md:grid-cols-2">
 		<Card>
 			<CardHeader class="flex-row items-center justify-between gap-3">
 				<CardTitle>{t('Modul')}</CardTitle>
-				<Badge variant="secondary">{modules.items.length} {t('total')}</Badge>
+				<Badge variant="secondary">{filteredModules.length} {t('total')}</Badge>
 			</CardHeader>
 			<CardContent class="grid gap-2">
 				{#if modules.loading}
@@ -132,14 +180,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				{/if}
 			</CardContent>
 			<CardContent class="p-0">
-				<Pagination bind:page={paginationPage_modules} bind:pageSize={paginationPageSize_modules} totalPages={paginationTotalPages_modules} totalItems={modules.items?.length ?? 0} />
+				<Pagination bind:page={paginationPage_modules} bind:pageSize={paginationPageSize_modules} totalPages={paginationTotalPages_modules} totalItems={filteredModules?.length ?? 0} />
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardHeader class="flex-row items-center justify-between gap-3">
 				<CardTitle>{t('Artikel')}</CardTitle>
-				<Badge variant="secondary">{articles.items.length} {t('total')}</Badge>
+				<Badge variant="secondary">{filteredArticles.length} {t('total')}</Badge>
 			</CardHeader>
 			<CardContent class="grid gap-2">
 				{#if articles.loading}
@@ -170,7 +218,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				{/if}
 			</CardContent>
 			<CardContent class="p-0">
-				<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
+				<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={filteredArticles?.length ?? 0} />
 			</CardContent>
 		</Card>
 	</div>
