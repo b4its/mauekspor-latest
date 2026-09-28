@@ -2810,7 +2810,12 @@ const dictionary: Record<string, Entry> = {
 	'Lihat Sales Order': { id: 'Lihat Sales Order', en: 'View Sales Order' },
 	'Konversi ke Sales Order': { id: 'Konversi ke Sales Order', en: 'Convert to Sales Order' },
 	'Mengonversi...': { id: 'Mengonversi...', en: 'Converting...' },
-	'Sales Order berhasil dibuat dari kuotasi ini.': { id: 'Sales Order berhasil dibuat dari kuotasi ini.', en: 'Sales Order created from this quotation successfully.' }
+	'Sales Order berhasil dibuat dari kuotasi ini.': { id: 'Sales Order berhasil dibuat dari kuotasi ini.', en: 'Sales Order created from this quotation successfully.' },
+	// Kontrol pengurutan daftar
+	'Urutkan': { id: 'Urutkan', en: 'Sort' },
+	'Urutkan berdasarkan': { id: 'Urutkan berdasarkan', en: 'Sort by' },
+	'Urutan menaik': { id: 'Urutan menaik', en: 'Ascending order' },
+	'Urutan menurun': { id: 'Urutan menurun', en: 'Descending order' }
 };
 
 let initial: Locale = 'id';
