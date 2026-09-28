@@ -13,13 +13,24 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const filters = ['All', 'Lead', 'Qualified', 'Negotiating', 'Active', 'At Risk'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'fitScore', label: t('Skor kecocokan') },
+		{ value: 'estimatedAnnualValue', label: t('Nilai tahunan') },
+		{ value: 'name', label: t('Nama') },
+		{ value: 'country', label: t('Negara') },
+		{ value: 'status', label: t('Status') }
+	];
 	let error = $state('');
 	let message = $state('');
 	let showForm = $state(false);
@@ -36,14 +47,18 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	});
 
 	let filteredBuyers = $derived(
-		buyers.items.filter((buyer) => {
-			const matchesFilter = activeFilter === 'All' || buyer.status === activeFilter;
-			const matchesQuery = [buyer.name, buyer.country, buyer.segment, buyer.status, ...(buyer.interestedProducts ?? [])]
-				.join(' ')
-				.toLowerCase()
-				.includes(query.trim().toLowerCase());
-			return matchesFilter && matchesQuery;
-		})
+		sortBy(
+			buyers.items.filter((buyer) => {
+				const matchesFilter = activeFilter === 'All' || buyer.status === activeFilter;
+				const matchesQuery = [buyer.name, buyer.country, buyer.segment, buyer.status, ...(buyer.interestedProducts ?? [])]
+					.join(' ')
+					.toLowerCase()
+					.includes(query.trim().toLowerCase());
+				return matchesFilter && matchesQuery;
+			}),
+			sortKey,
+			sortDir
+		)
 	);
 
 	let activeCount = $derived(buyers.items.filter((buyer) => ['Active', 'Negotiating'].includes(buyer.status)).length);
@@ -102,6 +117,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	$effect(() => {
 		activeFilter;
 		query;
+		sortKey;
+		sortDir;
 		paginationPage = 1;
 	});
 
@@ -109,10 +126,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
 		syncTimer = setTimeout(
-			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']),
 			250
 		);
 		return () => clearTimeout(syncTimer);
@@ -191,8 +208,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search buyer, country, segment...')} placeholder={t('Search buyer, country, segment...')} class="max-w-xs" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search buyer, country, segment...')} placeholder={t('Search buyer, country, segment...')} class="max-w-xs" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

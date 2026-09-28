@@ -2830,6 +2830,8 @@ const dictionary: Record<string, Entry> = {
 	'Jumlah dibayar': { id: 'Jumlah dibayar', en: 'Paid amount' },
 	'Moda': { id: 'Moda', en: 'Mode' },
 	'Progres': { id: 'Progres', en: 'Progress' },
+	'Nilai tahunan': { id: 'Nilai tahunan', en: 'Annual value' },
+	'Keparahan': { id: 'Keparahan', en: 'Severity' },
 	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 

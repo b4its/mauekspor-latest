@@ -15,13 +15,23 @@
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
 	const filters = ['All', 'Published', 'Draft', 'Needs Review'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'readiness', label: t('Kesiapan') },
+		{ value: 'title', label: t('Judul') },
+		{ value: 'targetMarket', label: t('Pasar tujuan') },
+		{ value: 'status', label: t('Status') }
+	];
 	let deleting = $state('');
 	let error = $state('');
 
@@ -31,9 +41,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -58,15 +68,19 @@ import { page } from '$app/state';
 	}
 
 	let filteredCatalogs = $derived(
-		catalogs.items.filter((catalog) => {
-			const product = products.items.find((item) => item.id === catalog.productId)?.name ?? '';
-			const matchesFilter = activeFilter === 'All' || catalog.status === activeFilter;
-			const matchesQuery = [catalog.id, catalog.title, catalog.targetMarket, catalog.status, product]
-				.join(' ')
-				.toLowerCase()
-				.includes(query.trim().toLowerCase());
-			return matchesFilter && matchesQuery;
-		})
+		sortBy(
+			catalogs.items.filter((catalog) => {
+				const product = products.items.find((item) => item.id === catalog.productId)?.name ?? '';
+				const matchesFilter = activeFilter === 'All' || catalog.status === activeFilter;
+				const matchesQuery = [catalog.id, catalog.title, catalog.targetMarket, catalog.status, product]
+					.join(' ')
+					.toLowerCase()
+					.includes(query.trim().toLowerCase());
+				return matchesFilter && matchesQuery;
+			}),
+			sortKey,
+			sortDir
+		)
 	);
 
 	let publishedCount = $derived(catalogs.items.filter((catalog) => catalog.status === 'Published').length);
@@ -84,6 +98,8 @@ import { page } from '$app/state';
 	$effect(() => {
 		activeFilter;
 		query;
+		sortKey;
+		sortDir;
 		paginationPage = 1;
 	});
 
@@ -122,8 +138,11 @@ import { page } from '$app/state';
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search catalog, market, product...')} placeholder={t('Search catalog, market, product...')} class="max-w-xs" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search catalog, market, product...')} placeholder={t('Search catalog, market, product...')} class="max-w-xs" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

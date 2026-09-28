@@ -15,7 +15,9 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { formatDate } from '$lib/utils/date';
 import { page } from '$app/state';
@@ -23,6 +25,15 @@ import { page } from '$app/state';
 	const filters = ['All', 'Blocked', 'In Review', 'Evidence Uploaded', 'Verified'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'severity', label: t('Keparahan') },
+		{ value: 'due', label: t('Tenggat') },
+		{ value: 'title', label: t('Judul') },
+		{ value: 'category', label: t('Kategori') },
+		{ value: 'status', label: t('Status') }
+	];
 	let message = $state('');
 	let showForm = $state(false);
 	let saving = $state(false);
@@ -43,14 +54,18 @@ import { page } from '$app/state';
 	});
 
 	let filteredRequirements = $derived(
-		complianceRequirements.items.filter((item) => {
-			const matchesFilter = activeFilter === 'All' || item.status === activeFilter;
-			const matchesQuery = [item.title, item.category, item.owner, item.source, item.projectId]
-				.join(' ')
-				.toLowerCase()
-				.includes(query.trim().toLowerCase());
-			return matchesFilter && matchesQuery;
-		})
+		sortBy(
+			complianceRequirements.items.filter((item) => {
+				const matchesFilter = activeFilter === 'All' || item.status === activeFilter;
+				const matchesQuery = [item.title, item.category, item.owner, item.source, item.projectId]
+					.join(' ')
+					.toLowerCase()
+					.includes(query.trim().toLowerCase());
+				return matchesFilter && matchesQuery;
+			}),
+			sortKey,
+			sortDir
+		)
 	);
 
 	let criticalCount = $derived(complianceRequirements.items.filter((item) => item.severity === 'Critical').length);
@@ -80,9 +95,9 @@ import { page } from '$app/state';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -145,6 +160,15 @@ import { page } from '$app/state';
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredRequirements ?? [], paginationPage, paginationPageSize));
 	let paginationTotalPages = $derived(calcTotalPages(filteredRequirements?.length ?? 0, paginationPageSize));
+
+	// Reset ke halaman pertama saat filter/pencarian/pengurutan berubah.
+	$effect(() => {
+		activeFilter;
+		query;
+		sortKey;
+		sortDir;
+		paginationPage = 1;
+	});
 
 </script>
 
@@ -228,8 +252,11 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search requirement, source, project...')} placeholder={t('Search requirement, source, project...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search requirement, source, project...')} placeholder={t('Search requirement, source, project...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if complianceRequirements.loading}
