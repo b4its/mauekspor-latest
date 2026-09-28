@@ -465,3 +465,31 @@ def test_module_export_accepts_scope_params():
         res = c.get("/api/v1/orders/export.csv", params={"status": "Draft"}, headers=headers)
         assert res.status_code == 200
         assert "text/csv" in res.headers["content-type"]
+
+
+# ---------------------------------------------------------------------------
+# PRD FR-ADMIN-1: admin HS codes feed the runtime search pipeline
+# ---------------------------------------------------------------------------
+def test_admin_hs_code_becomes_searchable():
+    with TestClient(app) as c:
+        headers = _login(c)
+        code = "99999999"
+        created = c.post("/api/v1/hs-codes/", json={
+            "hs_code": code, "description": "Uji komoditas ekspor khusus",
+            "section": "I", "keywords": ["uji", "komoditas", "khusus"],
+        }, headers=headers)
+        assert created.status_code == 200
+        # Langsung muncul di detail publik.
+        detail = c.get(f"/api/v1/hs-codes/{code}/", headers=headers)
+        assert detail.status_code == 200
+        assert detail.json()["data"]["hs_code"] == code
+        # Dan di autocomplete.
+        auto = c.get("/api/v1/hs-codes/autocomplete/", params={"q": code}, headers=headers)
+        assert any(r["hs_code"] == code for r in auto.json()["data"])
+
+
+def test_admin_hs_code_rejects_non_numeric():
+    with TestClient(app) as c:
+        headers = _login(c)
+        res = c.post("/api/v1/hs-codes/", json={"hs_code": "ABC", "description": "x", "section": "I"}, headers=headers)
+        assert res.status_code == 422

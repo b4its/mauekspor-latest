@@ -117,6 +117,31 @@ class HSCodeLoader:
             return []
         return [r for r in self.codes if r.get("parent") == hs_code]
 
+    def register_code(self, record: dict[str, Any]) -> None:
+        """Daftarkan HS code buatan admin ke indeks runtime (PRD §5.14 FR-ADMIN-1).
+
+        Tanpa ini, kode yang dibuat lewat `/hs-codes/` hanya tersimpan di tabel
+        tapi tidak pernah muncul pada pencarian/autocomplete/enrichment.
+        """
+        code = str(record.get("hs_code", "")).strip()
+        if not code:
+            return
+        if code in self._index:
+            self._index[code].update(record)
+            return
+        entry = {
+            "hs_code": code,
+            "section": str(record.get("section", "")).strip(),
+            "description": str(record.get("description", "")).strip(),
+            "parent": str(record.get("parent", "")).strip(),
+            "level": int(record.get("level", 0) or 0),
+            "keywords": record.get("keywords", ""),
+            "description_id": record.get("description_id", ""),
+            "custom": True,
+        }
+        self.codes.append(entry)
+        self._index[code] = entry
+
 
 @lru_cache(maxsize=1)
 def get_hs_loader() -> HSCodeLoader:

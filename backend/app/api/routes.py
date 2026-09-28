@@ -5923,6 +5923,8 @@ def get_hs_code(hs_code: str):
 def create_hs_code(payload: sc.CreateHSCodePayload):
     from app.data.hs_loader import get_hs_loader
     code = str(payload.hs_code).replace(".", "")
+    if not code.isdigit():
+        raise HTTPException(422, "hs_code harus berupa angka")
     level = 2 if len(code) <= 2 else 4 if len(code) <= 4 else 6 if len(code) <= 6 else 8
     record = db.insert("hs_codes", {
         "id": db.gen_id("hs_codes", "HS"),
@@ -5935,6 +5937,8 @@ def create_hs_code(payload: sc.CreateHSCodePayload):
         "keywords": payload.keywords,
         "createdAt": "now",
     })
+    # FR-ADMIN-1: daftarkan ke indeks runtime agar langsung bisa dicari/enrich.
+    get_hs_loader().register_code(record)
     return _one(record)
 
 

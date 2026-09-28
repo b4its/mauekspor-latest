@@ -21,6 +21,15 @@ async def lifespan(app: FastAPI):
     db.init_store()
     if settings.seed_demo_data:
         seed_if_empty()
+    # FR-ADMIN-1: muat HS code buatan admin ke indeks runtime agar ikut
+    # pencarian/autocomplete/enrichment (bukan hanya tersimpan di tabel).
+    try:
+        from app.data.hs_loader import get_hs_loader
+        loader = get_hs_loader()
+        for record in db.all("hs_codes"):
+            loader.register_code(record)
+    except Exception:  # pragma: no cover - non-fatal, jangan gagalkan boot
+        pass
     yield
 
 
