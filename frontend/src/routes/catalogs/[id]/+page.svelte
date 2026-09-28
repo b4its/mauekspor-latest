@@ -489,14 +489,14 @@
 												oninput={(e) => (renameOption = { ...renameOption, [option.id]: (e.currentTarget as HTMLInputElement).value })}
 												class="w-24 rounded border bg-background px-1.5 py-0.5 text-xs"
 											/>
-											<button class="text-primary hover:underline" onclick={() => handleRenameVariantOption(vt.id, option.id)}>✓</button>
-											<button class="text-muted-foreground hover:text-foreground" onclick={() => (renameOption[option.id] = '')}>✕</button>
+											<button class="text-primary hover:underline" aria-label={t('Simpan nama opsi')} title={t('Simpan')} onclick={() => handleRenameVariantOption(vt.id, option.id)}>✓</button>
+											<button class="text-muted-foreground hover:text-foreground" aria-label={t('Batal')} title={t('Batal')} onclick={() => (renameOption[option.id] = '')}>✕</button>
 										</span>
 									{:else}
 										<span class="inline-flex items-center gap-1 rounded-full border bg-background/60 px-2.5 py-1 text-xs font-bold">
 											{option.optionName}
-											<button class="text-muted-foreground hover:text-foreground" onclick={() => (renameOption = { ...renameOption, [option.id]: option.optionName })}>✎</button>
-											<button class="text-muted-foreground hover:text-destructive" onclick={() => handleRemoveVariantOption(vt.id, option.id)}>✕</button>
+											<button class="text-muted-foreground hover:text-foreground" aria-label={`${t('Ganti nama')} ${option.optionName}`} title={t('Ganti nama')} onclick={() => (renameOption = { ...renameOption, [option.id]: option.optionName })}>✎</button>
+											<button class="text-muted-foreground hover:text-destructive" aria-label={`${t('Hapus')} ${option.optionName}`} title={t('Hapus')} onclick={() => handleRemoveVariantOption(vt.id, option.id)}>✕</button>
 										</span>
 									{/if}
 								{/each}
@@ -509,7 +509,7 @@
 									value={newVariantOption[vt.id] ?? ''}
 									oninput={(e) => (newVariantOption = { ...newVariantOption, [vt.id]: (e.currentTarget as HTMLInputElement).value })}
 								/>
-								<Button size="sm" variant="outline" onclick={() => handleAddVariantOption(vt.id)}>+</Button>
+								<Button size="sm" variant="outline" aria-label={t('Tambah opsi varian')} title={t('Tambah opsi')} onclick={() => handleAddVariantOption(vt.id)}>+</Button>
 							</div>
 						</div>
 					{/each}

@@ -1197,6 +1197,7 @@
 																onclick={() => openInspect(record)}
 																class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 																title={t('Lihat Detail')}
+																aria-label={`${t('Lihat Detail')}`}
 															>
 																<EyeIcon class="size-3.5" />
 															</button>
@@ -1204,6 +1205,7 @@
 																onclick={() => cloneRecord(record)}
 																class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 																title={t('Klon Record')}
+							aria-label={`${t('Klon Record')}`}
 															>
 																<CopyIcon class="size-3.5" />
 															</button>
@@ -1211,6 +1213,7 @@
 																onclick={() => openEdit(record)}
 																class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 																title={t('Edit Record')}
+							aria-label={`${t('Edit Record')}`}
 															>
 																<PencilIcon class="size-3.5" />
 															</button>
@@ -1218,6 +1221,7 @@
 																onclick={() => openDelete(record)}
 																class="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
 																title={t('Hapus Record')}
+							aria-label={`${t('Hapus Record')}`}
 															>
 																<Trash2Icon class="size-3.5" />
 															</button>
@@ -1469,6 +1473,7 @@
 													onclick={() => openInspect(ev)}
 													class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 													title={t('Lihat Detail')}
+													aria-label={`${t('Lihat Detail')}`}
 												>
 													<EyeIcon class="size-3.5" />
 												</button>

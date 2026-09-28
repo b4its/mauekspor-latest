@@ -330,7 +330,7 @@
 				<AlertCircleIcon class="size-4" />
 				<span>{error}</span>
 			</div>
-			<button onclick={() => (error = '')}><XIcon class="size-4" /></button>
+			<button onclick={() => (error = '')} aria-label={t('Tutup')} title={t('Tutup')}><XIcon class="size-4" /></button>
 		</div>
 	{/if}
 
@@ -340,7 +340,7 @@
 				<CheckCircle2Icon class="size-4" />
 				<span>{successMessage}</span>
 			</div>
-			<button onclick={() => (successMessage = '')}><XIcon class="size-4" /></button>
+			<button onclick={() => (successMessage = '')} aria-label={t('Tutup')} title={t('Tutup')}><XIcon class="size-4" /></button>
 		</div>
 	{/if}
 
@@ -502,6 +502,7 @@
 								onclick={() => openEdit(village)}
 								class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 								title={t('Edit Desa')}
+								aria-label={`${t('Edit Desa')} ${village.name ?? village.id}`}
 							>
 								<PencilIcon class="size-3.5" />
 							</button>
@@ -509,6 +510,7 @@
 								onclick={() => openDelete(village)}
 								class="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
 								title={t('Hapus Desa')}
+								aria-label={`${t('Hapus Desa')} ${village.name ?? village.id}`}
 							>
 								<Trash2Icon class="size-3.5" />
 							</button>
