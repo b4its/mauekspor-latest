@@ -13,6 +13,7 @@ def _make(**overrides) -> Settings:
         environment="production",
         secret_key="a-very-strong-random-secret-key-value",
         seed_admin_password="a-strong-admin-password",
+        seed_demo_data=False,
         pbkdf2_iterations=100_000,
     )
     base.update(overrides)
@@ -37,6 +38,11 @@ def test_production_tolak_password_seed_default():
 def test_production_tolak_iterasi_pbkdf2_rendah():
     with pytest.raises(RuntimeError, match="MAUEKSPOR_PBKDF2_ITERATIONS"):
         _make(pbkdf2_iterations=1)
+
+
+def test_production_tolak_demo_seed():
+    with pytest.raises(RuntimeError, match="MAUEKSPOR_SEED_DEMO_DATA"):
+        _make(seed_demo_data=True)
 
 
 def test_production_tolak_beberapa_masalah_sekaligus():
@@ -106,4 +112,3 @@ def test_cors_origins_parsing_formats():
     # 7. Direct list
     s7 = Settings(cors_origins=["http://custom:5188"])
     assert s7.cors_origins == ["http://custom:5188"]
-

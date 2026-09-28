@@ -81,6 +81,9 @@ class Settings(BaseSettings):
     # Lingkungan deploy: "development" (default) atau "production".
     # Di production, secret default / password seed default akan MENGHENTIKAN boot.
     environment: str = "development"
+    # Demo seed hanya untuk development/demo eksplisit. Production selalu
+    # menolak flag ini agar tidak membuat akun ber-password yang diketahui.
+    seed_demo_data: bool = True
     # Set MAUEKSPOR_ALLOW_INSECURE_DEFAULTS=1 untuk menonaktifkan fail-fast
     # (mis. CI/demo yang sengaja memakai default).
     allow_insecure_defaults: bool = False
@@ -103,7 +106,8 @@ class Settings(BaseSettings):
         # Iterasi PBKDF2 terlalu rendah melemahkan hashing password (brute-force).
         # Test/dev boleh rendah; production wajib kuat.
         weak_pbkdf2 = self.pbkdf2_iterations < 50_000
-        if is_prod and (weak_secret or weak_seed or weak_pbkdf2) and not self.allow_insecure_defaults:
+        unsafe_demo_seed = is_prod and self.seed_demo_data
+        if is_prod and (weak_secret or weak_seed or weak_pbkdf2 or unsafe_demo_seed) and not self.allow_insecure_defaults:
             problems = []
             if weak_secret:
                 problems.append("MAUEKSPOR_SECRET_KEY")
@@ -113,6 +117,8 @@ class Settings(BaseSettings):
                 problems.append(
                     f"MAUEKSPOR_PBKDF2_ITERATIONS ({self.pbkdf2_iterations} < 50000)"
                 )
+            if unsafe_demo_seed:
+                problems.append("MAUEKSPOR_SEED_DEMO_DATA must be false")
             raise RuntimeError(
                 "Refusing to start in production with insecure defaults: "
                 + ", ".join(problems)

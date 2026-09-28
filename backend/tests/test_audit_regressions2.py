@@ -80,6 +80,8 @@ def test_production_dengan_secret_kuat_ok():
         # Iterasi PBKDF2 production harus kuat; conftest menurunkannya untuk
         # kecepatan test, jadi set eksplisit di sini agar guard tidak menyala.
         MAUEKSPOR_PBKDF2_ITERATIONS="100000",
+        # Production wajib mematikan demo seed (fail-closed).
+        MAUEKSPOR_SEED_DEMO_DATA="false",
     )
     assert s.environment == "production"
 
