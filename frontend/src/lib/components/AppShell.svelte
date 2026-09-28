@@ -38,8 +38,12 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 		// Snippet sidebar opsional: halaman (mis. panel Admin) bisa memakai sidebar
 		// khusus alih-alih AppSidebar utama. Default = AppSidebar.
 		sidebar,
+		// href tombol "kembali" opsional (mis. daftar entitas). Bila diisi, header
+		// menampilkan tombol kembali di depan breadcrumb sehingga halaman detail
+		// punya navigasi balik yang jelas tanpa bergantung tombol browser.
+		back,
 		children
-	}: { title?: string; eyebrow?: string; sidebar?: import('svelte').Snippet; children: import('svelte').Snippet } = $props();
+	}: { title?: string; eyebrow?: string; sidebar?: import('svelte').Snippet; back?: string; children: import('svelte').Snippet } = $props();
 	let commandOpen = $state(false);
 	let activityOpen = $state(false);
 	let commandQuery = $state('');
@@ -249,6 +253,11 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 		>
 			<div class="flex min-w-0 items-center gap-2">
 				<Sidebar.Trigger class="-ms-1" />
+				{#if back}
+					<Button href={back} variant="ghost" size="sm" class="hidden h-8 w-8 shrink-0 p-0 sm:flex" title={t('Kembali')} aria-label={t('Kembali')}>
+						<ArrowLeftIcon class="size-4" />
+					</Button>
+				{/if}
 				<Separator orientation="vertical" class="me-1 data-[orientation=vertical]:h-4" />
 				<Breadcrumb.Root>
 					<Breadcrumb.List>
