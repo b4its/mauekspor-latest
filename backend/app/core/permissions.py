@@ -51,6 +51,12 @@ AUTH_REQUIRED_READ_MODULES = {
     "support",
     "villages",
     "search",
+    # Endpoint export generik (`/exports.csv`, `/exports.xlsx`, `/exports/tables/`)
+    # memakai query `?table=` sehingga tidak boleh jatuh ke default "readable".
+    # Anonim ditolak di middleware; peran dicek per-tabel di handler.
+    "exports",
+    "exports.csv",
+    "exports.xlsx",
 }
 
 # Modules each role may mutate (writes). Reads stay open unless in ADMIN_ONLY_MODULES.
@@ -226,3 +232,27 @@ def can_read_path(role: str, path: str) -> bool:
 def _module_of_path(path: str) -> str:
     parts = path.strip("/").split("/")
     return parts[2] if len(parts) > 2 else ""
+
+
+def module_for_data_table(table: str) -> str:
+    """Map nama tabel internal ke modul izin yang terlihat pengguna.
+
+    Endpoint generik seperti export memakai query ``?table=`` sehingga nama
+    modul tidak dapat diambil aman dari path. Mapping eksplisit mencegah tabel
+    sensitif jatuh ke perilaku default ``can_read_module(...)=True``.
+    """
+    aliases = {
+        "projects": "trade-projects",
+        "export_analyses": "export-analysis",
+        "audit_events": "audit",
+        "compliance_requirements": "compliance",
+        "buyer_requests": "buyer-requests",
+        "team_members": "team",
+        "knowledge_articles": "knowledge",
+        "educational_articles": "educational",
+        "calendar_events": "calendar",
+        "billing_records": "billing",
+        "support_tickets": "support",
+        "api_keys": "api-keys",
+    }
+    return aliases.get(table, table.replace("_", "-"))

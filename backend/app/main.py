@@ -19,7 +19,8 @@ from app.seed import seed_if_empty
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_store()
-    seed_if_empty()
+    if settings.seed_demo_data:
+        seed_if_empty()
     yield
 
 
@@ -414,6 +415,16 @@ async def require_auth_for_mutations(request, call_next):
                 user = db.get("users", payload["sub"])
         except Exception:
             payload = None
+
+    # Endpoint export generik memakai `?table=`, jadi modul tidak bisa disimpulkan
+    # dari path. Wajib login di sini; izin per-tabel dicek di handler dengan
+    # `can_read_module(role, module_for_data_table(table))`.
+    if module.startswith("exports"):
+        if request.method == "OPTIONS":
+            return await call_next(request)
+        if not token or not user:
+            return JSONResponse(status_code=401, content=_error_body(401, "Authentication required"))
+        return await call_next(request)
 
     is_write = request.method in {"POST", "PATCH", "PUT", "DELETE"} and not _is_public_mutation(
         request.url.path

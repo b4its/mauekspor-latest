@@ -53,6 +53,36 @@ def test_generic_export_endpoint():
         assert "text/csv" in res.headers["content-type"]
 
 
+def test_generic_export_requires_authentication():
+    with TestClient(app) as c:
+        res = c.get("/api/v1/exports.csv", params={"table": "buyers"})
+        assert res.status_code == 401
+
+
+def test_generic_export_honors_role_permissions():
+    with TestClient(app) as c:
+        login = c.post(
+            "/api/v1/auth/login/",
+            json={"email": "aya@hikari.example", "password": "buyer123"},
+        )
+        token = login.json()["meta"]["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        # Buyer tidak boleh mengekspor CRM buyers maupun daftar payment.
+        assert c.get("/api/v1/exports.csv", params={"table": "buyers"}, headers=headers).status_code == 403
+        assert c.get("/api/v1/exports.csv", params={"table": "payments"}, headers=headers).status_code == 403
+        # Katalog adalah modul yang memang boleh dibaca Buyer.
+        assert c.get("/api/v1/exports.csv", params={"table": "catalogs"}, headers=headers).status_code == 200
+
+
+def test_csv_export_escapes_formula_cells():
+    from app.api.routes import _csv_response
+
+    response = _csv_response([["name"], ["=HYPERLINK(\"https://evil.example\")"], ["+1+1"]], "safe.csv")
+    text = response.body.decode()
+    assert "'=HYPERLINK" in text
+    assert "'+1+1" in text
+
+
 def test_generic_export_unknown_table_404():
     with TestClient(app) as c:
         headers = _login(c)
@@ -299,3 +329,25 @@ def test_batch_delete_available_for_common_modules():
             assert res.status_code == 422, module
 
 
+def test_notification_batch_delete_enforces_ownership():
+    from app import db
+
+    with TestClient(app) as c:
+        login = c.post(
+            "/api/v1/auth/login/",
+            json={"email": "aya@hikari.example", "password": "buyer123"},
+        )
+        token = login.json()["meta"]["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        db.insert("notifications", {"id": "NTF-OWN", "title": "milik buyer", "status": "Unread", "ownerId": "U-003"})
+        db.insert("notifications", {"id": "NTF-FOREIGN", "title": "rahasia", "status": "Unread", "ownerId": "U-999"})
+
+        res = c.post(
+            "/api/v1/notifications/batch/delete/",
+            json={"ids": ["NTF-OWN", "NTF-FOREIGN"]},
+            headers=headers,
+        )
+        assert res.status_code == 200
+        assert res.json()["data"] == {"deleted": ["NTF-OWN"], "deletedCount": 1}
+        assert db.get("notifications", "NTF-OWN") is None
+        assert db.get("notifications", "NTF-FOREIGN") is not None

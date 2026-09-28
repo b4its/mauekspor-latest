@@ -31,7 +31,7 @@ from app.core.security import (
     get_current_user,
     decode_token,
 )
-from app.core.permissions import can_read_path
+from app.core.permissions import can_read_module, can_read_path, module_for_data_table
 from app.schemas import models as sc
 
 router = APIRouter(prefix="/api/v1")
@@ -407,8 +407,18 @@ def _csv_response(rows: list[list], filename: str) -> Response:
     import io as _io
     buffer = _io.StringIO()
     writer = _csv.writer(buffer)
+
+    def safe_cell(value):
+        """Cegah CSV/spreadsheet formula injection dari input pengguna."""
+        if value is None:
+            return ""
+        text = str(value)
+        if text.lstrip().startswith(("=", "+", "-", "@")) or text.startswith(("\t", "\r", "\n")):
+            return "'" + text
+        return value
+
     for row in rows:
-        writer.writerow(["" if v is None else v for v in row])
+        writer.writerow([safe_cell(v) for v in row])
     from fastapi.responses import Response
     return Response(
         content=buffer.getvalue(),
@@ -649,28 +659,38 @@ def _export_filename(key: str, ext: str) -> str:
     return key.replace("_", "-") + "." + ext
 
 
-@router.get("/exports.xlsx")
-def export_any_xlsx(table: str):
-    """XLSX generik untuk modul apa pun di registry."""
+def _authorized_export_key(table: str, current_user: dict) -> str:
+    """Validasi tabel export dan izin baca peran terhadap modulnya."""
     key = _EXPORT_ALIASES.get(table, table)
     if key not in _EXPORTS:
         raise HTTPException(404, f"Export tidak tersedia untuk '{table}'")
+    if not can_read_module(current_user.get("role", ""), module_for_data_table(key)):
+        raise HTTPException(403, "You do not have access to this export")
+    return key
+
+
+@router.get("/exports.xlsx")
+def export_any_xlsx(table: str, current_user: dict = Depends(get_current_user)):
+    """XLSX generik untuk modul apa pun di registry (wajib login + izin modul)."""
+    key = _authorized_export_key(table, current_user)
     return _xlsx_response(_export_rows(key), key, _export_filename(key, "xlsx"))
 
 
 @router.get("/exports.csv")
-def export_any_csv(table: str):
-    """CSV generik untuk modul apa pun di registry."""
-    key = _EXPORT_ALIASES.get(table, table)
-    if key not in _EXPORTS:
-        raise HTTPException(404, f"Export tidak tersedia untuk '{table}'")
+def export_any_csv(table: str, current_user: dict = Depends(get_current_user)):
+    """CSV generik untuk modul apa pun di registry (wajib login + izin modul)."""
+    key = _authorized_export_key(table, current_user)
     return _csv_response(_export_rows(key), _export_filename(key, "csv"))
 
 
 @router.get("/exports/tables/")
-def export_tables():
-    """Daftar modul yang menyediakan export (dipakai oleh UI untuk tombol)."""
-    return {"data": sorted(_EXPORTS.keys()), "meta": {"count": len(_EXPORTS)}}
+def export_tables(current_user: dict = Depends(get_current_user)):
+    """Daftar modul export yang boleh diakses peran pemanggil."""
+    tables = [
+        key for key in sorted(_EXPORTS.keys())
+        if can_read_module(current_user.get("role", ""), module_for_data_table(key))
+    ]
+    return {"data": tables, "meta": {"count": len(tables)}}
 
 
 def _register_export_routes():
@@ -736,7 +756,8 @@ _BATCH_DELETE_TABLES: dict[str, str] = {
     "support-tickets": "support_tickets",
     "api-keys": "api_keys",
     "export-analyses": "export_analyses",
-    "notifications": "notifications",
+    # Catatan: notifikasi TIDAK masuk registry generik karena butuh pengecekan
+    # ownership per-record; route khususnya didefinisikan di seksi NOTIFICATIONS.
 }
 
 # Route path frontend -> tabel, agar alias seperti `/export-analysis/batch/delete/`
@@ -3879,6 +3900,27 @@ def _owned_notification(notification_id: str, current_user: dict) -> dict:
     if not record or not _notification_owned(record, current_user):
         raise HTTPException(404, "Notification not found")
     return record
+
+
+@router.post("/notifications/batch/delete/")
+def batch_delete_notifications(
+    payload: sc.BatchActionPayload,
+    current_user: dict = Depends(get_current_user),
+):
+    """Hapus banyak notifikasi tanpa menembus batas ownership pengguna."""
+    if not payload.ids:
+        raise HTTPException(422, "ids are required")
+    deleted: list[str] = []
+    for notification_id in payload.ids:
+        try:
+            _owned_notification(notification_id, current_user)
+        except HTTPException as exc:
+            if exc.status_code == 404:
+                continue
+            raise
+        db.delete("notifications", notification_id)
+        deleted.append(notification_id)
+    return {"data": {"deleted": deleted, "deletedCount": len(deleted)}, "meta": {}}
 
 
 @router.get("/notifications/stream/")
