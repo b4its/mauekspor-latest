@@ -191,7 +191,54 @@ def _notify(title: str, description: str, module: str, severity: str = "Info", h
 # ----------------------------------------------------------------------------
 @router.get("/health")
 def health():
+    """Health legacy (liveness ringan) — dipertahankan untuk kompatibilitas."""
     return {"status": "ok"}
+
+
+@router.get("/health/live")
+def health_live():
+    """Liveness probe: proses hidup dan event loop melayani request."""
+    return {"data": {"status": "alive"}, "meta": {}}
+
+
+@router.get("/health/ready")
+def health_ready(response: Response):
+    """Readiness probe (PRD §5.15 FR-X-4): DB + storage benar-benar siap.
+
+    Mengembalikan 503 bila salah satu dependensi kritis gagal, agar orchestrator
+    tidak mengarahkan traffic ke instance yang belum siap.
+    """
+    checks: dict[str, dict] = {}
+
+    # Database: baca ringan dari store (harus ter-load).
+    try:
+        db.all("users")
+        checks["database"] = {"ok": True, "backend": "postgresql" if db.is_postgres() else "sqlite"}
+    except Exception as exc:  # pragma: no cover - jalur error tak terduga
+        checks["database"] = {"ok": False, "error": str(exc)}
+
+    # Storage unggahan: direktori ada dan dapat ditulis.
+    try:
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        probe = os.path.join(UPLOAD_DIR, ".healthcheck")
+        with open(probe, "w") as fh:
+            fh.write("ok")
+        os.remove(probe)
+        checks["storage"] = {"ok": True, "dir": UPLOAD_DIR}
+    except Exception as exc:
+        checks["storage"] = {"ok": False, "error": str(exc)}
+
+    # Data referensi: HS loader termuat (dipakai enrichment/analisis).
+    try:
+        from app.data.hs_loader import get_hs_loader
+        checks["hs_data"] = {"ok": len(get_hs_loader().codes) > 0}
+    except Exception as exc:
+        checks["hs_data"] = {"ok": False, "error": str(exc)}
+
+    all_ok = all(c.get("ok") for c in checks.values())
+    if not all_ok:
+        response.status_code = 503
+    return {"data": {"status": "ready" if all_ok else "degraded", "checks": checks}, "meta": {}}
 
 
 @router.get("")

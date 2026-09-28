@@ -543,3 +543,18 @@ def test_upload_rejects_unsupported_extension():
             headers=headers,
         )
         assert res.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# PRD FR-X-4: real liveness / readiness probes
+# ---------------------------------------------------------------------------
+def test_health_live_and_ready():
+    with TestClient(app) as c:
+        assert c.get("/api/v1/health/live").json()["data"]["status"] == "alive"
+        ready = c.get("/api/v1/health/ready")
+        assert ready.status_code == 200
+        data = ready.json()["data"]
+        assert data["status"] == "ready"
+        assert data["checks"]["database"]["ok"] is True
+        assert data["checks"]["storage"]["ok"] is True
+        assert data["checks"]["hs_data"]["ok"] is True

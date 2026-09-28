@@ -84,7 +84,7 @@ services:
     volumes:
       - backend-prod-uploads:/app/uploads
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready')\""]
       interval: 5s
       timeout: 8s
       retries: 12
