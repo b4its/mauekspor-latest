@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { payments as seedPayments } from '$lib/data/trade';
 	import { listPayments, sendPaymentReminder, createPayment, markPaymentReceived, deletePayment, batchDeletePayments } from '$lib/api/payments';
-	import { downloadFile } from '$lib/api/client';
+	import { downloadFile, exportPath } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
@@ -226,6 +226,20 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 		}
 	}
 
+	// FR-EXP-2: export mengikuti cakupan yang sedang ditinjau (terpilih > filter/pencarian).
+	async function exportList(ext: 'csv' | 'xlsx') {
+		error = '';
+		try {
+			const scope = bulk.count
+				? { ids: bulk.ids }
+				: { search: query.trim(), status: activeFilter === 'All' ? '' : activeFilter };
+			const path = exportPath(`/payments/export.${ext}`, scope);
+			await downloadFile(path, `payments.${ext}`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengekspor data.');
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -241,8 +255,8 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Tambah pembayaran')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/payments/export.csv', 'payments.csv')}>{t('Export CSV')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/payments/export.xlsx', 'payments.xlsx')}>{t('Excel (.xlsx)')}</Button>
+			<Button variant="outline" onclick={() => exportList('csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => exportList('xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="destructive">{t('Risk')} {highRisk}</Badge>
 		</CardContent>
 		{#if showForm}

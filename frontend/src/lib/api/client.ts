@@ -15,6 +15,28 @@ export function csvExportUrl(path: string): string {
 	return `${API_BASE_URL}${path}`;
 }
 
+export type ExportScope = {
+	/** Kata kunci pencarian aktif. */
+	search?: string;
+	/** Filter status aktif ('' = semua). */
+	status?: string;
+	/** Daftar id terpilih; bila ada, mengalahkan filter lain. */
+	ids?: string[];
+};
+
+/**
+ * Bangun path export ber-scope (FR-EXP-2): sertakan `search`/`status`/`ids`
+ * agar berkas yang diunduh mencerminkan tampilan yang sedang ditinjau.
+ */
+export function exportPath(path: string, scope: ExportScope = {}): string {
+	const qs = new URLSearchParams();
+	if (scope.ids && scope.ids.length) qs.set('ids', scope.ids.join(','));
+	if (scope.search) qs.set('search', scope.search);
+	if (scope.status) qs.set('status', scope.status);
+	const query = qs.toString();
+	return query ? `${path}?${query}` : path;
+}
+
 /**
  * Unduh file dari endpoint backend yang butuh autentikasi (export CSV/XLSX,
  * PDF, dsb). Berbeda dengan `<a href>`, helper ini mengirim header
@@ -23,15 +45,45 @@ export function csvExportUrl(path: string): string {
  * Token disimpan di sessionStorage, jadi tidak ikut pada navigasi tautan biasa;
  * karena itu unduhan harus lewat fetch + blob.
  */
-export async function downloadFile(path: string, filename: string): Promise<void> {
-	const token =
-		typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('mauekspor_access_token') : null;
-	const headers: Record<string, string> = {};
-	if (token) headers['Authorization'] = `Bearer ${token}`;
+export type DownloadOptions = {
+	/** Metode HTTP (default GET). POST dipakai endpoint yang butuh body. */
+	method?: 'GET' | 'POST';
+	/** Body JSON untuk metode POST. */
+	body?: unknown;
+};
 
-	const response = await fetch(`${API_BASE_URL}${path}`, { credentials: 'include', headers });
+export async function downloadFile(
+	path: string,
+	filename: string,
+	options: DownloadOptions = {}
+): Promise<void> {
+	const { method = 'GET', body } = options;
+	const headers: Record<string, string> = {};
+	// Prefer token dari store (sudah dimuat dari sessionStorage), fallback ke
+	// sessionStorage langsung bila store belum diinisialisasi (mis. SSR guard).
+	const token =
+		_accessToken ??
+		(typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('mauekspor_access_token') : null);
+	if (token) headers['Authorization'] = `Bearer ${token}`;
+	if (body !== undefined) headers['Content-Type'] = 'application/json';
+
+	const response = await fetch(`${API_BASE_URL}${path}`, {
+		method,
+		credentials: 'include',
+		headers,
+		body: body === undefined ? undefined : JSON.stringify(body)
+	});
 	if (!response.ok) {
-		throw new ApiError(response.status, null);
+		// Coba baca pesan error JSON agar pengguna tahu alasan kegagalan.
+		let errBody: ApiErrorBody | null = null;
+		try {
+			if (response.headers.get('content-type')?.includes('application/json')) {
+				errBody = (await response.json()) as ApiErrorBody;
+			}
+		} catch {
+			/* abaikan body tak terbaca */
+		}
+		throw new ApiError(response.status, errBody);
 	}
 	const blob = await response.blob();
 	const url = URL.createObjectURL(blob);

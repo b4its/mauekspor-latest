@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts } from '$lib/data/trade';
 	import { listProducts, deleteProduct, batchEnrichProducts, batchDeleteProducts } from '$lib/api/products';
-	import { downloadFile } from '$lib/api/client';
+	import { downloadFile, exportPath } from '$lib/api/client';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
@@ -145,6 +145,20 @@
 		paginationPage = 1;
 	});
 
+	// FR-EXP-2: export mengikuti cakupan yang sedang ditinjau (terpilih > filter/pencarian).
+	async function exportList(ext: 'csv' | 'xlsx') {
+		error = '';
+		try {
+			const scope = selected.size
+				? { ids: [...selected] }
+				: { search: query.trim(), status: filter === 'All' ? '' : filter };
+			const path = exportPath(`/products/export.${ext}`, scope);
+			await downloadFile(path, `products.${ext}`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengekspor data.');
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -165,8 +179,8 @@
 			</div>
 		<Button href="/products/new">{t('Add product')}</Button>
 		<div class="flex gap-2">
-			<Button variant="outline" onclick={() => downloadFile('/products/export.csv', 'products.csv')}>{t('Export CSV')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/products/export.xlsx', 'products.xlsx')}>{t('Excel (.xlsx)')}</Button>
+			<Button variant="outline" onclick={() => exportList('csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => exportList('xlsx')}>{t('Excel (.xlsx)')}</Button>
 		</div>
 	</div>
 	{#if pendingCount > 0}

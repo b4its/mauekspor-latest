@@ -648,16 +648,64 @@ _EXPORTS: dict[str, list] = {
 _EXPORT_ALIASES = {"export-analysis": "export_analyses", "audit": "audit_events"}
 
 
-def _export_rows(key: str) -> list[list]:
+def _export_search_fields(key: str) -> tuple[str, ...]:
+    """Field teks yang dipakai untuk filter `search` pada export (FR-EXP-2)."""
+    return tuple(field for _, field in _EXPORTS.get(key, []))
+
+
+def _export_records(
+    key: str,
+    *,
+    search: str = "",
+    status: str = "",
+    ids: str = "",
+) -> list[dict]:
+    """Ambil record untuk export sesuai cakupan yang diminta.
+
+    Cakupan (PRD §5.11 FR-EXP-2):
+    - `ids`: daftar id terpilih (dipisah koma) mengalahkan filter lain.
+    - `search` + `status`: hasil yang sedang difilter pengguna.
+    - tanpa parameter: seluruh data yang diizinkan.
+    """
+    records = db.all(key)
+    selected = [i for i in (ids or "").split(",") if i.strip()]
+    if selected:
+        wanted = {i.strip() for i in selected}
+        return [r for r in records if str(r.get("id", "")) in wanted]
+    if status:
+        records = [r for r in records if str(r.get("status", "")).lower() == status.lower()]
+    if search:
+        fields = _export_search_fields(key)
+        q = search.lower()
+        records = [
+            r for r in records
+            if any(q in str(r.get(f, "")).lower() for f in fields)
+        ]
+    return list(records)
+
+
+def _export_rows(key: str, records: list[dict] | None = None) -> list[list]:
     columns = _EXPORTS[key]
     rows: list[list] = [[header for header, _ in columns]]
-    for record in db.all(key):
+    for record in (records if records is not None else db.all(key)):
         rows.append([record.get(field) for _, field in columns])
     return rows
 
 
-def _export_filename(key: str, ext: str) -> str:
-    return key.replace("_", "-") + "." + ext
+def _export_scope_label(search: str, status: str, ids: str, count: int) -> str:
+    if ids.strip():
+        return f"selected-{count}"
+    parts = []
+    if status:
+        parts.append(status)
+    if search:
+        parts.append(search)
+    return ("-".join(parts) if parts else "all").replace(" ", "_")[:40]
+
+
+def _export_filename(key: str, ext: str, scope: str = "") -> str:
+    base = key.replace("_", "-")
+    return f"{base}-{scope}.{ext}" if scope and scope != "all" else f"{base}.{ext}"
 
 
 def _authorized_export_key(table: str, current_user: dict) -> str:
@@ -671,17 +719,33 @@ def _authorized_export_key(table: str, current_user: dict) -> str:
 
 
 @router.get("/exports.xlsx")
-def export_any_xlsx(table: str, current_user: dict = Depends(get_current_user)):
+def export_any_xlsx(
+    table: str,
+    search: str = "",
+    status: str = "",
+    ids: str = "",
+    current_user: dict = Depends(get_current_user),
+):
     """XLSX generik untuk modul apa pun di registry (wajib login + izin modul)."""
     key = _authorized_export_key(table, current_user)
-    return _xlsx_response(_export_rows(key), key, _export_filename(key, "xlsx"))
+    records = _export_records(key, search=search, status=status, ids=ids)
+    scope = _export_scope_label(search, status, ids, len(records))
+    return _xlsx_response(_export_rows(key, records), key, _export_filename(key, "xlsx", scope))
 
 
 @router.get("/exports.csv")
-def export_any_csv(table: str, current_user: dict = Depends(get_current_user)):
+def export_any_csv(
+    table: str,
+    search: str = "",
+    status: str = "",
+    ids: str = "",
+    current_user: dict = Depends(get_current_user),
+):
     """CSV generik untuk modul apa pun di registry (wajib login + izin modul)."""
     key = _authorized_export_key(table, current_user)
-    return _csv_response(_export_rows(key), _export_filename(key, "csv"))
+    records = _export_records(key, search=search, status=status, ids=ids)
+    scope = _export_scope_label(search, status, ids, len(records))
+    return _csv_response(_export_rows(key, records), _export_filename(key, "csv", scope))
 
 
 @router.get("/exports/tables/")
@@ -709,10 +773,12 @@ def _register_export_routes():
             routes += [("/audit/export.xlsx", key, "xlsx"), ("/audit/export.csv", key, "csv")]
         for path, table_key, ext in routes:
             def _make(p=path, k=table_key, e=ext):
-                def _handler():
+                def _handler(search: str = "", status: str = "", ids: str = ""):
+                    records = _export_records(k, search=search, status=status, ids=ids)
+                    scope = _export_scope_label(search, status, ids, len(records))
                     if e == "xlsx":
-                        return _xlsx_response(_export_rows(k), k, _export_filename(k, e))
-                    return _csv_response(_export_rows(k), _export_filename(k, e))
+                        return _xlsx_response(_export_rows(k, records), k, _export_filename(k, e, scope))
+                    return _csv_response(_export_rows(k, records), _export_filename(k, e, scope))
                 return _handler
             router.add_api_route(path, _make(), methods=["GET"], name=f"export_{key}_{ext}")
 

@@ -434,3 +434,34 @@ def test_quotation_to_order_requires_accepted_status():
         c.post(f"/api/v1/quotations/{qid}/accept/", headers=headers)
         ok = c.post(f"/api/v1/quotations/{qid}/to-order/", headers=headers)
         assert ok.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# PRD FR-EXP-2: scoped exports (selected / filtered / filename scope)
+# ---------------------------------------------------------------------------
+def test_generic_export_scope_ids_and_status():
+    with TestClient(app) as c:
+        headers = _login(c)
+        tasks = c.get("/api/v1/tasks/", params={"limit": 3}, headers=headers).json()["data"]
+        assert tasks, "seed harus punya task"
+        wanted = [t["id"] for t in tasks[:2]]
+        res = c.get("/api/v1/exports.csv", params={"table": "tasks", "ids": ",".join(wanted)}, headers=headers)
+        assert res.status_code == 200
+        # Hanya id terpilih yang ikut (baris = header + 2).
+        lines = [l for l in res.text.strip().splitlines() if l]
+        assert len(lines) == 1 + len(wanted)
+        assert "selected-2" in res.headers["content-disposition"]
+
+        # Filter status menyempitkan hasil dan memberi nama berkas ber-scope.
+        first_status = tasks[0]["status"]
+        f = c.get("/api/v1/exports.csv", params={"table": "tasks", "status": first_status}, headers=headers)
+        assert f.status_code == 200
+        assert "tasks-" in f.headers["content-disposition"]
+
+
+def test_module_export_accepts_scope_params():
+    with TestClient(app) as c:
+        headers = _login(c)
+        res = c.get("/api/v1/orders/export.csv", params={"status": "Draft"}, headers=headers)
+        assert res.status_code == 200
+        assert "text/csv" in res.headers["content-type"]

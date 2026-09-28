@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts, suppliers as seedSuppliers } from '$lib/data/trade';
 	import { listSuppliers, requestSupplierEvidence, createSupplier, batchDeleteSuppliers } from '$lib/api/suppliers';
-	import { downloadFile } from '$lib/api/client';
+	import { downloadFile, exportPath } from '$lib/api/client';
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone, toneVariant } from '$lib/utils/format';
@@ -184,6 +184,20 @@ import { createConfirmController } from '$lib/utils/confirm.svelte';
 			batchDeleting = false;
 		}
 	}
+	// FR-EXP-2: export mengikuti cakupan yang sedang ditinjau (terpilih > filter/pencarian).
+	async function exportList(ext: 'csv' | 'xlsx') {
+		error = '';
+		try {
+			const scope = bulk.count
+				? { ids: bulk.ids }
+				: { search: query.trim(), status: activeFilter === 'All' ? '' : activeFilter };
+			const path = exportPath(`/suppliers/export.${ext}`, scope);
+			await downloadFile(path, `suppliers.${ext}`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengekspor data.');
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -198,8 +212,8 @@ import { createConfirmController } from '$lib/utils/confirm.svelte';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Tambah supplier')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/suppliers/export.csv', 'suppliers.csv')}>{t('Export CSV')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/suppliers/export.xlsx', 'suppliers.xlsx')}>{t('Excel (.xlsx)')}</Button>
+			<Button variant="outline" onclick={() => exportList('csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => exportList('xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="secondary">{t('Verified')} {verifiedCount}</Badge>
 		</CardContent>
 		{#if showForm}

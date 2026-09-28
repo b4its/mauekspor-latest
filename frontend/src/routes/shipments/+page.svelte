@@ -7,7 +7,7 @@
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { projects, shipments as seedShipments } from '$lib/data/trade';
 	import { listShipments, createShipment, updateShipmentMilestone, deleteShipment, batchDeleteShipments } from '$lib/api/shipments';
-	import { downloadFile } from '$lib/api/client';
+	import { downloadFile, exportPath } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone, toneVariant } from '$lib/utils/format';
@@ -222,6 +222,20 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 		}
 	}
 
+	// FR-EXP-2: export mengikuti cakupan yang sedang ditinjau (terpilih > filter/pencarian).
+	async function exportList(ext: 'csv' | 'xlsx') {
+		error = '';
+		try {
+			const scope = bulk.count
+				? { ids: bulk.ids }
+				: { search: query.trim(), status: activeFilter === 'All' ? '' : activeFilter };
+			const path = exportPath(`/shipments/export.${ext}`, scope);
+			await downloadFile(path, `shipments.${ext}`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengekspor data.');
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -239,8 +253,8 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Tambah pengiriman')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/shipments/export.csv', 'shipments.csv')}>{t('Export CSV')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/shipments/export.xlsx', 'shipments.xlsx')}>{t('Excel (.xlsx)')}</Button>
+			<Button variant="outline" onclick={() => exportList('csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => exportList('xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="secondary">{t('Avg progress')} {averageProgress}%</Badge>
 		</CardContent>
 		{#if showForm}

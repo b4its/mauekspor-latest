@@ -6,7 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, workTasks as seedTasks, type WorkTask } from '$lib/data/trade';
 	import { listTasks, createTask, completeTask, deleteTask, batchDeleteTasks } from '$lib/api/tasks';
-	import { downloadFile } from '$lib/api/client';
+	import { downloadFile, exportPath } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { page } from '$app/state';
@@ -209,6 +209,20 @@ import { formatDate } from '$lib/utils/date';
 		}
 	}
 
+	// FR-EXP-2: export mengikuti cakupan yang sedang ditinjau (terpilih > filter/pencarian).
+	async function exportList(ext: 'csv' | 'xlsx') {
+		error = '';
+		try {
+			const scope = bulk.count
+				? { ids: bulk.ids }
+				: { search: query.trim(), status: activeFilter === 'All' ? '' : activeFilter };
+			const path = exportPath(`/tasks/export.${ext}`, scope);
+			await downloadFile(path, `tasks.${ext}`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengekspor data.');
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -224,8 +238,8 @@ import { formatDate } from '$lib/utils/date';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create task')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/tasks/export.csv', 'tasks.csv')}>{t('Export CSV')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/tasks/export.xlsx', 'tasks.xlsx')}>{t('Excel (.xlsx)')}</Button>
+			<Button variant="outline" onclick={() => exportList('csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => exportList('xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="destructive">{t('Blocked')} {blocked}</Badge>
 		</CardContent>
 		{#if showForm}

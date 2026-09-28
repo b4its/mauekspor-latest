@@ -2903,6 +2903,9 @@ const dictionary: Record<string, Entry> = {
 	// PRD: provenance, dokumen, gerbang alur
 	'AI (saran)': { id: 'AI (saran)', en: 'AI (advisory)' },
 	'Dokumen wajib (indikatif)': { id: 'Dokumen wajib (indikatif)', en: 'Required documents (indicative)' },
+	'Mengunduh...': { id: 'Mengunduh...', en: 'Downloading...' },
+	'Gagal mengekspor data.': { id: 'Gagal mengekspor data.', en: 'Failed to export data.' },
+	'Gagal mengekspor dokumen.': { id: 'Gagal mengekspor dokumen.', en: 'Failed to export documents.' },
 	'Commercial Invoice': { id: 'Faktur Komersial', en: 'Commercial Invoice' },
 	'Packing List': { id: 'Packing List', en: 'Packing List' },
 	'Proforma Invoice': { id: 'Faktur Proforma', en: 'Proforma Invoice' },

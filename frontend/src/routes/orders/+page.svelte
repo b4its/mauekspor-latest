@@ -7,7 +7,7 @@
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { orders as seedOrders } from '$lib/data/trade';
 	import { listOrders, createOrder, confirmOrder, deleteOrder, batchDeleteOrders } from '$lib/api/orders';
-	import { downloadFile } from '$lib/api/client';
+	import { downloadFile, exportPath } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
@@ -193,6 +193,20 @@ import { page } from '$app/state';
 		}
 	}
 
+	// FR-EXP-2: export mengikuti cakupan yang sedang ditinjau (terpilih > filter/pencarian).
+	async function exportList(ext: 'csv' | 'xlsx') {
+		error = '';
+		try {
+			const scope = bulk.count
+				? { ids: bulk.ids }
+				: { search: query.trim(), status: activeFilter === 'All' ? '' : activeFilter };
+			const path = exportPath(`/orders/export.${ext}`, scope);
+			await downloadFile(path, `orders.${ext}`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengekspor data.');
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -208,8 +222,8 @@ import { page } from '$app/state';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create order')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/orders/export.csv', 'orders.csv')}>{t('Export CSV')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/orders/export.xlsx', 'orders.xlsx')}>{t('Excel (.xlsx)')}</Button>
+			<Button variant="outline" onclick={() => exportList('csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => exportList('xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="secondary">{t('Pipeline')} {currency.format(totalValue)}</Badge>
 		</CardContent>
 		{#if showForm}

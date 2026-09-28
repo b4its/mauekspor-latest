@@ -9,6 +9,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { reanalyzeExportAnalysis, deleteExportAnalysis, getRegulationRecommendations, runRegulationCheck, analysisPdfUrl } from '$lib/api/export-analysis';
+	import { downloadFile } from '$lib/api/client';
 	import { updateProduct, getProduct } from '$lib/api/products';
 	import type { RegulationRecommendations } from '$lib/api/export-analysis';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -16,6 +17,20 @@
 	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
+	let downloadingPdf = $state(false);
+
+	// Unduhan PDF terautentikasi (FR-EXP-1).
+	async function downloadAnalysisPdf() {
+		downloadingPdf = true;
+		try {
+			const path = analysisPdfUrl(data.analysis.id).replace(import.meta.env.VITE_API_BASE_URL ?? '/api/v1', '');
+			await downloadFile(path, `analysis-${data.analysis.id}.pdf`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengunduh PDF.');
+		} finally {
+			downloadingPdf = false;
+		}
+	}
 
 	type Issue = {
 		type: string;
@@ -204,7 +219,7 @@
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" href={`/countries/${data.analysis.destination}`}>{t('Regulasi negara')}</Button>
-					<Button variant="outline" href={analysisPdfUrl(data.analysis.id)}>{t('Unduh PDF')}</Button>
+					<Button variant="outline" disabled={downloadingPdf} onclick={downloadAnalysisPdf}>{downloadingPdf ? t('Mengunduh...') : t('Unduh PDF')}</Button>
 					<Button variant="outline" href={`/export-analysis/${data.analysis.id}/regulation-recommendations`}>{t('Lihat rekomendasi')}</Button>
 					<Button variant="outline" onclick={handleRegs}>{t('Panduan 10 bagian')}</Button>
 					<Button variant="outline" disabled={regRunning} onclick={handleRunRegCheck}>

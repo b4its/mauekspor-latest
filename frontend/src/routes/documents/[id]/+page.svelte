@@ -6,6 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { generateTradeDocument, approveTradeDocument, updateTradeDocument, deleteTradeDocument, documentPdfUrl } from '$lib/api/documents';
+	import { downloadFile } from '$lib/api/client';
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
@@ -38,6 +39,25 @@
 	let localOwner = $derived(savedOwner || data.document.owner);
 
 	let displayStatus = $derived(approved ? 'Approved' : regenerated ? 'Ready' : localStatus);
+	let downloading = $state('');
+
+	// Unduhan PDF terautentikasi (FR-EXP-1): kirim bearer token via fetch+blob.
+	async function downloadPdf(openInNewTab = false) {
+		error = '';
+		downloading = data.document.id;
+		try {
+			if (openInNewTab) {
+				window.open(documentPdfUrl(data.document.id), '_blank', 'noopener');
+				return;
+			}
+			const path = documentPdfUrl(data.document.id).replace(import.meta.env.VITE_API_BASE_URL ?? '/api/v1', '');
+			await downloadFile(path, `${data.document.id}.pdf`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengunduh PDF.');
+		} finally {
+			downloading = '';
+		}
+	}
 	let displayScore = $derived(regenerated || approved ? Math.max(data.document.validationScore, 94) : data.document.validationScore);
 
 	async function regenerate() {
@@ -142,9 +162,9 @@
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
-			<Button variant="default" href={documentPdfUrl(data.document.id)} target="_blank">
+			<Button variant="default" disabled={downloading === data.document.id} onclick={() => downloadPdf()}>
 				<DownloadIcon class="size-4" />
-				{t('Unduh PDF')}
+				{downloading === data.document.id ? t('Mengunduh...') : t('Unduh PDF')}
 			</Button>
 			<Button variant="outline" onclick={() => (editing ? (editing = false) : openEdit())}>{editing ? t('Batal') : t('Edit')}</Button>
 			<Button
@@ -198,9 +218,9 @@
 					<CardDescription>{t('Kolom dihasilkan dari data proyek, produk, kutipan, dan pengiriman.')}</CardDescription>
 				</div>
 				<div class="flex flex-wrap gap-2.5">
-					<Button variant="outline" href={documentPdfUrl(data.document.id)} target="_blank">
+					<Button variant="outline" disabled={downloading === data.document.id} onclick={() => downloadPdf()}>
 						<DownloadIcon class="size-4" />
-						{t('Unduh PDF')}
+						{downloading === data.document.id ? t('Mengunduh...') : t('Unduh PDF')}
 					</Button>
 					<Button variant="outline" disabled={regenerating || regenerated} onclick={regenerate}>{t('Regenerasi')}</Button>
 					<Button disabled={approving || approved || displayScore < 90} onclick={approve}>

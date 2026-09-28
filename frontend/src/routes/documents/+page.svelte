@@ -8,7 +8,8 @@
 	import type { TradeDocument } from '$lib/data/trade';
 	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument, documentPdfUrl, batchDeleteDocuments, listDocumentTypes } from '$lib/api/documents';
 	import type { DocumentTypeSpec } from '$lib/api/documents';
-	import { downloadFile } from '$lib/api/client';
+	// documentPdfUrl dipakai untuk membentuk path unduhan terautentikasi.
+	import { downloadFile, exportPath } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone, toneVariant } from '$lib/utils/format';
@@ -100,6 +101,37 @@ import { page } from '$app/state';
 
 	function projectName(projectId: string) {
 		return projects.items.find((project) => project.id === projectId)?.name ?? projectId;
+	}
+
+	// FR-EXP-2: export mengikuti cakupan yang sedang ditinjau (terpilih >
+	// filter/pencarian). Nama berkas mencerminkan scope.
+	async function exportDocuments(ext: 'csv' | 'xlsx') {
+		error = '';
+		try {
+			const scope = bulk.count
+				? { ids: bulk.ids }
+				: { search: query.trim(), status: activeFilter === 'All' ? '' : activeFilter };
+			const path = exportPath(`/documents/export.${ext}`, scope);
+			await downloadFile(path, `documents.${ext}`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengekspor dokumen.');
+		}
+	}
+
+	// FR-EXP-1: unduhan PDF lewat helper terautentikasi (bearer token), bukan
+	// tautan biasa yang akan 401 karena token ada di sessionStorage.
+	let downloadingId = $state('');
+	async function downloadTradeDocumentPdf(document: TradeDocument) {
+		error = '';
+		downloadingId = document.id;
+		try {
+			const path = documentPdfUrl(document.id).replace(import.meta.env.VITE_API_BASE_URL ?? '/api/v1', '');
+			await downloadFile(path, `${document.id}.pdf`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengunduh PDF.');
+		} finally {
+			downloadingId = '';
+		}
 	}
 
 	function openCreate() {
@@ -221,8 +253,8 @@ import { page } from '$app/state';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Generate document')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/documents/export.csv', 'documents.csv')}>{t('Export CSV')}</Button>
-			<Button variant="outline" onclick={() => downloadFile('/documents/export.xlsx', 'documents.xlsx')}>{t('Excel (.xlsx)')}</Button>
+			<Button variant="outline" onclick={() => exportDocuments('csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => exportDocuments('xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="secondary">Avg validation {averageScore}%</Badge>
 		</CardContent>
 		{#if showForm}
@@ -391,10 +423,10 @@ import { page } from '$app/state';
 								variant="outline"
 								size="sm"
 								class="h-7 text-xs"
-								href={documentPdfUrl(document.id)}
-								target="_blank"
+								disabled={downloadingId === document.id}
+								onclick={() => downloadTradeDocumentPdf(document)}
 							>
-								PDF
+								{downloadingId === document.id ? '…' : 'PDF'}
 							</Button>
 							<Button
 								variant="ghost"

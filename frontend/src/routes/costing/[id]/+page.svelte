@@ -6,6 +6,7 @@
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { recalculateCostingScenario, costingPdfUrl, getExchangeRate, updateExchangeRate, refreshExchangeRate, deleteCostingScenario } from '$lib/api/costing';
 	import type { ExchangeRate } from '$lib/api/costing';
+	import { downloadFile } from '$lib/api/client';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 	import { formatDateTime } from '$lib/utils/date';
@@ -14,6 +15,21 @@
 	import { label } from '$lib/utils/labels';
 
 	let { data } = $props();
+	let downloading = $state(false);
+
+	// Unduhan PDF terautentikasi (FR-EXP-1).
+	async function downloadPdf() {
+		error = '';
+		downloading = true;
+		try {
+			const path = costingPdfUrl(data.scenario.id).replace(import.meta.env.VITE_API_BASE_URL ?? '/api/v1', '');
+			await downloadFile(path, `${data.scenario.id}-costing.pdf`);
+		} catch (e) {
+			error = e instanceof Error && e.message ? e.message : t('Gagal mengunduh PDF.');
+		} finally {
+			downloading = false;
+		}
+	}
 	let recalculated = $state(false);
 	let fxShock = $state(false);
 	let error = $state('');
@@ -156,7 +172,7 @@
 					{/if}
 					<Button variant="outline" onclick={() => (fxShock = !fxShock)}>{fxShock ? t('Hapus shock FX') : t('Terapkan shock FX +3.5%')}</Button>
 					<Button onclick={handleRecalculate}>{recalculated ? t('Dihitung ulang') : t('Hitung ulang')}</Button>
-					<Button variant="outline" href={costingPdfUrl(data.scenario.id)}>{t('Unduh PDF')}</Button>
+					<Button variant="outline" disabled={downloading} onclick={downloadPdf}>{downloading ? t('Mengunduh...') : t('Unduh PDF')}</Button>
 				</div>
 				{#if fx}
 					<div class="mt-2 flex flex-wrap items-center gap-2">
