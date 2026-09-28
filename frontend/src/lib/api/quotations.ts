@@ -48,3 +48,11 @@ export function updateQuotation(id: string, payload: Partial<Quotation>) {
 export function deleteQuotation(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/quotations/${id}/`, { method: 'DELETE' });
 }
+
+
+export function batchDeleteQuotations(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/quotations/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

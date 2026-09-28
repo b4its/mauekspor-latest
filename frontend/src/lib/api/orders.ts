@@ -39,3 +39,11 @@ export function updateOrder(id: string, payload: Partial<SalesOrder>) {
 export function deleteOrder(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/orders/${id}/`, { method: 'DELETE' });
 }
+
+
+export function batchDeleteOrders(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/orders/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

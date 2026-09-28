@@ -2847,6 +2847,13 @@ const dictionary: Record<string, Entry> = {
 	'Naikkan urutan': { id: 'Naikkan urutan', en: 'Move up' },
 	'Turunkan urutan': { id: 'Turunkan urutan', en: 'Move down' },
 	'Tanggal': { id: 'Tanggal', en: 'Date' },
+	'Aksi massal': { id: 'Aksi massal', en: 'Bulk actions' },
+	'Bersihkan': { id: 'Bersihkan', en: 'Clear' },
+	'order': { id: 'order', en: 'orders' },
+	'order dihapus.': { id: 'order dihapus.', en: 'orders deleted.' },
+	'Gagal menghapus order terpilih.': { id: 'Gagal menghapus order terpilih.', en: 'Failed to delete selected orders.' },
+	'Hapus order terpilih': { id: 'Hapus order terpilih', en: 'Delete selected orders' },
+	'Order terpilih akan dihapus permanen dari workspace.': { id: 'Order terpilih akan dihapus permanen dari workspace.', en: 'Selected orders will be permanently removed from the workspace.' },
 	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 

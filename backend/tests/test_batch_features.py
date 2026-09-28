@@ -261,3 +261,41 @@ def test_upgraded_module_export_has_header_and_rows():
             first_line = res.text.strip().splitlines()[0]
             assert first_line, module
 
+
+# ---------------------------------------------------------------------------
+# Generic batch delete endpoints
+# ---------------------------------------------------------------------------
+def test_batch_delete_removes_tasks_and_reports_count():
+    with TestClient(app) as c:
+        headers = _login(c)
+        created = [
+            c.post("/api/v1/tasks/", json={"title": f"Batch task {i}"}, headers=headers).json()["data"]["id"]
+            for i in range(3)
+        ]
+        res = c.post("/api/v1/tasks/batch/delete/", json={"ids": [*created, "TSK-DOES-NOT-EXIST"]}, headers=headers)
+        assert res.status_code == 200
+        body = res.json()["data"]
+        # Hanya id yang benar-benar ada yang dilaporkan terhapus.
+        assert sorted(body["deleted"]) == sorted(created)
+        assert body["deletedCount"] == len(created)
+        # Verifikasi hilang dari koleksi.
+        remaining = {t["id"] for t in c.get("/api/v1/tasks/", headers=headers).json()["data"]}
+        assert remaining.isdisjoint(created)
+
+
+def test_batch_delete_empty_ids_returns_422():
+    with TestClient(app) as c:
+        headers = _login(c)
+        res = c.post("/api/v1/orders/batch/delete/", json={"ids": []}, headers=headers)
+        assert res.status_code == 422
+
+
+def test_batch_delete_available_for_common_modules():
+    with TestClient(app) as c:
+        headers = _login(c)
+        for module in ("orders", "quotations", "shipments", "payments", "documents", "suppliers", "buyers", "messages", "support"):
+            res = c.post(f"/api/v1/{module}/batch/delete/", json={"ids": []}, headers=headers)
+            # 422 (validasi ids kosong) membuktikan route terdaftar — bukan 404/405.
+            assert res.status_code == 422, module
+
+

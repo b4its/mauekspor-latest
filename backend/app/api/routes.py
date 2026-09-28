@@ -701,6 +701,92 @@ def _register_export_routes():
 _register_export_routes()
 
 
+# ----------------------------------------------------------------------------
+# GENERIC BATCH DELETE REGISTRY
+# ----------------------------------------------------------------------------
+# Modul yang mendukung hapus massal (`POST /<module>/batch/delete/`) dengan body
+# `{"ids": [...]}`. Sebelumnya hanya produk yang punya endpoint batch; registry
+# ini memberi perilaku Seragam ke koleksi lain tanpa menyentuh tabel terkait.
+# Path memakai bentuk kebab-case modul (mis. `team-members`).
+_BATCH_DELETE_TABLES: dict[str, str] = {
+    "orders": "orders",
+    "quotations": "quotations",
+    "shipments": "shipments",
+    "payments": "payments",
+    "documents": "documents",
+    "tasks": "tasks",
+    "suppliers": "suppliers",
+    "buyers": "buyers",
+    "buyer-requests": "buyer_requests",
+    "catalogs": "catalogs",
+    "rfqs": "rfqs",
+    "markets": "markets",
+    "costing": "costing",
+    "compliance-requirements": "compliance_requirements",
+    "trade-projects": "projects",
+    "team-members": "team_members",
+    "templates": "templates",
+    "automations": "automations",
+    "integrations": "integrations",
+    "knowledge-articles": "knowledge_articles",
+    "calendar-events": "calendar_events",
+    "files": "files",
+    "messages": "messages",
+    "reports": "reports",
+    "support-tickets": "support_tickets",
+    "api-keys": "api_keys",
+    "export-analyses": "export_analyses",
+}
+
+# Route path frontend -> tabel, agar alias seperti `/export-analysis/batch/delete/`
+# dan `/compliance/requirements/batch/delete/` ikut bekerja.
+_BATCH_DELETE_ALIASES: dict[str, str] = {
+    "export-analysis": "export_analyses",
+    "compliance/requirements": "compliance_requirements",
+    "support": "support_tickets",
+    "knowledge": "knowledge_articles",
+    "team": "team_members",
+    "calendar": "calendar_events",
+}
+
+
+def _register_batch_delete_routes():
+    """Daftarkan `POST /<module>/batch/delete/` untuk setiap tabel di registry."""
+
+    def _handler(table: str):
+        def _inner(payload: sc.BatchActionPayload):
+            if not payload.ids:
+                raise HTTPException(422, "ids are required")
+            deleted: list[str] = []
+            for record_id in payload.ids:
+                if db.get(table, record_id):
+                    db.delete(table, record_id)
+                    deleted.append(record_id)
+            return {"data": {"deleted": deleted, "deletedCount": len(deleted)}, "meta": {}}
+        return _inner
+
+    seen: set[str] = set()
+    for path_key, table in _BATCH_DELETE_TABLES.items():
+        seen.add(path_key)
+        router.add_api_route(
+            f"/{path_key}/batch/delete/",
+            _handler(table),
+            methods=["POST"],
+            name=f"batch_delete_{path_key.replace('-', '_').replace('/', '_')}",
+        )
+    for alias, table in _BATCH_DELETE_ALIASES.items():
+        if alias in seen:
+            continue
+        router.add_api_route(
+            f"/{alias}/batch/delete/",
+            _handler(table),
+            methods=["POST"],
+            name=f"batch_delete_{alias.replace('-', '_').replace('/', '_')}",
+        )
+
+
+_register_batch_delete_routes()
+
 
 
 

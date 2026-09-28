@@ -41,3 +41,11 @@ export function updateTask(id: string, payload: Partial<WorkTask>) {
 export function deleteTask(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/tasks/${id}/`, { method: 'DELETE' });
 }
+
+
+export function batchDeleteTasks(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/tasks/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

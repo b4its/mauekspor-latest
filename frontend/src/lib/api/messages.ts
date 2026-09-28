@@ -24,3 +24,11 @@ export function createMessageThread(payload: Partial<MessageThread>) {
 export function deleteMessageThread(threadId: string) {
 	return apiFetch<{ status: string; id: string }>(`/messages/${threadId}/`, { method: 'DELETE' });
 }
+
+
+export function batchDeleteMessageThreads(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/messages/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

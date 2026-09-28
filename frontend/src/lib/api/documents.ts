@@ -49,3 +49,11 @@ export function documentPdfUrl(id: string): string {
 	return `${base}/documents/${id}/pdf/`;
 }
 
+
+
+export function batchDeleteDocuments(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/documents/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

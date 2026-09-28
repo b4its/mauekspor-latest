@@ -48,3 +48,11 @@ export function updateShipment(id: string, payload: Partial<Shipment>) {
 export function deleteShipment(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/shipments/${id}/`, { method: 'DELETE' });
 }
+
+
+export function batchDeleteShipments(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/shipments/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

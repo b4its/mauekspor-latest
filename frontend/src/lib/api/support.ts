@@ -20,3 +20,11 @@ export function updateSupportTicket(id: string, payload: Partial<SupportTicket>)
 export function deleteSupportTicket(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/support/${id}/`, { method: 'DELETE' });
 }
+
+
+export function batchDeleteSupportTickets(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/support/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

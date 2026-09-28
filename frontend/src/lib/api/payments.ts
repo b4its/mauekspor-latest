@@ -37,3 +37,11 @@ export function updatePayment(id: string, payload: Partial<Payment>) {
 export function deletePayment(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/payments/${id}/`, { method: 'DELETE' });
 }
+
+
+export function batchDeletePayments(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/payments/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

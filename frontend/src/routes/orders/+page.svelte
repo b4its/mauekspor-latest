@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { orders as seedOrders } from '$lib/data/trade';
-	import { listOrders, createOrder, confirmOrder, deleteOrder } from '$lib/api/orders';
+	import { listOrders, createOrder, confirmOrder, deleteOrder, batchDeleteOrders } from '$lib/api/orders';
 	import { downloadFile } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -17,8 +17,10 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
@@ -171,6 +173,26 @@ import { page } from '$app/state';
 		paginationPage = 1;
 	});
 
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteOrders(bulk.ids);
+			bulk.clear();
+			await orders.load();
+			message = `${res.data.deletedCount} ${t('order dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus order terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -263,10 +285,29 @@ import { page } from '$app/state';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search order, buyer, supplier...')} placeholder={t('Search order, buyer, supplier...')} class="w-[min(390px,100%)]" />
-		<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((o) => o.id))} onchange={() => bulk.toggleAll(pagedItems.map((o) => o.id))} />
+				{t('Pilih semua')}
+			</label>
+			<Input bind:value={query} type="search"
+				aria-label={t('Search order, buyer, supplier...')} placeholder={t('Search order, buyer, supplier...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('order')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus order terpilih'),
+			description: t('Order terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('order')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card><CardContent class="p-5"><span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Orders')}</span><strong class="mt-2 block text-3xl font-bold tracking-tight">{orders.items.length}</strong></CardContent></Card>
@@ -297,11 +338,14 @@ import { page } from '$app/state';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as order}
-				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class={`relative flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md ${bulk.has(order.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="absolute top-4 right-4 z-10">
+						<input type="checkbox" class="size-4" checked={bulk.has(order.id)} aria-label={`${t('Pilih')} ${order.id}`} onchange={() => bulk.toggle(order.id)} onclick={(e) => e.stopPropagation()} />
+					</div>
 					<div class="grid gap-3 p-5">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(order.status))}>{label(order.status)}</Badge>
-							<strong class="text-2xl font-bold tracking-tight">{order.readiness}%</strong>
+							<strong class="text-2xl font-bold tracking-tight mr-6">{order.readiness}%</strong>
 						</div>
 						<a href={`/orders/${order.id}`} class="block no-underline hover:underline">
 							<h3 class="text-2xl font-bold tracking-tight text-foreground">{order.id}</h3>

@@ -108,3 +108,11 @@ export function listBuyerPortal(params: { country?: string; search?: string; buy
 	}));
 }
 
+
+
+export function batchDeleteBuyers(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/buyers/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

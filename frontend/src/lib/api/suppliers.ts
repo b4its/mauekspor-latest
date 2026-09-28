@@ -38,3 +38,11 @@ export function updateSupplier(id: string, payload: Partial<Supplier>) {
 export function deleteSupplier(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/suppliers/${id}/`, { method: 'DELETE' });
 }
+
+
+export function batchDeleteSuppliers(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/suppliers/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}
