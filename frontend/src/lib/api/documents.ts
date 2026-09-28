@@ -6,6 +6,26 @@ export type GenerateDocumentPayload = {
 	type: TradeDocument['type'];
 };
 
+export type DocumentTypeSpec = {
+	type: string;
+	group: string;
+	requiredFields: string[];
+};
+
+export type DocumentTypesCatalogue = {
+	types: DocumentTypeSpec[];
+	required: string[];
+};
+
+/** Katalog tipe dokumen yang didukung + dokumen wajib untuk konteks tertentu. */
+export function listDocumentTypes(commodityGroup = '', incoterm = '') {
+	const qs = new URLSearchParams();
+	if (commodityGroup) qs.set('commodityGroup', commodityGroup);
+	if (incoterm) qs.set('incoterm', incoterm);
+	const query = qs.toString();
+	return apiFetch<DocumentTypesCatalogue>(`/documents/types/${query ? `?${query}` : ''}`);
+}
+
 export function listTradeDocuments() {
 	return apiFetch<TradeDocument[]>('/documents/');
 }

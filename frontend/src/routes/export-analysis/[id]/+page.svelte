@@ -431,16 +431,47 @@
 				<CardTitle>{t('Panduan regulasi (10 bagian)')}</CardTitle>
 				<Button variant="outline" size="sm" onclick={() => (showRegs = false)}>{t('Tutup')}</Button>
 			</CardHeader>
-			<CardContent class="grid gap-3 md:grid-cols-2">
-				{#if regs}
-					{#each regs.sections as section}
-						<div class="rounded-lg border bg-muted/30 p-3.5">
-							<strong class="text-sm">{section.title}</strong>
-							<p class="mt-1 text-xs leading-relaxed text-muted-foreground">{section.body}</p>
-						</div>
-					{/each}
-				{:else}
-					<p class="text-sm font-semibold text-muted-foreground">{t('Memuat panduan regulasi...')}</p>
+			<CardContent class="grid gap-3">
+				{#if regs?.trust?.advisory}
+					<div class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs font-semibold text-amber-800 dark:text-amber-300" role="note">
+						<p>{regs.trust.disclaimer || t('Materi ini bersifat indikatif, bukan nasihat hukum. Verifikasi ke sumber resmi sebelum keputusan ekspor.')}</p>
+						{#if regs.trust.ai?.fallback}
+							<p class="mt-1">{t('Sebagian isi dihasilkan mode mock/template (bukan AI produksi) — gunakan sebagai saran saja.')}</p>
+						{/if}
+					</div>
+				{/if}
+				<div class="grid gap-3 md:grid-cols-2">
+					{#if regs}
+						{#each regs.sections as section}
+							<div class="rounded-lg border bg-muted/30 p-3.5">
+								<div class="flex items-center justify-between gap-2">
+									<strong class="text-sm">{section.title}</strong>
+									{#if section.generatedBy}
+										<Badge variant={section.generatedBy === 'ai' ? 'secondary' : 'outline'} class="text-[10px] font-bold uppercase">
+											{section.generatedBy === 'ai' ? t('AI (saran)') : t('Template')}
+										</Badge>
+									{/if}
+								</div>
+								<p class="mt-1 text-xs leading-relaxed text-muted-foreground">{section.body}</p>
+							</div>
+						{/each}
+					{:else}
+						<p class="text-sm font-semibold text-muted-foreground">{t('Memuat panduan regulasi...')}</p>
+					{/if}
+				</div>
+				{#if regs?.sources?.length}
+					<div class="rounded-lg border bg-muted/20 p-3">
+						<strong class="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Sumber')}</strong>
+						<ul class="mt-1.5 grid gap-1 text-xs">
+							{#each regs.sources as src}
+								<li>
+									<a href={src.url} target="_blank" rel="noopener noreferrer" class="font-semibold text-primary hover:underline">{src.publisher || src.url}</a>
+									{#if src.jurisdiction}<span class="text-muted-foreground"> · {src.jurisdiction}</span>{/if}
+									{#if src.reviewStatus}<span class="text-muted-foreground"> · {label(src.reviewStatus)}</span>{/if}
+								</li>
+							{/each}
+						</ul>
+					</div>
 				{/if}
 			</CardContent>
 		</Card>

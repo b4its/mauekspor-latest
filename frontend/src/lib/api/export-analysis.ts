@@ -28,6 +28,32 @@ export type RegulationSection = {
 	title: string;
 	title_en?: string;
 	body: string;
+	/** Asal-usul isi bagian: dari model AI atau template deterministik. */
+	generatedBy?: 'ai' | 'template' | string;
+};
+
+export type ProvenanceSource = {
+	publisher?: string;
+	url?: string;
+	effectiveFrom?: string;
+	effectiveTo?: string;
+	jurisdiction?: string;
+	reviewStatus?: string;
+	retrievedAt?: string;
+};
+
+export type TrustInfo = {
+	advisory?: boolean;
+	humanReviewRequired?: boolean;
+	disclaimer?: string;
+	ai?: {
+		provider?: string;
+		model?: string;
+		fallback?: boolean;
+		advisory?: boolean;
+		generatedAt?: string;
+		note?: string;
+	};
 };
 
 export type RegulationRecommendations = {
@@ -36,6 +62,10 @@ export type RegulationRecommendations = {
 	sections: RegulationSection[];
 	country?: Record<string, unknown>;
 	fromCache?: boolean;
+	/** Provenance: daftar sumber primer (PRD §5.4). */
+	sources?: ProvenanceSource[];
+	/** Tingkat kepercayaan + disclaimer hukum. */
+	trust?: TrustInfo;
 };
 
 export type CountryRegulation = {

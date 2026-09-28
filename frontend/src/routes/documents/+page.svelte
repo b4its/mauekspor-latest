@@ -6,7 +6,8 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, tradeDocuments as seedDocuments } from '$lib/data/trade';
 	import type { TradeDocument } from '$lib/data/trade';
-	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument, documentPdfUrl, batchDeleteDocuments } from '$lib/api/documents';
+	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument, documentPdfUrl, batchDeleteDocuments, listDocumentTypes } from '$lib/api/documents';
+	import type { DocumentTypeSpec } from '$lib/api/documents';
 	import { downloadFile } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -49,9 +50,20 @@ import { page } from '$app/state';
 
 	let tradeDocuments = createRemoteList(listTradeDocuments, seedDocuments);
 	let projects = createRemoteList(listTradeProjects, seedProjects);
+	// Katalog tipe dokumen dari backend (satu sumber kebenaran, PRD §5.8).
+	let docTypes = $state<DocumentTypeSpec[]>([]);
+	let requiredDocs = $state<string[]>([]);
 	$effect(() => {
 		tradeDocuments.load();
 		projects.load();
+		listDocumentTypes()
+			.then((res) => {
+				docTypes = res.data.types ?? [];
+				requiredDocs = res.data.required ?? [];
+			})
+			.catch(() => {
+				docTypes = [];
+			});
 	});
 
 	let filteredDocuments = $derived(
@@ -228,12 +240,17 @@ import { page } from '$app/state';
 					<label class="grid gap-1 text-sm font-semibold">
 						{t('Tipe dokumen')}
 						<select bind:value={fType} class="h-10 rounded-md border bg-background px-3 text-sm">
-							{#each ['Commercial Invoice', 'Packing List', 'COO', 'Proforma'] as type}
-								<option value={type}>{type}</option>
+							{#each (docTypes.length ? docTypes.map((d) => d.type) : ['Commercial Invoice', 'Packing List', 'Proforma Invoice', 'Certificate of Origin']) as type}
+								<option value={type}>{label(type)}</option>
 							{/each}
 						</select>
 					</label>
 				</div>
+				{#if requiredDocs.length}
+					<p class="text-xs font-semibold text-muted-foreground">
+						{t('Dokumen wajib (indikatif)')}: {requiredDocs.map((d) => label(d)).join(', ')}
+					</p>
+				{/if}
 				{#if formError}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{formError}</p>
 				{/if}
