@@ -14,6 +14,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 	import { createCalendarEvent, markCalendarEventDone, updateCalendarEvent, deleteCalendarEvent } from '$lib/api/calendar';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import SortSelect from '$lib/components/SortSelect.svelte';
+	import { sortBy, type SortDir } from '$lib/utils/sort';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
@@ -25,6 +27,15 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	const types = ['Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'date', label: t('Tanggal') },
+		{ value: 'title', label: t('Judul') },
+		{ value: 'type', label: t('Tipe') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'owner', label: t('Pemilik') }
+	];
 	let events = createRemoteList(listCalendarEvents, seedCalendarEvents);
 	let projects = createRemoteList(listTradeProjects, seedProjects);
 	let created = $state(false);
@@ -49,9 +60,9 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -81,10 +92,14 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	});
 
 	let filteredEvents = $derived(
-		events.items.filter(
-			(event) =>
-				(activeFilter === 'All' || event.type === activeFilter) &&
-				[event.title, event.type, event.status, event.owner, event.description].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+		sortBy(
+			events.items.filter(
+				(event) =>
+					(activeFilter === 'All' || event.type === activeFilter) &&
+					[event.title, event.type, event.status, event.owner, event.description].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let dueSoon = $derived(events.items.filter((event) => event.status === 'Due Soon' || event.status === 'Blocked').length);
@@ -264,8 +279,11 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search event, owner, status...')} placeholder={t('Search event, owner, status...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search event, owner, status...')} placeholder={t('Search event, owner, status...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	{#if events.loading}

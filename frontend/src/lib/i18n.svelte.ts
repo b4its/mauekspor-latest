@@ -2846,6 +2846,7 @@ const dictionary: Record<string, Entry> = {
 	'Cari artikel...': { id: 'Cari artikel...', en: 'Search articles...' },
 	'Naikkan urutan': { id: 'Naikkan urutan', en: 'Move up' },
 	'Turunkan urutan': { id: 'Turunkan urutan', en: 'Move down' },
+	'Tanggal': { id: 'Tanggal', en: 'Date' },
 	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 
