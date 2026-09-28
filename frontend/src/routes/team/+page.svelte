@@ -7,6 +7,7 @@
 	import { teamMembers as seedMembers } from '$lib/data/trade';
 	import type { TeamMember } from '$lib/data/trade';
 	import { listTeamMembers, inviteTeamMember, updateTeamMemberRole, updateTeamMember, removeTeamMember } from '$lib/api/team';
+	import { downloadFile } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -190,6 +191,8 @@ import { page } from '$app/state';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button onclick={() => (showInvite ? (showInvite = false) : (showInvite = true))}>{showInvite ? t('Batal') : t('Invite member')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/team-members/export.csv', 'team-members.csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/team-members/export.xlsx', 'team-members.xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge>{t('Active')} {activeCount}</Badge>
 		</CardContent>
 		{#if showInvite}

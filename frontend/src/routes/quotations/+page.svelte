@@ -6,6 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { quotations as seedQuotations } from '$lib/data/trade';
 	import { listQuotations, createQuotation, acceptQuotation, deleteQuotation } from '$lib/api/quotations';
+	import { downloadFile } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
@@ -190,6 +191,8 @@ import { page } from '$app/state';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create quotation')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/quotations/export.csv', 'quotations.csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/quotations/export.xlsx', 'quotations.xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="secondary">{t('Pipeline')} {currency.format(totalValue)}</Badge>
 		</CardContent>
 		{#if showForm}

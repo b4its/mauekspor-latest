@@ -6,6 +6,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, workTasks as seedTasks, type WorkTask } from '$lib/data/trade';
 	import { listTasks, createTask, completeTask, deleteTask } from '$lib/api/tasks';
+	import { downloadFile } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { page } from '$app/state';
@@ -201,6 +202,8 @@ import { formatDate } from '$lib/utils/date';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Create task')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/tasks/export.csv', 'tasks.csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/tasks/export.xlsx', 'tasks.xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="destructive">{t('Blocked')} {blocked}</Badge>
 		</CardContent>
 		{#if showForm}

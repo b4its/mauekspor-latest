@@ -7,6 +7,7 @@
 	import { projects as seedProjects, tradeDocuments as seedDocuments } from '$lib/data/trade';
 	import type { TradeDocument } from '$lib/data/trade';
 	import { listTradeDocuments, generateTradeDocument, approveTradeDocument, deleteTradeDocument, documentPdfUrl } from '$lib/api/documents';
+	import { downloadFile } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone, toneVariant } from '$lib/utils/format';
@@ -186,6 +187,8 @@ import { page } from '$app/state';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Generate document')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/documents/export.csv', 'documents.csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/documents/export.xlsx', 'documents.xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="secondary">Avg validation {averageScore}%</Badge>
 		</CardContent>
 		{#if showForm}

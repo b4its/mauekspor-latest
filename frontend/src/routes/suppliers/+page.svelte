@@ -6,6 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts, suppliers as seedSuppliers } from '$lib/data/trade';
 	import { listSuppliers, requestSupplierEvidence, createSupplier } from '$lib/api/suppliers';
+	import { downloadFile } from '$lib/api/client';
 	import { listProducts } from '$lib/api/products';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { statusTone, toneVariant } from '$lib/utils/format';
@@ -171,6 +172,8 @@ import { sortBy, type SortDir } from '$lib/utils/sort';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Tambah supplier')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/suppliers/export.csv', 'suppliers.csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/suppliers/export.xlsx', 'suppliers.xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="secondary">{t('Verified')} {verifiedCount}</Badge>
 		</CardContent>
 		{#if showForm}
