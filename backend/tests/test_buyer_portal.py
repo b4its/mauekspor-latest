@@ -25,13 +25,22 @@ def _auth(token: str) -> dict:
 
 
 def _publish(c: TestClient, token: str, title: str, target_market: str) -> str:
+    # Gate publikasi (PRD §5.6) mensyaratkan deskripsi, harga, dan minimal 1 gambar.
     created = c.post(
         "/api/v1/catalogs/",
-        json={"title": title, "productId": "PRD-COF-001", "targetMarket": target_market, "moq": "100"},
+        json={
+            "title": title, "productId": "PRD-COF-001", "targetMarket": target_market,
+            "moq": "100", "description": "Katalog uji portal buyer.", "priceRange": "FOB USD 10-15/kg",
+        },
         headers=_auth(token),
     )
     assert created.status_code == 200, created.text
     cid = created.json()["data"]["id"]
+    c.post(
+        f"/api/v1/catalogs/{cid}/images/",
+        json={"image_url": "https://example.com/catalog.jpg", "alt_text": "katalog"},
+        headers=_auth(token),
+    )
     pub = c.post(f"/api/v1/catalogs/{cid}/publish/", headers=_auth(token))
     assert pub.status_code == 200, pub.text
     return cid

@@ -40,7 +40,7 @@ def test_posts_do_not_crash():
             ("/api/v1/rfqs/", {"buyerName": "BuyCo", "destination": "JP", "quantity": "1"}),
             ("/api/v1/quotations/", {"projectId": "P1", "buyerName": "BuyCo", "incoterm": "FOB"}),
             ("/api/v1/orders/", {"projectId": "P1", "buyerName": "BuyCo", "value": 100}),
-            ("/api/v1/documents/generate/", {"type": "Invoice", "projectId": "P1", "data": {}}),
+                ("/api/v1/documents/generate/", {"type": "Commercial Invoice", "projectId": "P1", "data": {}}),
             ("/api/v1/calendar/", {"title": "Event", "date": "2026-08-10", "type": "Task"}),
             ("/api/v1/team/invite/", {"email": "x@y.co", "role": "Ops"}),
             ("/api/v1/templates/", {"title": "Tpl", "category": "Doc"}),

@@ -152,6 +152,10 @@ def test_quotation_to_order_creates_and_links_order():
         )
         assert created.status_code == 200
         quotation_id = created.json()["data"]["id"]
+        # State machine: quotation harus Accepted dulu sebelum dikonversi.
+        assert c.post(f"/api/v1/quotations/{quotation_id}/to-order/", headers=headers).status_code == 409
+        accepted = c.post(f"/api/v1/quotations/{quotation_id}/accept/", headers=headers)
+        assert accepted.status_code == 200
 
         conv = c.post(f"/api/v1/quotations/{quotation_id}/to-order/", headers=headers)
         assert conv.status_code == 200
@@ -177,6 +181,7 @@ def test_quotation_to_order_is_idempotent():
         quotation_id = c.post(
             "/api/v1/quotations/", json={"buyer": "Merlion Grocers", "value": 100}, headers=headers
         ).json()["data"]["id"]
+        c.post(f"/api/v1/quotations/{quotation_id}/accept/", headers=headers)
 
         first = c.post(f"/api/v1/quotations/{quotation_id}/to-order/", headers=headers).json()["data"]
         second = c.post(f"/api/v1/quotations/{quotation_id}/to-order/", headers=headers)
@@ -351,3 +356,81 @@ def test_notification_batch_delete_enforces_ownership():
         assert res.json()["data"] == {"deleted": ["NTF-OWN"], "deletedCount": 1}
         assert db.get("notifications", "NTF-OWN") is None
         assert db.get("notifications", "NTF-FOREIGN") is not None
+
+
+# ---------------------------------------------------------------------------
+# PRD: document types, provenance, gates (FR-DOC/FR-COMPL/FR-AI/FR-CAT/FR-COMM)
+# ---------------------------------------------------------------------------
+def test_document_types_endpoint_lists_supported_and_required():
+    with TestClient(app) as c:
+        headers = _login(c)
+        res = c.get("/api/v1/documents/types/", params={"commodityGroup": "pertanian", "incoterm": "CIF"}, headers=headers)
+        assert res.status_code == 200
+        body = res.json()["data"]
+        names = [t["type"] for t in body["types"]]
+        assert "Phytosanitary Certificate" in names
+        assert "Bill of Lading" in names
+        # CIF menambahkan Insurance Certificate.
+        assert "Insurance Certificate" in body["required"]
+
+
+def test_generate_document_rejects_unsupported_type():
+    with TestClient(app) as c:
+        headers = _login(c)
+        res = c.post("/api/v1/documents/generate/", json={"type": "Alien Permit"}, headers=headers)
+        assert res.status_code == 422
+
+
+def test_generate_document_accepts_health_certificate():
+    with TestClient(app) as c:
+        headers = _login(c)
+        res = c.post("/api/v1/documents/generate/", json={"type": "Health Certificate"}, headers=headers)
+        assert res.status_code == 200
+        assert res.json()["data"]["type"] == "Health Certificate"
+
+
+def _fresh_analysis(c, headers):
+    """Buat analisis untuk produk unik agar tidak menabrak dedup (product,country)."""
+    product = c.post("/api/v1/products/", json={
+        "name": f"Provenance Coffee {len(c.get('/api/v1/products/', headers=headers).json()['data'])}",
+        "category": "Agro", "hs": "090111", "origin": "Aceh", "packaging": "Karung 60kg",
+    }, headers=headers).json()["data"]
+    return product["id"]
+
+
+def test_analysis_carries_trust_and_required_documents():
+    with TestClient(app) as c:
+        headers = _login(c)
+        pid = _fresh_analysis(c, headers)
+        created = c.post("/api/v1/export-analysis/", json={"productId": pid, "destination": "Japan"}, headers=headers)
+        assert created.status_code == 200
+        data = created.json()["data"]
+        assert data.get("trust", {}).get("advisory") is True
+        assert data["trust"]["humanReviewRequired"] is True
+        assert isinstance(data.get("requiredDocuments"), list) and data["requiredDocuments"]
+
+
+def test_regulation_recommendations_include_sources_and_trust():
+    with TestClient(app) as c:
+        headers = _login(c)
+        pid = _fresh_analysis(c, headers)
+        created = c.post("/api/v1/export-analysis/", json={"productId": pid, "destination": "Japan"}, headers=headers)
+        aid = created.json()["data"]["id"]
+        rec = c.get(f"/api/v1/export-analysis/{aid}/regulation-recommendations/", headers=headers)
+        assert rec.status_code == 200
+        data = rec.json()["data"]
+        assert data.get("trust", {}).get("advisory") is True
+        assert data.get("sources"), "harus ada daftar sumber"
+        # Setiap bagian ditandai asal-usulnya.
+        assert all("generatedBy" in sec for sec in data["sections"])
+
+
+def test_quotation_to_order_requires_accepted_status():
+    with TestClient(app) as c:
+        headers = _login(c)
+        qid = c.post("/api/v1/quotations/", json={"buyer": "Gate Test", "value": 10}, headers=headers).json()["data"]["id"]
+        blocked = c.post(f"/api/v1/quotations/{qid}/to-order/", headers=headers)
+        assert blocked.status_code == 409
+        c.post(f"/api/v1/quotations/{qid}/accept/", headers=headers)
+        ok = c.post(f"/api/v1/quotations/{qid}/to-order/", headers=headers)
+        assert ok.status_code == 200

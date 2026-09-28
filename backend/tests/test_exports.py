@@ -92,14 +92,17 @@ def test_export_audit_xlsx():
 def test_public_catalog_detail():
     with TestClient(app) as c:
         token = _login(c)
-        # buat katalog + publish
+        # buat katalog + publish (lengkapi syarat gate publikasi)
         created = c.post("/api/v1/catalogs/", json={
             "title": "Katalog Publik", "productId": "PRD-COF-001",
             "targetMarket": "JP", "moq": "100",
+            "description": "Katalog publik uji.", "priceRange": "FOB USD 10-15/kg",
         }, headers={"Authorization": f"Bearer {token}"})
         assert created.status_code == 200
         cid = created.json()["data"]["id"]
-        c.post(f"/api/v1/catalogs/{cid}/publish/", headers={"Authorization": f"Bearer {token}"})
+        c.post(f"/api/v1/catalogs/{cid}/images/", json={"image_url": "https://example.com/x.jpg"}, headers={"Authorization": f"Bearer {token}"})
+        pub = c.post(f"/api/v1/catalogs/{cid}/publish/", headers={"Authorization": f"Bearer {token}"})
+        assert pub.status_code == 200, pub.text
 
         # detail publik tanpa auth (public endpoint)
         pub = c.get(f"/api/v1/catalogs/public/{cid}/")

@@ -17,13 +17,20 @@ def _headers(token: str) -> dict:
 def test_katalog_publish_unpublish():
     with TestClient(app) as c:
         token = _login(c)
-        # buat katalog lalu publish
+        # buat katalog lalu publish (lengkapi field wajib gate publikasi)
         created = c.post("/api/v1/catalogs/", json={
             "title": "Katalog Test", "productId": "PRD-COF-001",
             "targetMarket": "JP", "moq": "100",
+            "description": "Kopi Arabika Gayo premium siap ekspor.",
+            "priceRange": "FOB USD 12-18/kg",
         }, headers=_headers(token))
         assert created.status_code == 200
         cid = created.json()["data"]["id"]
+        # Gate publikasi: tanpa gambar harus 422.
+        blocked = c.post(f"/api/v1/catalogs/{cid}/publish/", headers=_headers(token))
+        assert blocked.status_code == 422
+        # Tambah gambar lalu publish berhasil.
+        c.post(f"/api/v1/catalogs/{cid}/images/", json={"image_url": "https://example.com/a.jpg", "alt_text": "kopi"}, headers=_headers(token))
         pub = c.post(f"/api/v1/catalogs/{cid}/publish/", headers=_headers(token))
         assert pub.status_code == 200
         assert pub.json()["data"]["status"] == "Published"

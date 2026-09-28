@@ -32,6 +32,7 @@ from app.core.security import (
     decode_token,
 )
 from app.core.permissions import can_read_module, can_read_path, module_for_data_table
+from app.services import document_types as doc_types
 from app.schemas import models as sc
 
 router = APIRouter(prefix="/api/v1")
@@ -2219,8 +2220,29 @@ def publish_catalog(catalog_id: str):
     record = db.get("catalogs", catalog_id)
     if not record:
         raise HTTPException(404, "Catalog not found")
+    # Gate publikasi (PRD §5.6/§5.10): deskripsi, pasar target, dan minimal satu
+    # gambar wajib ada agar katalog publik tidak tampil setengah jadi.
+    problems: list[str] = []
+    if not str(record.get("description", "")).strip():
+        problems.append("deskripsi")
+    if not str(record.get("targetMarket", "")).strip():
+        problems.append("pasar target")
+    if not str(record.get("priceRange", "")).strip() and not record.get("basePrice"):
+        problems.append("harga")
+    image_rows = db.find("catalog_images", catalogId=catalog_id)
+    # Terima juga field `images` berupa jumlah (representasi seed/legacy) agar
+    # katalog demo yang sudah punya gambar tidak ikut terblokir.
+    has_image = bool(image_rows) or int(record.get("images") or 0) > 0
+    if not has_image:
+        problems.append("minimal 1 gambar")
+    if problems:
+        raise HTTPException(
+            422,
+            "Katalog belum siap dipublikasikan. Lengkapi: " + ", ".join(problems) + ".",
+        )
     record["status"] = "Published"
     record["readiness"] = max(record.get("readiness", 0), 95)
+    record["publishedAt"] = "now"
     record["updatedAt"] = "now"
     return _save_one(record)
 
@@ -3044,6 +3066,16 @@ def quotation_to_order(quotation_id: str):
         if existing:
             return {"data": _serialize(existing), "meta": {"deduplicated": True}}
 
+    # Validasi state machine (PRD §5.7): hanya quotation Accepted / In Review
+    # (final) yang boleh menjadi order. Mencegah konversi draf yang belum sah.
+    current = str(quotation.get("status", "")).strip().lower()
+    if current not in {"accepted", "in review", "approved"}:
+        raise HTTPException(
+            409,
+            f"Quotation berstatus '{quotation.get('status', '')}' belum dapat dikonversi. "
+            "Terima (Accept) quotation terlebih dahulu.",
+        )
+
     order = {
         "id": db.gen_id("orders", "ORD"),
         "quotationId": quotation_id,
@@ -3057,7 +3089,12 @@ def quotation_to_order(quotation_id: str):
         "incoterm": quotation.get("incoterm", "FOB"),
         "destination": quotation.get("destination", ""),
         "paymentTerms": quotation.get("paymentTerms", ""),
+        # Semua terms diwarisi dari quotation (bukan nilai hardcode).
+        "deliveryWindow": quotation.get("deliveryWindow", ""),
+        "shippingMode": quotation.get("shippingMode", ""),
+        "costingId": quotation.get("costingId", ""),
         "status": "Draft",
+        "version": 1,
         "updatedAt": "now",
     }
     db.insert("orders", order)
@@ -3242,6 +3279,21 @@ def delete_compliance(req_id: str):
 # ----------------------------------------------------------------------------
 # DOCUMENTS
 # ----------------------------------------------------------------------------
+@router.get("/documents/types/")
+def list_document_types(commodityGroup: str = "", incoterm: str = ""):
+    """Katalog tipe dokumen yang didukung + dokumen wajib untuk konteks tertentu.
+
+    Didefinisikan sebelum `/documents/{document_id}/` agar tidak tertutup.
+    """
+    return {
+        "data": {
+            "types": doc_types.SUPPORTED_DOCUMENT_TYPES,
+            "required": doc_types.required_documents(commodityGroup, incoterm),
+        },
+        "meta": {"count": len(doc_types.SUPPORTED_DOCUMENT_TYPES)},
+    }
+
+
 @router.get("/documents/")
 def list_documents(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
     return _filtered_query("documents", search=search, search_fields=("id", "type", "projectId", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
@@ -3289,10 +3341,18 @@ def generate_document(payload: sc.GenerateDocumentPayload):
         pid = project.get("productId")
         if pid:
             product = db.get("products", pid)
-    # Invoice number otomatis
+    # Validasi tipe dokumen: hanya tipe yang benar-benar didukung (PRD §5.8).
     doc_type = payload.type or "Commercial Invoice"
-    if not fields.get("invoiceNo") and doc_type.lower().startswith("commercial"):
-        fields["invoiceNo"] = f"INV-{payload.projectId or 'DRAFT'}-{len(db.all('documents')) + 1:03d}"
+    if not doc_types.is_supported(doc_type):
+        raise HTTPException(
+            422,
+            f"Tipe dokumen '{doc_type}' belum didukung. Pilih salah satu: "
+            + ", ".join(doc_types.SUPPORTED_DOCUMENT_TYPE_NAMES),
+        )
+    # Invoice number otomatis
+    if not fields.get("invoiceNo") and doc_type.lower().startswith(("commercial", "proforma")):
+        prefix = "PRO" if doc_type.lower().startswith("proforma") else "INV"
+        fields["invoiceNo"] = f"{prefix}-{payload.projectId or 'DRAFT'}-{len(db.all('documents')) + 1:03d}"
     # Checks & validation score
     checks.append({"label": "Buyer terisi", "status": "Passed" if fields.get("buyer") else "Failed", "detail": "Buyer wajib pada dokumen komersial"})
     checks.append({"label": "HS code", "status": "Passed" if fields.get("hsCode") else "Needs Review", "detail": "HS code dari data proyek/produk"})
@@ -3302,12 +3362,22 @@ def generate_document(payload: sc.GenerateDocumentPayload):
         checks.append({"label": "Produk terisi", "status": "Passed", "detail": product.get("name", "")})
     if fields.get("value"):
         checks.append({"label": "Nilai dokumen", "status": "Passed", "detail": f"{fields['value']}"})
+    # Cek field wajib spesifik tipe dokumen.
+    spec = doc_types.spec_for(doc_type) or {}
+    for req_field in spec.get("requiredFields", []):
+        ok = bool(fields.get(req_field)) or (req_field == "product" and bool(product))
+        checks.append({
+            "label": f"Field wajib: {req_field}",
+            "status": "Passed" if ok else "Failed",
+            "detail": f"Dibutuhkan oleh {doc_type}",
+        })
     passed = sum(1 for c in checks if c["status"] == "Passed")
     validation_score = round((passed / len(checks)) * 100) if checks else 0
     record = db.insert("documents", {
         "id": db.gen_id("documents", "DOC"),
         "projectId": payload.projectId,
         "type": doc_type,
+        "group": (doc_types.spec_for(doc_type) or {}).get("group", "Commercial"),
         "status": "Draft",
         "version": "v1.0",
         "owner": "System",
@@ -5393,6 +5463,12 @@ def create_analysis(payload: sc.CreateExportAnalysisPayload):
         "restrictions": [],
         "commodityGroup": result.get("commodityGroup", "pertanian"),  # dari inferensi desa
         "summary": result["recommendations"][:300] if result["recommendations"] else "Analysis complete.",
+        # Provenance & tingkat kepercayaan (PRD §5.4/§5.12): tandai advisory +
+        # wajib review manusia agar UI tidak menyajikan sebagai kebenaran final.
+        "trust": compliance_svc.prov.analysis_trust(False),
+        "requiredDocuments": doc_types.required_documents(
+            result.get("commodityGroup", "pertanian"), product.get("incoterm")
+        ),
         "updatedAt": "now",
     })
     return _one(record)
@@ -5520,6 +5596,11 @@ def reanalyze_analysis(analysis_id: str):
     record["snapshotProductName"] = product.get("name", "")
     record["productChanged"] = False
     record["status"] = "Ready"
+    record["commodityGroup"] = result.get("commodityGroup", record.get("commodityGroup", "pertanian"))
+    record["trust"] = compliance_svc.prov.analysis_trust(False)
+    record["requiredDocuments"] = doc_types.required_documents(
+        record["commodityGroup"], product.get("incoterm")
+    )
     record["updatedAt"] = "now"
     # Hapus cache rekomendasi regulasi
     for cached in db.find("regulation_recommendations", analysisId=analysis_id):
@@ -5556,6 +5637,16 @@ def get_regulation_recommendations(analysis_id: str, request: Request, language:
     cached = db.get_by("regulation_recommendations", analysisId=analysis_id, language=language)
     if cached:
         cached["fromCache"] = True
+        if not cached.get("trust"):
+            cached["trust"] = compliance_svc.prov.analysis_trust(True)
+        if not cached.get("sources"):
+            cached["sources"] = [
+                compliance_svc.prov.source_block(
+                    publisher="Indonesia National Single Window (INSW)",
+                    url="https://www.insw.go.id/",
+                    jurisdiction="ID",
+                )
+            ]
         return _one(cached)
     snapshot = record.get("productSnapshot") or compliance_svc.snapshot_product({})
     result = compliance_svc.generate_regulation_recommendations(snapshot, country_code, language)
@@ -5565,6 +5656,9 @@ def get_regulation_recommendations(analysis_id: str, request: Request, language:
         "language": language,
         "sections": result["sections"],
         "country": result["country"],
+        # Provenance & trust (PRD §5.4/§5.12): sitasi sumber + disclaimer wajib.
+        "sources": result.get("sources", []),
+        "trust": result.get("trust", {}),
         "fromCache": False,
     }
     db.insert("regulation_recommendations", data)

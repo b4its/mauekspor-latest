@@ -10,8 +10,22 @@ from typing import Any
 
 from app import ai, db
 from app.data import countries as country_data
+from app.services import provenance as prov
 
 SEVERITY_POINTS = {"critical": 20, "major": 10, "minor": 5}
+
+# Sumber primer default per tema (PRD §11) — ditandai review_status=Draft agar
+# ditinjau manusia sebelum dipakai sebagai nasihat kepatuhan.
+_SOURCE_BY_GROUP = {
+    "pertanian": {"publisher": "Badan Karantina Indonesia (Barantin)", "url": "https://karantinaindonesia.go.id/"},
+    "perikanan": {"publisher": "Badan Karantina Indonesia (Barantin)", "url": "https://karantinaindonesia.go.id/"},
+    "kerajinan": {"publisher": "Kementerian Lingkungan Hidup / CITES", "url": "https://www.cites.org/"},
+}
+
+_VILLAGE_DEFAULT_SOURCE = {
+    "publisher": "Direktorat Jenderal Bea dan Cukai (DJBC)",
+    "url": "https://www.beacukai.go.id/",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -292,14 +306,35 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
             )
 
         ai_body = ai_sections.get(key)
-        final_body = ai_body if (ai_body and len(str(ai_body).strip()) > 15) else body
+        used_ai = bool(ai_body and len(str(ai_body).strip()) > 15)
+        final_body = ai_body if used_ai else body
         sections.append({
             "key": key,
             "title_en": en_title,
             "title": id_title if is_id else en_title,
             "body": final_body,
+            "generatedBy": "ai" if used_ai else "template",
         })
-    return {"sections": sections, "country": country, "from_cache": False}
+    return {
+        "sections": sections,
+        "country": country,
+        "from_cache": False,
+        "trust": prov.analysis_trust(bool(ai_sections)),
+        "sources": [
+            prov.source_block(
+                publisher="Indonesia National Single Window (INSW)",
+                url="https://www.insw.go.id/",
+                jurisdiction="ID",
+                review_status=prov.REVIEW_DRAFT,
+            ),
+            prov.source_block(
+                publisher="Direktorat Jenderal Bea dan Cukai (DJBC)",
+                url="https://www.beacukai.go.id/",
+                jurisdiction="ID",
+                review_status=prov.REVIEW_DRAFT,
+            ),
+        ],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -410,6 +445,7 @@ def village_regulatory_issues(product: dict, country_code: str, group: str) -> l
         needs_evidence = item.get("priority") != "minor"
 
         if not has_evidence:
+            src = _SOURCE_BY_GROUP.get(group, _VILLAGE_DEFAULT_SOURCE)
             issues.append({
                 "type": "Regulation",
                 "rule_key": f"village_priority_{item.get('title','').replace(' ','')}",
@@ -417,6 +453,12 @@ def village_regulatory_issues(product: dict, country_code: str, group: str) -> l
                 "required_value": f"{title}",
                 "description": detail,
                 "severity": severity,
+                "source": prov.source_block(
+                    publisher=src["publisher"],
+                    url=src["url"],
+                    jurisdiction="ID",
+                    review_status=prov.REVIEW_DRAFT,
+                ),
             })
 
     if group == "kerajinan" and _material_matches_cites_keyword(material):
@@ -427,6 +469,12 @@ def village_regulatory_issues(product: dict, country_code: str, group: str) -> l
             "required_value": "Periksa appendix CITES; siapkan dokumen CITES permit jika applicable",
             "description": "Bahan baku dikategorikan berpotensi masuk CITES. Pastikan legalitas bahan terdokumentasi.",
             "severity": "critical",
+            "source": prov.source_block(
+                publisher="CITES Secretariat",
+                url="https://www.cites.org/",
+                jurisdiction="INTL",
+                review_status=prov.REVIEW_DRAFT,
+            ),
         })
 
     return issues
@@ -445,6 +493,7 @@ def product_regulation_issues(product: dict, country_code: str) -> list[dict]:
 
     issues: list[dict] = []
     for reg in product_regulations_for(hs, country_code):
+        first_source = (reg.get("sources") or [{}])[0]
         issues.append({
             "rule_key": reg.get("id", "PRODUCT-REG"),
             "type": "product_regulation",
@@ -452,7 +501,14 @@ def product_regulation_issues(product: dict, country_code: str) -> list[dict]:
             "title": reg.get("name", "Product regulation"),
             "detail": f"{reg.get('requirement', '')} ({reg.get('ref', '')}). "
                       f"Deadline: {reg.get('deadline', '-')} {reg.get('risk_note', '')}".strip(),
-            "source": (reg.get("sources") or [{}])[0].get("url", ""),
+            "source": first_source.get("url", ""),
+            "sourceDetail": prov.source_block(
+                publisher=first_source.get("publisher", "Regulator"),
+                url=first_source.get("url", ""),
+                effective_from=str(reg.get("deadline", "") or ""),
+                jurisdiction="EU" if "EU" in str(reg.get("ref", "")) else "INTL",
+                review_status=prov.REVIEW_DRAFT,
+            ),
             "evidence_fields": ["due_diligence", "geolocation", "traceability"]
             if reg.get("id") == "EUDR"
             else ["certificate", "compliance_doc"],
