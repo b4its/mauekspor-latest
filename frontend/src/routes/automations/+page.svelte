@@ -16,6 +16,8 @@ import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { formatRelative } from '$lib/utils/date';
+import { label } from '$lib/utils/labels';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
@@ -350,8 +352,8 @@ import { page } from '$app/state';
 			{#each pagedItems as rule}
 				<Card class="grid gap-4">
 					<div class="flex items-center justify-between gap-3">
-						<Badge variant={toneVariant(statusTone(justActivated === rule.id ? 'Active' : rule.status))}>{justActivated === rule.id ? 'Active' : rule.status}</Badge>
-						<strong class="text-sm font-bold text-muted-foreground">{rule.module}</strong>
+						<Badge variant={toneVariant(statusTone(justActivated === rule.id ? 'Active' : rule.status))}>{label(justActivated === rule.id ? 'Active' : rule.status)}</Badge>
+						<strong class="text-sm font-bold text-muted-foreground">{label(rule.module)}</strong>
 					</div>
 					<h3 class="text-2xl font-bold tracking-tight">{rule.name}</h3>
 					<p class="text-sm leading-relaxed text-muted-foreground">{rule.description}</p>
@@ -361,14 +363,14 @@ import { page } from '$app/state';
 					</div>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Runs')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.runs}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Run terakhir')}<strong class="mt-1 block text-sm font-bold text-foreground">{rule.lastRun}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Run terakhir')}<strong class="mt-1 block text-sm font-bold text-foreground">{formatRelative(rule.lastRun)}</strong></div>
 					</div>
 					<div class="grid grid-cols-2 gap-2">
 						<Button variant="outline" disabled={busyId === rule.id} onclick={() => handleRun(rule.id)}>
-							{busyId === rule.id ? '...' : 'Run'}
+							{busyId === rule.id ? '...' : t('Jalankan')}
 						</Button>
 						<Button variant={rule.status === 'Active' || justActivated === rule.id ? 'secondary' : 'outline'} disabled={busyId === rule.id} onclick={() => (rule.status === 'Active' || justActivated === rule.id ? handlePause(rule.id) : handleActivate(rule.id))}>
-							{rule.status === 'Active' || justActivated === rule.id ? 'Active' : 'Activate'}
+							{rule.status === 'Active' || justActivated === rule.id ? t('Aktif') : t('Aktifkan')}
 						</Button>
 					</div>
 					<div class="grid grid-cols-2 gap-2">

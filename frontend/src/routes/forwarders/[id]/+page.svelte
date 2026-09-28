@@ -227,7 +227,7 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 								<div class="flex items-center justify-between gap-2">
 									<strong class="text-sm font-bold">
 										{review.rating} ★
-										<span class="ml-1 font-normal text-muted-foreground">{review.reviewerName ?? t('Anonim')} · {review.createdAt ?? '—'}</span>
+										<span class="ml-1 font-normal text-muted-foreground">{review.reviewerName ?? t('Anonim')} · {review.createdAt ? formatDate(review.createdAt) : '—'}</span>
 									</strong>
 									<div class="flex gap-2">
 										<Button size="sm" variant="outline" onclick={() => {

@@ -16,6 +16,7 @@ import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { formatRelative } from '$lib/utils/date';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
@@ -348,7 +349,7 @@ import { page } from '$app/state';
 					<CardContent class="grid gap-3 p-0">
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Sinkronisasi terakhir')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.lastSync}</strong>
+								{t('Sinkronisasi terakhir')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatRelative(item.lastSync)}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 								{t('Lingkup')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.scopes.length}</strong>

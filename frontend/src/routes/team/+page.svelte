@@ -19,6 +19,7 @@ import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { formatRelative } from '$lib/utils/date';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 
@@ -315,7 +316,7 @@ import { page } from '$app/state';
 						<p class="text-sm text-muted-foreground">{member.email}</p>
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Last active')} <strong class="mt-1 block text-sm font-bold text-foreground">{member.lastActive}</strong>
+								{t('Last active')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatRelative(member.lastActive)}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 								{t('Workload')} <strong class="mt-1 block text-sm font-bold text-foreground">{member.workload}%</strong>

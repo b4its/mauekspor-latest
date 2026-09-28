@@ -2899,6 +2899,7 @@ const dictionary: Record<string, Entry> = {
 	'Hapus pesan terpilih': { id: 'Hapus pesan terpilih', en: 'Delete selected messages' },
 	'Thread pesan terpilih akan dihapus permanen dari workspace.': { id: 'Thread pesan terpilih akan dihapus permanen dari workspace.', en: 'Selected message threads will be permanently removed from the workspace.' },
 	'baru saja': { id: 'baru saja', en: 'just now' },
+	'Aktifkan': { id: 'Aktifkan', en: 'Activate' },
 	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 

@@ -16,7 +16,7 @@
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { sortBy, type SortDir } from '$lib/utils/sort';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
-	import { formatDate } from '$lib/utils/date';
+	import { formatDate, formatRelative } from '$lib/utils/date';
 	import { page } from '$app/state';
 
 	import KeyIcon from '@lucide/svelte/icons/key';
@@ -297,7 +297,7 @@
 
 						<CardHeader class="p-0 mt-3">
 							<CardTitle class="text-xl font-bold tracking-tight text-foreground">{key.name}</CardTitle>
-							<CardDescription>{key.owner} · {t('Last used')} {key.lastUsed}</CardDescription>
+							<CardDescription>{key.owner} · {t('Last used')} {formatRelative(key.lastUsed)}</CardDescription>
 						</CardHeader>
 
 						<CardContent class="grid gap-3 p-0 mt-3">
