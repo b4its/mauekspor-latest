@@ -13,7 +13,7 @@ backend/__pycache__/
 backend/**/__pycache__/
 backend/.pytest_cache/
 backend/*.egg-info/
-backend/mauekspor.db
+backend/*.db
 backend/data/
 backend/uploads/
 uploads/

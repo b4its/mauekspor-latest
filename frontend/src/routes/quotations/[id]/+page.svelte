@@ -5,8 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
-	import { acceptQuotation, updateQuotation, deleteQuotation } from '$lib/api/quotations';
-	import { createOrder } from '$lib/api/orders';
+	import { acceptQuotation, updateQuotation, deleteQuotation, convertQuotationToOrder } from '$lib/api/quotations';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 	import { formatDate } from '$lib/utils/date';
@@ -57,22 +56,20 @@
 	}
 
 	let convertingOrder = $state(false);
+	// ID order hasil konversi: dari server (bila sudah pernah dikonversi) atau hasil aksi lokal.
+	let localOrderId = $state('');
+	let convertedOrderId = $derived(localOrderId || (data.quotation as { orderId?: string }).orderId || '');
 
 	async function handleConvertToOrder() {
 		error = '';
 		convertingOrder = true;
 		try {
-			const res = await createOrder({
-				quotationId: data.quotation.id,
-				projectId: data.quotation.projectId,
-				buyer: data.quotation.buyer,
-				value: displayValue,
-				incoterm: localIncoterm,
-				currency: data.quotation.currency || 'USD',
-				paymentTerms: '30% Deposit, 70% against B/L',
-				deliveryWindow: '30-45 days'
-			});
+			// Endpoint idempoten: membuat order + menautkan quotation<->order,
+			// menandai quotation Accepted. Aman ditekan dua kali.
+			const res = await convertQuotationToOrder(data.quotation.id);
 			if (res.data?.id) {
+				localOrderId = res.data.id;
+				serverStatus = 'Accepted';
 				message = t('Sales Order berhasil dibuat dari kuotasi ini.');
 				goto(`/orders/${res.data.id}`);
 			}
@@ -238,6 +235,11 @@
 					<Button variant="outline" disabled={revising || revised} onclick={handleRevise}>{revising ? t('Merevisi...') : revised ? t('Direvisi +2.5%') : t('Revise +2.5%')}</Button>
 					<Button disabled={accepted} onclick={handleAccept}>{accepted ? t('Diterima') : t('Terima kutipan')}</Button>
 					{#if accepted || displayStatus === 'Accepted'}
+						{#if convertedOrderId}
+							<Button variant="outline" href={`/orders/${convertedOrderId}`}>
+								{t('Lihat Sales Order')} {convertedOrderId}
+							</Button>
+						{/if}
 						<Button variant="default" disabled={convertingOrder} onclick={handleConvertToOrder}>
 							{convertingOrder ? t('Mengonversi...') : t('Konversi ke Sales Order')}
 						</Button>

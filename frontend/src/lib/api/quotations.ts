@@ -32,6 +32,15 @@ export function acceptQuotation(id: string) {
 	return apiFetch<Quotation>(`/quotations/${id}/accept/`, { method: 'POST' });
 }
 
+/**
+ * Konversi quotation (idealnya sudah Accepted) menjadi sales order.
+ * Backend menandai quotation sebagai Accepted + menyimpan `orderId`, dan
+ * idempoten: pemanggilan kedua mengembalikan order yang sama.
+ */
+export function convertQuotationToOrder(id: string) {
+	return apiFetch<import('$lib/data/trade').SalesOrder>(`/quotations/${id}/to-order/`, { method: 'POST' });
+}
+
 export function updateQuotation(id: string, payload: Partial<Quotation>) {
 	return apiFetch<Quotation>(`/quotations/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
 }

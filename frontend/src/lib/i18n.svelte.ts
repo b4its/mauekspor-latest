@@ -2805,7 +2805,12 @@ const dictionary: Record<string, Entry> = {
 	'Kirim (Enter)': { id: 'Kirim (Enter)', en: 'Send (Enter)' },
 	'Sesi Baru': { id: 'Sesi Baru', en: 'New Session' },
 	'Buka Layar Penuh': { id: 'Buka Layar Penuh', en: 'Open Full Screen' },
-	'Tutup (Esc)': { id: 'Tutup (Esc)', en: 'Close (Esc)' }
+	'Tutup (Esc)': { id: 'Tutup (Esc)', en: 'Close (Esc)' },
+	// Konversi quotation -> sales order
+	'Lihat Sales Order': { id: 'Lihat Sales Order', en: 'View Sales Order' },
+	'Konversi ke Sales Order': { id: 'Konversi ke Sales Order', en: 'Convert to Sales Order' },
+	'Mengonversi...': { id: 'Mengonversi...', en: 'Converting...' },
+	'Sales Order berhasil dibuat dari kuotasi ini.': { id: 'Sales Order berhasil dibuat dari kuotasi ini.', en: 'Sales Order created from this quotation successfully.' }
 };
 
 let initial: Locale = 'id';

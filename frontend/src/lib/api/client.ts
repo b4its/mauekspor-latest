@@ -15,6 +15,39 @@ export function csvExportUrl(path: string): string {
 	return `${API_BASE_URL}${path}`;
 }
 
+/**
+ * Unduh file dari endpoint backend yang butuh autentikasi (export CSV/XLSX,
+ * PDF, dsb). Berbeda dengan `<a href>`, helper ini mengirim header
+ * `Authorization: Bearer` dari token sesi sehingga unduhan tidak 401.
+ *
+ * Token disimpan di sessionStorage, jadi tidak ikut pada navigasi tautan biasa;
+ * karena itu unduhan harus lewat fetch + blob.
+ */
+export async function downloadFile(path: string, filename: string): Promise<void> {
+	const token =
+		typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('mauekspor_access_token') : null;
+	const headers: Record<string, string> = {};
+	if (token) headers['Authorization'] = `Bearer ${token}`;
+
+	const response = await fetch(`${API_BASE_URL}${path}`, { credentials: 'include', headers });
+	if (!response.ok) {
+		throw new ApiError(response.status, null);
+	}
+	const blob = await response.blob();
+	const url = URL.createObjectURL(blob);
+	try {
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = filename;
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
+	} finally {
+		// Bebaskan object URL setelah klik diproses.
+		setTimeout(() => URL.revokeObjectURL(url), 1000);
+	}
+}
+
 export class ApiError extends Error {
 	status: number;
 	body: ApiErrorBody | null;

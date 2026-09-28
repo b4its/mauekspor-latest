@@ -7,6 +7,7 @@
 	import { auditEvents } from '$lib/data/trade';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { listAuditEvents } from '$lib/api/audit';
+	import { downloadFile } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
@@ -35,8 +36,6 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	);
 
 
-	const csvUrl = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/audit/export.csv`;
-	const xlsxUrl = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/audit/export.xlsx`;
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredEvents ?? [], paginationPage, paginationPageSize));
@@ -74,8 +73,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">{t('Keep a searchable event trail for compliance, document approvals, supplier risk, payment reminders, and AI-generated insights.')}</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
-			<Button variant="outline" href={csvUrl}>{t('Download CSV')}</Button>
-			<Button variant="outline" href={xlsxUrl}>{t('Download Excel')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/audit/export.csv', 'audit.csv')}>{t('Download CSV')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/audit/export.xlsx', 'audit.xlsx')}>{t('Download Excel')}</Button>
 			<Button variant="ghost" onclick={() => events.load()}>{t('Segarkan')}</Button>
 			<Badge variant="outline">{t('Events')} {events.items.length}</Badge>
 		</CardContent>

@@ -8,7 +8,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { exportAnalyses as seedAnalyses } from '$lib/data/trade';
 	import { listExportAnalyses } from '$lib/api/export-analysis';
-	import { csvExportUrl } from '$lib/api/client';
+	import { downloadFile } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
@@ -123,7 +123,7 @@
 				<Button href="/export-analysis/create">{t('Analisis baru')}</Button>
 				<Button href="/export-analysis/compare" variant="outline">{t('Bandingkan pasar')}</Button>
 				<Button href="/hs-codes" variant="outline">{t('Browsing HS code')}</Button>
-				<Button href={csvExportUrl('/export-analysis/export.csv')} variant="outline">{t('Ekspor CSV')}</Button>
+				<Button onclick={() => downloadFile('/export-analysis/export.csv', 'export-analyses.csv')} variant="outline">{t('Ekspor CSV')}</Button>
 			</CardContent>
 		</Card>
 

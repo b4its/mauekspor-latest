@@ -70,12 +70,17 @@ def _filtered_query(
     status_field: str = "status",
     limit: int = 0,
     offset: int = 0,
+    sort_by: str = "",
+    sort_dir: str = "asc",
 ) -> dict:
-    """List dengan filter opsional: search (LIKE pada field), status, dan pagination.
+    """List dengan filter opsional: search (LIKE pada field), status, sort, dan pagination.
 
     Bila `limit` <= 0, kembalikan semua (perilaku default lama agar kontrak frontend tetap).
     `limit`/`offset` di-clamp: negatif → 0, dan limit dibatasi `_MAX_LIMIT` agar
     query string tidak bisa meminta irisan tak wajar.
+
+    `sort_by` mengurutkan berdasarkan satu field (angka dibanding angka, sisanya
+    dibanding sebagai string case-insensitive). `sort_dir` = "asc"|"desc".
     """
     limit = min(max(int(limit or 0), 0), _MAX_LIMIT)
     offset = max(int(offset or 0), 0)
@@ -88,6 +93,18 @@ def _filtered_query(
         ]
     if status:
         items = [r for r in items if str(r.get(status_field, "")).lower() == status.lower()]
+    if sort_by:
+        def _sort_key(record):
+            value = record.get(sort_by)
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                return (0, value, "")
+            # Angka yang tersimpan sebagai string tetap diurutkan secara numerik.
+            text = "" if value is None else str(value)
+            try:
+                return (0, float(text.replace(",", "")), "")
+            except (ValueError, TypeError):
+                return (1, 0.0, text.lower())
+        items = sorted(items, key=_sort_key, reverse=(sort_dir or "asc").lower() == "desc")
     total = len(items)
     if limit > 0:
         items = items[offset:offset + limit]
@@ -477,85 +494,161 @@ def _xlsx_response(rows: list[list], sheet_name: str, filename: str) -> Response
     )
 
 
-@router.get("/products/export.xlsx")
-def export_products_xlsx():
-    rows = [["id", "name", "category", "status", "hs", "origin", "packaging", "netWeight", "grossWeight", "moq", "leadTime", "readiness"]]
-    for p in db.all("products"):
-        rows.append([p.get("id"), p.get("name"), p.get("category"), p.get("status"), p.get("hs"), p.get("origin"),
-                     p.get("packaging"), p.get("netWeight"), p.get("grossWeight"), p.get("moq"), p.get("leadTime"), p.get("readiness")])
-    return _xlsx_response(rows, "Products", "products.xlsx")
+# ----------------------------------------------------------------------------
+# CSV / XLSX EXPORT REGISTRY
+# ----------------------------------------------------------------------------
+# Setiap entri: (table, sheet_name, filename, [(header, field), ...]).
+# Registry-driven agar penambahan modul baru cukup menambah satu entri, dan
+# CSV serta XLSX selalu konsisten.
+_EXPORTS: dict[str, list] = {
+    "products": [
+        ("id", "id"), ("name", "name"), ("category", "category"), ("status", "status"),
+        ("hs", "hs"), ("origin", "origin"), ("packaging", "packaging"), ("netWeight", "netWeight"),
+        ("grossWeight", "grossWeight"), ("moq", "moq"), ("leadTime", "leadTime"), ("readiness", "readiness"),
+    ],
+    "buyers": [
+        ("id", "id"), ("name", "name"), ("country", "country"), ("segment", "segment"),
+        ("status", "status"), ("fitScore", "fitScore"), ("estimatedAnnualValue", "estimatedAnnualValue"),
+        ("nextStep", "nextStep"),
+    ],
+    "export_analyses": [
+        ("id", "id"), ("productName", "productName"), ("destination", "destination"), ("status", "status"),
+        ("hsCode", "hsCode"), ("score", "score"), ("grade", "statusGrade"), ("confidence", "confidence"),
+        ("summary", "summary"),
+    ],
+    "costing": [
+        ("id", "id"), ("title", "title"), ("destination", "destination"), ("incoterm", "incoterm"),
+        ("margin", "margin"), ("exchangeRate", "exchangeRate"), ("exwPrice", "exwPrice"),
+        ("fobPrice", "fobPrice"), ("cifPrice", "cifPrice"), ("status", "status"),
+    ],
+    "audit_events": [
+        ("time", "time"), ("actor", "actor"), ("action", "action"), ("module", "module"),
+        ("entity", "entity"), ("severity", "severity"), ("detail", "detail"),
+    ],
+    "orders": [
+        ("id", "id"), ("buyer", "buyer"), ("product", "product"), ("quantity", "quantity"),
+        ("value", "value"), ("currency", "currency"), ("incoterm", "incoterm"),
+        ("destination", "destination"), ("status", "status"), ("eta", "eta"),
+    ],
+    "quotations": [
+        ("id", "id"), ("buyer", "buyer"), ("product", "product"), ("quantity", "quantity"),
+        ("value", "value"), ("currency", "currency"), ("incoterm", "incoterm"),
+        ("validUntil", "validUntil"), ("status", "status"),
+    ],
+    "shipments": [
+        ("id", "id"), ("projectId", "projectId"), ("forwarder", "forwarder"), ("mode", "mode"),
+        ("container", "container"), ("port", "port"), ("eta", "eta"), ("status", "status"),
+        ("progress", "progress"),
+    ],
+    "payments": [
+        ("id", "id"), ("orderId", "orderId"), ("buyer", "buyer"), ("amount", "amount"),
+        ("paid", "paid"), ("currency", "currency"), ("method", "method"), ("dueDate", "dueDate"),
+        ("status", "status"), ("risk", "risk"),
+    ],
+    "suppliers": [
+        ("id", "id"), ("name", "name"), ("category", "category"), ("province", "province"),
+        ("status", "status"), ("capacity", "capacity"), ("leadTime", "leadTime"),
+        ("nextAudit", "nextAudit"),
+    ],
+    "tasks": [
+        ("id", "id"), ("title", "title"), ("module", "module"), ("projectId", "projectId"),
+        ("owner", "owner"), ("priority", "priority"), ("status", "status"), ("due", "due"),
+    ],
+    "documents": [
+        ("id", "id"), ("type", "type"), ("projectId", "projectId"), ("status", "status"),
+        ("version", "version"), ("owner", "owner"), ("validationScore", "validationScore"),
+        ("updatedAt", "updatedAt"),
+    ],
+    "compliance_requirements": [
+        ("id", "id"), ("title", "title"), ("projectId", "projectId"), ("category", "category"),
+        ("severity", "severity"), ("status", "status"), ("owner", "owner"), ("due", "due"),
+        ("confidence", "confidence"),
+    ],
+    "buyer_requests": [
+        ("id", "id"), ("subject", "subject"), ("buyerId", "buyerId"), ("productId", "productId"),
+        ("quantity", "quantity"), ("destination", "destination"), ("deadline", "deadline"),
+        ("status", "status"),
+    ],
+    "catalogs": [
+        ("id", "id"), ("title", "title"), ("productId", "productId"), ("targetMarket", "targetMarket"),
+        ("basePrice", "basePrice"), ("currency", "currency"), ("status", "status"),
+        ("is_published", "is_published"),
+    ],
+    "forwarders": [
+        ("id", "id"), ("name", "name"), ("mode", "mode"), ("coverage", "coverage"),
+        ("status", "status"), ("rating", "rating"), ("quoteSpeed", "quoteSpeed"),
+    ],
+}
+
+# Alias path -> key agar URL lama (mis. /export-analysis/export.csv) tetap hidup.
+_EXPORT_ALIASES = {"export-analysis": "export_analyses", "audit": "audit_events"}
 
 
-@router.get("/buyers/export.xlsx")
-def export_buyers_xlsx():
-    rows = [["id", "name", "country", "segment", "status", "fitScore", "estimatedAnnualValue", "nextStep"]]
-    for b in db.all("buyers"):
-        rows.append([b.get("id"), b.get("name"), b.get("country"), b.get("segment"), b.get("status"),
-                     b.get("fitScore"), b.get("estimatedAnnualValue"), b.get("nextStep")])
-    return _xlsx_response(rows, "Buyers", "buyers.xlsx")
+def _export_rows(key: str) -> list[list]:
+    columns = _EXPORTS[key]
+    rows: list[list] = [[header for header, _ in columns]]
+    for record in db.all(key):
+        rows.append([record.get(field) for _, field in columns])
+    return rows
 
 
-@router.get("/export-analysis/export.xlsx")
-def export_analyses_xlsx():
-    rows = [["id", "productName", "destination", "status", "hsCode", "score", "grade", "confidence", "summary"]]
-    for a in db.all("export_analyses"):
-        rows.append([a.get("id"), a.get("productName"), a.get("destination"), a.get("status"), a.get("hsCode"),
-                     a.get("score"), a.get("statusGrade"), a.get("confidence"), a.get("summary")])
-    return _xlsx_response(rows, "ExportAnalysis", "export-analyses.xlsx")
+def _export_filename(key: str, ext: str) -> str:
+    return key.replace("_", "-") + "." + ext
 
 
-@router.get("/costing/export.xlsx")
-def export_costing_xlsx():
-    rows = [["id", "title", "destination", "incoterm", "margin", "exchangeRate", "exwPrice", "fobPrice", "cifPrice", "status"]]
-    for c in db.all("costing"):
-        rows.append([c.get("id"), c.get("title"), c.get("destination"), c.get("incoterm"), c.get("margin"),
-                     c.get("exchangeRate"), c.get("exwPrice"), c.get("fobPrice"), c.get("cifPrice"), c.get("status")])
-    return _xlsx_response(rows, "Costing", "costing.xlsx")
+@router.get("/exports.xlsx")
+def export_any_xlsx(table: str):
+    """XLSX generik untuk modul apa pun di registry."""
+    key = _EXPORT_ALIASES.get(table, table)
+    if key not in _EXPORTS:
+        raise HTTPException(404, f"Export tidak tersedia untuk '{table}'")
+    return _xlsx_response(_export_rows(key), key, _export_filename(key, "xlsx"))
 
 
-@router.get("/audit/export.xlsx")
-def export_audit_xlsx():
-    rows = [["time", "actor", "action", "module", "entity", "severity", "detail"]]
-    for a in db.all("audit_events"):
-        rows.append([a.get("time"), a.get("actor"), a.get("action"), a.get("module"),
-                     a.get("entity"), a.get("severity"), a.get("detail")])
-    return _xlsx_response(rows, "Audit", "audit.xlsx")
+@router.get("/exports.csv")
+def export_any_csv(table: str):
+    """CSV generik untuk modul apa pun di registry."""
+    key = _EXPORT_ALIASES.get(table, table)
+    if key not in _EXPORTS:
+        raise HTTPException(404, f"Export tidak tersedia untuk '{table}'")
+    return _csv_response(_export_rows(key), _export_filename(key, "csv"))
 
 
-@router.get("/products/export.csv")
-def export_products_csv():
-    rows = [["id", "name", "category", "status", "hs", "origin", "packaging", "netWeight", "grossWeight", "moq", "leadTime", "readiness"]]
-    for p in db.all("products"):
-        rows.append([p.get("id"), p.get("name"), p.get("category"), p.get("status"), p.get("hs"), p.get("origin"),
-                     p.get("packaging"), p.get("netWeight"), p.get("grossWeight"), p.get("moq"), p.get("leadTime"), p.get("readiness")])
-    return _csv_response(rows, "products.csv")
+@router.get("/exports/tables/")
+def export_tables():
+    """Daftar modul yang menyediakan export (dipakai oleh UI untuk tombol)."""
+    return {"data": sorted(_EXPORTS.keys()), "meta": {"count": len(_EXPORTS)}}
 
 
-@router.get("/buyers/export.csv")
-def export_buyers_csv():
-    rows = [["id", "name", "country", "segment", "status", "fitScore", "estimatedAnnualValue", "nextStep"]]
-    for b in db.all("buyers"):
-        rows.append([b.get("id"), b.get("name"), b.get("country"), b.get("segment"), b.get("status"),
-                     b.get("fitScore"), b.get("estimatedAnnualValue"), b.get("nextStep")])
-    return _csv_response(rows, "buyers.csv")
+def _register_export_routes():
+    """Daftarkan endpoint export per-modul dari registry (kompatibel URL lama)."""
+    for key in _EXPORTS:
+        safe = key.replace("_", "-")
+        routes = [
+            (f"/{safe}/export.xlsx", key, "xlsx"),
+            (f"/{safe}/export.csv", key, "csv"),
+        ]
+        # Alias tambahan agar /export-analysis dan /audit tetap sama seperti sebelumnya.
+        if key == "export_analyses":
+            routes += [("/export-analysis/export.xlsx", key, "xlsx"), ("/export-analysis/export.csv", key, "csv")]
+        if key == "audit_events":
+            routes += [("/audit/export.xlsx", key, "xlsx"), ("/audit/export.csv", key, "csv")]
+        for path, table_key, ext in routes:
+            def _make(p=path, k=table_key, e=ext):
+                def _handler():
+                    if e == "xlsx":
+                        return _xlsx_response(_export_rows(k), k, _export_filename(k, e))
+                    return _csv_response(_export_rows(k), _export_filename(k, e))
+                return _handler
+            router.add_api_route(path, _make(), methods=["GET"], name=f"export_{key}_{ext}")
 
 
-@router.get("/export-analysis/export.csv")
-def export_analyses_csv():
-    rows = [["id", "productName", "destination", "status", "hsCode", "score", "grade", "confidence", "summary"]]
-    for a in db.all("export_analyses"):
-        rows.append([a.get("id"), a.get("productName"), a.get("destination"), a.get("status"), a.get("hsCode"),
-                     a.get("score"), a.get("statusGrade"), a.get("confidence"), a.get("summary")])
-    return _csv_response(rows, "export-analyses.csv")
+# Registrasi route export di sini (sebelum endpoint parameterized) agar
+# `/products/{id}/` tidak menutup `/products/export.xlsx`.
+_register_export_routes()
 
 
-@router.get("/costing/export.csv")
-def export_costing_csv():
-    rows = [["id", "title", "destination", "incoterm", "margin", "exchangeRate", "exwPrice", "fobPrice", "cifPrice", "status"]]
-    for c in db.all("costing"):
-        rows.append([c.get("id"), c.get("title"), c.get("destination"), c.get("incoterm"), c.get("margin"),
-                     c.get("exchangeRate"), c.get("exwPrice"), c.get("fobPrice"), c.get("cifPrice"), c.get("status")])
-    return _csv_response(rows, "costing.csv")
+
 
 
 # ----------------------------------------------------------------------------
@@ -2363,8 +2456,8 @@ def costing_pdf(costing_id: str):
 
 
 @router.get("/costing/")
-def list_costing():
-    return _list_query("costing")
+def list_costing(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("costing", search=search, search_fields=("id", "title", "destination", "incoterm",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/costing/{costing_id}/")
@@ -2583,8 +2676,8 @@ def recalculate_costing(costing_id: str):
 # MARKETS
 # ----------------------------------------------------------------------------
 @router.get("/markets/")
-def list_markets():
-    return _list_query("markets")
+def list_markets(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("markets", search=search, search_fields=("id", "name", "country", "product",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/markets/{market_id}/")
@@ -2653,8 +2746,8 @@ def delete_market(market_id: str):
 # RFQ
 # ----------------------------------------------------------------------------
 @router.get("/rfqs/")
-def list_rfqs():
-    return _list_query("rfqs")
+def list_rfqs(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("rfqs", search=search, search_fields=("id", "title", "product", "destination", "buyer",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/rfqs/{rfq_id}/")
@@ -2716,8 +2809,8 @@ def delete_rfq(rfq_id: str):
 # QUOTATIONS
 # ----------------------------------------------------------------------------
 @router.get("/quotations/")
-def list_quotations():
-    return _list_query("quotations")
+def list_quotations(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("quotations", search=search, search_fields=("id", "buyer", "supplier", "product", "incoterm", "destination",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/quotations/{quotation_id}/")
@@ -2772,12 +2865,63 @@ def delete_quotation(quotation_id: str):
     return {"data": {"status": "deleted", "id": quotation_id}, "meta": {}}
 
 
+@router.post("/quotations/{quotation_id}/to-order/")
+def quotation_to_order(quotation_id: str):
+    """Konversi quotation (idealnya sudah Accepted) menjadi sales order.
+
+    Idempoten: bila quotation sudah punya `orderId`, kembalikan order yang ada
+    alih-alih membuat duplikat. Menyalin buyer, product, nilai, incoterm, mata
+    uang, dan project agar rantai dagang tetap terhubung.
+    """
+    quotation = db.get("quotations", quotation_id)
+    if not quotation:
+        raise HTTPException(404, "Quotation not found")
+
+    existing_id = quotation.get("orderId")
+    if existing_id:
+        existing = db.get("orders", existing_id)
+        if existing:
+            return {"data": _serialize(existing), "meta": {"deduplicated": True}}
+
+    order = {
+        "id": db.gen_id("orders", "ORD"),
+        "quotationId": quotation_id,
+        "projectId": quotation.get("projectId", ""),
+        "buyer": quotation.get("buyer", "") or quotation.get("buyerName", ""),
+        "supplier": quotation.get("supplier", ""),
+        "product": quotation.get("product", "") or quotation.get("productId", ""),
+        "quantity": quotation.get("quantity", ""),
+        "value": quotation.get("value", 0),
+        "currency": quotation.get("currency", settings.display_currency),
+        "incoterm": quotation.get("incoterm", "FOB"),
+        "destination": quotation.get("destination", ""),
+        "paymentTerms": quotation.get("paymentTerms", ""),
+        "status": "Draft",
+        "updatedAt": "now",
+    }
+    db.insert("orders", order)
+
+    quotation["status"] = "Accepted"
+    quotation["orderId"] = order["id"]
+    quotation["updatedAt"] = "now"
+    db.save(quotation)
+
+    _notify(
+        "Order dibuat dari quotation",
+        f"Quotation {quotation_id} dikonversi menjadi order {order['id']}.",
+        "Order",
+        "Info",
+        href=f"/orders/{order['id']}",
+    )
+    return {"data": _serialize(order), "meta": {"quotationId": quotation_id}}
+
+
 # ----------------------------------------------------------------------------
 # ORDERS
 # ----------------------------------------------------------------------------
 @router.get("/orders/")
-def list_orders():
-    return _list_query("orders")
+def list_orders(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("orders", search=search, search_fields=("id", "buyer", "supplier", "product", "incoterm", "destination",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/orders/{order_id}/")
@@ -2938,8 +3082,8 @@ def delete_compliance(req_id: str):
 # DOCUMENTS
 # ----------------------------------------------------------------------------
 @router.get("/documents/")
-def list_documents():
-    return _list_query("documents")
+def list_documents(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("documents", search=search, search_fields=("id", "type", "projectId", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/documents/{document_id}/")
@@ -3066,8 +3210,8 @@ def download_trade_document_pdf(document_id: str):
 # SHIPMENTS
 # ----------------------------------------------------------------------------
 @router.get("/shipments/")
-def list_shipments():
-    return _list_query("shipments")
+def list_shipments(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("shipments", search=search, search_fields=("id", "projectId", "forwarder", "mode", "container", "port",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/shipments/{shipment_id}/")
@@ -3173,8 +3317,8 @@ def delete_shipment(shipment_id: str):
 # PAYMENTS
 # ----------------------------------------------------------------------------
 @router.get("/payments/")
-def list_payments():
-    return _list_query("payments")
+def list_payments(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("payments", search=search, search_fields=("id", "orderId", "buyer", "method", "dueDate",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/payments/{payment_id}/")
@@ -3288,8 +3432,8 @@ def delete_payment(payment_id: str):
 # TASKS
 # ----------------------------------------------------------------------------
 @router.get("/tasks/")
-def list_tasks():
-    return _list_query("tasks")
+def list_tasks(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("tasks", search=search, search_fields=("id", "title", "module", "projectId", "owner",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/tasks/{task_id}/")
@@ -3368,8 +3512,8 @@ def delete_task(task_id: str):
 # SUPPLIERS
 # ----------------------------------------------------------------------------
 @router.get("/suppliers/")
-def list_suppliers():
-    return _list_query("suppliers")
+def list_suppliers(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
+    return _filtered_query("suppliers", search=search, search_fields=("id", "name", "category", "province",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/suppliers/{supplier_id}/")

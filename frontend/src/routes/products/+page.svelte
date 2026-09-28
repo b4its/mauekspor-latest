@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { products as seedProducts } from '$lib/data/trade';
 	import { listProducts, deleteProduct, batchEnrichProducts, batchDeleteProducts } from '$lib/api/products';
-	import { csvExportUrl } from '$lib/api/client';
+	import { downloadFile } from '$lib/api/client';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
@@ -165,8 +165,8 @@
 			</div>
 		<Button href="/products/new">{t('Add product')}</Button>
 		<div class="flex gap-2">
-			<Button variant="outline" href={csvExportUrl('/products/export.csv')}>{t('Export CSV')}</Button>
-			<Button variant="outline" href={csvExportUrl('/products/export.xlsx')}>{t('Excel (.xlsx)')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/products/export.csv', 'products.csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/products/export.xlsx', 'products.xlsx')}>{t('Excel (.xlsx)')}</Button>
 		</div>
 	</div>
 	{#if pendingCount > 0}

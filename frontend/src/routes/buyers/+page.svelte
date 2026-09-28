@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { buyers as seedBuyers } from '$lib/data/trade';
 import { listBuyers, createBuyer } from '$lib/api/buyers';
-import { csvExportUrl } from '$lib/api/client';
+	import { downloadFile } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
@@ -132,8 +132,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button variant="outline" onclick={() => (showForm ? (showForm = false) : openCreate())}>{showForm ? t('Batal') : t('Add buyer lead')}</Button>
-			<Button href={csvExportUrl('/buyers/export.csv')} variant="outline">CSV</Button>
-			<Button href={csvExportUrl('/buyers/export.xlsx')} variant="outline">Excel (.xlsx)</Button>
+			<Button variant="outline" onclick={() => downloadFile('/buyers/export.csv', 'buyers.csv')}>{t('Export CSV')}</Button>
+			<Button variant="outline" onclick={() => downloadFile('/buyers/export.xlsx', 'buyers.xlsx')}>{t('Excel (.xlsx)')}</Button>
 			<Badge variant="secondary">{t('Active')} {activeCount}</Badge>
 		</CardContent>
 		{#if showForm}

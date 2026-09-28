@@ -8,7 +8,7 @@ import { Button } from '$lib/components/ui/button/index.js';
 	import { costingScenarios as seedScenarios, projects as seedProjects } from '$lib/data/trade';
 	import { listCostingScenarios, deleteCostingScenario, compareCostingScenarios, type CostingCompare } from '$lib/api/costing';
 import { listTradeProjects } from '$lib/api/trade-projects';
-import { csvExportUrl } from '$lib/api/client';
+	import { downloadFile } from '$lib/api/client';
 import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
@@ -143,7 +143,7 @@ import { page } from '$app/state';
 		</CardHeader>
 <CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">
 			<Button href="/costing/create">{t('Create scenario')}</Button>
-			<Button href={csvExportUrl('/costing/export.csv')} variant="outline">{t('Ekspor CSV')}</Button>
+			<Button onclick={() => downloadFile('/costing/export.csv', 'costing.csv')} variant="outline">{t('Ekspor CSV')}</Button>
 			<Button variant="secondary" disabled={selected.length < 2 || comparing} onclick={runCompare}>
 				{comparing ? t('Membandingkan...') : `${t('Bandingkan')} (${selected.length})`}
 			</Button>
