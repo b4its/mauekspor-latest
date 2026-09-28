@@ -19,6 +19,7 @@ import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
+	import { formatDateTime } from '$lib/utils/date';
 
 	const filters = ['All', 'Ready', 'Needs Review', 'Approved', 'Missing'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -284,7 +285,7 @@ import { page } from '$app/state';
 								{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.owner}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{document.updatedAt}</strong>
+								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDateTime(document.updatedAt)}</strong>
 							</div>
 						</div>
 					</div>

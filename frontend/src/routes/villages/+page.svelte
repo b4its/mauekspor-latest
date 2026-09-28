@@ -125,6 +125,7 @@
 
 	// Distinct provinces
 	let provinces = $derived(['All', ...Array.from(new Set(villages.items.map((v) => v.province).filter(Boolean)))]);
+	let provinceOptions = $derived(provinces.filter((p) => p !== 'All'));
 
 	// Filtered list
 	let filteredVillages = $derived(
@@ -373,7 +374,7 @@
 				class="h-8 text-xs font-semibold"
 			>
 				<NativeSelectOption value="All">{t('Semua Provinsi')}</NativeSelectOption>
-				{#each provinces.filter((p) => p !== 'All') as prov}
+				{#each provinceOptions as prov}
 					<NativeSelectOption value={prov}>{prov}</NativeSelectOption>
 				{/each}
 			</NativeSelect>

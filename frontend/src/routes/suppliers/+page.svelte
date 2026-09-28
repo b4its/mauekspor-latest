@@ -16,6 +16,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { formatDate } from '$lib/utils/date';
 
 	const filters = ['All', 'Verified', 'In Review', 'Needs Evidence'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -251,7 +252,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Products')}<strong class="mt-1 block text-sm font-bold text-foreground">{productNames(supplier.productIds)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Capacity')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.capacity}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Lead time')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.leadTime}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next audit')}<strong class="mt-1 block text-sm font-bold text-foreground">{supplier.nextAudit}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Next audit')}<strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(supplier.nextAudit)}</strong></div>
 						</div>
 					</a>
 					<div class="flex flex-wrap gap-2 px-5 pb-5">

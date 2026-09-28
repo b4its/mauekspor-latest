@@ -15,6 +15,7 @@
 	import { page as appPage } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { label } from '$lib/utils/labels';
+	import { formatDate } from '$lib/utils/date';
 
 	const roleFilters = ['All', 'Admin', 'Exporter', 'Buyer', 'Forwarder', 'CustomsBroker', 'Finance'];
 	const PAGE_SIZE = 5;
@@ -163,7 +164,7 @@
 					</a>
 					<span><Badge variant="secondary">{label(user.role)}</Badge></span>
 					<span><Badge variant={toneVariant(statusTone(user.status))}>{label(user.status)}</Badge></span>
-					<span class="hidden text-muted-foreground md:block">{user.createdAt}</span>
+					<span class="hidden text-muted-foreground md:block">{formatDate(user.createdAt)}</span>
 					<span class="grid justify-end">
 						<Button size="sm" variant="ghost" href={`/users/${user.id}`}>{t('Buka')}</Button>
 						<Button size="sm" variant="destructive" disabled={deleting === user.id || user.role === 'Admin'} onclick={() =>

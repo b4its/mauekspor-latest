@@ -18,6 +18,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { formatDate } from '$lib/utils/date';
 
 	const filters = ['All', 'Open', 'In Progress', 'Blocked', 'Done'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -283,7 +284,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 						<p class="mt-2 text-sm text-muted-foreground">{task.module} · {projectName(task.projectId)}</p>
 						<div class="mt-4 grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.owner}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.due}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(task.due)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Checklist')} <strong class="mt-1 block text-sm font-bold text-foreground">{(task.checklist ?? []).filter((item) => item.done).length}/{task.checklist?.length ?? 0}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Priority')} <strong class="mt-1 block text-sm font-bold text-foreground">{label(task.priority)}</strong></div>
 						</div>

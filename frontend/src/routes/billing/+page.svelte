@@ -11,6 +11,7 @@
 	import { currency, formatCurrencyAs, statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
+	import { formatDate } from '$lib/utils/date';
 	
 	let changed = $state(false);
 	let downloaded = $state(false);
@@ -168,7 +169,7 @@
 		<Card>
 			<CardContent class="p-5">
 				<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Due date')}</span>
-				<strong class="mt-2 block text-3xl font-bold tracking-tight">{billing.dueDate}</strong>
+				<strong class="mt-2 block text-3xl font-bold tracking-tight">{formatDate(billing.dueDate)}</strong>
 			</CardContent>
 		</Card>
 	</div>

@@ -19,6 +19,7 @@ import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
+	import { formatDate } from '$lib/utils/date';
 
 	const filters = ['All', 'New', 'Matched', 'Quoted', 'Closed'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -192,7 +193,7 @@ import { page } from '$app/state';
 				<a href={`/buyer-requests/${request.id}`} class="block p-5 no-underline">
 					<div class="flex items-center justify-between gap-3">
 						<Badge variant={toneVariant(statusTone(request.status))}>{label(request.status)}</Badge>
-						<small class="text-xs font-semibold text-muted-foreground">{request.deadline}</small>
+						<small class="text-xs font-semibold text-muted-foreground">{formatDate(request.deadline)}</small>
 					</div>
 					<h3 class="mt-4 text-2xl font-bold tracking-tight">{request.subject}</h3>
 					<p class="mt-2 text-sm text-muted-foreground">{resolveBuyer(request.buyerId)} {t('wants')} {request.quantity} {t('for')} {request.destination}.</p>
@@ -200,7 +201,7 @@ import { page } from '$app/state';
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Product')} <strong class="mt-1 block text-sm font-bold text-foreground">{resolveProduct(request.productId)}</strong></div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Quantity')} <strong class="mt-1 block text-sm font-bold text-foreground">{request.quantity}</strong></div>
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Destination')} <strong class="mt-1 block text-sm font-bold text-foreground">{request.destination}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{request.deadline}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(request.deadline)}</strong></div>
 					</div>
 					<div class="mt-4 flex flex-wrap gap-2">
 						{#each request.requirements as requirement}

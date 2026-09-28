@@ -17,6 +17,7 @@ import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
+	import { formatDateTime } from '$lib/utils/date';
 
 	const filters = ['All', 'Export Basics', 'Compliance', 'Logistics', 'Finance', 'Platform'];
 	const categories = ['Export Basics', 'Compliance', 'Logistics', 'Finance', 'Platform'];
@@ -273,7 +274,7 @@ import { page } from '$app/state';
 					<p class="text-sm leading-relaxed text-muted-foreground">{article.summary}</p>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Category')}<strong class="mt-1 block text-sm font-bold text-foreground">{article.category}</strong></div>
-						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Updated')}<strong class="mt-1 block text-sm font-bold text-foreground">{article.updatedAt}</strong></div>
+						<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Updated')}<strong class="mt-1 block text-sm font-bold text-foreground">{formatDateTime(article.updatedAt)}</strong></div>
 					</div>
 					<ol class="m-0 list-decimal space-y-1.5 pl-5 font-bold text-muted-foreground">
 						{#each article.steps as step}<li>{step}</li>{/each}

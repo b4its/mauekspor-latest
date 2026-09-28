@@ -16,6 +16,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { formatDateTime } from '$lib/utils/date';
 import { page } from '$app/state';
 	
 
@@ -258,7 +259,7 @@ import { page } from '$app/state';
 								{t('Used by')} <strong class="mt-1 block text-sm font-bold text-foreground">{template.usedBy}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{template.updatedAt}</strong>
+								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDateTime(template.updatedAt)}</strong>
 							</div>
 						</div>
 						<div class="flex flex-wrap gap-2">

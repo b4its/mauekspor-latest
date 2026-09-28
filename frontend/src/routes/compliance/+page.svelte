@@ -17,6 +17,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { formatDate } from '$lib/utils/date';
 import { page } from '$app/state';
 
 	const filters = ['All', 'Blocked', 'In Review', 'Evidence Uploaded', 'Verified'];
@@ -265,7 +266,7 @@ import { page } from '$app/state';
 						<div class="mt-4 grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Category')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.category}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.owner}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.due}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(item.due)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Confidence')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.confidence}%</strong></div>
 						</div>
 						<p class="mt-4 text-xs font-semibold text-muted-foreground">{t('Source:')} {item.source}</p>

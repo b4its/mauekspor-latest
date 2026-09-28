@@ -20,6 +20,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { page } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { label } from '$lib/utils/labels';
+	import { formatDate } from '$lib/utils/date';
 
 	const filters = ['All', 'Booking Requested', 'Customs Submitted', 'Loaded', 'Exception'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -313,7 +314,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Forwarder')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.forwarder}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Mode')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.mode}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Booking')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.bookingNo}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ETA')}<strong class="mt-1 block text-sm font-bold text-foreground">{shipment.eta}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ETA')}<strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(shipment.eta)}</strong></div>
 						</div>
 						{#if shipment.exception}
 							<div class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive" role="alert">{shipment.exception}</div>

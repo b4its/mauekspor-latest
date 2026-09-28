@@ -18,6 +18,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { page } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { label } from '$lib/utils/labels';
+	import { formatDate } from '$lib/utils/date';
 
 	const filters = ['All', 'Pending', 'Deposit Paid', 'Due Soon', 'Overdue', 'Settled'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -307,7 +308,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Total')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(payment.amount)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Paid')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(payment.paid)}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')}<strong class="mt-1 block text-sm font-bold text-foreground">{payment.dueDate}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')}<strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(payment.dueDate)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Method')}<strong class="mt-1 block text-sm font-bold text-foreground">{payment.method}</strong></div>
 						</div>
 					</a>

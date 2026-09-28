@@ -19,6 +19,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { formatDateTime } from '$lib/utils/date';
 
 	const filters = ['All', 'Bug', 'Question', 'Billing', 'Integration', 'Operations'];
 	const categories = ['Bug', 'Question', 'Billing', 'Integration', 'Operations'];
@@ -269,7 +270,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<Badge variant={toneVariant(statusTone(resolved || resolvedId === ticket.id ? 'Resolved' : ticket.status))}>{resolved || resolvedId === ticket.id ? 'Resolved' : ticket.status}</Badge>
 						<h3 class="mt-3 text-2xl font-bold tracking-tight">{ticket.subject}</h3>
 						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{ticket.description}</p>
-						<small class="mt-2 block text-sm text-muted-foreground">{ticket.category} · {ticket.owner} · {ticket.createdAt}</small>
+						<small class="mt-2 block text-sm text-muted-foreground">{ticket.category} · {ticket.owner} · {formatDateTime(ticket.createdAt)}</small>
 					</div>
 					<aside class="grid justify-items-start gap-2 whitespace-nowrap md:justify-items-end">
 						<strong class="text-xl font-bold tracking-tight">{label(ticket.priority)}</strong>

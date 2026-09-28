@@ -15,6 +15,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { formatDateTime } from '$lib/utils/date';
 
 	const filters = ['All', 'Info', 'Warning', 'Critical'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -124,7 +125,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 							<p class="text-sm text-muted-foreground">{event.detail}</p>
 						</div>
 						<aside class="grid justify-items-end gap-1 whitespace-nowrap">
-							<span class="text-xs text-muted-foreground">{event.time}</span>
+							<span class="text-xs text-muted-foreground">{formatDateTime(event.time)}</span>
 							<strong class="text-sm font-bold">{event.actor}</strong>
 							<small class="text-xs text-muted-foreground">{event.module} · {event.entity}</small>
 						</aside>

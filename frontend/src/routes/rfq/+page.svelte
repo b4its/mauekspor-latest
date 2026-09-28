@@ -15,6 +15,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { formatDate } from '$lib/utils/date';
 
 	const filters = ['All', 'Matching', 'Quoted', 'Accepted'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
@@ -245,7 +246,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								{t('Incoterm')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.incoterm}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{rfq.deadline}</strong>
+								{t('Deadline')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(rfq.deadline)}</strong>
 							</div>
 						</div>
 					</a>

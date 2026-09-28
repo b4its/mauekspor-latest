@@ -19,6 +19,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { page } from '$app/state';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 	import { label } from '$lib/utils/labels';
+	import { formatTime, formatDate } from '$lib/utils/date';
 
 	const filters = ['All', 'Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
 	const types = ['Compliance', 'Payment', 'Shipment', 'Buyer', 'Supplier'];
@@ -293,8 +294,8 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 				<Card>
 					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
 						<div class="grid min-w-32 place-items-center gap-1 rounded-lg border bg-muted/40 p-3 text-center">
-							<strong class="text-base font-bold tracking-tight">{event.date}</strong>
-							<span class="text-xs text-muted-foreground">{event.time}</span>
+							<strong class="text-base font-bold tracking-tight">{formatDate(event.date)}</strong>
+							<span class="text-xs text-muted-foreground">{formatTime(event.time)}</span>
 						</div>
 						<div class="min-w-0 flex-1">
 							<Badge variant={toneVariant(statusTone(event.status))}>{label(event.status)}</Badge>

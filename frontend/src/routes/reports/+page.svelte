@@ -15,6 +15,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { formatDateTime } from '$lib/utils/date';
 
 	const filters = ['All', 'Executive', 'Compliance', 'Financial', 'Shipment'];
 
@@ -224,7 +225,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<div class="mt-4 grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Bagian')}<strong class="mt-1 block text-sm font-bold text-foreground">{(report.sections ?? []).length}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Wawasan')}<strong class="mt-1 block text-sm font-bold text-foreground">{(report.insights ?? []).length}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Updated')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.updatedAt}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Updated')}<strong class="mt-1 block text-sm font-bold text-foreground">{formatDateTime(report.updatedAt)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('ID Laporan')}<strong class="mt-1 block text-sm font-bold text-foreground">{report.id}</strong></div>
 						</div>
 					</a>

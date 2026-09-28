@@ -16,6 +16,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+import { formatDateTime } from '$lib/utils/date';
 import { page } from '$app/state';
 
 	const filters = ['All', 'Document', 'Certificate', 'Image', 'Evidence', 'Report'];
@@ -260,7 +261,7 @@ import { page } from '$app/state';
 					<CardContent class="grid gap-3 p-0">
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.updatedAt}</strong>
+								{t('Updated')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDateTime(file.updatedAt)}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 								{t('Ukuran')} <strong class="mt-1 block text-sm font-bold text-foreground">{file.size}</strong>

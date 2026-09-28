@@ -14,6 +14,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { formatDate } from '$lib/utils/date';
 	import { page } from '$app/state';
 
 	import KeyIcon from '@lucide/svelte/icons/key';
@@ -275,7 +276,7 @@
 						<CardContent class="grid gap-3 p-0 mt-3">
 							<div class="grid grid-cols-2 gap-2">
 								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-									{t('Created')} <strong class="mt-1 block text-sm font-bold text-foreground">{key.createdAt}</strong>
+									{t('Created')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(key.createdAt)}</strong>
 								</div>
 								<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 									{t('Scopes')} <strong class="mt-1 block text-sm font-bold text-foreground">{key.scopes?.length ?? 0}</strong>

@@ -18,6 +18,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
+	import { formatRelative } from '$lib/utils/date';
 
 	const filters = ['All', 'Unread', 'Read', 'Archived'];
 
@@ -218,7 +219,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					</div>
 					<aside class="grid shrink-0 justify-items-start gap-2.5 md:min-w-[200px] md:justify-items-end">
 						<Badge variant={toneVariant(statusTone(item.severity))}>{label(item.severity)}</Badge>
-						<small class="text-sm text-muted-foreground">{item.module} · {item.time}</small>
+						<small class="text-sm text-muted-foreground">{item.module} · {formatRelative(item.time)}</small>
 						<div class="flex flex-wrap gap-2">
 							<Button variant="outline" size="sm" href={item.href}>{t('Buka')}</Button>
 							{#if item.status === 'Unread'}
