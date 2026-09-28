@@ -269,8 +269,22 @@ Commit atomik yang sudah masuk (audit → perbaikan):
      tombol export di 9 halaman mengikuti filter/pencarian/pilihan; tombol PDF di
      halaman dokumen/costing/analisis memakai unduhan terautentikasi.
 8. **`feat(prd): admin HS codes feed the runtime search pipeline (FR-ADMIN-1)`**
+9. **`fix(security): atomic create, CSRF fail-closed, and proxy trust default off`**
+   - `db.create()` mengalokasikan id + menulis di satu lock dan menolak id
+     duplikat (create tak pernah jadi update diam-diam); `replace()` mempertahankan
+     metadata `__table`.
+   - CSRF wajib untuk mutasi berbasis cookie di production (fail-closed); Bearer
+     tidak terpengaruh.
+   - `MAUEKSPOR_TRUST_PROXY` default OFF (anti-spoof X-Real-IP).
+10. **`fix(ux): stop showing demo seed data as valid business data (FR-EXP/G-09)`**
+    - Seed fallback hanya aktif di mode demo (`VITE_DEMO_DATA=1` / `?demo=1`);
+      gagal API → daftar kosong + banner `DataStateBanner` (9 halaman list).
+11. **`fix(security): validate uploads by magic bytes and use safe stored names`**
+    (G-16) + koreksi URL unduh berkas edukasi.
+12. **`fix(docs): emit valid, text-extractable PDFs (FR-DOC-2 / G-08)`**
+13. **`feat(ops): add liveness/readiness probes with real dependency checks (FR-X-4)`**
 
-Verifikasi terkini: backend 490 test hijau; frontend 348 test hijau; `svelte-check` 0 error.
+Verifikasi terkini: backend 503 test hijau; frontend 344 test hijau; `svelte-check` 0 error; build produksi sukses.
 
 Sisa temuan P0/P1 dari audit yang **belum** ditangani menjadi backlog di §8.
 
@@ -287,17 +301,17 @@ Tabel ringkas. Status: ✅ selesai · 🟡 sebagian · ❌ belum.
 | G-03 | Demo seed akun admin password tetap | Kompromi akun | P0 | ✅ |
 | G-04 | Stored XSS (Markdown/edukasi) | Curi token | P0 | ✅ |
 | G-05 | Tanpa isolasi tenant | Kebocoran lintas-org | P0 | ❌ |
-| G-06 | ID non-atomik → overwrite | Kehilangan data | P0 | ❌ |
+| G-06 | ID non-atomik → overwrite | Kehilangan data | P0 | ✅ |
 | G-07 | Unduhan PDF/file via `<a href>` | 401 / tidak dapat unduh | P0 | ✅ |
-| G-08 | PDF kustom tak valid | Dokumen klaim gagal | P0 | ❌ |
-| G-09 | Truth in UI: seed fallback | Keputusan salah | P1 | ❌ |
+| G-08 | PDF kustom tak valid | Dokumen klaim gagal | P0 | ✅ |
+| G-09 | Truth in UI: seed fallback | Keputusan salah | P1 | ✅ |
 | G-10 | Export abaikan filter/scope | Data tak sesuai tinjauan | P1 | ✅ |
 | G-11 | Nilai hardcode (42800, L/C, 30 hari) | Record komersial salah | P1 | 🟡 (order mewarisi terms; wizard shipment/payment belum) |
 | G-12 | AI fallback menyamar | Nasihat kepatuhan keliru | P0/P1 | ✅ (ditandai advisory + fallback) |
 | G-13 | Regulasi HS/admin tak terhubung runtime | Master data sia-sia | P1 | 🟡 (HS ✅; regulasi admin → analisis parsial) |
-| G-14 | CSRF off + cookie auth | Risiko CSRF | P1 | ❌ |
-| G-15 | Trust proxy default | Bypass rate-limit | P1 | ❌ |
-| G-16 | Upload extension-only, buffer penuh | Malware/DoS | P1 | ❌ |
+| G-14 | CSRF off + cookie auth | Risiko CSRF | P1 | ✅ (fail-closed di production) |
+| G-15 | Trust proxy default | Bypass rate-limit | P1 | ✅ (default off) |
+| G-16 | Upload extension-only, buffer penuh | Malware/DoS | P1 | 🟡 (magic bytes + nama acak ✅; streaming belum) |
 | G-17 | Multi-worker tidak aman | Stale/duplikasi | P1 | ❌ |
 | G-18 | Operasi: TLS/backup/monitoring/CI | Risiko produksi | P1 | ❌ |
 | G-19 | Rahasia bocor (ngrok token di Makefile.backup) | Kompromi tunnel | P0 | ❌ |
