@@ -190,3 +190,50 @@ def test_ai_container_optimization_mock_menghasilkan_saran():
     text = pricing.ai_container_optimization("Kopi Gayo", {"l": 50, "w": 40, "h": 30}, 100)
     # tidak wajib ada teks di mode mock; pastikan tidak error dan bertipe str
     assert isinstance(text, str)
+
+
+# ---------- PDF text validity (PRD G-08 / FR-DOC-2) ----------
+def _extract_pdf_text(pdf: bytes) -> str:
+    """Ambil teks dari operator Tj pada content stream (tanpa library eksternal)."""
+    import re
+    chunks = re.findall(rb"\((.*?)\) Tj", pdf, re.DOTALL)
+    text = b" ".join(chunks).decode("latin-1", errors="replace")
+    # Unescape literal PDF.
+    return text.replace("\\(", "(").replace("\\)", ")").replace("\\\\", "\\")
+
+
+def test_costing_pdf_has_text_operators_not_blank():
+    pdf = pricing.build_costing_pdf({
+        "title": "T", "destination": "JP", "incoterm": "FOB", "margin": 20,
+        "exchangeRate": 15800, "lines": [{"category": "Production", "label": "COGS", "amount": 100}],
+        "exwPrice": 1, "fobPrice": 2, "cifPrice": 3, "landedCost": 4, "risks": ["R1"],
+    })
+    # Content stream harus memakai BT/ET (tanpa ini halaman tampil kosong).
+    assert b"BT" in pdf and b"ET" in pdf
+    assert b"Tf" in pdf  # pemilihan font
+    extracted = _extract_pdf_text(pdf)
+    assert "MAUEKSPOR - COSTING REPORT" in extracted
+    assert "COGS" in extracted
+
+
+def test_analysis_pdf_text_is_extractable():
+    pdf = pricing.build_analysis_pdf({
+        "productName": "Kopi Gayo", "destination": "JP", "hsCode": "0901.21",
+        "status": "Ready", "score": 85, "statusGrade": "A", "confidence": 90,
+        "complianceIssues": [{"severity": "high", "type": "Label", "required_value": "JP label"}],
+        "recommendations": ["Perbaiki label"],
+    })
+    extracted = _extract_pdf_text(pdf)
+    assert "EXPORT ANALYSIS REPORT" in extracted
+    assert "Kopi Gayo" in extracted
+
+
+def test_pdf_escapes_special_characters():
+    pdf = pricing.build_costing_pdf({
+        "title": "A (B) \\ C", "destination": "JP", "incoterm": "FOB", "margin": 0,
+        "exchangeRate": 1, "lines": [], "exwPrice": 0, "fobPrice": 0, "cifPrice": 0,
+        "landedCost": 0, "risks": [],
+    })
+    # Tanda kurung harus ter-escape agar tidak merusak struktur PDF.
+    assert b"\\(B\\)" in pdf
+    assert pdf.startswith(b"%PDF-1.4")

@@ -394,18 +394,61 @@ def build_costing_pdf(costing: dict[str, Any]) -> bytes:
     return _wrap_pdf(content)
 
 
+# Karakter yang harus di-escape dalam literal string PDF.
+def _pdf_escape(text: str) -> bytes:
+    out = []
+    for ch in text:
+        if ch in "()\\":
+            out.append("\\" + ch)
+        elif ord(ch) < 32:  # kontrol → spasi
+            out.append(" ")
+        elif ord(ch) > 126:  # non-ASCII (WinAnsi tak mendukung) → '?'
+            out.append("?")
+        else:
+            out.append(ch)
+    return "".join(out).encode("latin-1", errors="replace")
+
+
+def _pdf_content_stream(text: str) -> bytes:
+    """Bangun content stream PDF yang VALID: BT/ET, font, dan posisi baris.
+
+    Sebelumnya teks mentah ditempel langsung ke stream tanpa operator teks →
+    pembaca PDF menampilkan halaman kosong. Di sini setiap baris digambar dengan
+    operator ``Td``/``Tj`` pada koordinat A4, dengan line-wrap sederhana.
+    """
+    leading = 14.0
+    start_x, start_y, max_y = 40.0, 800.0, 40.0
+    max_chars = 96
+    parts: list[bytes] = [b"BT\n/F1 11 Tf\n"]
+    y = start_y
+    for raw_line in text.splitlines():
+        # Line wrap sederhana per max_chars.
+        chunks = [raw_line[i:i + max_chars] for i in range(0, len(raw_line), max_chars)] or [""]
+        for chunk in chunks:
+            if y < max_y:
+                break
+            parts.append(f"1 0 0 1 {start_x:.0f} {y:.0f} Tm\n".encode())
+            parts.append(b"(" + _pdf_escape(chunk) + b") Tj\n")
+            y -= leading
+        if y < max_y:
+            break
+    parts.append(b"ET")
+    return b"".join(parts)
+
+
 def _wrap_pdf(text_bytes: bytes) -> bytes:
-    # Minimal valid PDF writer (no external deps)
+    """PDF A4 satu halaman dengan teks yang benar-benar dapat diekstraksi."""
+    text = text_bytes.decode("utf-8", errors="replace")
+    stream = _pdf_content_stream(text)
     objects: list[bytes] = []
     objects.append(b"<< /Type /Catalog /Pages 2 0 R >>")
-    stream = text_bytes
     objects.append(b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
     objects.append(
         b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
         b"/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>"
     )
     objects.append(b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream")
-    objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+    objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
     out = bytearray(b"%PDF-1.4\n")
     offsets: list[int] = []
     for i, obj in enumerate(objects, start=1):
