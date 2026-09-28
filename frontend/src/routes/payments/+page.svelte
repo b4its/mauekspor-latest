@@ -12,7 +12,9 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
@@ -23,6 +25,16 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	const filters = ['All', 'Pending', 'Deposit Paid', 'Due Soon', 'Overdue', 'Settled'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'amount', label: t('Jumlah') },
+		{ value: 'paid', label: t('Jumlah dibayar') },
+		{ value: 'dueDate', label: t('Tenggat') },
+		{ value: 'buyer', label: t('Buyer') },
+		{ value: 'risk', label: t('Risiko') },
+		{ value: 'status', label: t('Status') }
+	];
 	let message = $state('');
 	let busyId = $state('');
 	let showForm = $state(false);
@@ -43,9 +55,9 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -74,13 +86,17 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	});
 
 	let filteredPayments = $derived(
-		payments.items.filter(
-			(payment) =>
-				(activeFilter === 'All' || payment.status === activeFilter) &&
-				[payment.id, payment.orderId, payment.buyer, payment.method, payment.status]
-					.join(' ')
-					.toLowerCase()
-					.includes(query.trim().toLowerCase())
+		sortBy(
+			payments.items.filter(
+				(payment) =>
+					(activeFilter === 'All' || payment.status === activeFilter) &&
+					[payment.id, payment.orderId, payment.buyer, payment.method, payment.status]
+						.join(' ')
+						.toLowerCase()
+						.includes(query.trim().toLowerCase())
+			),
+			sortKey,
+			sortDir
 		)
 	);
 	let receivable = $derived(payments.items.reduce((sum, payment) => sum + payment.amount - payment.paid, 0));
@@ -182,6 +198,8 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	$effect(() => {
 		activeFilter;
 		query;
+		sortKey;
+		sortDir;
 		paginationPage = 1;
 	});
 
@@ -265,8 +283,11 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search payment, buyer, order...')} placeholder={t('Search payment, buyer, order...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search payment, buyer, order...')} placeholder={t('Search payment, buyer, order...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

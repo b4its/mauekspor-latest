@@ -14,7 +14,9 @@
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	import { page } from '$app/state';
@@ -25,6 +27,16 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	const filters = ['All', 'Booking Requested', 'Customs Submitted', 'Loaded', 'Exception'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'progress', label: t('Progres') },
+		{ value: 'eta', label: 'ETA' },
+		{ value: 'forwarder', label: t('Forwarder') },
+		{ value: 'mode', label: t('Moda') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'id', label: 'ID' }
+	];
 	let message = $state('');
 	let showForm = $state(false);
 	let saving = $state(false);
@@ -44,9 +56,9 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
-		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']), 250);
+		syncTimer = setTimeout(() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']), 250);
 		return () => clearTimeout(syncTimer);
 	});
 
@@ -79,14 +91,18 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	});
 
 	let filteredShipments = $derived(
-		shipments.items.filter((shipment) => {
-			const matchesFilter = activeFilter === 'All' || shipment.status === activeFilter;
-			const matchesQuery = [shipment.id, shipment.route, shipment.forwarder, shipment.mode, shipment.projectId]
-				.join(' ')
-				.toLowerCase()
-				.includes(query.trim().toLowerCase());
-			return matchesFilter && matchesQuery;
-		})
+		sortBy(
+			shipments.items.filter((shipment) => {
+				const matchesFilter = activeFilter === 'All' || shipment.status === activeFilter;
+				const matchesQuery = [shipment.id, shipment.route, shipment.forwarder, shipment.mode, shipment.projectId]
+					.join(' ')
+					.toLowerCase()
+					.includes(query.trim().toLowerCase());
+				return matchesFilter && matchesQuery;
+			}),
+			sortKey,
+			sortDir
+		)
 	);
 
 	let exceptionCount = $derived(shipments.items.filter((shipment) => shipment.status === 'Exception').length);
@@ -178,6 +194,8 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	$effect(() => {
 		activeFilter;
 		query;
+		sortKey;
+		sortDir;
 		paginationPage = 1;
 	});
 
@@ -266,8 +284,11 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search route, forwarder, booking...')} placeholder={t('Search route, forwarder, booking...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search route, forwarder, booking...')} placeholder={t('Search route, forwarder, booking...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

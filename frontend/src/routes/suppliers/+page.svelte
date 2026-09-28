@@ -13,7 +13,9 @@
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
+import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
+import { sortBy, type SortDir } from '$lib/utils/sort';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { formatDate } from '$lib/utils/date';
@@ -21,6 +23,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	const filters = ['All', 'Verified', 'In Review', 'Needs Evidence'];
 	let activeFilter = $state(page.url.searchParams.get('status') ?? 'All');
 	let query = $state(page.url.searchParams.get('query') ?? '');
+	let sortKey = $state(page.url.searchParams.get('sort') ?? '');
+	let sortDir = $state<SortDir>((page.url.searchParams.get('dir') as SortDir) ?? 'asc');
+	const sortOptions = [
+		{ value: 'name', label: t('Nama') },
+		{ value: 'capabilityScore', label: t('Skor') },
+		{ value: 'category', label: t('Kategori') },
+		{ value: 'location', label: t('Lokasi') },
+		{ value: 'status', label: t('Status') },
+		{ value: 'id', label: 'ID' }
+	];
 	let error = $state('');
 	let message = $state('');
 	let busyId = $state('');
@@ -42,13 +54,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	});
 
 	let filteredSuppliers = $derived(
-		suppliers.items.filter((supplier) => {
-			const names = (supplier.productIds ?? []).map((id) => products.items.find((product) => product.id === id)?.name ?? id).join(' ');
-			return (
-				(activeFilter === 'All' || supplier.status === activeFilter) &&
-				[supplier.name, supplier.location, supplier.category, names].join(' ').toLowerCase().includes(query.trim().toLowerCase())
-			);
-		})
+		sortBy(
+			suppliers.items.filter((supplier) => {
+				const names = (supplier.productIds ?? []).map((id) => products.items.find((product) => product.id === id)?.name ?? id).join(' ');
+				return (
+					(activeFilter === 'All' || supplier.status === activeFilter) &&
+					[supplier.name, supplier.location, supplier.category, names].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				);
+			}),
+			sortKey,
+			sortDir
+		)
 	);
 	let verifiedCount = $derived(suppliers.items.filter((supplier) => supplier.status === 'Verified').length);
 	let avgCapability = $derived(Math.round(suppliers.items.reduce((sum, supplier) => sum + supplier.capabilityScore, 0) / (suppliers.items.length || 1)));
@@ -123,6 +139,8 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	$effect(() => {
 		activeFilter;
 		query;
+		sortKey;
+		sortDir;
 		paginationPage = 1;
 	});
 
@@ -130,10 +148,10 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	// Simpan filter & pencarian ke URL agar tahan refresh/back/dibagikan.
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
-		const state = { query, status: activeFilter === 'All' ? '' : activeFilter };
+		const state = { query, status: activeFilter === 'All' ? '' : activeFilter, sort: sortKey, dir: sortKey ? sortDir : '' };
 		clearTimeout(syncTimer);
 		syncTimer = setTimeout(
-			() => syncFiltersToUrl(page.url, state, { query: '', status: '' }, ['query', 'status']),
+			() => syncFiltersToUrl(page.url, state, { query: '', status: '', sort: '', dir: '' }, ['query', 'status', 'sort', 'dir']),
 			250
 		);
 		return () => clearTimeout(syncTimer);
@@ -208,8 +226,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{filter}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Search supplier, product, location...')} placeholder={t('Search supplier, product, location...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<Input bind:value={query} type="search"
+				aria-label={t('Search supplier, product, location...')} placeholder={t('Search supplier, product, location...')} class="w-[min(390px,100%)]" />
+			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
+		</div>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
