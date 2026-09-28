@@ -191,7 +191,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	<title>{t('Payments')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Payments" eyebrow={t('Export receivables and settlement')}>
+<AppShell title={t('Payments')} eyebrow={t('Export receivables and settlement')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Cashflow control')}</Badge>

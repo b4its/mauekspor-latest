@@ -110,7 +110,7 @@ import { page } from '$app/state';
 	<title>{t('Permintaan Pembeli')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Buyer Requests" eyebrow={t('Inbound demand')}>
+<AppShell title={t('Buyer Requests')} eyebrow={t('Inbound demand')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Inbound lead flow')}</Badge>

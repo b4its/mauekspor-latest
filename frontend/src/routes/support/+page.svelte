@@ -171,7 +171,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<title>{t('Dukungan')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Support" eyebrow={t('Help desk and product support')}>
+<AppShell title={t('Support')} eyebrow={t('Help desk and product support')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Meja dukungan')}</Badge>

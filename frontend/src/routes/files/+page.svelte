@@ -170,7 +170,7 @@ import { page } from '$app/state';
 	<title>{t('Files')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Files" eyebrow={t('Pustaka bukti dan aset')}>
+<AppShell title={t('Files')} eyebrow={t('Pustaka bukti dan aset')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Kontrol file')}</Badge>

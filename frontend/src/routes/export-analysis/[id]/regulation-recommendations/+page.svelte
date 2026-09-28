@@ -37,7 +37,7 @@
 	<title>{t('Rekomendasi Regulasi')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Regulation Recommendations" eyebrow={data.analysis.destination}>
+<AppShell title={t('Regulation Recommendations')} eyebrow={data.analysis.destination}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<div class="flex flex-wrap items-center gap-2">

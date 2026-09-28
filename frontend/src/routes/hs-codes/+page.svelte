@@ -64,7 +64,7 @@
 	<title>{t('HS Code')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="HS Code" eyebrow={t('Browsing kode HS')}>
+<AppShell title={t('HS Code')} eyebrow={t('Browsing kode HS')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<Badge variant="secondary" class="w-fit">{t('Klasifikasi tarif')}</Badge>
 		<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">

@@ -75,7 +75,7 @@
 	<title>{t('Permintaan Buyer Baru')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Buyer Requests" eyebrow={t('Log inbound demand')}>
+<AppShell title={t('Buyer Requests')} eyebrow={t('Log inbound demand')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Permintaan inbound')}</Badge>

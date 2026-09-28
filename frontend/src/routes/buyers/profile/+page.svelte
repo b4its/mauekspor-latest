@@ -78,7 +78,7 @@
 	<title>{t('Edit Profil Pembeli')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Buyer Profile" eyebrow={t('Edit importer identity')}>
+<AppShell title={t('Buyer Profile')} eyebrow={t('Edit importer identity')}>
 	<Card class="grid gap-6 border panel-hero p-6 md:p-8">
 		<div>
 			<Badge variant="secondary">{t('Profil')}</Badge>

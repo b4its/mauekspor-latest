@@ -164,7 +164,7 @@ import { page } from '$app/state';
 	<title>{t('Basis Pengetahuan')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Knowledge Base" eyebrow={t('Export operating playbooks')}>
+<AppShell title={t('Knowledge Base')} eyebrow={t('Export operating playbooks')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Operasi terpandu')}</Badge>

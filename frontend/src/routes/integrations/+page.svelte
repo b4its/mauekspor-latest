@@ -212,7 +212,7 @@ import { page } from '$app/state';
 	<title>{t('Integrasi')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Integrations" eyebrow={t('Sistem dagang yang terhubung')}>
+<AppShell title={t('Integrations')} eyebrow={t('Sistem dagang yang terhubung')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge>{t('Pusat integrasi')}</Badge>

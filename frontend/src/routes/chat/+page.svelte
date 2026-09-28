@@ -236,7 +236,7 @@
 	<title>{t('Chat')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Chat" eyebrow={t('Asisten dagang AI')}>
+<AppShell title={t('Chat')} eyebrow={t('Asisten dagang AI')}>
 	<div class="relative flex h-[calc(100dvh-11rem)] min-h-[450px] overflow-hidden rounded-xl border bg-card shadow-sm lg:h-[calc(100dvh-10rem)]">
 		<!-- Backdrop untuk mobile & tablet -->
 		{#if sidebarOpen}

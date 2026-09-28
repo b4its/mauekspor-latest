@@ -115,7 +115,7 @@
 	<title>{t('Analytics')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Analytics" eyebrow={t('Executive trade intelligence')}>
+<AppShell title={t('Analytics')} eyebrow={t('Executive trade intelligence')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Menara kendali')}</Badge>

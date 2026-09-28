@@ -134,7 +134,7 @@ import { page } from '$app/state';
 	<title>{t('Costing')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Costing" eyebrow={t('Incoterm pricing and landed cost')}>
+<AppShell title={t('Costing')} eyebrow={t('Incoterm pricing and landed cost')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Kontrol biaya')}</Badge>

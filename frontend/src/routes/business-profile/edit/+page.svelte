@@ -67,7 +67,7 @@
 	<title>{t('Edit Profil Bisnis')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Business Profile" eyebrow={t('Edit identitas UMKM')}>
+<AppShell title={t('Business Profile')} eyebrow={t('Edit identitas UMKM')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Identitas')}</Badge>

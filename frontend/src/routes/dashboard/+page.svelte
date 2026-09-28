@@ -158,7 +158,7 @@
 	<title>{t('Dashboard')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Dashboard" eyebrow={t('Export workspace home')}>
+<AppShell title={t('Dashboard')} eyebrow={t('Export workspace home')}>
 	{#if summaryError}
 		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive" role="alert">{summaryError}</p>
 	{/if}

@@ -135,7 +135,7 @@
 	<title>{t('Portal Pembeli')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Buyer Portal" eyebrow={t('Export goods curated by buyer country')}>
+<AppShell title={t('Buyer Portal')} eyebrow={t('Export goods curated by buyer country')}>
 	{#if !allowed}
 		<div class="grid place-items-center gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-12 text-center">
 			<div>

@@ -71,7 +71,7 @@
 	<title>{data.article.title} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Educational" eyebrow={t('Article detail')}>
+<AppShell title={t('Educational')} eyebrow={t('Article detail')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<div class="flex flex-wrap items-center gap-2.5">

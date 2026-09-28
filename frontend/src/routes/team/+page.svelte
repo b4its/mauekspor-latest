@@ -153,7 +153,7 @@ import { page } from '$app/state';
 	<title>{t('Team')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Team" eyebrow={t('Roles and workspace access')}>
+<AppShell title={t('Team')} eyebrow={t('Roles and workspace access')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Access control')}</Badge>

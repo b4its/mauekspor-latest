@@ -93,7 +93,7 @@ import { page } from '$app/state';
 	<title>{t('Catalogs')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Catalogs" eyebrow={t('Buyer-facing export catalog')}>
+<AppShell title={t('Catalogs')} eyebrow={t('Buyer-facing export catalog')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Commercial presentation')}</Badge>

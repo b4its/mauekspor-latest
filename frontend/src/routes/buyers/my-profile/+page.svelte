@@ -26,7 +26,7 @@
 	<title>{t('Profil Pembeli Saya')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Buyer Profile" eyebrow={t('Identitas importer saya')}>
+<AppShell title={t('Buyer Profile')} eyebrow={t('Identitas importer saya')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

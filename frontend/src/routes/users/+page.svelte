@@ -88,7 +88,7 @@
 	<title>{t('Pengguna')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Users" eyebrow={t('Account management')}>
+<AppShell title={t('Users')} eyebrow={t('Account management')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

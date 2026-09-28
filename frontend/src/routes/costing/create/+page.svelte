@@ -78,7 +78,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 	<title>{t('Buat Skenario Costing')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Costing" eyebrow={t('Create costing scenario')}>
+<AppShell title={t('Costing')} eyebrow={t('Create costing scenario')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Model harga')}</Badge>

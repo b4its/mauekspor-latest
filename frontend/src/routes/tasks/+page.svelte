@@ -174,7 +174,7 @@ import { formatDate } from '$lib/utils/date';
 	<title>{t('Tugas')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Tasks" eyebrow={t('Operational work queue')}>
+<AppShell title={t('Tasks')} eyebrow={t('Operational work queue')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Next actions')}</Badge>

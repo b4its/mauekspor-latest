@@ -143,7 +143,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<title>{t('Notifications')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Notifications" eyebrow={t('Operational alerts')}>
+<AppShell title={t('Notifications')} eyebrow={t('Operational alerts')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Pusat alert')}</Badge>

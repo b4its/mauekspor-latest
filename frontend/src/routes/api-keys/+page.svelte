@@ -173,7 +173,7 @@
 	<title>{t('Kunci API')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="API Keys" eyebrow={t('Developer access controls')}>
+<AppShell title={t('API Keys')} eyebrow={t('Developer access controls')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline" class="gap-1 border-primary/30 bg-primary/10 text-primary">

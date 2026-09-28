@@ -151,17 +151,16 @@
 	<title>{t('Produk')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Komoditas Unggulan Desa" eyebrow="Master data komoditas unggulan desa">
+<AppShell title={t('Komoditas Unggulan Desa')} eyebrow={t('Master data komoditas unggulan desa')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
 				<Badge variant="secondary">{t('Product intelligence')}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
-					Structured product data for export readiness.
+					{t('Structured product data for export readiness.')}
 				</CardTitle>
 				<CardDescription class="mt-2 max-w-xl leading-relaxed">
-					Capture specifications, packaging, HS candidates, certificates, origin details, and product
-					revisions before compliance analysis or quotation.
+					{t('Capture specifications, packaging, HS candidates, certificates, origin details, and product revisions before compliance analysis or quotation.')}
 				</CardDescription>
 			</div>
 		<Button href="/products/new">{t('Add product')}</Button>

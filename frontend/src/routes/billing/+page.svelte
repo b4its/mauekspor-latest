@@ -73,7 +73,7 @@
 	<title>{t('Billing')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Billing" eyebrow={t('Subscription and usage')}>
+<AppShell title={t('Billing')} eyebrow={t('Subscription and usage')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(billing.status))}>{label(billing.status)}</Badge>

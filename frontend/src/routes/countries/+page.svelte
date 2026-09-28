@@ -78,7 +78,7 @@
 	<title>{t('Direktori Regulasi Negara')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Countries" eyebrow={t('Regulasi ekspor & impor seluruh dunia')}>
+<AppShell title={t('Countries')} eyebrow={t('Regulasi ekspor & impor seluruh dunia')}>
 	<Card class="p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="max-w-2xl">

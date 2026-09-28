@@ -121,15 +121,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<title>{t('Proyek Dagang')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Trade Projects" eyebrow="Project-based trade operations">
+<AppShell title={t('Trade Projects')} eyebrow={t('Project-based trade operations')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="flex-row flex-wrap items-start justify-between gap-3 p-0">
 			<div>
 				<Badge variant="outline">{t('Workspace proyek')}</Badge>
 				<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Kelola eksekusi ekspor-impor dalam satu tempat.')}</CardTitle>
 				<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-					Each project connects product, HS classification, compliance evidence, quotation,
-					documents, and shipment milestones.
+					{t('Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.')}
 				</CardDescription>
 			</div>
 			<div class="grid gap-2">

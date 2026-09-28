@@ -2773,7 +2773,21 @@ const dictionary: Record<string, Entry> = {
 	'Cari data di tabel ini': { id: 'Cari data di tabel ini', en: 'Search data in this table' },
 	'Cari audit log': { id: 'Cari audit log', en: 'Search audit log' },
 	'Pilih': { id: 'Pilih', en: 'Select' },
-	'/bln': { id: '/bln', en: '/mo' }
+	'/bln': { id: '/bln', en: '/mo' },
+	// Judul & eyebrow halaman (AppShell title/eyebrow) yang belum punya entri.
+	'Buyer Profile': { id: 'Profil Pembeli', en: 'Buyer Profile' },
+	'Certifications': { id: 'Sertifikasi', en: 'Certifications' },
+	'Educational Admin': { id: 'Admin Edukasi', en: 'Educational Admin' },
+	'Forwarder Catalogs': { id: 'Katalog Forwarder', en: 'Forwarder Catalogs' },
+	'Forwarder Profile': { id: 'Profil Forwarder', en: 'Forwarder Profile' },
+	'New Trade Project': { id: 'Proyek Dagang Baru', en: 'New Trade Project' },
+	'Regulation Recommendations': { id: 'Rekomendasi Regulasi', en: 'Regulation Recommendations' },
+	'Master data komoditas unggulan desa': { id: 'Master data komoditas unggulan desa', en: 'Village flagship commodity master data' },
+	'Project-based trade operations': { id: 'Operasi dagang berbasis proyek', en: 'Project-based trade operations' },
+	'Unit Pengolahan Hasil Desa': { id: 'Unit Pengolahan Hasil Desa', en: 'Village Product Processing Unit' },
+	'Structured product data for export readiness.': { id: 'Data produk terstruktur untuk kesiapan ekspor.', en: 'Structured product data for export readiness.' },
+	'Capture specifications, packaging, HS candidates, certificates, origin details, and product revisions before compliance analysis or quotation.': { id: 'Catat spesifikasi, kemasan, kandidat HS, sertifikat, detail asal, dan revisi produk sebelum analisis kepatuhan atau penawaran.', en: 'Capture specifications, packaging, HS candidates, certificates, origin details, and product revisions before compliance analysis or quotation.' },
+	'Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.': { id: 'Setiap proyek menghubungkan produk, klasifikasi HS, bukti kepatuhan, penawaran, dokumen, dan milestone pengiriman.', en: 'Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.' }
 };
 
 let initial: Locale = 'id';

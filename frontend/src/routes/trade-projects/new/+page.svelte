@@ -96,7 +96,7 @@
 	<title>{t('Proyek Dagang Baru')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="New Trade Project" eyebrow={t('Create export-import workspace')}>
+<AppShell title={t('New Trade Project')} eyebrow={t('Create export-import workspace')}>
 	<div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]">
 		<div class="space-y-6">
 			<Badge>{t('Panduan penyiapan')}</Badge>

@@ -145,7 +145,7 @@ import { page } from '$app/state';
 	<title>{t('Templates')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Templates" eyebrow={t('Reusable export assets')}>
+<AppShell title={t('Templates')} eyebrow={t('Reusable export assets')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Pustaka template')}</Badge>

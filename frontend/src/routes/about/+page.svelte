@@ -15,7 +15,7 @@
 	<title>{t('Tentang')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="About" eyebrow={t('Sistem operasi dagang')}>
+<AppShell title={t('About')} eyebrow={t('Sistem operasi dagang')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Indonesia ke pasar global')}</Badge>

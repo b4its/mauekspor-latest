@@ -126,7 +126,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<title>{t('RFQ')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="RFQ" eyebrow={t('Buyer demand workspace')}>
+<AppShell title={t('RFQ')} eyebrow={t('Buyer demand workspace')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge>{t('Smart matching')}</Badge>

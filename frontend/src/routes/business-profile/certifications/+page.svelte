@@ -63,7 +63,7 @@
 	<title>{t('Kelola Sertifikasi')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Certifications" eyebrow={t('Manage business certification claims')}>
+<AppShell title={t('Certifications')} eyebrow={t('Manage business certification claims')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Berbasis bukti')}</Badge>

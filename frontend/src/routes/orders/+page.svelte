@@ -159,7 +159,7 @@ import { page } from '$app/state';
 	<title>{t('Orders')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Orders" eyebrow={t('Accepted quotation to execution')}>
+<AppShell title={t('Orders')} eyebrow={t('Accepted quotation to execution')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge>{t('Sales order control')}</Badge>

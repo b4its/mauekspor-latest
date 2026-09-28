@@ -159,7 +159,7 @@
 	<title>{t('Profil Bisnis')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Business Profile" eyebrow={t('Identitas UMKM dan sertifikasi')}>
+<AppShell title={t('Business Profile')} eyebrow={t('Identitas UMKM dan sertifikasi')}>
 	{#if profiles.items.length > 1}
 		<div bind:this={dropdownEl} class="relative z-20 mb-4 max-w-md">
 			<!-- Trigger / selected -->

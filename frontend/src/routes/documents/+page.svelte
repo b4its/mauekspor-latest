@@ -155,16 +155,15 @@ import { page } from '$app/state';
 	<title>{t('Dokumen')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Documents" eyebrow="Trade document center">
+<AppShell title={t('Documents')} eyebrow={t('Trade document center')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Kontrol dokumen')}</Badge>
 			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
-				Generate, validate, approve, and version trade documents.
+				{t('Generate, validate, approve, and version trade documents.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				Keep invoice, packing list, certificate of origin, lab reports, insurance, and shipment
-				documents consistent with product, quotation, and shipment data.
+				{t('Keep invoice, packing list, certificate of origin, lab reports, insurance, and shipment documents consistent with product, quotation, and shipment data.')}
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="mt-6 flex flex-wrap items-center gap-3 p-0">

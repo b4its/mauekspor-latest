@@ -111,7 +111,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<title>{t('Modul Admin')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Educational Admin" eyebrow={t('Manage modules')}>
+<AppShell title={t('Educational Admin')} eyebrow={t('Manage modules')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

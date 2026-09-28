@@ -100,7 +100,7 @@
 	<title>{t('Settings')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Settings" eyebrow={t('Organisasi dan kontrol akses')}>
+<AppShell title={t('Settings')} eyebrow={t('Organisasi dan kontrol akses')}>
 	<div class="grid gap-4 lg:grid-cols-[1.2fr_minmax(360px,0.8fr)]">
 		<Card class="panel-hero">
 			<CardHeader><Badge>{t('Profil eksportir terverifikasi')}</Badge></CardHeader>

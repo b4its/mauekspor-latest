@@ -107,7 +107,7 @@
 	<title>{t('Analisis Ekspor')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Export Analysis" eyebrow={t('Intelijen kesiapan pasar')}>
+<AppShell title={t('Export Analysis')} eyebrow={t('Intelijen kesiapan pasar')}>
 	<div class="space-y-6">
 		<Card class="panel-hero p-6 md:p-8">
 			<CardHeader class="p-0">

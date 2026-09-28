@@ -138,7 +138,7 @@
 	<title>{t('Marketing')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Marketing" eyebrow={t('Intelijen pasar AI & penetapan harga')}>
+<AppShell title={t('Marketing')} eyebrow={t('Intelijen pasar AI & penetapan harga')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">

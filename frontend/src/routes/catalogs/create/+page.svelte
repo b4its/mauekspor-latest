@@ -115,7 +115,7 @@
 	<title>{t('Buat Katalog')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Catalogs" eyebrow={t('Create buyer-facing catalog')}>
+<AppShell title={t('Catalogs')} eyebrow={t('Create buyer-facing catalog')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Penyiapan katalog')}</Badge>

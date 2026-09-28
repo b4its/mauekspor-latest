@@ -163,7 +163,7 @@ import { page } from '$app/state';
 	<title>{t('Quotations')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Quotations" eyebrow={t('Commercial offer management')}>
+<AppShell title={t('Quotations')} eyebrow={t('Commercial offer management')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Incoterm clarity')}</Badge>

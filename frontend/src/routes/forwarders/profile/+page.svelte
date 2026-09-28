@@ -68,7 +68,7 @@
 	<title>{t('Edit Profil Forwarder')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Forwarder Profile" eyebrow={t('Edit freight partner identity')}>
+<AppShell title={t('Forwarder Profile')} eyebrow={t('Edit freight partner identity')}>
 	<Card class="grid gap-6 border panel-hero p-6 md:p-8">
 		<div>
 			<Badge variant="secondary">{t('Profil')}</Badge>

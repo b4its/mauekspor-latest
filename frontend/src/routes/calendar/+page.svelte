@@ -187,7 +187,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	<title>{t('Kalender')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Calendar" eyebrow={t('Trade milestone schedule')}>
+<AppShell title={t('Calendar')} eyebrow={t('Trade milestone schedule')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="outline">{t('Kalender milestone')}</Badge>

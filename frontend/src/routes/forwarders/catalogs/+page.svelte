@@ -59,7 +59,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	<title>{t('Katalog Forwarder')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Forwarder Catalogs" eyebrow={t('Inventaris kuotasi freight')}>
+<AppShell title={t('Forwarder Catalogs')} eyebrow={t('Inventaris kuotasi freight')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant={toneVariant(statusTone(forwarder.status))}>{forwarder.name}</Badge>

@@ -82,7 +82,7 @@
 	<title>{t('Analisis Ekspor Baru')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title="Export Analysis" eyebrow={t('Start market analysis')}>
+<AppShell title={t('Export Analysis')} eyebrow={t('Start market analysis')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<Badge variant="secondary">{t('Analisis baru')}</Badge>
 		<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">
