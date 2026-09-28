@@ -98,34 +98,104 @@ def test_get_token_tanpa_apapun_401():
     assert exc.value.status_code == 401
 
 
-def test_rate_limit_key_pakai_x_real_ip_bukan_xff():
-    """Di belakang ngrok/nginx, tiap user asli punya kuota sendiri.
+def _fake_request(headers):
+    class FakeRequest:
+        def __init__(self, hdrs, client_host="10.0.0.1"):
+            self.headers = hdrs
+            self.client = type("C", (), {"host": client_host})()
 
-    Bug lama: semua user tunnel share IP proxy → login ke-2 langsung 429 massal.
-    Keamanan: X-Forwarded-For hop-pertama bisa DIPALSUKAN client (nginx hanya
-    menambah hop), sehingga HANYA X-Real-IP (selalu dioverwrite $remote_addr)
-    yang dipercaya sebagai kunci rate limit.
+    return FakeRequest(headers)
+
+
+def test_rate_limit_key_default_tidak_percaya_proxy(monkeypatch):
+    """Default fail-safe (PRD NFR-SEC-1): X-Real-IP DIABAIKAN kecuali diaktifkan.
+
+    Tanpa ini, backend yang terekspos langsung bisa dibypass rate-limit dengan
+    memalsukan header X-Real-IP.
     """
     from app.main import _rate_limit_key
 
-    class FakeRequest:
-        def __init__(self, headers, client_host="10.0.0.1"):
-            self.headers = headers
-            self.client = type("C", (), {"host": client_host})()
+    monkeypatch.delenv("MAUEKSPOR_TRUST_PROXY", raising=False)
+    spoofed = _fake_request({"x-real-ip": "103.1.2.3"})
+    assert _rate_limit_key(spoofed) == "10.0.0.1"
+
+
+def test_rate_limit_key_pakai_x_real_ip_saat_proxy_tepercaya(monkeypatch):
+    """Di belakang proxy tepercaya (MAUEKSPOR_TRUST_PROXY=1), tiap user punya kuota.
+
+    Bug lama: semua user tunnel share IP proxy → login ke-2 langsung 429 massal.
+    """
+    from app.main import _rate_limit_key
+
+    monkeypatch.setenv("MAUEKSPOR_TRUST_PROXY", "1")
 
     # X-Real-IP dipercaya
-    r = FakeRequest({"x-real-ip": "103.1.2.3"})
+    r = _fake_request({"x-real-ip": "103.1.2.3"})
     assert _rate_limit_key(r) == "103.1.2.3"
 
     # XFF sendirian (tanpa X-Real-IP) TIDAK dipercaya → IP socket
-    r2 = FakeRequest({"x-forwarded-for": "103.9.9.9, 172.18.0.5"})
+    r2 = _fake_request({"x-forwarded-for": "103.9.9.9, 172.18.0.5"})
     assert _rate_limit_key(r2) == "10.0.0.1"
 
-    # Tanpa header → IP socket
-    r3 = FakeRequest({})
-    assert _rate_limit_key(r3) == "10.0.0.1"
-
     # Dua user berbeda via tunnel → key berbeda (tidak saling blokir)
-    a = FakeRequest({"x-real-ip": "1.1.1.1"})
-    b = FakeRequest({"x-real-ip": "2.2.2.2"})
+    a = _fake_request({"x-real-ip": "1.1.1.1"})
+    b = _fake_request({"x-real-ip": "2.2.2.2"})
     assert _rate_limit_key(a) != _rate_limit_key(b)
+
+
+def test_csrf_wajib_untuk_mutasi_berbasis_cookie(monkeypatch):
+    """PRD FR-AUTH-1: cookie-based mutation tanpa X-CSRF-Token harus 403.
+
+    Bearer (jalur utama menuju API) tidak terpengaruh. Di dev/test CSRF default
+    nonaktif (ergonomis), jadi paksa aktif di sini.
+    """
+    monkeypatch.setenv("MAUEKSPOR_ENABLE_CSRF", "1")
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    with TestClient(app) as c:
+        # Login untuk dapat cookie access_token.
+        r = c.post("/api/v1/auth/login/", json={"email": "admin@mauekspor.example", "password": "admin123"})
+        assert r.status_code == 200
+        token = r.json()["meta"]["access_token"]
+        assert c.cookies.get("access_token")
+
+        # Cookie saja (tanpa Bearer, tanpa CSRF) → ditolak 403.
+        blocked = c.post("/api/v1/products/", json={"name": "CSRF Test", "category": "Food", "origin": "ID"})
+        assert blocked.status_code == 403
+
+        # Dengan Bearer → lolos (tidak kena CSRF).
+        ok = c.post(
+            "/api/v1/products/",
+            json={"name": "Bearer OK", "category": "Food", "origin": "ID"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert ok.status_code == 200
+
+        # Dengan cookie + token CSRF valid → lolos.
+        csrf = c.get("/api/v1/auth/csrf/").json()["data"]["csrf_token"]
+        ok2 = c.post(
+            "/api/v1/products/",
+            json={"name": "CSRF OK", "category": "Food", "origin": "ID"},
+            headers={"X-CSRF-Token": csrf},
+        )
+        assert ok2.status_code == 200
+
+
+def test_csrf_aktif_otomatis_di_production(monkeypatch):
+    """Di production cookie-based mutation wajib CSRF walau flag tidak diset."""
+    monkeypatch.delenv("MAUEKSPOR_ENABLE_CSRF", raising=False)
+    monkeypatch.setenv("MAUEKSPOR_ENVIRONMENT", "production")
+    # Rebuild settings agar environment terbaca ulang.
+    from app.core import config as cfg
+    cfg.settings.environment = "production"
+    try:
+        from fastapi.testclient import TestClient
+        from app.main import app
+        with TestClient(app) as c:
+            r = c.post("/api/v1/auth/login/", json={"email": "admin@mauekspor.example", "password": "admin123"})
+            assert r.status_code == 200
+            blocked = c.post("/api/v1/tasks/", json={"title": "prod csrf"})
+            assert blocked.status_code == 403
+    finally:
+        cfg.settings.environment = "development"

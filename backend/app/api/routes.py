@@ -910,7 +910,8 @@ def get_product(product_id: str):
 def create_product(payload: sc.CreateProductPayload):
     data = payload.model_dump(exclude_none=True)
     data.update({
-        "id": db.gen_id("products", "PRD"),
+        # ID dialokasikan atomik di db.create (PRD FR-X-1/2) — bukan gen_id lalu
+        # insert terpisah yang bisa balapan dan menimpa record lain.
         "status": "Needs HS Review",
         "hs": "TBD",
         "readiness": 40,
@@ -927,7 +928,7 @@ def create_product(payload: sc.CreateProductPayload):
     data.setdefault("weight_net", None)
     data.setdefault("weight_gross", None)
     data["readiness"] = compute_product_readiness(data)
-    return _one(db.insert("products", data))
+    return _one(db.create("products", data, prefix="PRD"))
 
 
 def _generate_sku(product: dict) -> str:

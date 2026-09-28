@@ -359,11 +359,35 @@ def update(table: str, record_id: str, patch: dict[str, Any]) -> dict[str, Any] 
     return record
 
 
+def create(table: str, record: dict[str, Any], prefix: str | None = None) -> dict[str, Any]:
+    """Buat record BARU dengan id unik secara atomik (PRD §5.15 FR-X-1/FR-X-2).
+
+    Berbeda dengan `insert` (yang idempoten: id sama = update), fungsi ini
+    MENOLAK id yang sudah ada (raise ``ValueError``) sehingga "create" tidak
+    pernah berubah diam-diam menjadi "update" saat id bertabrakan. Alokasi id +
+    penulisan terjadi di bawah satu lock sehingga aman konkuren.
+    """
+    with _LOCK:
+        if "id" not in record or record["id"] in (None, ""):
+            record["id"] = _gen_id_locked(table, prefix)
+        _attach(table, record)
+        if _get_locked(table, str(record["id"])) is not None:
+            raise ValueError(f"Record {table}/{record['id']} already exists")
+        all(table).append(record)
+        result = record
+    _persist_record(table, result)
+    return result
+
+
 def replace(table: str, record_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
     with _LOCK:
         for i, record in enumerate(all(table)):
             if record.get("id") == record_id:
+                # Pertahankan metadata internal (__table) agar `save()` berikutnya
+                # tetap mem-persist; sebelumnya replace() menghilangkannya.
+                previous_table = record.get("__table", table)
                 data["id"] = record_id
+                _attach(previous_table, data)
                 all(table)[i] = data
                 result = data
                 break

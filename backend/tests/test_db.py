@@ -82,3 +82,29 @@ def test_loaded_records():
     db.insert("products", {"id": "P-1"})
     db.insert("products", {"id": "P-2"})
     assert db.loaded_records("products") == 2
+
+
+def test_create_menolak_id_duplikat():
+    """PRD FR-X-2: create tidak boleh berubah diam-diam menjadi update."""
+    db.create("products", {"id": "PRD-DUP", "name": "Pertama"})
+    with pytest.raises(ValueError):
+        db.create("products", {"id": "PRD-DUP", "name": "Kedua"})
+    # Record asli tidak tertimpa.
+    assert db.get("products", "PRD-DUP")["name"] == "Pertama"
+    assert len(db.all("products")) == 1
+
+
+def test_create_mengalokasikan_id_unik():
+    a = db.create("buyers", {"name": "A"})
+    b = db.create("buyers", {"name": "B"})
+    assert a["id"] != b["id"]
+
+
+def test_replace_mempertahankan_metadata_table():
+    db.insert("products", {"id": "PRD-R1", "name": "X"})
+    replaced = db.replace("products", "PRD-R1", {"name": "Y"})
+    assert replaced["__table"] == "products"
+    # save() harus tetap bekerja setelah replace.
+    replaced["name"] = "Z"
+    db.save(replaced)
+    assert db.get("products", "PRD-R1")["name"] == "Z"

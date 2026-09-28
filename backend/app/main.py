@@ -218,11 +218,15 @@ def _rate_limit_key(request) -> str:
     Percaya HANYA X-Real-IP (selalu dioverwrite proxy dari $remote_addr —
     tidak bisa dipalsukan client dari sisi proxy). X-Forwarded-For pertama
     bisa dipalsukan client (nginx hanya menambah hop, tidak menimpa),
-    sehingga tidak dipakai sebagai kunci. Set MAUEKSPOR_TRUST_PROXY=0 untuk
-    mengabaikan header proxy sepenuhnya (mis. backend terekspos langsung).
+    sehingga tidak dipakai sebagai kunci.
+
+    Default OFF (fail-safe, PRD §6 NFR-SEC-1): bila backend terekspos langsung
+    tanpa proxy yang menimpa X-Real-IP, klien bisa memalsukan header dan
+    melewati rate-limit. Nyalakan eksplisit dengan MAUEKSPOR_TRUST_PROXY=1
+    HANYA bila backend selalu di belakang proxy tepercaya.
     Fallback: IP socket langsung.
     """
-    if os.getenv("MAUEKSPOR_TRUST_PROXY", "1").lower() not in {"0", "false", "no"}:
+    if os.getenv("MAUEKSPOR_TRUST_PROXY", "0").lower() in {"1", "true", "yes"}:
         real_ip = request.headers.get("x-real-ip", "").strip()
         if real_ip:
             return real_ip
@@ -347,25 +351,44 @@ def issue_csrf_token(request) -> str:
     return token
 
 
+# Endpoint mutasi publik (tanpa sesi) yang boleh tanpa CSRF (mis. login).
+_CSRF_EXEMPT_PREFIXES = (
+    "/api/v1/auth/login",
+    "/api/v1/auth/register",
+    "/api/v1/auth/register-admin",
+    "/api/v1/auth/refresh",
+    "/api/v1/auth/csrf",
+)
+
+
 @app.middleware("http")
 async def csrf_protection(request, call_next):
-    """Cegah CSRF untuk mutasi yang memakai cookie (bukan Bearer).
+    """WAJIBKAN CSRF untuk setiap mutasi berbasis cookie (PRD §5.1 FR-AUTH-1).
 
-    Diaktifkan via env MAUEKSPOR_ENABLE_CSRF=1 (default nonaktif karena
-    auth utama adalah Bearer token; CSRF hanya untuk fallback cookie).
+    Prinsip: kalau request mengautentikasi lewat cookie (bukan Bearer) dan
+    mengubah state, maka token CSRF harus disertakan. Bearer (jalur utama
+    frontend) tidak terpengaruh.
+
+    Default: AKTIF di production (fail-closed), nonaktif di dev/test agar
+    ergonomis. Bisa dipaksa via MAUEKSPOR_ENABLE_CSRF=1/0.
     """
-    if os.getenv("MAUEKSPOR_ENABLE_CSRF", "").lower() not in {"1", "true", "yes"}:
+    flag = os.getenv("MAUEKSPOR_ENABLE_CSRF", "").lower()
+    is_prod = settings.environment.strip().lower() in {"production", "prod"}
+    enabled = (flag in {"1", "true", "yes"}) or (is_prod and flag not in {"0", "false", "no"})
+    if not enabled:
         return await call_next(request)
+    path = request.url.path
     is_write = request.method in {"POST", "PUT", "PATCH", "DELETE"}
     uses_bearer = request.headers.get("authorization", "").lower().startswith("bearer ")
     has_cookie = bool(request.cookies.get("access_token"))
 
     if (
-        request.url.path.startswith("/api/v1/")
+        path.startswith("/api/v1/")
         and is_write
         and has_cookie
         and not uses_bearer
-        and not _is_public_mutation(request.url.path)
+        and not path.startswith(_CSRF_EXEMPT_PREFIXES)
+        and not _is_public_mutation(path)
     ):
         csrf = request.headers.get("x-csrf-token")
         if not csrf or csrf not in _active_csrf_tokens():
