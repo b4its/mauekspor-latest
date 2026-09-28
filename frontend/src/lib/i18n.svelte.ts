@@ -2854,6 +2854,16 @@ const dictionary: Record<string, Entry> = {
 	'Gagal menghapus order terpilih.': { id: 'Gagal menghapus order terpilih.', en: 'Failed to delete selected orders.' },
 	'Hapus order terpilih': { id: 'Hapus order terpilih', en: 'Delete selected orders' },
 	'Order terpilih akan dihapus permanen dari workspace.': { id: 'Order terpilih akan dihapus permanen dari workspace.', en: 'Selected orders will be permanently removed from the workspace.' },
+	'kuotasi': { id: 'kuotasi', en: 'quotations' },
+	'kuotasi dihapus.': { id: 'kuotasi dihapus.', en: 'quotations deleted.' },
+	'Gagal menghapus kuotasi terpilih.': { id: 'Gagal menghapus kuotasi terpilih.', en: 'Failed to delete selected quotations.' },
+	'Hapus kuotasi terpilih': { id: 'Hapus kuotasi terpilih', en: 'Delete selected quotations' },
+	'Kuotasi terpilih akan dihapus permanen dari workspace.': { id: 'Kuotasi terpilih akan dihapus permanen dari workspace.', en: 'Selected quotations will be permanently removed from the workspace.' },
+	'tugas': { id: 'tugas', en: 'tasks' },
+	'tugas dihapus.': { id: 'tugas dihapus.', en: 'tasks deleted.' },
+	'Gagal menghapus tugas terpilih.': { id: 'Gagal menghapus tugas terpilih.', en: 'Failed to delete selected tasks.' },
+	'Hapus tugas terpilih': { id: 'Hapus tugas terpilih', en: 'Delete selected tasks' },
+	'Tugas terpilih akan dihapus permanen dari workspace.': { id: 'Tugas terpilih akan dihapus permanen dari workspace.', en: 'Selected tasks will be permanently removed from the workspace.' },
 	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
 };
 

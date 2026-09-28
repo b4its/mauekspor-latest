@@ -5,7 +5,7 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { quotations as seedQuotations } from '$lib/data/trade';
-	import { listQuotations, createQuotation, acceptQuotation, deleteQuotation } from '$lib/api/quotations';
+	import { listQuotations, createQuotation, acceptQuotation, deleteQuotation, batchDeleteQuotations } from '$lib/api/quotations';
 	import { downloadFile } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -16,8 +16,10 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { page } from '$app/state';
 	import { formatDate } from '$lib/utils/date';
@@ -176,6 +178,26 @@ import { page } from '$app/state';
 		paginationPage = 1;
 	});
 
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteQuotations(bulk.ids);
+			bulk.clear();
+			await quotations.load();
+			message = `${res.data.deletedCount} ${t('kuotasi dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus kuotasi terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -266,11 +288,28 @@ import { page } from '$app/state';
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((q) => q.id))} onchange={() => bulk.toggleAll(pagedItems.map((q) => q.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search"
 				aria-label={t('Search quotation, buyer, incoterm...')} placeholder={t('Search quotation, buyer, incoterm...')} class="w-[min(390px,100%)]" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('kuotasi')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus kuotasi terpilih'),
+			description: t('Kuotasi terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('kuotasi')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	{#if quotations.loading}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -294,11 +333,14 @@ import { page } from '$app/state';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as quote}
-				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class={`relative flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md ${bulk.has(quote.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="absolute top-4 right-4 z-10">
+						<input type="checkbox" class="size-4" checked={bulk.has(quote.id)} aria-label={`${t('Pilih')} ${quote.id}`} onchange={() => bulk.toggle(quote.id)} onclick={(e) => e.stopPropagation()} />
+					</div>
 					<div class="grid gap-4 p-5">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(quote.status))}>{label(quote.status)}</Badge>
-							<strong class="text-2xl font-bold tracking-tight">{quote.margin}%</strong>
+							<strong class="text-2xl font-bold tracking-tight mr-6">{quote.margin}%</strong>
 						</div>
 						<a href={`/quotations/${quote.id}`} class="block no-underline hover:underline">
 							<h3 class="text-2xl font-bold tracking-tight text-foreground">{quote.id}</h3>

@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { projects as seedProjects, workTasks as seedTasks, type WorkTask } from '$lib/data/trade';
-	import { listTasks, createTask, completeTask, deleteTask } from '$lib/api/tasks';
+	import { listTasks, createTask, completeTask, deleteTask, batchDeleteTasks } from '$lib/api/tasks';
 	import { downloadFile } from '$lib/api/client';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -18,8 +18,10 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
+import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
+import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
 import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 import { formatDate } from '$lib/utils/date';
 
@@ -187,6 +189,26 @@ import { formatDate } from '$lib/utils/date';
 		paginationPage = 1;
 	});
 
+	// Aksi massal: pilih baris lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteTasks(bulk.ids);
+			bulk.clear();
+			await workTasks.load();
+			message = `${res.data.deletedCount} ${t('tugas dihapus.')}`;
+		} catch {
+			error = t('Gagal menghapus tugas terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -261,11 +283,28 @@ import { formatDate } from '$lib/utils/date';
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
 			<Input bind:value={query} type="search"
 				aria-label={t('Search task, module, owner...')} placeholder={t('Search task, module, owner...')} class="w-[min(390px,100%)]" />
 			<SortSelect bind:key={sortKey} bind:dir={sortDir} options={sortOptions} placeholder={t('Urutkan')} />
 		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('tugas')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus tugas terpilih'),
+			description: t('Tugas terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('tugas')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		<Card>
@@ -301,11 +340,14 @@ import { formatDate } from '$lib/utils/date';
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each pagedItems as task}
-				<Card class="flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md">
+				<Card class={`relative flex flex-col justify-between transition-all hover:border-ring/40 hover:shadow-md ${bulk.has(task.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="absolute top-4 right-4 z-10">
+						<input type="checkbox" class="size-4" checked={bulk.has(task.id)} aria-label={`${t('Pilih')} ${task.title}`} onchange={() => bulk.toggle(task.id)} onclick={(e) => e.stopPropagation()} />
+					</div>
 					<a href={`/tasks/${task.id}`} class="block p-5 no-underline">
-						<div class="flex items-center justify-between gap-3"><Badge variant={toneVariant(statusTone(task.status))}>{label(task.status)}</Badge><strong class="text-sm font-bold">{label(task.priority)}</strong></div>
+						<div class="flex items-center justify-between gap-3 pr-6"><Badge variant={toneVariant(statusTone(task.status))}>{label(task.status)}</Badge><strong class="text-sm font-bold">{label(task.priority)}</strong></div>
 						<h3 class="mt-4 text-2xl font-bold tracking-tight">{task.title}</h3>
-						<p class="mt-2 text-sm text-muted-foreground">{task.module} · {projectName(task.projectId)}</p>
+						<p class="mt-2 text-sm text-muted-foreground">{label(task.module)} · {projectName(task.projectId)}</p>
 						<div class="mt-4 grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{task.owner}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(task.due)}</strong></div>
