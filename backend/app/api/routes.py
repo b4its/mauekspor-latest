@@ -736,6 +736,7 @@ _BATCH_DELETE_TABLES: dict[str, str] = {
     "support-tickets": "support_tickets",
     "api-keys": "api_keys",
     "export-analyses": "export_analyses",
+    "notifications": "notifications",
 }
 
 # Route path frontend -> tabel, agar alias seperti `/export-analysis/batch/delete/`

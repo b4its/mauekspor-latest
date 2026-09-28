@@ -6,13 +6,15 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { notifications as seedNotifications } from '$lib/data/trade';
-	import { listNotifications, markNotificationRead, archiveNotification, deleteNotification } from '$lib/api/notifications';
+	import { listNotifications, markNotificationRead, archiveNotification, deleteNotification, batchDeleteNotifications } from '$lib/api/notifications';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
+	import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -137,6 +139,27 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		);
 		return () => clearTimeout(syncTimer);
 	});
+
+	// Aksi massal: pilih notifikasi lalu hapus sekaligus.
+	const bulk = createBulkSelection();
+	let batchDeleting = $state(false);
+
+	async function removeSelected() {
+		if (bulk.count === 0) return;
+		error = '';
+		batchDeleting = true;
+		try {
+			const res = await batchDeleteNotifications(bulk.ids);
+			bulk.clear();
+			await notifications.load();
+			marked = false;
+			void res;
+		} catch {
+			error = t('Gagal menghapus notifikasi terpilih.');
+		} finally {
+			batchDeleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -183,9 +206,28 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Button variant={activeFilter === filter ? 'default' : 'outline'} size="sm" onclick={() => (activeFilter = filter)}>{trFilter(filter)}</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Cari notifikasi, modul, tingkat keparahan...')} placeholder={t('Cari notifikasi, modul, tingkat keparahan...')} class="w-[min(390px,100%)]" />
+		<div class="flex flex-wrap items-center gap-2">
+			<label class="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+				<input type="checkbox" class="size-4" checked={bulk.allOf(pagedItems.map((x) => x.id))} onchange={() => bulk.toggleAll(pagedItems.map((x) => x.id))} />
+				{t('Pilih semua')}
+			</label>
+			<Input bind:value={query} type="search"
+				aria-label={t('Cari notifikasi, modul, tingkat keparahan...')} placeholder={t('Cari notifikasi, modul, tingkat keparahan...')} class="w-[min(390px,100%)]" />
+		</div>
 	</div>
+
+	<BulkActionsBar
+		count={bulk.count}
+		busy={batchDeleting}
+		noun={t('notifikasi')}
+		ondelete={() => confirm.ask({
+			title: t('Hapus notifikasi terpilih'),
+			description: t('Notifikasi terpilih akan dihapus permanen dari workspace.'),
+			detail: `${bulk.count} ${t('notifikasi')}`,
+			action: removeSelected
+		})}
+		onclear={() => bulk.clear()}
+	/>
 
 	{#if notifications.loading}
 		<div class="grid gap-3">
@@ -211,11 +253,14 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	{:else}
 		<div class="grid gap-3">
 			{#each pagedItems as item}
-				<Card class="flex flex-col items-start justify-between gap-4 p-5 md:flex-row md:items-center">
-					<div class="min-w-0">
-						<Badge variant={toneVariant(statusTone(item.status))}>{trStatus(item.status)}</Badge>
-						<strong class="mt-2.5 block text-xl font-bold tracking-tight">{item.title}</strong>
-						<p class="mt-2 leading-relaxed text-muted-foreground">{item.description}</p>
+				<Card class={`flex flex-col items-start justify-between gap-4 p-5 md:flex-row md:items-center ${bulk.has(item.id) ? 'border-primary ring-2 ring-primary/30' : ''}`}>
+					<div class="flex min-w-0 items-start gap-3">
+						<input type="checkbox" class="mt-1 size-4 shrink-0" checked={bulk.has(item.id)} aria-label={`${t('Pilih')} ${item.title}`} onchange={() => bulk.toggle(item.id)} />
+						<div class="min-w-0">
+							<Badge variant={toneVariant(statusTone(item.status))}>{trStatus(item.status)}</Badge>
+							<strong class="mt-2.5 block text-xl font-bold tracking-tight">{item.title}</strong>
+							<p class="mt-2 leading-relaxed text-muted-foreground">{item.description}</p>
+						</div>
 					</div>
 					<aside class="grid shrink-0 justify-items-start gap-2.5 md:min-w-[200px] md:justify-items-end">
 						<Badge variant={toneVariant(statusTone(item.severity))}>{label(item.severity)}</Badge>

@@ -16,3 +16,10 @@ export function archiveNotification(id: string) {
 export function deleteNotification(id: string) {
 	return apiFetch<{ status: string; id: string }>(`/notifications/${id}/`, { method: 'DELETE' });
 }
+
+export function batchDeleteNotifications(ids: string[]) {
+	return apiFetch<{ deleted: string[]; deletedCount: number }>('/notifications/batch/delete/', {
+		method: 'POST',
+		body: JSON.stringify({ ids })
+	});
+}

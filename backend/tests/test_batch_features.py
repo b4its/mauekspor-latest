@@ -293,7 +293,7 @@ def test_batch_delete_empty_ids_returns_422():
 def test_batch_delete_available_for_common_modules():
     with TestClient(app) as c:
         headers = _login(c)
-        for module in ("orders", "quotations", "shipments", "payments", "documents", "suppliers", "buyers", "messages", "support"):
+        for module in ("orders", "quotations", "shipments", "payments", "documents", "suppliers", "buyers", "messages", "support", "notifications"):
             res = c.post(f"/api/v1/{module}/batch/delete/", json={"ids": []}, headers=headers)
             # 422 (validasi ids kosong) membuktikan route terdaftar — bukan 404/405.
             assert res.status_code == 422, module
