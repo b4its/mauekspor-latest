@@ -83,15 +83,15 @@
 						<FieldGroup>
 							<Field>
 								<FieldLabel>{t('Email Admin')}</FieldLabel>
-								<Input type="email" placeholder="admin@company.com" bind:value={email} required />
+								<Input type="email" placeholder="admin@company.com" bind:value={email} required aria-label={t('Email Admin')} />
 							</Field>
 							<Field>
 								<FieldLabel>{t('Password')}</FieldLabel>
-								<Input type="password" placeholder={t('Minimal 8 karakter')} bind:value={password} required />
+								<Input type="password" placeholder={t('Minimal 8 karakter')} bind:value={password} required aria-label={t('Password')} />
 							</Field>
 							<Field>
 								<FieldLabel>{t('Kode Admin')}</FieldLabel>
-								<Input type="password" placeholder="******" bind:value={adminCode} required />
+								<Input type="password" placeholder="******" bind:value={adminCode} required aria-label={t('Kode Admin')} />
 								<p class="mt-1 text-xs text-muted-foreground">{t('Kode bootstrap dari file .env (MAUEKSPOR_ADMIN_CODE).')}</p>
 							</Field>
 							{#if error}

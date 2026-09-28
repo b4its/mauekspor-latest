@@ -285,7 +285,7 @@ import { page } from '$app/state';
 				</div>
 				{#if showRename === file.id}
 					<div class="flex flex-wrap items-center gap-2">
-						<Input bind:value={renameValue} class="w-[min(240px,100%)]" placeholder={t('Nama file baru...')} />
+						<Input bind:value={renameValue} class="w-[min(240px,100%)]" placeholder={t('Nama file baru...')} aria-label={t('Nama file baru')} />
 						<Button variant="outline" disabled={busyId === file.id} onclick={() => handleRename(file.id)}>{t('Simpan')}</Button>
 						<Button variant="outline" onclick={() => (showRename = '')}>{t('Batal')}</Button>
 					</div>

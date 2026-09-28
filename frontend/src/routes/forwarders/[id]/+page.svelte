@@ -252,7 +252,7 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 										<select class="h-9 rounded-md border bg-background px-2 text-sm" bind:value={editingRating}>
 											{#each [5, 4, 3, 2, 1] as r}<option value={r}>{r} ★</option>{/each}
 										</select>
-										<Input placeholder={t('Tulis ulasan...')} bind:value={editingText} />
+										<Input placeholder={t('Tulis ulasan...')} aria-label={t('Ubah ulasan')} bind:value={editingText} />
 										{#if editError}
 											<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{editError}</p>
 										{/if}
@@ -286,7 +286,7 @@ import type { ForwarderStatistics, ForwarderReview, ForwarderQuote } from '$lib/
 						{#each [5, 4, 3, 2, 1] as r}<option value={r}>{r} ★</option>{/each}
 					</select>
 				</label>
-				<Input placeholder={t('Tulis ulasan...')} bind:value={reviewText} />
+				<Input placeholder={t('Tulis ulasan...')} aria-label={t('Tulis ulasan')} bind:value={reviewText} />
 				<Button onclick={handleReview} disabled={submitting}>{submitting ? t('Mengirim...') : t('Kirim review')}</Button>
 			</CardContent>
 		</Card>

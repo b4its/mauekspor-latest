@@ -1142,7 +1142,7 @@
 									<span class="ms-1">{t('Buat Record')}</span>
 								</Button>
 
-								<Button size="sm" variant="outline" onclick={loadRecords} title={t('Segarkan')}>
+								<Button size="sm" variant="outline" onclick={loadRecords} title={t('Segarkan')} aria-label={t('Segarkan')}>
 									<RefreshCwIcon class="size-3.5 {recordsLoading ? 'animate-spin' : ''}" />
 								</Button>
 							</div>
@@ -1416,7 +1416,7 @@
 							<NativeSelectOption value="export">EXPORT</NativeSelectOption>
 						</NativeSelect>
 
-						<Button size="sm" variant="outline" onclick={loadAuditEvents} title={t('Segarkan')}>
+						<Button size="sm" variant="outline" onclick={loadAuditEvents} title={t('Segarkan')} aria-label={t('Segarkan')}>
 							<RefreshCwIcon class="size-3.5 {auditLoading ? 'animate-spin' : ''}" />
 						</Button>
 					</div>

@@ -266,7 +266,7 @@
 						<input type="text" aria-label={t('Cari sesi')} placeholder={t('Cari sesi...')} bind:value={searchQuery}
 							class="w-full bg-transparent outline-none placeholder:text-muted-foreground" />
 						{#if searchQuery}
-							<button onclick={() => (searchQuery = '')} class="shrink-0 text-muted-foreground hover:text-foreground"><XIcon class="size-3" /></button>
+							<button onclick={() => (searchQuery = '')} aria-label={t('Bersihkan pencarian')} class="shrink-0 text-muted-foreground hover:text-foreground"><XIcon class="size-3" /></button>
 						{/if}
 					</div>
 				</div>
@@ -428,6 +428,7 @@
 			<!-- Input -->
 			<form class="flex items-end gap-2 border-t bg-card px-3 py-3 md:px-4" onsubmit={(e) => { e.preventDefault(); send(); }}>
 				<Input bind:value={input} placeholder={t('Tanya tentang kepatuhan, freight, pricing...')}
+					aria-label={t('Tulis pesan untuk asisten AI')}
 					class="min-h-[44px] flex-1 resize-none text-sm" disabled={!active} onkeydown={handleKeydown} />
 				<Button type="submit" disabled={sending || !active || !input.trim()} class="h-[44px] w-[44px] shrink-0 p-0" title={t('Kirim')} aria-label={t('Kirim pesan')}>
 					{#if sending}
@@ -450,7 +451,7 @@
 				<Dialog.Description>{t('Masukkan nama baru untuk sesi chat ini.')}</Dialog.Description>
 			</Dialog.Header>
 			<div class="grid gap-4 py-4">
-				<Input bind:value={renameTitle} placeholder={t('Nama sesi...')} onkeydown={(e) => { if (e.key === 'Enter') confirmRename(); }} />
+				<Input bind:value={renameTitle} placeholder={t('Nama sesi...')} aria-label={t('Nama sesi')} onkeydown={(e) => { if (e.key === 'Enter') confirmRename(); }} />
 			</div>
 			<Dialog.Footer>
 				<Button variant="outline" onclick={() => { renameDialogOpen = false; renameTarget = null; }}>{t('Batal')}</Button>

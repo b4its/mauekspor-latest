@@ -290,6 +290,7 @@
 					class="size-8 p-0 text-muted-foreground hover:text-foreground"
 					onclick={handleNewSession}
 					title={t('Sesi Baru')}
+					aria-label={t('Sesi Baru')}
 				>
 					<MessageSquarePlusIcon class="size-4" />
 				</Button>
@@ -299,6 +300,7 @@
 					class="size-8 p-0 text-muted-foreground hover:text-foreground"
 					onclick={openFullChat}
 					title={t('Buka Layar Penuh')}
+					aria-label={t('Buka Layar Penuh')}
 				>
 					<ExternalLinkIcon class="size-4" />
 				</Button>
@@ -308,6 +310,7 @@
 					class="size-8 p-0 text-muted-foreground hover:text-foreground"
 					onclick={closeAiAssistant}
 					title={t('Tutup (Esc)')}
+					aria-label={t('Tutup (Esc)')}
 				>
 					<XIcon class="size-4" />
 				</Button>
@@ -458,6 +461,7 @@
 					size="sm"
 					class="h-10 w-10 shrink-0 rounded-xl p-0"
 					title={t('Kirim (Enter)')}
+					aria-label={t('Kirim (Enter)')}
 				>
 					{#if sending}
 						<span class="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"></span>

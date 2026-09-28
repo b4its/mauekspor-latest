@@ -183,7 +183,7 @@
 		<Card class="md:col-span-2">
 			<CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
 				<div class="flex flex-wrap gap-2">
-					<Input placeholder={t('Cari produk...')} bind:value={search} class="w-56" />
+					<Input placeholder={t('Cari produk...')} aria-label={t('Cari produk')} bind:value={search} class="w-56" />
 					<select
 						class="h-10 rounded-md border bg-background px-3 text-sm"
 						aria-label={t('Filter kategori')}

@@ -601,6 +601,7 @@
 						onclick={loadCountries}
 						class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
 						title={t('Segarkan')}
+						aria-label={t('Segarkan')}
 					>
 						<RefreshCwIcon class="size-3.5 {countriesLoading ? 'animate-spin' : ''}" />
 					</button>

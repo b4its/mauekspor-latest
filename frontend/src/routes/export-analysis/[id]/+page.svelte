@@ -315,6 +315,7 @@
 									<div class="flex gap-2">
 										<Input
 											placeholder={t('Label (mis. Allergen)')}
+											aria-label={t('Label spesifikasi kualitas')}
 											value={key}
 											oninput={(e) => {
 												const newKey = (e.currentTarget as HTMLInputElement).value;
@@ -327,12 +328,13 @@
 										/>
 										<Input
 											placeholder={t('Nilai')}
+											aria-label={t('Nilai spesifikasi kualitas')}
 											value={value}
 											oninput={(e) => {
 												qualitySpecs = { ...qualitySpecs, [key]: (e.currentTarget as HTMLInputElement).value };
 											}}
 										/>
-										<Button type="button" size="icon" variant="ghost" onclick={() => removeSpecRow(key)}>✕</Button>
+										<Button type="button" size="icon" variant="ghost" aria-label={t('Hapus baris')} onclick={() => removeSpecRow(key)}>✕</Button>
 									</div>
 								{/each}
 							</div>

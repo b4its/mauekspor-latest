@@ -135,7 +135,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardHeader>
 		<CardContent class="grid gap-3">
 			<form class="flex gap-2" onsubmit={(event) => { event.preventDefault(); createModule(); }}>
-				<Input placeholder={t('Judul modul baru...')} bind:value={newTitle} class="flex-1" />
+				<Input placeholder={t('Judul modul baru...')} aria-label={t('Judul modul baru')} bind:value={newTitle} class="flex-1" />
 				<Button type="submit" disabled={creating}>{creating ? t('Membuat...') : t('Buat modul')}</Button>
 			</form>
 			{#if modules.loading}

@@ -167,7 +167,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		</CardHeader>
 		<CardContent class="grid gap-3">
 			<form class="grid gap-2" onsubmit={(event) => { event.preventDefault(); createArticle(); }}>
-				<Input placeholder={t('Judul artikel baru...')} bind:value={newTitle} />
+				<Input placeholder={t('Judul artikel baru...')} aria-label={t('Judul artikel baru')} bind:value={newTitle} />
 				<Textarea placeholder={t('Konten (Markdown)...')} bind:value={newContent} rows={3} />
 				<Button type="submit" disabled={creating} class="w-fit">{creating ? t('Membuat...') : t('Buat artikel')}</Button>
 			</form>
@@ -186,7 +186,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<div class="rounded-lg border bg-muted/30 p-3.5">
 					{#if editingId === article.id}
 						<div class="grid gap-2">
-							<Input placeholder={t('Judul artikel...')} bind:value={editTitle} />
+							<Input placeholder={t('Judul artikel...')} aria-label={t('Judul artikel')} bind:value={editTitle} />
 							<Textarea placeholder={t('Konten (Markdown)...')} bind:value={editContent} rows={3} />
 							{#if editError}
 								<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{editError}</p>

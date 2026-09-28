@@ -2789,7 +2789,23 @@ const dictionary: Record<string, Entry> = {
 	'Capture specifications, packaging, HS candidates, certificates, origin details, and product revisions before compliance analysis or quotation.': { id: 'Catat spesifikasi, kemasan, kandidat HS, sertifikat, detail asal, dan revisi produk sebelum analisis kepatuhan atau penawaran.', en: 'Capture specifications, packaging, HS candidates, certificates, origin details, and product revisions before compliance analysis or quotation.' },
 	'Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.': { id: 'Setiap proyek menghubungkan produk, klasifikasi HS, bukti kepatuhan, penawaran, dokumen, dan milestone pengiriman.', en: 'Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.' },
 	'Belum ada metrik analytics. Tambahkan proyek dagang untuk mulai mengukur performa.': { id: 'Belum ada metrik analytics. Tambahkan proyek dagang untuk mulai mengukur performa.', en: 'No analytics metrics yet. Add trade projects to start measuring performance.' },
-	'min read': { id: 'menit baca', en: 'min read' }
+	'min read': { id: 'menit baca', en: 'min read' },
+	// Label aksesibilitas & kontrol tambahan
+	'Label spesifikasi kualitas': { id: 'Label spesifikasi kualitas', en: 'Quality spec label' },
+	'Nilai spesifikasi kualitas': { id: 'Nilai spesifikasi kualitas', en: 'Quality spec value' },
+	'Hapus baris': { id: 'Hapus baris', en: 'Remove row' },
+	'Ubah ulasan': { id: 'Ubah ulasan', en: 'Edit review' },
+	'Tulis ulasan': { id: 'Tulis ulasan', en: 'Write review' },
+	'Nama sesi': { id: 'Nama sesi', en: 'Session name' },
+	'Nama file baru': { id: 'Nama file baru', en: 'New file name' },
+	'Filter tag': { id: 'Filter tag', en: 'Filter tag' },
+	'Judul artikel baru': { id: 'Judul artikel baru', en: 'New article title' },
+	'Judul artikel': { id: 'Judul artikel', en: 'Article title' },
+	'Judul modul baru': { id: 'Judul modul baru', en: 'New module title' },
+	'Kirim (Enter)': { id: 'Kirim (Enter)', en: 'Send (Enter)' },
+	'Sesi Baru': { id: 'Sesi Baru', en: 'New Session' },
+	'Buka Layar Penuh': { id: 'Buka Layar Penuh', en: 'Open Full Screen' },
+	'Tutup (Esc)': { id: 'Tutup (Esc)', en: 'Close (Esc)' }
 };
 
 let initial: Locale = 'id';

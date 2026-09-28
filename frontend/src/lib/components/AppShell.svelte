@@ -403,6 +403,7 @@ import { t, i18n, toggleLocale } from '$lib/i18n.svelte';
 				<Input
 					bind:value={commandQuery}
 					placeholder={t('Cari navigasi, proyek, produk...')}
+					aria-label={t('Cari navigasi, proyek, produk...')}
 					class="border-0 bg-transparent focus-visible:ring-0 focus-visible:border-0"
 				/>
 			</div>
