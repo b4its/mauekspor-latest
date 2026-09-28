@@ -5,6 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import {
 		analyticsMetrics as seedMetrics,
 		buyers as seedBuyers,
@@ -26,6 +27,7 @@
 	import { t } from '$lib/i18n.svelte';
 	let refreshed = $state(false);
 	let refreshing = $state(false);
+	let loading = $state(true);
 	let error = $state('');
 	let aiSummary = $state<AnalyticsAiSummary | null>(null);
 	let aiLoading = $state(false);
@@ -65,7 +67,8 @@
 				// Sebelumnya merge by label selalu gagal (label seed beda) → demo values.
 				metrics = res.data.length ? res.data : seedMetrics;
 			})
-			.catch(() => { error = t('Gagal memuat metrik analytics.'); });
+			.catch(() => { error = t('Gagal memuat metrik analytics.'); })
+			.finally(() => { loading = false; });
 		getAnalyticsLanes()
 			.then((res) => {
 				lanes = res.data.length ? res.data : seedLanes;
@@ -173,15 +176,33 @@
 	</Card>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		{#each metrics as metric}
-			<Card>
-				<CardContent class="p-5">
-					<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{metric.label}</span>
-					<strong class="mt-2 block text-3xl font-bold tracking-tight">{metric.value}</strong>
-					<small class="mt-1 block text-sm text-muted-foreground">{metric.change}</small>
-				</CardContent>
-			</Card>
-		{/each}
+		{#if loading}
+			{#each Array(6) as _}
+				<Card>
+					<CardContent class="p-5">
+						<Skeleton class="h-3 w-24" />
+						<Skeleton class="mt-3 h-8 w-20" />
+						<Skeleton class="mt-2 h-4 w-16" />
+					</CardContent>
+				</Card>
+			{/each}
+		{:else}
+			{#each metrics as metric}
+				<Card>
+					<CardContent class="p-5">
+						<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{metric.label}</span>
+						<strong class="mt-2 block text-3xl font-bold tracking-tight">{metric.value}</strong>
+						<small class="mt-1 block text-sm text-muted-foreground">{metric.change}</small>
+					</CardContent>
+				</Card>
+			{:else}
+				<Card class="sm:col-span-2 lg:col-span-3">
+					<CardContent class="p-6 text-center text-sm font-semibold text-muted-foreground">
+						{t('Belum ada metrik analytics. Tambahkan proyek dagang untuk mulai mengukur performa.')}
+					</CardContent>
+				</Card>
+			{/each}
+		{/if}
 	</div>
 
 	<div class="grid gap-4 lg:grid-cols-2">

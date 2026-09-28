@@ -8,6 +8,7 @@
 	import { educationalArticles as seedArticles, educationalModules as seedModules } from '$lib/data/trade';
 	import { listEducationalArticles, publishEducationalArticle, createEducationalArticle, deleteEducationalArticle, updateEducationalArticle, uploadEducationalFile } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
@@ -170,6 +171,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Textarea placeholder={t('Konten (Markdown)...')} bind:value={newContent} rows={3} />
 				<Button type="submit" disabled={creating} class="w-fit">{creating ? t('Membuat...') : t('Buat artikel')}</Button>
 			</form>
+			{#if articles.loading}
+				{#each Array(4) as _}
+					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+						<div class="grid gap-2">
+							<Skeleton class="h-4 w-48" />
+							<Skeleton class="h-3 w-32" />
+						</div>
+						<Skeleton class="h-8 w-24" />
+					</div>
+				{/each}
+			{:else}
 			{#each pagedItems_articles as article}
 				<div class="rounded-lg border bg-muted/30 p-3.5">
 					{#if editingId === article.id}
@@ -188,7 +200,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<div class="flex items-center justify-between gap-3">
 							<div>
 								<strong class="block text-sm font-bold">{article.title}</strong>
-								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} min read - {article.level} - {(article.tags ?? []).join(' · ')}</span>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} {t('min read')} - {article.level} - {(article.tags ?? []).join(' · ')}</span>
 							</div>
 							<div class="grid justify-items-end gap-2">
 								<Badge variant={toneVariant(statusTone(article.status))}>{label(article.status)}</Badge>
@@ -224,6 +236,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					{/if}
 				</div>
 			{/each}
+			{/if}
 		</CardContent>
 	</Card>
 {#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>{/if}

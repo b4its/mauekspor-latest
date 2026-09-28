@@ -9,6 +9,7 @@
 	import { filterCountries, computeCountryStats } from '$lib/data/countries';
 	import { t } from '$lib/i18n.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 	import { page } from '$app/state';
@@ -148,7 +149,23 @@
 	</Card>
 
 	{#if countries.loading}
-		<p class="py-12 text-center text-sm text-muted-foreground">{t('Memuat direktori...')}</p>
+		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+			{#each Array(8) as _}
+				<div class="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+					<div class="flex items-center gap-3">
+						<Skeleton class="size-9 shrink-0 rounded-lg" />
+						<div class="grid w-full gap-1.5">
+							<Skeleton class="h-4 w-28" />
+							<Skeleton class="h-3 w-16" />
+						</div>
+					</div>
+					<div class="flex gap-1.5">
+						<Skeleton class="h-5 w-16 rounded-full" />
+						<Skeleton class="h-5 w-12 rounded-full" />
+					</div>
+				</div>
+			{/each}
+		</div>
 	{:else if countries.error}
 		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive" role="alert">
 			{countries.error}

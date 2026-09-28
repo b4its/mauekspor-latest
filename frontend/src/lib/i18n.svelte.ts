@@ -2787,7 +2787,9 @@ const dictionary: Record<string, Entry> = {
 	'Unit Pengolahan Hasil Desa': { id: 'Unit Pengolahan Hasil Desa', en: 'Village Product Processing Unit' },
 	'Structured product data for export readiness.': { id: 'Data produk terstruktur untuk kesiapan ekspor.', en: 'Structured product data for export readiness.' },
 	'Capture specifications, packaging, HS candidates, certificates, origin details, and product revisions before compliance analysis or quotation.': { id: 'Catat spesifikasi, kemasan, kandidat HS, sertifikat, detail asal, dan revisi produk sebelum analisis kepatuhan atau penawaran.', en: 'Capture specifications, packaging, HS candidates, certificates, origin details, and product revisions before compliance analysis or quotation.' },
-	'Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.': { id: 'Setiap proyek menghubungkan produk, klasifikasi HS, bukti kepatuhan, penawaran, dokumen, dan milestone pengiriman.', en: 'Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.' }
+	'Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.': { id: 'Setiap proyek menghubungkan produk, klasifikasi HS, bukti kepatuhan, penawaran, dokumen, dan milestone pengiriman.', en: 'Each project connects product, HS classification, compliance evidence, quotation, documents, and shipment milestones.' },
+	'Belum ada metrik analytics. Tambahkan proyek dagang untuk mulai mengukur performa.': { id: 'Belum ada metrik analytics. Tambahkan proyek dagang untuk mulai mengukur performa.', en: 'No analytics metrics yet. Add trade projects to start measuring performance.' },
+	'min read': { id: 'menit baca', en: 'min read' }
 };
 
 let initial: Locale = 'id';

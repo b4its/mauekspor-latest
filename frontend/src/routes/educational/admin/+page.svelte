@@ -7,6 +7,7 @@
 	import { listEducationalModules, publishEducationalModule } from '$lib/api/educational';
 	import { listEducationalArticles, publishEducationalArticle } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
@@ -103,20 +104,35 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Badge variant="secondary">{modules.items.length} {t('total')}</Badge>
 			</CardHeader>
 			<CardContent class="grid gap-2">
-				{#each pagedItems_modules as module}
-					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-						<div>
-							<strong class="block text-sm font-bold">{module.title}</strong>
-							<span class="mt-1 block text-xs font-semibold text-muted-foreground">{module.level} - {module.lessons} {t('pelajaran')}</span>
+				{#if modules.loading}
+					{#each Array(4) as _}
+						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+							<div class="grid gap-2">
+								<Skeleton class="h-4 w-40" />
+								<Skeleton class="h-3 w-24" />
+							</div>
+							<Skeleton class="h-8 w-20" />
 						</div>
-						<div class="grid justify-items-end gap-2">
-							<Badge variant={toneVariant(statusTone(module.status))}>{label(module.status)}</Badge>
-							<Button size="sm" variant={module.status === 'Published' ? 'outline' : 'default'} disabled={module.status === 'Published' || modulePublishing === module.id} onclick={() => publishModule(module.id)}>{modulePublishing === module.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
-						</div>
-					</div>
+					{/each}
 				{:else}
-					<p class="text-sm text-muted-foreground">{t('Belum ada modul.')}</p>
-				{/each}
+					{#each pagedItems_modules as module}
+						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+							<div>
+								<strong class="block text-sm font-bold">{module.title}</strong>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{module.level} - {module.lessons} {t('pelajaran')}</span>
+							</div>
+							<div class="grid justify-items-end gap-2">
+								<Badge variant={toneVariant(statusTone(module.status))}>{label(module.status)}</Badge>
+								<Button size="sm" variant={module.status === 'Published' ? 'outline' : 'default'} disabled={module.status === 'Published' || modulePublishing === module.id} onclick={() => publishModule(module.id)}>{modulePublishing === module.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
+							</div>
+						</div>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada modul.')}</p>
+					{/each}
+				{/if}
+			</CardContent>
+			<CardContent class="p-0">
+				<Pagination bind:page={paginationPage_modules} bind:pageSize={paginationPageSize_modules} totalPages={paginationTotalPages_modules} totalItems={modules.items?.length ?? 0} />
 			</CardContent>
 		</Card>
 
@@ -126,26 +142,38 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Badge variant="secondary">{articles.items.length} {t('total')}</Badge>
 			</CardHeader>
 			<CardContent class="grid gap-2">
-				{#each pagedItems_articles as article}
-					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
-						<div>
-							<strong class="block text-sm font-bold">{article.title}</strong>
-							<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} min read - {article.level}</span>
+				{#if articles.loading}
+					{#each Array(4) as _}
+						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+							<div class="grid gap-2">
+								<Skeleton class="h-4 w-40" />
+								<Skeleton class="h-3 w-24" />
+							</div>
+							<Skeleton class="h-8 w-20" />
 						</div>
-						<div class="grid justify-items-end gap-2">
-							<Badge variant={toneVariant(statusTone(article.status))}>{label(article.status)}</Badge>
-							<Button variant="ghost" size="sm" disabled={article.status === 'Published' || articlePublishing === article.id} onclick={() => publishArticle(article.id)}>{articlePublishing === article.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
-						</div>
-					</div>
+					{/each}
 				{:else}
-					<p class="text-sm text-muted-foreground">{t('Belum ada artikel.')}</p>
-				{/each}
+					{#each pagedItems_articles as article}
+						<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+							<div>
+								<strong class="block text-sm font-bold">{article.title}</strong>
+								<span class="mt-1 block text-xs font-semibold text-muted-foreground">{article.readMinutes} {t('min read')} - {article.level}</span>
+							</div>
+							<div class="grid justify-items-end gap-2">
+								<Badge variant={toneVariant(statusTone(article.status))}>{label(article.status)}</Badge>
+								<Button variant="ghost" size="sm" disabled={article.status === 'Published' || articlePublishing === article.id} onclick={() => publishArticle(article.id)}>{articlePublishing === article.id ? t('Mempublikasikan...') : t('Publikasikan')}</Button>
+							</div>
+						</div>
+					{:else}
+						<p class="text-sm text-muted-foreground">{t('Belum ada artikel.')}</p>
+					{/each}
+				{/if}
+			</CardContent>
+			<CardContent class="p-0">
+				<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
 			</CardContent>
 		</Card>
 	</div>
 {#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>{/if}
-	<Pagination bind:page={paginationPage_modules} bind:pageSize={paginationPageSize_modules} totalPages={paginationTotalPages_modules} totalItems={modules.items?.length ?? 0} />
-
-	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={articles.items?.length ?? 0} />
 
 </AppShell>

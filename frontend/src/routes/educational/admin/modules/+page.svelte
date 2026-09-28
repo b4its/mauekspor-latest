@@ -7,6 +7,7 @@
 	import { educationalModules as seedModules } from '$lib/data/trade';
 	import { listEducationalModules, publishEducationalModule, createEducationalModule, deleteEducationalModule, updateEducationalModule } from '$lib/api/educational';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
@@ -137,6 +138,17 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<Input placeholder={t('Judul modul baru...')} bind:value={newTitle} class="flex-1" />
 				<Button type="submit" disabled={creating}>{creating ? t('Membuat...') : t('Buat modul')}</Button>
 			</form>
+			{#if modules.loading}
+				{#each Array(4) as _}
+					<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
+						<div class="grid gap-2">
+							<Skeleton class="h-4 w-48" />
+							<Skeleton class="h-3 w-40" />
+						</div>
+						<Skeleton class="h-8 w-24" />
+					</div>
+				{/each}
+			{:else}
 			{#each pagedItems_modules as module, index (module.id)}
 				<div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3.5">
 					<div class="min-w-0">
@@ -170,6 +182,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 			{:else}
 				<p class="text-sm text-muted-foreground">{t('Belum ada data.')}</p>
 			{/each}
+			{/if}
 		</CardContent>
 	</Card>
 {#if error}<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>{/if}
