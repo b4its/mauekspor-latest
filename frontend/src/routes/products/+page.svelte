@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { products as seedProducts } from '$lib/data/trade';
+		import DataStateBanner from '$lib/components/DataStateBanner.svelte';
 	import { listProducts, deleteProduct, batchEnrichProducts, batchDeleteProducts } from '$lib/api/products';
 	import { downloadFile, exportPath } from '$lib/api/client';
 	import { statusTone, toneVariant } from '$lib/utils/format';
@@ -62,13 +62,21 @@
 		}
 	}
 
+	// Truth-in-UI (PRD G-09): jangan tampilkan seed sebagai data valid kecuali
+	// mode demo aktif. Gagal → daftar kosong + banner, bukan data fiktif.
+	let loadError = $state('');
+	let usingFallback = $state(false);
 	$effect(() => {
 		listProducts()
 			.then((res) => {
 				products = res.data;
+				loadError = '';
+				usingFallback = false;
 			})
 			.catch(() => {
-				products = seedProducts;
+				products = [];
+				usingFallback = false;
+				loadError = t('Tidak dapat memuat data dari server. Coba muat ulang.');
 			})
 			.finally(() => (loaded = true));
 	});
@@ -354,6 +362,7 @@
 	{#if error}
 		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
 	{/if}
+	<DataStateBanner usingFallback={usingFallback} error={loadError} class="mb-2" />
 	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredProducts?.length ?? 0} />
 
 	<ConfirmDialog

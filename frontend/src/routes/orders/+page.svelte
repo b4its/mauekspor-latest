@@ -16,6 +16,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { label } from '$lib/utils/labels';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import DataStateBanner from '$lib/components/DataStateBanner.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
 import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -289,9 +290,7 @@ import { page } from '$app/state';
 		<p role="status" class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600">{message}</p>
 	{/if}
 
-	{#if orders.error}
-		<p role="alert" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{orders.error}</p>
-	{/if}
+	<DataStateBanner usingFallback={orders.usingFallback} error={orders.error} />
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">

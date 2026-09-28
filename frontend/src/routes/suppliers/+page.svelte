@@ -17,6 +17,7 @@ import Pagination from '$lib/components/Pagination.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
 import BulkActionsBar from '$lib/components/BulkActionsBar.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import DataStateBanner from '$lib/components/DataStateBanner.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
 import { createBulkSelection } from '$lib/utils/bulkSelection.svelte';
@@ -259,9 +260,7 @@ import { createConfirmController } from '$lib/utils/confirm.svelte';
 		<p class="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-600" role="status">{message}</p>
 	{/if}
 
-	{#if suppliers.error}
-		<p class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive" role="alert">{suppliers.error}</p>
-	{/if}
+	<DataStateBanner usingFallback={suppliers.usingFallback} error={suppliers.error} />
 
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-wrap gap-2">

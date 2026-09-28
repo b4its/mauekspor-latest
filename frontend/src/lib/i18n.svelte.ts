@@ -2906,6 +2906,8 @@ const dictionary: Record<string, Entry> = {
 	'Mengunduh...': { id: 'Mengunduh...', en: 'Downloading...' },
 	'Gagal mengekspor data.': { id: 'Gagal mengekspor data.', en: 'Failed to export data.' },
 	'Gagal mengekspor dokumen.': { id: 'Gagal mengekspor dokumen.', en: 'Failed to export documents.' },
+	'Tidak dapat memuat data dari server. Coba muat ulang.': { id: 'Tidak dapat memuat data dari server. Coba muat ulang.', en: 'Could not load data from the server. Try reloading.' },
+	'Mode demo: data di bawah berasal dari contoh lokal, bukan server. Jangan pakai untuk keputusan nyata.': { id: 'Mode demo: data di bawah berasal dari contoh lokal, bukan server. Jangan pakai untuk keputusan nyata.', en: 'Demo mode: the data below comes from local samples, not the server. Do not use it for real decisions.' },
 	'Commercial Invoice': { id: 'Faktur Komersial', en: 'Commercial Invoice' },
 	'Packing List': { id: 'Packing List', en: 'Packing List' },
 	'Proforma Invoice': { id: 'Faktur Proforma', en: 'Proforma Invoice' },
