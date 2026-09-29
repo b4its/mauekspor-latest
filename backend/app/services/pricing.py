@@ -153,14 +153,31 @@ def calculate_exw(cogs_idr: float, packing_cost_idr: float, margin_percent: floa
     return round(total_idr / rate, 2)
 
 
+def _freight_and_insurance(fob: float, region: str) -> tuple[float, float]:
+    """Freight + asuransi (keduanya dalam display currency) dari FOB.
+
+    Diekstrak agar `calculate_cif` dan rincian biaya (`lines`) memakai angka
+    yang identik — sebelumnya rincian "Insurance" dihitung ulang dengan rumus
+    berbeda sehingga CIF − FOB ≠ freight + insurance pada tabel.
+    """
+    freight = fob * _FREIGHT_PERCENT.get(region, 0.12)
+    insurance = (fob + freight) * _INSURANCE_PERCENT
+    return freight, insurance
+
+
 def calculate_fob(exw: float, distance_km: float, rate: float) -> float:
+    """Hitung FOB: EXW + trucking ke pelabuhan + biaya dokumen.
+
+    `rate` dipertahankan pada signature untuk kompatibilitas; nilai biaya
+    logistik (`_TRUCKING_BANDS`, `_DOCUMENT_COST`) dinyatakan dalam display
+    currency sehingga ditambahkan langsung ke EXW.
+    """
     trucking = _trucking_cost(distance_km)
     return round(exw + trucking + _DOCUMENT_COST, 2)
 
 
 def calculate_cif(fob: float, region: str) -> float:
-    freight = fob * _FREIGHT_PERCENT.get(region, 0.12)
-    insurance = (fob + freight) * _INSURANCE_PERCENT
+    freight, insurance = _freight_and_insurance(fob, region)
     return round(fob + freight + insurance, 2)
 
 
@@ -327,6 +344,9 @@ def calculate_full_costing(
     cif = calculate_cif(fob, region)
     dap = calculate_dap(cif, region)
     container = container_capacity(product_volume_m3, product_weight_kg)
+    # Pakai komponen freight/insurance yang sama dengan calculate_cif agar
+    # rincian rekonsiliasi dengan CIF − FOB.
+    freight, insurance = _freight_and_insurance(fob, region)
     return {
         "exchangeRate": rate,
         "exchangeSource": fx.get("source", "fallback"),
@@ -345,8 +365,8 @@ def calculate_full_costing(
             {"category": "Margin", "label": f"Target margin {margin_percent}%", "amount": round(exw - (cogs_idr + packing_cost_idr) / rate, 2)},
             {"category": "Local logistics", "label": "Trucking to port", "amount": round(fob - exw - _DOCUMENT_COST, 2)},
             {"category": "Documents", "label": "Documentation fee", "amount": _DOCUMENT_COST},
-            {"category": "Freight", "label": f"Ocean freight ({region})", "amount": round(cif - fob - (fob + (cif - fob - fob * _INSURANCE_PERCENT) / (1 + _INSURANCE_PERCENT)) * _INSURANCE_PERCENT, 2)},
-            {"category": "Insurance", "label": "Cargo insurance 0.5%", "amount": round((fob + (cif - fob) * 0.9) * _INSURANCE_PERCENT, 2)},
+            {"category": "Freight", "label": f"Ocean freight ({region})", "amount": round(freight, 2)},
+            {"category": "Insurance", "label": "Cargo insurance 0.5%", "amount": round(insurance, 2)},
             {"category": "Destination local", "label": f"DAP on-carriage ({region})", "amount": round(dap - cif, 2)},
         ],
     }
