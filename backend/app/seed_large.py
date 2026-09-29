@@ -495,6 +495,11 @@ def seed_100_records():
             "exwPrice": round(cogs/15800, 2),
             "fobPrice": round(cogs/15800*(1+mv/100), 2),
             "cifPrice": round(cogs/15800*(1+mv/100)*1.12, 2),
+            # `landedCost`, `dapPrice`, dan `profit` juga dirender di daftar/detail
+            # (total landed, margin). Tanpa ini muncul Rp0 / blank.
+            "dapPrice": round(cogs/15800*(1+mv/100)*1.12*1.05, 2),
+            "landedCost": round(cogs/15800*(1+mv/100)*1.12*1.12, 2),
+            "profit": round(cogs/15800*(1+mv/100) - cogs/15800, 2),
             "cogs_per_unit_idr": cogs,
             "updatedAt": "now"})
 

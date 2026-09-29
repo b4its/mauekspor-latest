@@ -96,6 +96,21 @@ def test_compliance_requirements_have_confidence():
         assert 0 <= int(req["confidence"]) <= 100
 
 
+def test_costing_scenarios_have_finite_financial_fields():
+    """UI daftar costing menjumlahkan `landedCost` (Total estimasi landed) dan
+    merata-ratakan `margin`. Bila `landedCost` null → NaN ("RpNaN"/"NaN%")."""
+    _seed()
+    scenarios = db.all("costing")
+    assert scenarios, "costing kosong"
+    for s in scenarios:
+        for field in ("landedCost", "margin", "fobPrice", "cifPrice"):
+            value = s.get(field)
+            assert isinstance(value, (int, float)), (
+                f"costing {s.get('id')} field {field} bukan angka: {value!r}"
+            )
+        assert s["landedCost"] > 0, f"costing {s.get('id')} landedCost harus > 0"
+
+
 def test_compliance_requirements_have_evidence_fields():
     # Kartu "Bukti yang Diperlukan" merender requiredEvidence/currentEvidence.
     _seed()

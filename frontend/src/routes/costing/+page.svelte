@@ -71,8 +71,14 @@ import { page } from '$app/state';
 		})
 	);
 
-	let totalLanded = $derived(costingScenarios.items.reduce((sum, item) => sum + item.landedCost, 0));
-	let averageMargin = $derived(Math.round(costingScenarios.items.reduce((sum, item) => sum + item.margin, 0) / (costingScenarios.items.length || 1)));
+	// Guard nilai opsional (landedCost/margin bisa null dari backend) agar tidak
+	// menghasilkan NaN pada total & rata-rata.
+	let totalLanded = $derived(costingScenarios.items.reduce((sum, item) => sum + (item.landedCost ?? 0), 0));
+	let averageMargin = $derived(
+		costingScenarios.items.length
+			? Math.round(costingScenarios.items.reduce((sum, item) => sum + (item.margin ?? 0), 0) / costingScenarios.items.length)
+			: 0
+	);
 
 	function projectName(projectId: string) {
 		return projects.items.find((project) => project.id === projectId)?.name ?? projectId;
