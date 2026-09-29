@@ -240,16 +240,16 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 						<p class="mt-1 text-sm text-muted-foreground">{productName(market.productId)}</p>
 						<div class="mt-4 grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Compliance')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.complianceComplexity}</strong>
+								{t('Compliance')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.complianceComplexity ?? '—'}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Logistics')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.logisticsFeasibility}%</strong>
+								{t('Logistics')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.logisticsFeasibility ?? '—'}{market.logisticsFeasibility != null ? '%' : ''}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Margin')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.estimatedMargin}%</strong>
+								{t('Margin')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.estimatedMargin ?? '—'}{market.estimatedMargin != null ? '%' : ''}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Growth')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.growth}</strong>
+								{t('Growth')} <strong class="mt-1 block text-sm font-bold text-foreground">{market.growth ?? '—'}</strong>
 							</div>
 						</div>
 					</a>

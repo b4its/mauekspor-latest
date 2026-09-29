@@ -229,13 +229,13 @@
 					{t('Tarif/kepatuhan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.tariff ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Kompleksitas')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.complianceComplexity}</strong>
+					{t('Kompleksitas')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.complianceComplexity ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Logistik')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.logisticsFeasibility}%</strong>
+					{t('Logistik')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.logisticsFeasibility ?? '—'}{data.market.logisticsFeasibility != null ? '%' : ''}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Margin')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.estimatedMargin}%</strong>
+					{t('Margin')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.market.estimatedMargin ?? '—'}{data.market.estimatedMargin != null ? '%' : ''}</strong>
 				</div>
 			</CardContent>
 		</Card>

@@ -72,7 +72,7 @@ import { page } from '$app/state';
 	);
 
 	let totalValue = $derived(orders.items.reduce((sum, order) => sum + order.value, 0));
-	let avgReadiness = $derived(Math.round(orders.items.reduce((sum, order) => sum + order.readiness, 0) / (orders.items.length || 1)));
+	let avgReadiness = $derived(Math.round(orders.items.reduce((sum, order) => sum + (order.readiness ?? 0), 0) / (orders.items.length || 1)));
 
 
 	let busyId = $state('');
@@ -358,13 +358,13 @@ import { page } from '$app/state';
 					<div class="grid gap-3 p-5">
 						<div class="flex items-center justify-between gap-3">
 							<Badge variant={toneVariant(statusTone(order.status))}>{label(order.status)}</Badge>
-							<strong class="text-2xl font-bold tracking-tight mr-6">{order.readiness}%</strong>
+							<strong class="text-2xl font-bold tracking-tight mr-6">{order.readiness ?? 0}%</strong>
 						</div>
 						<a href={`/orders/${order.id}`} class="block no-underline hover:underline">
 							<h3 class="text-2xl font-bold tracking-tight text-foreground">{order.id}</h3>
 							<p class="text-sm text-muted-foreground">{order.supplier} to {order.buyer}</p>
 						</a>
-						<Progress value={order.readiness} />
+						<Progress value={order.readiness ?? 0} />
 						<div class="grid grid-cols-2 gap-2">
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Value')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(order.value)}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Incoterm')}<strong class="mt-1 block text-sm font-bold text-foreground">{order.incoterm}</strong></div>

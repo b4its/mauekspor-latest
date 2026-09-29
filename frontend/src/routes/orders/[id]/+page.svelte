@@ -40,13 +40,14 @@
 	let localIncoterm = $derived(savedIncoterm || data.order.incoterm);
 	let localPaymentTerms = $derived(savedPaymentTerms || data.order.paymentTerms);
 	let displayStatus = $derived(serverStatus || (docsStarted ? 'Document Prep' : confirmed ? 'Confirmed' : data.order.status));
+	let baseReadiness = $derived(data.order.readiness ?? 0);
 	let displayReadiness = $derived(
 		serverReadiness ??
 			(docsStarted
-				? Math.min(data.order.readiness + 12, 100)
+				? Math.min(baseReadiness + 12, 100)
 				: confirmed
-					? Math.min(data.order.readiness + 7, 100)
-					: data.order.readiness)
+					? Math.min(baseReadiness + 7, 100)
+					: baseReadiness)
 	);
 	const confirm = createConfirmController();
 

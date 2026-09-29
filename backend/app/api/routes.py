@@ -935,6 +935,8 @@ _register_batch_delete_routes()
 # ----------------------------------------------------------------------------
 @router.get("/products/")
 def list_products(search: str = "", status: str = "", category: str = "", limit: int = 0, offset: int = 0):
+    limit = min(max(int(limit or 0), 0), _MAX_LIMIT)
+    offset = max(int(offset or 0), 0)
     items = db.all("products")
     if search:
         q = search.lower()
@@ -1991,6 +1993,8 @@ def forwarder_recommendations(destination_country: str):
 
 @router.get("/forwarders/")
 def list_forwarders(search: str = "", status: str = "", min_rating: float = 0, limit: int = 0, offset: int = 0):
+    limit = min(max(int(limit or 0), 0), _MAX_LIMIT)
+    offset = max(int(offset or 0), 0)
     from app.services.forwarders import recalculate_rating
     items = db.all("forwarders")
     if search:
@@ -2978,6 +2982,13 @@ def get_market(market_id: str):
 @router.post("/markets/")
 def create_market(payload: sc.CreateMarketPayload):
     data = payload.model_dump()
+    # Isi bentuk field yang dibaca UI agar kartu tidak menampilkan nilai kosong
+    # ("%", blank). Nilai awal netral & ditandai "Needs Research" sampai analisis
+    # dijalankan—bukan klaim pasar yang sudah terverifikasi.
+    data.setdefault("complianceComplexity", "Unknown")
+    data.setdefault("logisticsFeasibility", 0)
+    data.setdefault("estimatedMargin", 0)
+    data.setdefault("growth", "—")
     data.update({"id": db.gen_id("markets", "MKT"), "marketScore": 50, "status": "Needs Research", "updatedAt": "now"})
     return _one(db.insert("markets", data))
 
@@ -3095,7 +3106,20 @@ def shortlist_rfq(rfq_id: str, payload: dict):
     if not record:
         raise HTTPException(404, "RFQ not found")
     record.setdefault("matches", [])
-    record["matches"].append({"supplier": payload.get("supplier", ""), "score": 50, "reason": "Shortlisted"})
+    score = payload.get("score", 50)
+    try:
+        score = int(score)
+    except (TypeError, ValueError):
+        score = 50
+    record["matches"].append({
+        "supplier": payload.get("supplier", ""),
+        "catalog": payload.get("catalog", ""),
+        "score": score,
+        "reason": payload.get("reason", "Shortlisted"),
+    })
+    # matchScore RFQ = skor tertinggi dari kandidat yang di-shortlist.
+    existing_scores = [m.get("score", 0) for m in record["matches"] if isinstance(m, dict)]
+    record["matchScore"] = max([int(s or 0) for s in existing_scores] + [0])
     record["status"] = "Matching"
     db.save(record)
     return {"data": _rfq_out(record), "meta": {}}
@@ -3231,6 +3255,10 @@ def quotation_to_order(quotation_id: str):
         "shippingMode": quotation.get("shippingMode", ""),
         "costingId": quotation.get("costingId", ""),
         "status": "Draft",
+        # Samakan bentuk dengan create_order agar UI tidak menampilkan NaN%.
+        "readiness": 0,
+        "lines": [],
+        "checklist": [],
         "version": 1,
         "updatedAt": "now",
     }
@@ -5888,6 +5916,14 @@ def _compare_analyses_results(product: dict, country_codes: list[str]) -> dict:
             })
         critical_count = sum(1 for i in (analysis.get("complianceIssues") or []) if i.get("severity") == "critical")
         raw_rec = analysis.get("recommendations") or ""
+        # `recommendations` bisa berupa list (diisi run_regulation_check) maupun
+        # string. Normalisasi dulu agar `.replace()` tidak error 500 saat compare.
+        if isinstance(raw_rec, list):
+            raw_rec = " • ".join(
+                r.get("title", "") if isinstance(r, dict) else str(r) for r in raw_rec
+            )
+        else:
+            raw_rec = str(raw_rec)
         # Bersihkan text markdown & carriage returns agar tidak merusak layout tabel
         clean_rec = raw_rec.replace("\r\n", "\n").replace("\r", "\n").strip()
         import re
@@ -6235,8 +6271,12 @@ def get_reference():
 def list_hs_codes(search: str = "", chapter: str = "", limit: int = 50, offset: int = 0):
     from app.data.hs_loader import get_hs_loader
     loader = get_hs_loader()
+    limit = min(max(int(limit or 0), 0), _MAX_LIMIT)
+    offset = max(int(offset or 0), 0)
     if search:
-        items = loader.search_hs_codes(search, max_results=limit, min_level=2)
+        # search_hs_codes mengembalikan daftar; terapkan offset yang sama agar
+        # paginasi konsisten dengan cabang non-search.
+        items = loader.search_hs_codes(search, max_results=limit + offset, min_level=2)[offset:offset + limit]
     else:
         items = loader.codes
         if chapter:
@@ -6256,9 +6296,12 @@ def autocomplete_hs_codes(q: str = "", limit: int = 10):
 def get_hs_code(hs_code: str):
     from app.data.hs_loader import get_hs_loader
     loader = get_hs_loader()
-    record = loader.get_hs_code(hs_code)
-    if not record:
+    found = loader.get_hs_code(hs_code)
+    if not found:
         raise HTTPException(404, "HS code not found")
+    # Salin sebelum menambah field turunan: `get_hs_code` mengembalikan record
+    # cache bersama, dan memutasinya akan mencemari indeks in-memory.
+    record = dict(found)
     record["section_name"] = loader.sections.get(record.get("section", ""), "")
     record["children"] = loader.children_of(hs_code)
     return {"data": record, "meta": {}}

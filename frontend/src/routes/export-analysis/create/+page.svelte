@@ -40,7 +40,13 @@
 			const prodParam = page.url.searchParams.get('productId') || page.url.searchParams.get('product');
 			const hsParam = page.url.searchParams.get('hsCode');
 			if (prodParam) {
-				const found = products.items.find((p) => p.id === prodParam || p.id.toLowerCase() === prodParam.toLowerCase());
+				// Terima id produk, atau nama produk/komoditas (deep-link dari halaman
+				// desa & lainnya) agar prefill tidak diam-diam gagal.
+				const needle = prodParam.toLowerCase();
+				const found =
+					products.items.find((p) => p.id === prodParam || p.id.toLowerCase() === needle) ??
+					products.items.find((p) => (p.name ?? '').toLowerCase() === needle) ??
+					products.items.find((p) => (p.name ?? '').toLowerCase().includes(needle));
 				if (found) productId = found.id;
 			} else if (hsParam) {
 				const cleanHs = hsParam.replace(/\./g, '');
