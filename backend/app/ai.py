@@ -280,6 +280,21 @@ _MOCK_OUTPUTS: dict[str, Any] = {
         "3. Pertimbangkan shrink wrap heavy-duty untuk proteksi kelembaban kontainer laut."
     ),
     "test": "AI test successful — koneksi AI berjalan normal.",
+    "file_analysis": (
+        "### Ringkasan Isi Berkas\n"
+        "Berkas ini memuat data operasional ekspor yang dapat dibaca oleh sistem. "
+        "Struktur isi terdeteksi dan tervalidasi.\n\n"
+        "### Temuan Utama\n"
+        "- Isi berkas tersusun rapi dan konsisten dengan skema yang diharapkan.\n"
+        "- Tidak ditemukan kolom/field wajib yang kosong pada baris inti.\n\n"
+        "### Rekomendasi Perbaikan\n"
+        "1. Lengkapi kolom yang masih kosong bila ada.\n"
+        "2. Samakan format tanggal dan satuan berat.\n"
+        "3. Tinjau ulang nilai yang tidak wajar sebelum diajukan ke buyer.\n\n"
+        "### Langkah Selanjutnya\n"
+        "- Verifikasi berkas ini di menu Files agar berstatus **Verified**.\n"
+        "- Lampirkan sebagai bukti pada proyek dagang terkait."
+    ),
 }
 
 

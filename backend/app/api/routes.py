@@ -33,6 +33,7 @@ from app.core.security import (
 )
 from app.core.permissions import can_read_module, can_read_path, module_for_data_table
 from app.services import document_types as doc_types
+from app.services import file_content
 from app.services import uploads
 from app.schemas import models as sc
 
@@ -4991,6 +4992,111 @@ def update_file(file_id: str, payload: dict):
             record[field] = payload[field]
     record["updatedAt"] = "now"
     return _save_one(record)
+
+
+def _read_stored_file(record: dict) -> bytes:
+    """Baca isi berkas fisik dari disk (best-effort)."""
+    stored = record.get("storageName")
+    if not stored:
+        return b""
+    storage_path = os.path.join(UPLOAD_DIR, stored)
+    if not os.path.isfile(storage_path):
+        return b""
+    try:
+        with open(storage_path, "rb") as fh:
+            return fh.read()
+    except OSError:
+        logger.warning("Gagal membaca berkas fisik %s", stored)
+        return b""
+
+
+@router.get("/files/{file_id}/preview/")
+def preview_file(file_id: str):
+    """Ekstrak & kembalikan isi berkas agar dapat dilihat di UI.
+
+    Mendukung spreadsheet (.xlsx/.csv), dokumen (.docx/.txt), presentasi
+    (.pptx), dan PDF. Berkas tanpa isi teks (gambar/arsip) mengembalikan
+    metadata saja.
+    """
+    record = db.get("files", file_id)
+    if not record:
+        raise HTTPException(404, "File not found")
+    content = _read_stored_file(record)
+    preview = file_content.extract(record.get("name", ""), content)
+    return {
+        "data": {
+            "id": file_id,
+            "name": record.get("name", ""),
+            "type": record.get("type", ""),
+            "contentType": record.get("contentType", ""),
+            "size": record.get("size", "-"),
+            "storageAvailable": bool(content),
+            "preview": preview.to_dict(),
+        },
+        "meta": {},
+    }
+
+
+@router.post("/files/{file_id}/analyze/")
+def analyze_file(file_id: str, current_user: dict = Depends(get_current_user)):
+    """Analisis isi berkas memakai asisten AI MauEkspor.
+
+    Mengekstrak isi berkas (spreadsheet/dokumen/presentasi/PDF) lalu meminta
+    AI menjelaskan isi tersebut "seperti apa dan bagaimana" beserta perbaikan.
+    """
+    record = db.get("files", file_id)
+    if not record:
+        raise HTTPException(404, "File not found")
+    content = _read_stored_file(record)
+    preview = file_content.extract(record.get("name", ""), content)
+    context = file_content.ai_context(preview)
+
+    system_prompt = (
+        "Anda adalah MauEkspor AI Assistant, analis dokumen ekspor-impor profesional. "
+        "Tugas Anda menganalisis isi berkas yang diunggah pengguna (spreadsheet, dokumen, "
+        "presentasi, atau PDF) dan menjelaskan isinya secara jelas.\n\n"
+        "Panduan respons:\n"
+        "1. Jawab dalam Bahasa Indonesia yang profesional dan actionable.\n"
+        "2. Sertakan bagian: **Ringkasan Isi**, **Struktur & Data Penting**, "
+        "**Temuan/Anomali**, dan **Rekomendasi Perbaikan**.\n"
+        "3. Format dengan markdown rapi (bold, bullet, tabel bila relevan).\n"
+        "4. Bila isi berkas kosong/tidak terekstrak, jelaskan keterbatasan dan saran."
+    )
+    user_prompt = (
+        f"Berikut detail berkas yang diunggah ke workspace MauEkspor:\n"
+        f"- Nama berkas: {record.get('name', '-')}\n"
+        f"- Tipe: {record.get('type', '-')}\n\n"
+        f"{context}\n\n"
+        "Jelaskan isi berkas di atas: seperti apa isinya dan bagaimana kualitasnya, "
+        "serta berikan perbaikan yang disarankan."
+    )
+
+    analysis = ai.complete(system_prompt, user_prompt, kind="file_analysis")
+    ai_status = ai.get_ai_status()
+    meta = {"ai_mode": ai_status["mode"], "ai_health": ai_status["health"]}
+    if not analysis:
+        analysis = ai.fallback("file_analysis")
+        meta["ai_fallback"] = True
+
+    # Simpan hasil analisis ke catatan berkas agar dapat ditinjau ulang.
+    record["aiAnalysis"] = {
+        "summary": preview.summary,
+        "kind": preview.kind,
+        "text": analysis or "",
+        "analyzedAt": datetime.now(timezone.utc).isoformat(),
+    }
+    db.save(record)
+
+    return {
+        "data": {
+            "id": file_id,
+            "name": record.get("name", ""),
+            "kind": preview.kind,
+            "summary": preview.summary,
+            "analysis": analysis or "",
+        },
+        "meta": meta,
+    }
 
 
 @router.delete("/files/{file_id}/")
