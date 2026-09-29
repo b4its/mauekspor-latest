@@ -71,7 +71,7 @@
 				{t('Tangkap data produk yang dibutuhkan setiap langkah ekspor.')}
 			</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
-				{t('Spesifikasi terstruktur di sini menggerakkan klasifikasi HS, pemeriksaan kepatuhan, katalog, dan costing. Endpoint disiapkan di createProduct().')}
+				{t('Spesifikasi terstruktur di sini menggerakkan klasifikasi HS, pemeriksaan kepatuhan, katalog, dan costing.')}
 			</CardDescription>
 		</CardHeader>
 	</Card>

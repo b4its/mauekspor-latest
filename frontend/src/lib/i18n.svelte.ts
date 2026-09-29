@@ -603,7 +603,7 @@ const dictionary: Record<string, Entry> = {
 	'Add export product': { id: 'Tambah produk ekspor', en: 'Add export product' },
 	'Pembuatan produk': { id: 'Pembuatan produk', en: 'Product creation' },
 	'Tangkap data produk yang dibutuhkan setiap langkah ekspor.': { id: 'Tangkap data produk yang dibutuhkan setiap langkah ekspor.', en: 'Capture the product data every export step needs.' },
-	'Spesifikasi terstruktur di sini menggerakkan klasifikasi HS, pemeriksaan kepatuhan, katalog, dan costing. Endpoint disiapkan di createProduct().': { id: 'Spesifikasi terstruktur di sini menggerakkan klasifikasi HS, pemeriksaan kepatuhan, katalog, dan costing. Endpoint disiapkan di createProduct().', en: 'Structured specs here drive HS classification, compliance checks, catalogs, and costing. Endpoint prepared in createProduct().' },
+	'Spesifikasi terstruktur di sini menggerakkan klasifikasi HS, pemeriksaan kepatuhan, katalog, dan costing.': { id: 'Spesifikasi terstruktur di sini menggerakkan klasifikasi HS, pemeriksaan kepatuhan, katalog, dan costing.', en: 'Structured specs here drive HS classification, compliance checks, catalogs, and costing.' },
 	'Produk dibuat': { id: 'Produk dibuat', en: 'Product created' },
 	'Produk berhasil disimpan ke backend dan siap digunakan di HS classification, compliance, dan katalog.': { id: 'Produk berhasil disimpan ke backend dan siap digunakan di HS classification, compliance, dan katalog.', en: 'Product saved to the backend and ready for HS classification, compliance, and catalogs.' },
 	'Kembali ke produk': { id: 'Kembali ke produk', en: 'Back to products' },
