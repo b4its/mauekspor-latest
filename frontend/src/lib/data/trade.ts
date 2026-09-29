@@ -578,6 +578,7 @@ export type EducationalModule = {
 	orderIndex?: number;
 	articleCount?: number;
 	articles?: EducationalArticle[];
+	lessonsList?: EducationalLesson[];
 	createdAt?: string;
 	updatedAt?: string;
 };

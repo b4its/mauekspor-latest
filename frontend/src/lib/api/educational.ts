@@ -56,3 +56,58 @@ export function setLessonComplete(moduleId: string, lessonId: string, completed:
 		body: JSON.stringify({ completed })
 	});
 }
+
+// ---------- Kuis modul ----------
+export type QuizQuestion = {
+	id: string;
+	question: string;
+	options: string[];
+};
+
+export type QuizAttemptSummary = {
+	bestScore: number;
+	lastScore: number;
+	passed: boolean;
+	attemptCount: number;
+};
+
+export type ModuleQuiz = {
+	moduleId: string;
+	title: string;
+	questions: QuizQuestion[];
+	questionCount: number;
+	lastAttempt: QuizAttemptSummary | null;
+};
+
+export type QuizResultDetail = {
+	id: string;
+	question: string;
+	options: string[];
+	chosen: number | null;
+	answer: number;
+	correct: boolean;
+	explanation: string;
+};
+
+export type QuizResult = {
+	moduleId: string;
+	attemptId: string;
+	score: number;
+	correctCount: number;
+	total: number;
+	passed: boolean;
+	details: QuizResultDetail[];
+};
+
+/** Ambil soal kuis modul (topik menyesuaikan materi modul). */
+export function getModuleQuiz(moduleId: string) {
+	return apiFetch<ModuleQuiz>(`/educational/modules/${moduleId}/quiz/`);
+}
+
+/** Kirim jawaban kuis (map questionId → indeks opsi) dan dapatkan penilaian. */
+export function submitModuleQuiz(moduleId: string, answers: Record<string, number>) {
+	return apiFetch<QuizResult>(`/educational/modules/${moduleId}/quiz/submit/`, {
+		method: 'POST',
+		body: JSON.stringify({ answers })
+	});
+}
