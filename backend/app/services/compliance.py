@@ -203,6 +203,9 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
     """
     is_id = language.lower().startswith("id")
     country = country_data.get_country(country_code) or {"country_name": country_code, "region": "Asia"}
+    from app.data.trade_reference import rules_for, SNAPSHOT_DATE
+    from app.data.regulatory_intel import product_regulations_for
+
     regs = country_data.get_regulations(country_code)
     product_name = snapshot.get("name") or snapshot.get("product_name") or "Produk"
     hs_code = snapshot.get("hs") or snapshot.get("hs_code") or "TBD"
@@ -214,30 +217,11 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
     def label(text_en: str, text_id: str) -> str:
         return text_id if is_id else text_en
 
+    # Free-form AI cannot substantiate current law. Use only traceable data
+    # for compliance recommendations, including when an AI provider is enabled.
     ai_sections: dict[str, str] = {}
-    if ai.configured():
-        prompt_sys = (
-            "You are an international trade compliance expert for Indonesian exports. "
-            f"Generate concise, accurate, and actionable export regulation guidance in {'Indonesian' if is_id else 'English'} "
-            "for 10 standard trade compliance sections. "
-            "Return JSON: {\"sections\": {\"overview\": \"...\", \"prohibited_items\": \"...\", \"import_restrictions\": \"...\", "
-            "\"certifications\": \"...\", \"labeling\": \"...\", \"customs\": \"...\", \"testing\": \"...\", \"ip\": \"...\", "
-            "\"shipping\": \"...\", \"timeline_costs\": \"...\"}}"
-        )
-        prompt_usr = (
-            f"Product: {product_name} (HS: {hs_code}, Category: {snapshot.get('category', 'Komoditas')})\n"
-            f"Target Country: {country.get('country_name', country_code)} ({country_code})\n"
-            f"Known Regulations: {[r.get('description_rule') for r in regs[:5]]}"
-        )
-        res = ai.ask_json(prompt_sys, prompt_usr, kind="recommendations")
-        if res and isinstance(res, dict):
-            sec_dict = res.get("sections")
-            if isinstance(sec_dict, dict):
-                ai_sections = {str(k): str(v) for k, v in sec_dict.items()}
-            elif isinstance(sec_dict, list):
-                for item in sec_dict:
-                    if isinstance(item, dict) and "key" in item:
-                        ai_sections[str(item["key"])] = str(item.get("content") or item.get("body") or "")
+    references = rules_for(country_code)
+    product_refs = product_regulations_for(hs_code, country_code)
 
     sections: list[dict] = []
     for key, en_title, id_title in _REGULATION_SECTIONS:
@@ -261,6 +245,7 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
                 "Check import licensing, quotas, and special permits for the target country before shipping.",
                 "Periksa lisensi impor, kuota, dan izin khusus negara tujuan sebelum pengiriman.",
             )
+            body += " " + " ".join(r["descriptionRule"] for r in references)
         elif key == "certifications":
             certs = []
             for reg in by_category.get("Physical", []):
@@ -276,14 +261,15 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
                 if reg.get("required_specs"):
                     reqs.append(reg["required_specs"])
             body = label(
-                "Labeling requirements: " + ("; ".join(reqs) if reqs else "Standard commercial labeling."),
-                "Persyaratan pelabelan: " + ("; ".join(reqs) if reqs else "Pelabelan komersial standar."),
+                "Labeling requirements: " + ("; ".join(reqs) if reqs else "Not determined; check the destination authority for this product."),
+                "Persyaratan pelabelan: " + ("; ".join(reqs) if reqs else "Belum ditentukan; cek otoritas negara tujuan untuk produk ini."),
             )
         elif key == "customs":
             body = label(
                 f"Declare HS {hs_code} correctly; verify duty rates and any preferential trade agreements (e.g. EPA/FTA).",
                 f"Deklarasikan HS {hs_code} dengan benar; verifikasi tarif bea dan perjanjian perdagangan preferensial (mis. EPA/FTA).",
             )
+            body += " " + " ".join(f"{r['name']}: {r['requirement']} (cek cakupan HS nasional)." for r in product_refs)
         elif key == "testing":
             body = label(
                 "Arrange lab testing (pesticide residue, microbiology, nutrition) from accredited laboratories.",
@@ -296,13 +282,13 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
             )
         elif key == "shipping":
             body = label(
-                "Use ISPM-15 compliant packaging, book freight with forwarder, and prepare packing list + B/L.",
-                "Gunakan kemasan patuh ISPM-15, booking freight dengan forwarder, dan siapkan packing list + B/L.",
+                "If using wood packaging, check ISPM-15; book freight and prepare packing list + B/L or AWB as applicable.",
+                "Jika menggunakan kemasan kayu, cek ISPM-15; booking freight dan siapkan packing list + B/L atau AWB sesuai moda.",
             )
         elif key == "timeline_costs":
             body = label(
-                "Budget 2-6 weeks for compliance preparation plus freight transit time; include certification costs.",
-                "Anggarkan 2-6 minggu untuk persiapan kepatuhan ditambah waktu transit; sertakan biaya sertifikasi.",
+                "Confirm permit processing times, freight transit and certification costs with the relevant authorities and providers.",
+                "Konfirmasi waktu pengurusan izin, transit angkutan, dan biaya sertifikasi pada otoritas dan penyedia terkait.",
             )
 
         ai_body = ai_sections.get(key)
@@ -319,21 +305,14 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
         "sections": sections,
         "country": country,
         "from_cache": False,
-        "trust": prov.analysis_trust(bool(ai_sections)),
-        "sources": [
-            prov.source_block(
-                publisher="Indonesia National Single Window (INSW)",
-                url="https://www.insw.go.id/",
-                jurisdiction="ID",
-                review_status=prov.REVIEW_DRAFT,
-            ),
-            prov.source_block(
-                publisher="Direktorat Jenderal Bea dan Cukai (DJBC)",
-                url="https://www.beacukai.go.id/",
-                jurisdiction="ID",
-                review_status=prov.REVIEW_DRAFT,
-            ),
-        ],
+        "trust": prov.analysis_trust(False),
+        "referenceSnapshot": SNAPSHOT_DATE,
+        "sources": ([prov.source_block(publisher=r["source"], url=r["sourceUrl"],
+                                        jurisdiction=country_code.upper(), review_status=prov.REVIEW_DRAFT)
+                     for r in references]
+                    + [prov.source_block(publisher=s["name"], url=s["url"],
+                                         jurisdiction=country_code.upper(), review_status=prov.REVIEW_DRAFT)
+                       for r in product_refs for s in r.get("sources", [])]),
     }
 
 

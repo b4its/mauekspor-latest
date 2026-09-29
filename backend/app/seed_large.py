@@ -480,13 +480,18 @@ def seed_100_records():
     for i in range(1, 101):
         cogs = n()%50000+5000
         mv = n()%30+10
+        # Judul costing mengikuti produk yang dirujuk agar konsisten dengan productId.
+        cost_product_id = _pick(product_ids, n())
+        cost_product_name = (db.get("products", cost_product_id) or {}).get("name", cost_product_id)
         db.insert("costing", {"id": f"CST-{i:03d}",
             "projectId": _pick(proj_ids, n()),
-            "productId": _pick(product_ids, n()),
-            "title": f"Costing {_pick(PRODUCTS, n())}",
+            "productId": cost_product_id,
+            "title": f"Costing {cost_product_name}",
             "destination": _pick(REGIONS[_pick(ALL_REGIONS, n())], n()),
             "incoterm": _pick(INCOTERMS, n()), "currency": "USD",
             "status": "Ready", "margin": mv, "exchangeRate": 15800,
+            # `confidence` dirender di daftar & detail costing; tanpa ini muncul "%" kosong.
+            "confidence": n()%40+55,
             "exwPrice": round(cogs/15800, 2),
             "fobPrice": round(cogs/15800*(1+mv/100), 2),
             "cifPrice": round(cogs/15800*(1+mv/100)*1.12, 2),
@@ -853,15 +858,7 @@ def seed_100_records():
             "level": len(code), "parent": code[:-2] if len(code)>2 else "TOTAL",
             **village_flags(code), "createdAt": "now"})
 
-    # -- REGULATIONS (100) --
-    demo_cc = ["JP","SG","DE","US","KR","NL","AU","GB","MY","TH"]
-    for i in range(1, 101):
-        cc = demo_cc[(i-1)%len(demo_cc)]
-        db.insert("regulations", {"id": f"REG-{i+200:03d}", "countryCode": cc,
-            "ruleCategory": _pick(["Labeling","Ingredient","Packaging","Documentation","Certificate"], n()),
-            "forbiddenKeywords": _pick_n(["BPA","phthalates","GMO"], n()%2+1, n()),
-            "requiredSpecs": _pick_n(["Nutrition facts","Country of origin","Expiry date"], n()%2+1, n()),
-            "descriptionRule": f"Regulation for {cc}.", "createdAt": "now", "updatedAt": "now"})
+    # Regulatory reference is seeded from curated data, not synthetic rules.
 
     # -- BUYER PROFILES (100) — 1:1 dengan user role Buyer (U-166..U-180) + ekspansi --
     buyer_users = [f"U-{100 + i:03d}" for i in range(1, 101) if roles[i-1] == "Buyer"] or [f"U-{100 + i:03d}" for i in range(1, 101)]

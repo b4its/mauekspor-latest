@@ -1,6 +1,6 @@
 """Global Export–Import Regulatory Intelligence baseline.
 
-Snapshot per 15 Agustus 2026. Bukan pengganti pengecekan aturan resmi pada saat transaksi.
+Snapshot referensi per 29 September 2026. Bukan pengganti pengecekan aturan resmi pada saat transaksi.
 Referensi: WCO (HS), WTO (tarif/valuation), ITC Market Access Map, UNCTAD TRAINS,
 portal bea cukai & kementerian dagang nasional (BTKI/INSW/DJBC, HTSUS, TARIC,
 Japan Customs, KCS/UNI-PASS, DGFT, GACC, UK Integrated Online Tariff, CBSA, dll.).
@@ -104,19 +104,19 @@ def customs_system_of(country_code: str) -> dict[str, Any]:
 COUNTRY_PROFILES: dict[str, dict[str, Any]] = {
     "ID": {
         "customs": "DJBC / BTKI 2022 (AHTN 8 digit); INSW gateway; PIB untuk impor, PEB untuk ekspor",
-        "tariff": "Bea masuk MFN umumnya 0-150%, rata-rata ~8%; PPN 11% + PPh22 2.5-10% + PPnBM bila kena; bea keluar utk SDA strategis",
-        "fta": "18 FTA/PTA: ATIGA, ACFTA, AKFTA, AIFTA, AANZFTA, AJCEP, AHKFTA, IJEPA, IPPTA, ICCEPA, IACEPA, IECEPA, D-8, IMPTA, RCEP, IKCEPA, IUAE-CEPA, MoU Palestine",
+        "tariff": "BM sesuai BTKI 2022/INSW dan asal; PPN 12% dengan DPP nilai lain 11/12 bagi non-mewah (efektif sekitar 11%); PPh 22/PPnBM sesuai barang dan status importir. Cek NDPBM mingguan.",
+        "fta": "ATIGA, ACFTA, RCEP, IJEPA, IA-CEPA, IK-CEPA, IUAE-CEPA dan perjanjian berlaku lain; cek PSR/SKA. ICA-CEPA, IEU-CEPA dan EAEU FTA belum otomatis memberi tarif preferensi.",
         "checks": "HS/AHTN -> Lartas -> bea masuk/keluar -> PPN/PPh/Cukai -> persetujuan impor/ekspor -> surveyor -> certificate -> COO -> karantina/BPOM/SNI",
         "import_rules": [
             "Gunakan pos tarif BTKI 2022 (8 digit) untuk seluruh pemberitahuan PIB/PEB.",
             "Cek lartas (larangan & pembatasan) per komoditas via INSW sebelum impor.",
             "Persetujuan impor dari K/L terkait bisa wajib (mis. karantina, BPOM, Kemenperin).",
-            "Kebijakan komoditas berubah cepat: Permendag 11/2026 (impor pertanian), 16/2026 (kelapa sawit), 6/2026 (larangan ekspor).",
+            "Cek Permendag 16/2025 beserta klaster sektoral (17/2025 tekstil, 18/2025 pertanian/peternakan, 19/2025 garam/perikanan) dan status lartas di SINSW.",
         ],
         "export_rules": [
             "PEB + persetujuan ekspor untuk barang tertentu (lartas ekspor).",
             "COO/surat keterangan asal untuk klaim FTA (ATIGA/RCEP/dll).",
-            "Bea keluar berlaku untuk ekspor SDA strategis tertentu.",
+            "Cek Permendag 23/2023 jo. 5/2026 serta Permendag 22/2023 jo. 6/2026; bea keluar sesuai PMK per komoditas. Batu bara/emas: jangan asumsikan tarif tanpa PMK berlaku.",
         ],
         "documents": ["PIB / PEB", "Invoice & packing list", "Bill of lading/AWB", "Certificate of Origin (bila klaim FTA)", "Surat persetujuan ekspor/import (bila lartas)", "Sertifikat karantina/BPOM/SNI bila relevan"],
         "authorities": [
@@ -144,13 +144,14 @@ COUNTRY_PROFILES: dict[str, dict[str, Any]] = {
     },
     "US": {
         "customs": "CBP; HTSUS (HTS Revision 15/2026); PGA (FDA/USDA/EPA/FCC/dst)",
-        "tariff": "HTSUS MFN; + trade remedies (301, AD/CVD, Section 232); MPF 0.3464% (min $27.75/maks $538.40); HMF utk ocean",
+        "tariff": "HTSUS MFN + tindakan Chapter 99 (Section 301/232), AD/CVD jika berlaku. Tarif IEEPA historis tidak dapat dipakai sebagai tarif kini; cek CSMS/HTS untuk tanggal, asal dan HS spesifik.",
         "fta": "USMCA, US-Japan, dst",
         "checks": "HTS -> rate -> Chapter 99 -> PGA -> EAR/ECCN -> OFAC screening",
         "import_rules": [
             "Klasifikasi HTS bisa 8-10 digit; cek note chapter & Chapter 99 untuk kode khusus.",
             "Barang tertentu under FDA/USDA/EPA/FCC; registrasi & label khusus mungkin wajib.",
-            "Cek Section 301 & trade remedies (kurs bea bisa jauh di atas MFN).",
+            "Cek Section 301/232, pengecualian serta AD/CVD lewat HTSUS dan CBP CSMS; status tarif 'forced labor' dalam riset 29 September 2026 harus diverifikasi ulang.",
+            "De minimis USD 800 ditangguhkan; cek perubahan terbaru di CBP sebelum mengirim barang kiriman.",
         ],
         "export_rules": ["EAR/ECCN -> Country Chart -> end use/user -> BIS license bila perlu; cek Consolidated Screening List."],
         "documents": ["Entry form (CBP Form 7501)", "Commercial invoice", "Packing list", "Bill of lading/AWB", "Entry bond", "Certificates (FDA/dll) bila relevan"],
@@ -204,7 +205,7 @@ COUNTRY_PROFILES: dict[str, dict[str, Any]] = {
     },
     "GB": {
         "customs": "HMRC; UK Integrated Online Tariff (UKGT)",
-        "tariff": "UKGT (0-25% umum); Import VAT 20% (atas CIF+duty); de minimis £135 (VAT point of sale)",
+        "tariff": "UK Global Tariff per kode impor 10 digit + VAT sesuai produk. Aturan £135 dan UK CBAM (mulai 2027 menurut riset) perlu dicek di HMRC.",
         "fta": "TCA EU, CPTPP, UK-Japan, UK-Australia, UK-NZ, dst",
         "checks": "Commodity code -> UKGT -> VAT -> restrictions -> license",
         "import_rules": [
@@ -220,7 +221,7 @@ COUNTRY_PROFILES: dict[str, dict[str, Any]] = {
     "CA": {
         "customs": "CBSA; Canadian Customs Tariff (10 digit); currency Code",
         "tariff": "MFN CBSA + preferensi CUSMA/CPTPP; GST/HST 5% (HST bervariasi provinsi)",
-        "fta": "CUSMA, CPTPP, CETA",
+        "fta": "CUSMA, CPTPP, CETA; ICA-CEPA ditandatangani tetapi preferensi hanya setelah berlaku resmi dan terpenuhi rules of origin.",
         "checks": "classification -> origin -> valuation (6 metode) -> duty -> GST/HST -> permits",
         "import_rules": [
             "Klasifikasi impor 10 digit; transaction value umumnya metode valuation utama.",
@@ -462,7 +463,7 @@ COUNTRY_PROFILES: dict[str, dict[str, Any]] = {
     },
     "MX": {
         "customs": "SAT Mexico",
-        "tariff": "MFN MX + USMCA; IVA 16%",
+        "tariff": "Tarif Meksiko per kode nasional, asal dan status FTA; riset mencatat bea tambahan non-FTA pada sejumlah pos sejak 2026. Cek SAT/ANAM.",
         "fta": "USMCA, CPTPP, EU-Mexico",
         "checks": "HS -> duty -> USMCA RoO -> IVA -> NOM",
         "import_rules": ["NOM (standar) wajib utk banyak kategori.", "Port import dgn padron (list importer) mungkin."],
@@ -566,7 +567,19 @@ def profile_for(country_code: str, region: str = "") -> dict[str, Any]:
     """Profil regulasi negara: profil detail bila ada, else template regional."""
     code = country_code.upper()
     if code in COUNTRY_PROFILES:
-        return dict(COUNTRY_PROFILES[code])
+        out = dict(COUNTRY_PROFILES[code])
+        if COUNTRY_CUSTOMS.get(code) == "EU":
+            out["import_rules"] = list(out.get("import_rules", [])) + [
+                "CBAM mulai fase definitif 2026; cek kode CN dan kewajiban emisi/importir di portal Komisi Eropa.",
+                "EUDR: cek Annex I dan tanggal penerapan menurut ukuran operator; IEU-CEPA belum otomatis memberi preferensi.",
+            ]
+            out["authorities"] = list(out.get("authorities", [])) + [
+                {"name": "Access2Markets", "url": "https://trade.ec.europa.eu/access-to-markets/en/home"},
+            ]
+        if code in {"ID", "US", "GB", "CA", "MX"} or COUNTRY_CUSTOMS.get(code) == "EU":
+            out["reference_snapshot"] = "2026-09-29"
+            out["reference_status"] = "research_only"
+        return out
     tpl = _template_for(region or "default")
     out = dict(tpl)
     out["_is_template"] = True
@@ -607,8 +620,7 @@ PRODUCT_REGULATIONS: dict[str, list[dict[str, Any]]] = {
                        "statement + traceability geolokasi lahan produksi (plot-level coordinates).",
         "deadline": "Berlaku penuh 30 Desember 2026 (perusahaan besar); mikro/usaha kecil 30 Juni 2027.",
         "destinations": ["EU"],
-        "risk_note": "±90% kakao global berasal dari petani kecil yang rentan kepatuhan (Springer, 2026). "
-                     "Petani desa perlu pemetaan lahan & bukti asal sejak dini.",
+        "risk_note": "Cek kode CN di Annex I; siapkan pemetaan lahan dan bukti asal sebelum transaksi.",
         "sources": [{"name": "EU EUDR", "url": "https://environment.ec.europa.eu/topics/forests/deforestation-regulation_en"}],
     }],
     "18": [{
@@ -688,7 +700,30 @@ def product_regulations_for(hs_code: str, destination: str = "") -> list[dict[st
         List regulasi (EUDR, plant health, dll) yang berlaku.
     """
     chapter = str(hs_code or "").replace(".", "").strip()[:2]
-    regs: list[dict[str, Any]] = list(PRODUCT_REGULATIONS.get(chapter, []))
+    digits = "".join(c for c in str(hs_code or "") if c.isdigit())
+    # Bab saja tidak cukup untuk menentukan cakupan Annex I EUDR. Tampilkan
+    # sebagai kandidat untuk pengecekan, bukan keputusan bahwa barang tercakup.
+    eudr_prefixes = {"09": ("0901",), "18": ("1801", "1802", "1803", "1804", "1805", "1806"),
+                     "40": ("4001",), "44": ("44",)}
+    regs: list[dict[str, Any]] = [dict(r) for r in PRODUCT_REGULATIONS.get(chapter, [])
+                                  if r["id"] != "EUDR" or (len(digits) >= 4 and
+                                  digits.startswith(eudr_prefixes.get(chapter, ("_",))))]
+    cbam_prefixes = ("72", "73", "76", "2523", "31", "280410", "2716")
+    if len(digits) >= 4 and digits.startswith(cbam_prefixes):
+        regs.append({
+            "id": "EU-CBAM", "name": "CBAM — EU Carbon Border Adjustment Mechanism",
+            "ref": "Regulation (EU) 2023/956", "scope": "Kandidat kode CN sektor CBAM",
+            "requirement": "Cek Annex I/kode CN, status authorised CBAM declarant dan data emisi tertanam; hanya importir dalam cakupan yang wajib.",
+            "deadline": "Periode definitif mulai 1 Januari 2026; cek jadwal deklarasi/sertifikat terbaru.",
+            "destinations": ["EU"], "applicability": "candidate_check_annex_i",
+            "snapshotDate": "2026-09-29",
+            "sources": [{"name": "European Commission CBAM", "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en"}],
+        })
+    for reg in regs:
+        if reg["id"] == "EUDR":
+            reg["applicability"] = "candidate_check_annex_i"
+            reg["risk_note"] = "Periksa kode CN di Annex I dan pengecualian terbaru sebelum menyatakan wajib."
+            reg["snapshotDate"] = "2026-09-29"
     regs.extend(CROSS_PRODUCT_REGULATIONS)
     if destination:
         dest = destination.upper()

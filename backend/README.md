@@ -95,3 +95,14 @@ docker build -t mauekspor-backend .
 ```
 
 Atau pakai `docker-compose` di root repo (backend + frontend sekaligus), lihat `docker-compose.yml`.
+
+## Referensi regulasi
+
+Dokumen riset per 29 September 2026 tersedia di
+[`guideline/PANDUAN-REGULASI-EKSPOR-IMPOR-2026.md`](../guideline/PANDUAN-REGULASI-EKSPOR-IMPOR-2026.md).
+Pointer operasional yang dipakai seeder dan rekomendasi berada di
+`app/data/trade_reference.py` (`snapshotDate`, `sourceUrl`, `reviewStatus=research_only`).
+Angka tarif, kelayakan FTA, dan cakupan EUDR/CBAM **tidak** dapat disimpulkan
+dari HS bab/6 digit saja: cocokkan HS nasional, asal, atribut produk, tanggal
+transaksi, pengecualian dan status aturan pada portal otoritas terkait. Dokumen
+riset yang diberikan pengguna belum diverifikasi secara independen oleh aplikasi.

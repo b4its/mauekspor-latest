@@ -20,6 +20,7 @@ uploads/
 
 # Dokumen produk/PRD di guideline/plana/ tetap dilacak; sisanya diabaikan.
 /guideline/*
+!/guideline/PANDUAN-REGULASI-EKSPOR-IMPOR-2026.md
 !/guideline/plana/
 !/guideline/plana/**
 
@@ -46,4 +47,3 @@ frontend/playwright-report/
 
 # Local development config
 .env.local
-

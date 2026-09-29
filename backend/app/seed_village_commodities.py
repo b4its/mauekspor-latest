@@ -60,51 +60,51 @@ def village_flags(hs_code: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Data desa fiktif (demo) — direlasikan ke produk melalui `villageId`.
-# Status kesiapan: >= 80 = "Siap Ekspor", sisanya "Butuh Pendampingan".
+# Data desa fiktif (demo) — direlasikan ke produk melalui `villageId` dan ke
+# profil bisnis pengelola melalui `businessProfileId`.
+#
+# CATATAN: tidak ada `readiness` di sini. Skor kesiapan desa DIHITUNG dari
+# kelengkapan profil bisnis pengelola (lihat `app/services/readiness.py`), jadi
+# nilai di UI selalu konsisten dengan data profil—bukan angka manual.
 # ---------------------------------------------------------------------------
 VILLAGE_DESA = [
     {"id": "DES-GAYO", "name": "Desa Kopi Gayo", "region": "Lut Tawar, Aceh Tengah", "province": "Aceh",
      "lat": 4.5074, "lng": 96.8557,
      "flagshipCommodity": "Kopi Arabika", "commodityGroup": "pertanian", "production": "8 ton green beans / bulan",
-     "organization": "BUMDes Kopi Gayo Sejahtera", "readiness": 86},
+     "organization": "BUMDes Kopi Gayo Sejahtera", "businessProfileId": "BIZ-DES-GAYO"},
     {"id": "DES-VANILI-BALI", "name": "Desa Vanili Bali", "region": "Tabanan", "province": "Bali",
      "lat": -8.5955, "lng": 115.1121,
      "flagshipCommodity": "Vanili Planifolia", "commodityGroup": "pertanian", "production": "50 kg curing / bulan",
-     "organization": "Koperasi Vanili Bali Sejahtera", "readiness": 77},
+     "organization": "Koperasi Vanili Bali Sejahtera", "businessProfileId": "BIZ-DES-VANILI"},
     {"id": "DES-SITUBONDO", "name": "Desa Manggis Situbondo", "region": "Banyuputih, Situbondo", "province": "Jawa Timur",
      "lat": -7.4091, "lng": 114.1161,
      "flagshipCommodity": "Manggis Premium", "commodityGroup": "pertanian", "production": "600 kg / musim panen",
-     "organization": "Gapoktan Manggis Lestari", "readiness": 68},
+     "organization": "Gapoktan Manggis Lestari", "businessProfileId": "BIZ-DES-SITUBONDO"},
     {"id": "DES-TORAJA", "name": "Desa Kakao Toraja", "region": "Rantepao, Toraja Utara", "province": "Sulawesi Selatan",
      "lat": -2.9267, "lng": 119.3334,
      "flagshipCommodity": "Kakao Fermentasi", "commodityGroup": "pertanian", "production": "3 ton / bulan",
-     "organization": "Koperasi Desa Kakao Toraja", "readiness": 81},
+     "organization": "Koperasi Desa Kakao Toraja", "businessProfileId": "BIZ-DES-TORAJA"},
     {"id": "DES-KAHAYAN", "name": "Desa Rotan Kahayan", "region": "Pulang Pisau", "province": "Kalimantan Tengah",
      "lat": -2.0194, "lng": 114.8025,
      "flagshipCommodity": "Kerajinan Rotan", "commodityGroup": "kerajinan", "production": "200 pcs / bulan",
-     "organization": "BUMDes Kriya Kahayan", "readiness": 72},
+     "organization": "BUMDes Kriya Kahayan", "businessProfileId": "BIZ-DES-KAHAYAN"},
     {"id": "DES-SUMBAWA", "name": "Desa Madu Sumbawa", "region": "Dompu", "province": "Nusa Tenggara Barat",
      "lat": -8.5932, "lng": 118.4586,
      "flagshipCommodity": "Madu Hutan", "commodityGroup": "pertanian", "production": "480 jar / bulan",
-     "organization": "Kelompok Panen Madu Hutan Sumbawa", "readiness": 84},
+     "organization": "Kelompok Panen Madu Hutan Sumbawa", "businessProfileId": "BIZ-DES-SUMBAWA"},
     {"id": "DES-TERNATE", "name": "Desa Cengkeh Ternate", "region": "Ternate", "province": "Maluku Utara",
      "lat": 0.7833, "lng": 127.3667,
      "flagshipCommodity": "Cengkeh Grade A", "commodityGroup": "pertanian", "production": "2 ton / musim",
-     "organization": "Koperasi Cengkeh Ternate Makmur", "readiness": 75},
+     "organization": "Koperasi Cengkeh Ternate Makmur", "businessProfileId": "BIZ-DES-TERNATE"},
     {"id": "DES-MUNTOK", "name": "Desa Lada Putih Muntok", "region": "Bangka Barat", "province": "Kepulauan Bangka Belitung",
      "lat": -2.8967, "lng": 105.8601,
      "flagshipCommodity": "Lada Putih Muntok", "commodityGroup": "pertanian", "production": "1,5 ton / bulan",
-     "organization": "BUMDes Lada Muntok Jaya", "readiness": 70},
+     "organization": "BUMDes Lada Muntok Jaya", "businessProfileId": "BIZ-DES-MUNTOK"},
     {"id": "DES-KERINCI", "name": "Desa Kayu Manis Kerinci", "region": "Kerinci", "province": "Jambi",
      "lat": -1.5786, "lng": 101.3261,
      "flagshipCommodity": "Kayu Manis (Kassia)", "commodityGroup": "pertanian", "production": "1 ton bale / bulan",
-     "organization": "Koperasi Kayu Manis Kerinci", "readiness": 74},
+     "organization": "Koperasi Kayu Manis Kerinci", "businessProfileId": "BIZ-DES-KERINCI"},
 ]
-
-
-def _desa_status(readiness: int) -> str:
-    return "Siap Ekspor" if readiness >= 80 else "Butuh Pendampingan"
 
 
 # ---------------------------------------------------------------------------
@@ -210,18 +210,63 @@ VILLAGE_PRODUCTS = [
     },
 ]
 
+# Profil bisnis pengelola desa. `readiness` TIDAK diisi di sini — dihitung
+# otomatis dari kelengkapan data (lihat app/services/readiness.py) saat profil
+# dibaca/disimpan, sehingga desa yang tertaut selalu menampilkan skor konsisten.
 VILLAGE_PROFILES = [
     {
         "id": "BIZ-DES-TORAJA", "companyName": "Koperasi Desa Kakao Toraja", "address": "Desa Kakao Toraja, Sulawesi Selatan",
         "productionCapacity": "3 ton kakao fermentasi / bulan", "yearEstablished": 2019,
-        "certifications": ["Halal", "Fermentation log"], "status": "Complete",
-        "owner": "Yohanis Tangka", "readiness": 88, "updatedAt": "2026-08-05",
+        "certifications": ["Halal", "Fermentation log", "Origin declaration"], "status": "Complete",
+        "owner": "Yohanis Tangka", "updatedAt": "2026-08-05",
     },
     {
         "id": "BIZ-DES-GAYO", "companyName": "BUMDes Kopi Gayo Sejahtera", "address": "Desa Kopi Gayo, Aceh Tengah",
         "productionCapacity": "8.000 retail bag / bulan", "yearEstablished": 2017,
-        "certifications": ["Halal", "Origin declaration"], "status": "Needs Review",
-        "owner": "Rizal Fahmi", "readiness": 82, "updatedAt": "2026-08-05",
+        "certifications": ["Halal", "Origin declaration"], "status": "Complete",
+        "owner": "Rizal Fahmi", "updatedAt": "2026-08-05",
+    },
+    {
+        "id": "BIZ-DES-VANILI", "companyName": "Koperasi Vanili Bali Sejahtera", "address": "Desa Vanili Bali, Tabanan",
+        "productionCapacity": "50 kg curing / bulan", "yearEstablished": 2020,
+        "certifications": ["Organic"], "status": "Needs Review",
+        "owner": "Ni Luh Sari", "updatedAt": "2026-08-05",
+    },
+    {
+        "id": "BIZ-DES-SITUBONDO", "companyName": "Gapoktan Manggis Lestari", "address": "Desa Manggis Situbondo, Jawa Timur",
+        "productionCapacity": "600 kg / musim panen", "yearEstablished": 2018,
+        "certifications": [], "status": "Draft",
+        "owner": "Sutrisno", "updatedAt": "2026-08-04",
+    },
+    {
+        "id": "BIZ-DES-KAHAYAN", "companyName": "BUMDes Kriya Kahayan", "address": "Desa Rotan Kahayan, Kalimantan Tengah",
+        "productionCapacity": "200 pcs kerajinan / bulan", "yearEstablished": 2021,
+        "certifications": ["SVLK"], "status": "Needs Review",
+        "owner": "Darius Untung", "updatedAt": "2026-08-03",
+    },
+    {
+        "id": "BIZ-DES-SUMBAWA", "companyName": "Kelompok Panen Madu Hutan Sumbawa", "address": "Desa Madu Sumbawa, NTB",
+        "productionCapacity": "480 jar / bulan", "yearEstablished": 2019,
+        "certifications": ["Halal", "Origin declaration"], "status": "Complete",
+        "owner": "Ahmad Fauzi", "updatedAt": "2026-08-02",
+    },
+    {
+        "id": "BIZ-DES-TERNATE", "companyName": "Koperasi Cengkeh Ternate Makmur", "address": "Desa Cengkeh Ternate, Maluku Utara",
+        "productionCapacity": "2 ton / musim", "yearEstablished": 2016,
+        "certifications": ["Origin declaration"], "status": "Needs Review",
+        "owner": "Siti Rahma", "updatedAt": "2026-08-02",
+    },
+    {
+        "id": "BIZ-DES-MUNTOK", "companyName": "BUMDes Lada Muntok Jaya", "address": "Desa Lada Putih Muntok, Bangka Belitung",
+        "productionCapacity": "1,5 ton / bulan", "yearEstablished": 2015,
+        "certifications": [], "status": "Draft",
+        "owner": "Wahyu Pratama", "updatedAt": "2026-08-01",
+    },
+    {
+        "id": "BIZ-DES-KERINCI", "companyName": "Koperasi Kayu Manis Kerinci", "address": "Desa Kayu Manis Kerinci, Jambi",
+        "productionCapacity": "1 ton bale / bulan", "yearEstablished": 2014,
+        "certifications": ["Origin declaration"], "status": "Needs Review",
+        "owner": "Hendra Gunawan", "updatedAt": "2026-08-01",
     },
 ]
 
@@ -393,16 +438,19 @@ def seed_village_hs_codes() -> int:
 
 
 def seed_villages() -> int:
-    """Isi tabel desa fiktif untuk demo peta potensi desa."""
+    """Isi tabel desa fiktif untuk demo peta potensi desa.
+
+    Tidak menyimpan `readiness`/`status`: keduanya dihitung dari profil bisnis
+    pengelola saat endpoint desa dipanggil.
+    """
     existing = {str(v.get("id")) for v in db.all("villages")}
     inserted = 0
     for village in VILLAGE_DESA:
-        if village["id"] not in existing:
-            db.insert("villages", {
-                **village,
-                "status": _desa_status(village["readiness"]),
-                "createdAt": "2026-08-01",
-            })
+        record = dict(village)
+        record.pop("readiness", None)
+        record.pop("status", None)
+        if record["id"] not in existing:
+            db.insert("villages", {**record, "createdAt": "2026-08-01"})
             inserted += 1
     return inserted
 

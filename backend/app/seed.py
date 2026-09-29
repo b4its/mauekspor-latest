@@ -10,6 +10,9 @@ logger = logging.getLogger("mauekspor.seed")
 
 
 def seed_if_empty():
+    from app.data.trade_reference import seed_trade_reference
+    # Run even when demo data has already been seeded; clean up legacy fake rules.
+    seed_trade_reference(db)
     user_count = db.loaded_records("users")
     if user_count > 50:
         return  # sudah di-seed 100+

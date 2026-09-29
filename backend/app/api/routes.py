@@ -36,6 +36,7 @@ from app.services import document_types as doc_types
 from app.services import file_content
 from app.services import quiz
 from app.services import uploads
+from app.services import readiness as readiness_svc
 from app.schemas import models as sc
 
 router = APIRouter(prefix="/api/v1")
@@ -994,29 +995,12 @@ def _generate_sku(product: dict) -> str:
 
 
 def compute_product_readiness(product: dict) -> int:
-    """Skor kesiapan produk 0-100 dari kelengkapan data (diadaptasi dari readiness model ExportReadyAI)."""
-    score = 20  # base
-    name = str(product.get("name", "")).strip()
-    category = str(product.get("category", "")).strip()
-    if name and category:
-        score += 15
-    if product.get("description") or product.get("quality_specs") or product.get("material_composition"):
-        score += 10
-    if product.get("packaging"):
-        score += 10
-    if product.get("netWeight") or product.get("weight_net"):
-        score += 5
-    if product.get("grossWeight") or product.get("weight_gross"):
-        score += 5
-    if product.get("moq") or product.get("min_order_quantity"):
-        score += 5
-    if product.get("leadTime") or product.get("lead_time_days"):
-        score += 5
-    if product.get("certificates"):
-        score += min(len(product["certificates"]) * 5, 15)
-    if product.get("status") == "Enriched" and product.get("hs") not in (None, "", "TBD"):
-        score += 10
-    return max(0, min(100, score))
+    """Skor kesiapan produk 0-100 dari kelengkapan data.
+
+    Logika dipusatkan di `app.services.readiness` agar produk, profil bisnis, dan
+    desa memakai satu model penilaian yang konsisten.
+    """
+    return readiness_svc.product_readiness(product)
 
 
 @router.post("/products/batch/enrich/")
@@ -1422,6 +1406,8 @@ def get_profile(profile_id: str):
 def create_profile(payload: sc.CreateBusinessProfilePayload):
     data = payload.model_dump()
     data["id"] = db.gen_id("business_profiles", "BIZ")
+    data.pop("readiness", None)  # dihitung dari kelengkapan data, bukan dari klien
+    data["readiness"] = readiness_svc.profile_readiness(data)
     data["updatedAt"] = "now"
     return _one(db.insert("business_profiles", data))
 
@@ -1432,8 +1418,9 @@ def put_profile(profile_id: str, payload: sc.CreateBusinessProfilePayload):
     if not record:
         raise HTTPException(404, "Business profile not found")
     data = payload.model_dump()
+    data.pop("readiness", None)
     record.update(data)
-    record["readiness"] = min(40 + len(data.get("certifications", []) or []) * 8, 100)
+    record["readiness"] = readiness_svc.profile_readiness(record)
     record["updatedAt"] = "now"
     return _save_one(record)
 
@@ -1447,8 +1434,8 @@ def update_profile(profile_id: str, payload: dict):
         if field == "readiness":
             continue  # readiness dihitung ulang, bukan dari klien
         record[field] = value
-    # Samakan dengan PUT/certifications: readiness diturunkan dari jumlah sertifikasi.
-    record["readiness"] = min(40 + len(record.get("certifications", []) or []) * 8, 100)
+    # Skor diturunkan dari kelengkapan data profil (bukan jumlah sertifikasi saja).
+    record["readiness"] = readiness_svc.profile_readiness(record)
     record["updatedAt"] = "now"
     return _save_one(record)
 
@@ -1468,7 +1455,7 @@ def update_certifications(profile_id: str, payload: sc.UpdateCertificationsPaylo
     if not record:
         raise HTTPException(404, "Business profile not found")
     record["certifications"] = payload.certifications
-    record["readiness"] = min(40 + len(payload.certifications) * 8, 100)
+    record["readiness"] = readiness_svc.profile_readiness(record)
     record["updatedAt"] = "now"
     return _save_one(record)
 
@@ -6158,6 +6145,8 @@ def get_country_detail(country_code: str):
     regs = list(get_regulations(code))
     for r in db.all("regulations"):
         if str(r.get("countryCode", "")) == code:
+            if str(r.get("descriptionRule", "")) == f"Regulation for {code}.":
+                continue  # legacy synthetic demo record; never display as legal guidance
             regs.append({
                 "id": r.get("id"),
                 "country_code": code,
@@ -6165,6 +6154,10 @@ def get_country_detail(country_code: str):
                 "forbidden_keywords": r.get("forbiddenKeywords", ""),
                 "required_specs": r.get("requiredSpecs", ""),
                 "description_rule": r.get("descriptionRule", ""),
+                "source": r.get("source", ""),
+                "source_url": r.get("sourceUrl", ""),
+                "snapshot_date": r.get("snapshotDate", ""),
+                "review_status": r.get("reviewStatus", ""),
             })
     by_category: dict[str, list] = {}
     for r in regs:
@@ -6189,6 +6182,8 @@ def get_country_detail(country_code: str):
     country["authorities"] = profile.get("authorities", [])
     country["sources"] = profile.get("sources", [])
     country["verified"] = profile.get("verified", "")
+    country["reference_snapshot"] = profile.get("reference_snapshot", "")
+    country["reference_status"] = profile.get("reference_status", "")
     country["data_note"] = profile.get("note", "")
     country["sanctions_warning"] = profile.get("sanctions_warning", "")
     country["_is_template"] = profile.get("_is_template", False)
@@ -6257,22 +6252,54 @@ def create_hs_code(payload: sc.CreateHSCodePayload):
 # ----------------------------------------------------------------------------
 # DESA & KOMODITAS UNGGULAN
 # ----------------------------------------------------------------------------
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _link_village_profile(record: dict) -> None:
+    """Tautkan desa ke profil bisnis pengelola agar kesiapan bisa dihitung.
+
+    Menghormati `businessProfileId` yang dikirim klien (divalidasi harus ada);
+    bila tidak dikirim, cari profil yang cocok dengan organisasi/nama desa.
+    """
+    explicit = str(record.get("businessProfileId") or "").strip()
+    if explicit:
+        if not db.get("business_profiles", explicit):
+            raise HTTPException(422, "Profil bisnis pengelola tidak ditemukan")
+        return
+    match = readiness_svc.business_profile_for_village(record, db.all("business_profiles"))
+    if match:
+        record["businessProfileId"] = match.get("id")
+
+
+def _village_view(record: dict, profiles: list[dict] | None = None) -> dict:
+    """Serialisasi desa dengan kesiapan yang dihitung dari profil bisnis tertaut.
+
+    Tidak lagi memakai angka `readiness` manual: skor selalu diturunkan dari
+    kelengkapan data profil pengelola (BUMDes/koperasi). `readinessSource`
+    menandai apakah desa sudah tertaut profil ("profile") atau belum
+    ("unlinked") sehingga UI bisa mengarahkan pelengkapan profil.
+    """
+    profiles = profiles if profiles is not None else db.all("business_profiles")
+    computed = readiness_svc.with_village_readiness(record, profiles, computed_at=_now_iso())
+    return _serialize(computed)
+
+
 @router.get("/villages/")
 def list_villages(search: str = "", province: str = "", readiness: str = "", with_coords: str = ""):
     """Daftar potensi desa unggulan ekspor beserta komoditas dan tingkat kesiapan.
 
     `with_coords=1` menyaring hanya desa yang sudah punya koordinat, sehingga
     peta potensi desa dapat memakai data nyata dari tabel (bukan hardcode).
+    Kesiapan dihitung dari profil bisnis pengelola, bukan input manual desa.
     """
-    items = db.all("villages")
+    profiles = db.all("business_profiles")
+    items = [_village_view(v, profiles) for v in db.all("villages")]
     if province:
         items = [v for v in items if v.get("province", "").lower() == province.lower()]
     if readiness:
-        # `readiness` adalah skor numerik (0-100) pada record desa, bukan field
-        # `status` (label "Siap Ekspor"/"Butuh Pendampingan"). Sebelumnya filter
-        # membandingkan ke `status`, sehingga ?readiness=86 tidak pernah cocok.
-        # Terima nilai numerik (mis. "80"); jika bukan angka, fallback ke
-        # pencocokan label status agar tetap kompatibel.
+        # `readiness` adalah skor numerik hasil hitung (0-100). Terima nilai
+        # numerik (mis. "80"); jika bukan angka, fallback ke label status.
         r = readiness.strip()
         if r.isdigit():
             target = int(r)
@@ -6284,7 +6311,7 @@ def list_villages(search: str = "", province: str = "", readiness: str = "", wit
         items = [v for v in items if q in json.dumps(v, ensure_ascii=False).lower()]
     if with_coords and with_coords.lower() in {"1", "true", "yes"}:
         items = [v for v in items if v.get("lat") is not None and v.get("lng") is not None]
-    return {"data": [_serialize(dict(v)) for v in items], "meta": {"total": len(items)}}
+    return {"data": items, "meta": {"total": len(items)}}
 
 
 @router.get("/villages/map/")
@@ -6292,13 +6319,16 @@ def village_map_points():
     """Titik peta desa (nama, komoditas, kesiapan, koordinat) untuk komponen peta.
 
     Didefinisikan sebelum `/villages/{village_id}/` agar tidak tertutup rute
-    parameter. Hanya desa berkoordinat yang dikembalikan.
+    parameter. Hanya desa berkoordinat yang dikembalikan. Kesiapan diturunkan
+    dari profil bisnis pengelola (bukan angka manual).
     """
+    profiles = db.all("business_profiles")
     points = []
-    for v in db.all("villages"):
-        lat, lng = v.get("lat"), v.get("lng")
+    for raw in db.all("villages"):
+        lat, lng = raw.get("lat"), raw.get("lng")
         if lat is None or lng is None:
             continue
+        v = _village_view(raw, profiles)
         points.append({
             "id": v.get("id"),
             "name": v.get("name"),
@@ -6307,6 +6337,8 @@ def village_map_points():
             "production": v.get("production", ""),
             "readiness": v.get("readiness", 0),
             "status": v.get("status", ""),
+            "readinessSource": v.get("readinessSource", ""),
+            "businessProfileId": v.get("businessProfileId") or (v.get("businessProfile") or {}).get("id"),
             "lat": float(lat),
             "lng": float(lng),
         })
@@ -6318,7 +6350,7 @@ def get_village(village_id: str):
     record = db.get("villages", village_id)
     if not record:
         raise HTTPException(404, "Village not found")
-    data = _serialize(dict(record))
+    data = _village_view(record)
     products = [p for p in db.all("products") if p.get("villageId") == village_id]
     data["products"] = [_serialize(dict(p)) for p in products]
     return _one(data)
@@ -6328,9 +6360,11 @@ def get_village(village_id: str):
 def create_village(payload: dict):
     if "id" not in payload or not payload["id"]:
         payload["id"] = db.gen_id("villages", "DES")
-    if "status" not in payload:
-        readiness = int(payload.get("readiness", 70) or 70)
-        payload["status"] = "Siap Ekspor" if readiness >= 80 else "Butuh Pendampingan"
+    # Kesiapan desa TIDAK diterima dari klien; selalu dihitung dari profil bisnis
+    # pengelola. Buang field manual + status agar tidak ada angka "halu".
+    payload.pop("readiness", None)
+    payload.pop("status", None)
+    _link_village_profile(payload)
     if "createdAt" not in payload:
         payload["createdAt"] = "2026-08-01"
     # Validasi koordinat opsional agar peta tidak menerima titik di luar bumi.
@@ -6344,7 +6378,7 @@ def create_village(payload: dict):
                 raise HTTPException(422, f"{field} di luar rentang yang valid")
             payload[field] = value
     record = db.insert("villages", payload)
-    return _one(record)
+    return _one(_village_view(record))
 
 
 @router.put("/villages/{village_id}/")
@@ -6361,12 +6395,13 @@ def update_village(village_id: str, payload: dict):
             if abs(value) > bound:
                 raise HTTPException(422, f"{field} di luar rentang yang valid")
             payload[field] = value
+    # Kesiapan/status dihitung dari profil bisnis, bukan ditimpa dari klien.
+    payload.pop("readiness", None)
+    payload.pop("status", None)
     record.update(payload)
-    if "readiness" in payload and "status" not in payload:
-        readiness = int(record.get("readiness", 70) or 70)
-        record["status"] = "Siap Ekspor" if readiness >= 80 else "Butuh Pendampingan"
+    _link_village_profile(record)
     db.save(record)
-    return _save_one(record)
+    return _save_one(_village_view(record))
 
 
 @router.delete("/villages/{village_id}/")
@@ -6530,6 +6565,10 @@ def _regulation_out(r: dict) -> dict:
         "forbidden_keywords": r.get("forbiddenKeywords", r.get("forbidden_keywords", "")),
         "required_specs": r.get("requiredSpecs", r.get("required_specs", "")),
         "description_rule": r.get("descriptionRule", r.get("description_rule", "")),
+        "source": r.get("source", ""),
+        "source_url": r.get("sourceUrl", ""),
+        "snapshot_date": r.get("snapshotDate", ""),
+        "review_status": r.get("reviewStatus", ""),
     }
 
 
@@ -6544,6 +6583,8 @@ def admin_list_regulations(country_code: str, rule_category: str = "", current_u
         items.append({**r, "id": f"static-{i}"})
     for r in db.all("regulations"):
         if str(r.get("countryCode", "")) == code:
+            if str(r.get("descriptionRule", "")) == f"Regulation for {code}.":
+                continue
             items.append(_regulation_out(r))
     if rule_category:
         items = [r for r in items if str(r.get("rule_category", "")).lower() == rule_category.lower()]

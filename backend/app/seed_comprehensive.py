@@ -9,6 +9,8 @@ from app.core.security import hash_password
 
 def seed_comprehensive():
     """Seed semua tabel dengan data lengkap."""
+    from app.data.trade_reference import seed_trade_reference
+    seed_trade_reference(db)
     print("🌱 Starting comprehensive seeding...")
     
     # 1. MASTER DATA: Countries & HS Codes
