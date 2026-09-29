@@ -144,6 +144,115 @@ PRODUCTS = [
     "Beras Merah Organik",
 ]
 
+# Peta produk → kode HS yang benar (chapter komoditas desa 01-24, 46, 68-70).
+# Kunci = nama pada PRODUCTS; nilai = (kode HS, deskripsi Inggris singkat).
+# Sebelumnya setiap produk mendapat HS acak dari HS_POOL sehingga kopi bisa
+# berlabel HS pisang — fatal untuk aplikasi yang inti fiturnya klasifikasi HS.
+PRODUCT_HS = {
+    "Kopi Arabika Gayo": ("090111", "Coffee, not roasted"),
+    "Kopi Robusta Lampung": ("090111", "Coffee, not roasted"),
+    "Kopi Luwak Premium": ("090121", "Coffee, roasted"),
+    "Teh Hitam Jawa": ("090230", "Black tea"),
+    "Kakao Fermentasi": ("180100", "Cocoa beans"),
+    "Udang Vannamei": ("030617", "Frozen shrimps"),
+    "Tuna Sirip Kuning": ("030487", "Frozen tuna fillets"),
+    "Minyak Kelapa Virgin": ("151311", "Crude coconut oil"),
+    "Karet Alam RSS1": ("400121", "Natural rubber, smoked sheets"),
+    "Kayu Jati Olahan": ("440729", "Tropical wood sawn"),
+    "Rattan Anyaman": ("460212", "Basketwork of rattan"),
+    "Bambu Laminasi": ("441210", "Plywood of bamboo"),
+    "Mebel Rotan": ("940383", "Bamboo/rattan furniture"),
+    "Kursi Kayu Ukir": ("940360", "Wooden furniture"),
+    "Meja Jati": ("940360", "Wooden furniture"),
+    "Lemari Pakaian": ("940350", "Wooden bedroom furniture"),
+    "Batik Tulis Solo": ("621142", "Cotton garments"),
+    "Batik Cap Pekalongan": ("621142", "Cotton garments"),
+    "Kain Tenun Sumba": ("520852", "Woven cotton fabric"),
+    "Kain Songket": ("520842", "Woven cotton fabric"),
+    "Sarung Sutra": ("500720", "Woven silk fabric"),
+    "Kemeja Batik": ("620590", "Men's garments"),
+    "Tas Rotan": ("460290", "Basketwork articles"),
+    "Sepatu Kulit": ("640399", "Leather footwear"),
+    "Tas Kulit": ("420291", "Leather articles"),
+    "Sabun Herbal": ("340111", "Soap for toilet use"),
+    "Minyak Sereh Wangi": ("330129", "Essential oils, nes"),
+    "Essential Oil": ("330129", "Essential oils, nes"),
+    "Lilin Aromaterapi": ("340600", "Candles"),
+    "Keramik Hias": ("691390", "Ceramic statuettes"),
+    "Patung Perunggu": ("830629", "Bronze ornaments"),
+    "Patung Kayu": ("442010", "Wooden statuettes"),
+    "Wayang Kulit": ("970500", "Collector's pieces"),
+    "Keris Hias": ("930700", "Swords and cutlasses"),
+    "Topeng Kayu": ("442010", "Wooden statuettes"),
+    "Lukisan Bali": ("970110", "Paintings"),
+    "Ukiran Jepara": ("442010", "Wooden statuettes"),
+    "Permadani Tenun": ("570500", "Carpets and textiles, nes"),
+    "Karpet Serat Alam": ("570500", "Carpets and textiles, nes"),
+    "Ikan Asin Belah": ("030559", "Dried fish, nes"),
+    "Abon Sapi": ("160250", "Prepared bovine meat"),
+    "Dendeng Sapi": ("160250", "Prepared bovine meat"),
+    "Rendang Sapi Kaleng": ("160250", "Prepared bovine meat"),
+    "Sambal Goreng": ("210390", "Sauces and preparations"),
+    "Pempek Kaleng": ("160420", "Prepared fish"),
+    "Krupuk Udang": ("190590", "Bread, pastry, cakes"),
+    "Kripik Tempe": ("200819", "Prepared nuts/seeds"),
+    "Kripik Pisang": ("200899", "Prepared fruit, nes"),
+    "Madu Hutan Sumbawa": ("040900", "Natural honey"),
+    "Gula Kelapa Organik": ("170114", "Raw cane sugar"),
+    "Gula Aren": ("170114", "Raw cane sugar"),
+    "Kecap Manis": ("210310", "Soy sauce"),
+    "Saus Sambal": ("210390", "Sauces and preparations"),
+    "Beras Pandanwangi": ("100630", "Semi-milled rice"),
+    "Beras Hitam": ("100620", "Husked (brown) rice"),
+    "Kacang Mete Goreng": ("200819", "Prepared cashew nuts"),
+    "Emping Melinjo": ("190590", "Bread, pastry, cakes"),
+    "Kerupuk Ikan": ("190590", "Bread, pastry, cakes"),
+    "Sarden Ikan Kembung": ("160413", "Prepared sardines"),
+    "Bandeng Presto": ("160419", "Prepared fish, nes"),
+    "Otak-Otak Ikan": ("160420", "Prepared fish"),
+    "Tepung Tapioka": ("110814", "Cassava starch"),
+    "Patin Fillet Beku": ("030489", "Frozen fish fillets, nes"),
+    "Kopi Instant Premium": ("210111", "Coffee extracts"),
+    "Jahe Bubuk": ("091012", "Ginger, crushed or ground"),
+    "Kunyit Bubuk": ("091030", "Turmeric"),
+    "Kayu Manis Batang": ("090611", "Cinnamon"),
+    "Cengkih Kering": ("090710", "Cloves"),
+    "Pala Bubuk": ("090822", "Nutmeg, crushed or ground"),
+    "Lada Hitam": ("090411", "Pepper, neither crushed"),
+    "Lada Putih": ("090412", "Pepper, crushed or ground"),
+    "Vanili Kering": ("090611", "Vanilla"),
+    "Minyak Atsiri Cengkih": ("330129", "Essential oils, nes"),
+    "Kapur Barus": ("330741", "Odoriferous preparations"),
+    "Sirup Gula Merah": ("170290", "Other sugars and syrups"),
+    "Bumbu Rendang Instan": ("210390", "Sauces and preparations"),
+    "Bumbu Nasi Goreng": ("210390", "Sauces and preparations"),
+    "Jagung Pipil": ("100590", "Maize, other"),
+    "Kacang Tanah Kupas": ("120242", "Groundnuts, shelled"),
+    "Tepung Beras": ("110230", "Rice flour"),
+    "Lele Filet": ("030432", "Frozen catfish fillets"),
+    "Biskuit Jahe": ("190531", "Sweet biscuits"),
+    "Stroopwafel": ("190532", "Waffles and wafers"),
+    "Kemasan Vakum 250g": ("392321", "Plastic sacks and bags"),
+    "Kontainer 20ft": ("860900", "Containers for transport"),
+    "Palet Kayu Premium": ("441520", "Wooden pallets"),
+    "Box 5kg Ekspor": ("481910", "Cartons of paper"),
+    "Cokelat Premium": ("180632", "Chocolate, not filled"),
+    "Cumi-Cumi Beku": ("030743", "Frozen squid"),
+    "Rumput Laut Kering": ("121229", "Seaweed, other"),
+    "Minyak Sawit": ("151190", "Palm oil"),
+    "Kayu Mahoni Furniture": ("940360", "Wooden furniture"),
+    "Keranjang Bambu": ("460212", "Basketwork of bamboo"),
+    "Anyaman Mendong": ("460212", "Basketwork of vegetable materials"),
+    "Tikar Pandan": ("460129", "Plaiting materials"),
+    "Sandal Kayu": ("640399", "Footwear"),
+    "Gaun Tenun": ("620449", "Women's garments"),
+    "Selendang Sutra": ("621410", "Silk shawls and scarves"),
+    "Dompet Kulit": ("420231", "Leather wallets"),
+    "Sarung Bantal Batik": ("630492", "Furnishing articles, cotton"),
+    "Taplak Meja Bordir": ("630492", "Furnishing articles, cotton"),
+    "Beras Merah Organik": ("100620", "Husked (brown) rice"),
+}
+
 REGIONS = {
     "Asia": ["JP", "KR", "SG", "MY", "TH", "VN", "PH", "CN", "IN", "TW"],
     "Europe": ["DE", "NL", "GB", "FR", "IT", "ES", "BE", "CH", "SE", "NO"],
@@ -202,7 +311,9 @@ def seed_100_records():
     product_ids = []
     for i in range(1, 101):
         pname = PRODUCTS[i-1]
-        hs = _pick(HS_POOL, n())
+        # HS code diambil dari peta kurasi per produk (fallback acak hanya bila
+        # produk tak terdaftar) agar klasifikasi HS di demo masuk akal.
+        hs = PRODUCT_HS.get(pname) or _pick(HS_POOL, n())
         cat = _pick(CATEGORIES, n())
         city = _pick(CITIES, n())
         pid = f"PRD-{i:03d}"
@@ -313,10 +424,15 @@ def seed_100_records():
         # berbeda → judul "Kopi Instant Premium" dengan deskripsi "sirup gula merah").
         product_id = _pick(product_ids, n())
         product_name = (db.get("products", product_id) or {}).get("name", product_id)
+        # Status dipilih dari indeks iterasi (bukan counter `n()`) agar sebaran
+        # Draft/Published/Needs Review selalu sehat. Counter `n()` yang dipakai
+        # berulang modulo 3 pernah membuat SEMUA katalog "Draft" begitu urutan
+        # pemanggilan bergeser, sehingga portal pembeli jadi kosong.
+        catalog_status = ["Draft", "Published", "Needs Review"][i % 3]
         db.insert("catalogs", {"id": cid, "productId": product_id,
             "projectId": _pick(proj_ids, n()),
             "title": f"{product_name} - Export",
-            "status": _pick(["Draft","Published","Needs Review"], n()),
+            "status": catalog_status,
             "targetMarket": _pick(ALL_REGIONS, n()),
             "moq": f"{n()%5000+100} {_pick(['kg','pcs','unit'], n())}",
             "leadTime": f"{n()%45+7} days",
@@ -360,18 +476,25 @@ def seed_100_records():
     # -- EXPORT ANALYSES (100) + REGULATION RECS --
     for i in range(1, 101):
         aid = f"ANL-{i:03d}"
+        # Analisis harus konsisten dengan produk yang dirujuk: nama produk, HS
+        # code, dan ringkasan diambil dari `productId` yang sama. Sebelumnya
+        # masing-masing diundi terpisah → judul, ringkasan, dan HS saling tidak
+        # berhubungan (mis. "Keranjang Bambu" dengan "Market analysis for Teh...").
+        analysis_product_id = _pick(product_ids, n())
+        analysis_product = db.get("products", analysis_product_id) or {}
+        analysis_product_name = analysis_product.get("name") or analysis_product_id
         db.insert("export_analyses", {"id": aid,
-            "productId": _pick(product_ids, n()),
-            "productName": _pick(PRODUCTS, n()),
+            "productId": analysis_product_id,
+            "productName": analysis_product_name,
             "destination": _pick(REGIONS[_pick(ALL_REGIONS, n())], n()),
             "status": _pick(["Ready","In Progress","Needs Review"], n()),
-            "hsCode": _pick(HS_POOL, n())[0],
+            "hsCode": analysis_product.get("hs") or _pick(HS_POOL, n())[0],
             "confidence": n()%100, "score": n()%100,
             "marketDemand": _pick(["High","Medium","Low"], n()),
             "duties": f"{n()%30}%",
             "restrictions": _pick_n(["Labeling rules","Import quota"], n()%2, n()),
             "recommendations": _pick_n(["COO","Health Cert","Lab Report"], n()%3+1, n()),
-            "summary": f"Market analysis for {_pick(PRODUCTS, n())}.",
+            "summary": f"Market analysis for {analysis_product_name}.",
             "updatedAt": "now"})
         db.insert("regulation_recommendations", {"id": f"REG-{i:03d}",
             "analysisId": aid,
@@ -415,23 +538,38 @@ def seed_100_records():
             "status": _pick(["In Review","Revision Needed","Accepted","Draft"], n()),
             "validUntil": f"2026-{n()%12+1:02d}-{n()%28+1:02d}",
             "margin": n()%30+5, "updatedAt": "now"})
+        # Order line konsisten: total = unitPrice * quantity, dan `value` order
+        # mengikuti total baris. Sebelumnya `unitPrice` tak ada sehingga halaman
+        # detail order menampilkan "RpNaN per unit".
+        line_qty = n() % 1000 + 1
+        unit_price = round(n() % 95 + 5 + (n() % 100) / 100, 2)
+        order_value = round(unit_price * line_qty, 2)
+        order_line = {
+            "product": _pick(PRODUCTS, n()),
+            "quantity": f"{line_qty} kg",
+            "unitPrice": unit_price,
+            "total": order_value,
+        }
         db.insert("orders", {"id": f"ORD-{i:03d}", "quotationId": quot_id,
             "projectId": _pick(proj_ids, n()),
             "buyer": _pick(BUYER_COMPANIES, n()),
             "supplier": _pick(EXPORT_COMPANIES, n()),
             "status": _pick(["Draft","Confirmed","Document Prep","In Shipment","Delivered"], n()),
             "incoterm": _pick(INCOTERMS, n()),
-            "value": n()%100000+10000, "currency": "USD",
+            "value": order_value, "currency": "USD",
             "paymentTerms": _pick(["Net 30","LC at sight","T/T advance","Net 60"], n()),
             "deliveryWindow": f"{n()%28+1}-{n()%28+1} Aug 2026",
             "readiness": n()%100,
-            "lines": [{"product":_pick(PRODUCTS,n()),"quantity":f"{n()%1000} kg","total":n()%50000}],
+            "lines": [order_line],
             "updatedAt": "now"})
+        # `paid` tidak boleh melebihi `amount` — kalau tidak, piutang jadi negatif
+        # (mis. "Tertunggak -Rp 1") dan progres terbayar > 100%.
+        paid = round(order_value * (n() % 101) / 100, 2)
         db.insert("payments", {"id": f"PAY-{i:03d}", "orderId": f"ORD-{i:03d}",
             "buyer": _pick(BUYER_COMPANIES, n()),
             "status": _pick(["Pending","Received","Overdue"], n()),
-            "currency": "USD", "amount": n()%50000,
-            "paid": n()%50000, "dueDate": f"2026-{n()%12+1:02d}-{n()%28+1:02d}",
+            "currency": "USD", "amount": order_value,
+            "paid": paid, "dueDate": f"2026-{n()%12+1:02d}-{n()%28+1:02d}",
             "method": _pick(["T/T","LC","DP"], n()), "risk": _pick(RISKS, n()),
             "remindersSent": n()%3, "updatedAt": "now"})
 
