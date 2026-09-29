@@ -14,6 +14,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { createConfirmController } from '$lib/utils/confirm.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+import FileViewerDialog from '$lib/components/FileViewerDialog.svelte';
 import SortSelect from '$lib/components/SortSelect.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
 import { sortBy, type SortDir } from '$lib/utils/sort';
@@ -115,6 +116,15 @@ import { page } from '$app/state';
 	let busyId = $state('');
 	let showRename = $state('');
 	let renameValue = $state('');
+
+	// Penampil isi berkas (mendukung spreadsheet, dokumen, presentasi, PDF).
+	let viewerOpen = $state(false);
+	let viewerFileId = $state('');
+
+	function openViewer(fileId: string) {
+		viewerFileId = fileId;
+		viewerOpen = true;
+	}
 
 	// Konfirmasi terpusat untuk hapus file (pengganti window.confirm).
 	const confirm = createConfirmController();
@@ -294,6 +304,7 @@ import { page } from '$app/state';
 						</div>
 					</CardContent>
 					<div class="flex flex-wrap items-center gap-2">
+					<Button variant="default" size="sm" onclick={() => openViewer(file.id)}>{t('Lihat isi')}</Button>
 					{#if file.storageName}
 						<a href={fileDownloadUrl(file.id)} target="_blank" rel="noopener" class="text-sm font-bold text-primary no-underline hover:underline">{t('Unduh')}</a>
 					{/if}
@@ -345,4 +356,6 @@ import { page } from '$app/state';
 		loading={confirm.loading}
 		onconfirm={confirm.run}
 	/>
+
+	<FileViewerDialog bind:open={viewerOpen} fileId={viewerFileId} />
 </AppShell>

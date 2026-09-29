@@ -2935,7 +2935,21 @@ const dictionary: Record<string, Entry> = {
 	'Gagal menghapus notifikasi terpilih.': { id: 'Gagal menghapus notifikasi terpilih.', en: 'Failed to delete selected notifications.' },
 	'Hapus notifikasi terpilih': { id: 'Hapus notifikasi terpilih', en: 'Delete selected notifications' },
 	'Notifikasi terpilih akan dihapus permanen dari workspace.': { id: 'Notifikasi terpilih akan dihapus permanen dari workspace.', en: 'Selected notifications will be permanently removed from the workspace.' },
-	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' }
+	'Jumlah tagihan': { id: 'Jumlah tagihan', en: 'Bill amount' },
+	// Fitur lihat isi berkas & analisa AI
+	'Lihat isi': { id: 'Lihat isi', en: 'View content' },
+	'Isi berkas': { id: 'Isi berkas', en: 'File content' },
+	'Lihat isi berkas dan minta asisten AI menganalisisnya.': { id: 'Lihat isi berkas dan minta asisten AI menganalisisnya.', en: 'View the file content and ask the AI assistant to analyze it.' },
+	'Gagal memuat isi berkas.': { id: 'Gagal memuat isi berkas.', en: 'Failed to load file content.' },
+	'Gagal menganalisis berkas. Coba lagi.': { id: 'Gagal menganalisis berkas. Coba lagi.', en: 'Failed to analyze the file. Try again.' },
+	'Analisa file ini': { id: 'Analisa file ini', en: 'Analyze this file' },
+	'Analisis isi berkas ini': { id: 'Analisis isi berkas ini', en: 'Analyze this file content' },
+	'Isi tidak tersimpan di server': { id: 'Isi tidak tersimpan di server', en: 'Content not stored on server' },
+	'Isi berkas tidak dapat ditampilkan.': { id: 'Isi berkas tidak dapat ditampilkan.', en: 'File content cannot be displayed.' },
+	'Pratinjau dipotong untuk kinerja. Unduh berkas untuk isi lengkap.': { id: 'Pratinjau dipotong untuk kinerja. Unduh berkas untuk isi lengkap.', en: 'Preview truncated for performance. Download the file for the full content.' },
+	'Spreadsheet': { id: 'Spreadsheet', en: 'Spreadsheet' },
+	'Presentasi': { id: 'Presentasi', en: 'Presentation' },
+	'Berkas': { id: 'Berkas', en: 'File' }
 };
 
 let initial: Locale = 'id';
