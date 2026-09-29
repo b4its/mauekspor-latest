@@ -51,21 +51,6 @@
 	let aiStatus = $state<AiStatus | null>(null);
 	let messagesContainer = $state<HTMLDivElement | null>(null);
 
-	// Label status AI diturunkan dari status backend nyata (mode/health/model),
-	// bukan lagi nama model yang di-hardcode agar tidak menyesatkan.
-	let aiBadgeLabel = $derived.by(() => {
-		if (!aiStatus) return t('Tidak tersedia');
-		if (aiStatus.health && aiStatus.health !== 'healthy' && aiStatus.health !== 'ok') return t('Mode fallback');
-		if (aiStatus.mode === 'mock') return t('Mode demo');
-		return aiStatus.model || t('Online');
-	});
-	let aiBadgeTone = $derived.by(() => {
-		if (!aiStatus) return 'border-border bg-muted/40 text-muted-foreground';
-		if (aiStatus.health && aiStatus.health !== 'healthy' && aiStatus.health !== 'ok') return 'border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400';
-		if (aiStatus.mode === 'mock') return 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400';
-		return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
-	});
-
 	// Load AI status on mount
 	$effect(() => {
 		getAiStatus()
@@ -272,9 +257,9 @@
 						<h3 class="font-display text-sm font-black tracking-tight text-foreground">
 							{t('MauEkspor AI')}
 						</h3>
-						<Badge variant="outline" class={`h-4 px-1 text-[10px] font-semibold ${aiBadgeTone}`}>
-							<span class="mr-1 inline-block size-1.5 rounded-full bg-current"></span>
-							{aiBadgeLabel}
+						<Badge variant="outline" class="h-4 {aiStatus?.health === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'} px-1.5 text-[10px] font-semibold">
+							<span class="mr-1 inline-block size-1.5 rounded-full {aiStatus?.health === 'healthy' ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+							{aiStatus?.health === 'healthy' ? 'DeepSeek 4.1' : (aiStatus?.mode === 'mock' ? 'Fallback' : 'AI Ready')}
 						</Badge>
 					</div>
 					<p class="text-[11px] text-muted-foreground">
@@ -290,7 +275,6 @@
 					class="size-8 p-0 text-muted-foreground hover:text-foreground"
 					onclick={handleNewSession}
 					title={t('Sesi Baru')}
-					aria-label={t('Sesi Baru')}
 				>
 					<MessageSquarePlusIcon class="size-4" />
 				</Button>
@@ -300,7 +284,6 @@
 					class="size-8 p-0 text-muted-foreground hover:text-foreground"
 					onclick={openFullChat}
 					title={t('Buka Layar Penuh')}
-					aria-label={t('Buka Layar Penuh')}
 				>
 					<ExternalLinkIcon class="size-4" />
 				</Button>
@@ -310,7 +293,6 @@
 					class="size-8 p-0 text-muted-foreground hover:text-foreground"
 					onclick={closeAiAssistant}
 					title={t('Tutup (Esc)')}
-					aria-label={t('Tutup (Esc)')}
 				>
 					<XIcon class="size-4" />
 				</Button>
@@ -461,7 +443,6 @@
 					size="sm"
 					class="h-10 w-10 shrink-0 rounded-xl p-0"
 					title={t('Kirim (Enter)')}
-					aria-label={t('Kirim (Enter)')}
 				>
 					{#if sending}
 						<span class="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
@@ -471,13 +452,7 @@
 				</Button>
 			</div>
 			<div class="mt-2 flex items-center justify-between px-1 text-[10px] text-muted-foreground/60">
-				<span>
-					{#if aiStatus?.model}
-						{aiStatus.mode === 'mock' ? t('Mode demo') : aiStatus.model}
-					{:else}
-						{t('Asisten ekspor workspace')}
-					{/if}
-				</span>
+				<span>{t('Didukung DeepSeek 4.1 Flash')}</span>
 				<span>{t('Enter untuk kirim • Esc untuk tutup')}</span>
 			</div>
 		</form>

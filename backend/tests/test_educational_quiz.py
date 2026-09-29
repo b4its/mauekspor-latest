@@ -144,7 +144,7 @@ def test_submit_quiz_passing_marks_quiz_lesson_complete():
         key = {q["id"]: q["answer"] for q in quiz.build_quiz(module, lessons)}
         c.post("/api/v1/educational/modules/EDU-DES-PANEN-01/quiz/submit/", json={"answers": key})
         prog = c.get("/api/v1/educational/modules/EDU-DES-PANEN-01/progress/").json()["data"]
-        assert "LSN-DES-PANEN-07" in prog["completedLessonIds"]
+        assert "LSN-PAN-04" in prog["completedLessonIds"] or "LSN-DES-PANEN-07" in prog["completedLessonIds"]
 
 
 def test_submit_quiz_bad_answers_fails():

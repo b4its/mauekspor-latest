@@ -26,35 +26,68 @@ def is_food_product(product: dict) -> bool:
 
 def generate_market_intelligence(product: dict) -> dict[str, Any]:
     """Generate market intelligence untuk satu produk (1-per-produk, disimpan)."""
-    parsed = ai.ask_json(
-        "You are a market intelligence analyst for Indonesian exports. Return JSON with keys: "
-        "recommended_countries (list of {country, code, score, reason, market_size, competition_level, "
-        "price_range, entry_strategy}), countries_to_avoid (list of {country, code, reason}), "
-        "market_trends (list), competitive_landscape (string), growth_opportunities (list), "
-        "risks_and_challenges (list), overall_recommendation (string).",
-        f"Product: {product.get('name', '')} ({product.get('category', '')} - {product.get('description', '')})",
-        kind="market_insight",
+    name = product.get("name", "")
+    cat = product.get("category", "")
+    desc = product.get("description", "")
+    sys_prompt = (
+        "You are an international trade market intelligence analyst for Indonesian exports. "
+        "Return a valid JSON object matching this schema:\n"
+        "{\n"
+        '  "recommended_countries": [{"country": "Japan", "code": "JP", "score": 92, "reason": "...", "market_size": "...", "competition_level": "...", "price_range": "...", "entry_strategy": "..."}],\n'
+        '  "countries_to_avoid": [{"country": "...", "code": "...", "reason": "..."}],\n'
+        '  "market_trends": ["..."],\n'
+        '  "competitive_landscape": "...",\n'
+        '  "growth_opportunities": ["..."],\n'
+        '  "risks_and_challenges": ["..."],\n'
+        '  "overall_recommendation": "..."\n'
+        "}\n"
+        "Provide 3-5 recommended countries with 2-letter ISO codes."
     )
+    user_prompt = f"Analisis intelijen pasar ekspor untuk produk: {name} ({cat} - {desc})."
+    parsed = ai.ask_json(sys_prompt, user_prompt, kind="market_insight")
+
     if parsed and isinstance(parsed, dict):
-        # Tambahkan forwarder recommendations per negara yang direkomendasikan
-        recommended = parsed.get("recommended_countries") or []
-        if isinstance(recommended, list):
+        raw_recs = (
+            parsed.get("recommended_countries")
+            or parsed.get("recommendedCountries")
+            or parsed.get("target_markets")
+            or parsed.get("targetMarkets")
+            or []
+        )
+        recommended = []
+        if isinstance(raw_recs, list) and len(raw_recs) > 0:
             from app.services.forwarders import get_recommendations
-            for item in recommended:
-                code = str(item.get("code", ""))[:2].upper()
-                if code:
-                    item["forwarders"] = get_recommendations(code)
-        return {
-            "productId": product.get("id"),
-            "recommendedCountries": recommended,
-            "countriesToAvoid": parsed.get("countries_to_avoid") or [],
-            "marketTrends": parsed.get("market_trends") or [],
-            "competitiveLandscape": parsed.get("competitive_landscape") or "",
-            "growthOpportunities": parsed.get("growth_opportunities") or [],
-            "risksAndChallenges": parsed.get("risks_and_challenges") or [],
-            "overallRecommendation": parsed.get("overall_recommendation") or "",
-            "generatedAt": "now",
-        }
+            for item in raw_recs:
+                if isinstance(item, dict):
+                    code = str(item.get("code") or item.get("country_code") or item.get("countryCode") or "")[:2].upper()
+                    c_name = item.get("country") or item.get("country_name") or item.get("name") or code
+                    score = item.get("score") if item.get("score") is not None else 88
+                    entry = {
+                        "country": c_name,
+                        "code": code or "JP",
+                        "score": score,
+                        "reason": item.get("reason") or item.get("description") or "",
+                        "market_size": item.get("market_size") or item.get("marketSize") or "US$1B+",
+                        "competition_level": item.get("competition_level") or item.get("competitionLevel") or "Sedang",
+                        "price_range": item.get("price_range") or item.get("priceRange") or "Kompetitif",
+                        "entry_strategy": item.get("entry_strategy") or item.get("entryStrategy") or "Kemitraan lokal",
+                    }
+                    if code:
+                        entry["forwarders"] = get_recommendations(code)
+                    recommended.append(entry)
+
+        if len(recommended) > 0:
+            return {
+                "productId": product.get("id"),
+                "recommendedCountries": recommended,
+                "countriesToAvoid": parsed.get("countries_to_avoid") or parsed.get("countriesToAvoid") or [],
+                "marketTrends": parsed.get("market_trends") or parsed.get("marketTrends") or [],
+                "competitiveLandscape": str(parsed.get("competitive_landscape") or parsed.get("competitiveLandscape") or ""),
+                "growthOpportunities": parsed.get("growth_opportunities") or parsed.get("growthOpportunities") or [],
+                "risksAndChallenges": parsed.get("risks_and_challenges") or parsed.get("risksAndChallenges") or [],
+                "overallRecommendation": str(parsed.get("overall_recommendation") or parsed.get("overallRecommendation") or ""),
+                "generatedAt": "now",
+            }
     # Fallback deterministik
     return _fallback_market_intelligence(product)
 

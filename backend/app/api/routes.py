@@ -37,6 +37,7 @@ from app.services import file_content
 from app.services import quiz
 from app.services import uploads
 from app.services import readiness as readiness_svc
+from app.services import provenance as prov
 from app.schemas import models as sc
 
 router = APIRouter(prefix="/api/v1")
@@ -4722,29 +4723,90 @@ def list_educational_modules_v2():
     out = []
     for m in modules:
         item = dict(m)
+        lessons = db.find("educational_lessons", moduleId=m.get("id"))
         articles = db.find("educational_articles", moduleId=m.get("id"))
+        item["lessons"] = lessons
         item["articles"] = articles
+        item["lessonCount"] = len(lessons) if lessons else int(m.get("lessons") or len(articles) or 0)
+        item["quizCount"] = sum(1 for l in lessons if l.get("kind") == "Quiz" or l.get("quiz_questions") or l.get("quizQuestions"))
         item["articleCount"] = len(articles)
         out.append(item)
     return {"data": out, "meta": {}}
 
 
+
 @router.post("/educational/modules/")
 def create_educational_module(payload: sc.CreateEducationalModulePayload):
-    record = db.insert("educational_modules", {
-        "id": db.gen_id("educational_modules", "EDU"),
+    mod_id = db.gen_id("educational_modules", "EDU")
+    level = payload.level or "Beginner"
+    summary = payload.summary or payload.description or ""
+    description = payload.description or summary
+    status = payload.status or "Published"
+
+    module_record = db.insert("educational_modules", {
+        "id": mod_id,
         "title": payload.title,
-        "description": payload.description,
+        "description": description,
+        "summary": summary,
+        "level": level,
+        "status": status,
         "orderIndex": payload.order_index,
-        "status": "Published",
-        # Default field yang dibaca UI agar tidak muncul "undefined%"/level kosong.
-        "summary": payload.description,
-        "level": "Beginner",
         "completion": 0,
         "createdAt": "now",
         "updatedAt": "now",
     })
-    return _one(record)
+
+    inserted_lessons = []
+    has_quiz = False
+    for i, lsn in enumerate(payload.lessons, 1):
+        lsn_id = lsn.id or f"LSN-{mod_id}-{i:02d}"
+        kind = lsn.kind or "Reading"
+        if kind == "Quiz" or lsn.quiz_questions:
+            has_quiz = True
+        quiz_data = [q.model_dump() if hasattr(q, "model_dump") else dict(q) for q in lsn.quiz_questions]
+        v_url = getattr(lsn, "video_url", "") or getattr(lsn, "videoUrl", "") or ""
+        lesson_record = db.insert("educational_lessons", {
+            "id": lsn_id,
+            "moduleId": mod_id,
+            "title": lsn.title,
+            "duration": lsn.duration or "5 min",
+            "kind": kind,
+            "content": lsn.content,
+            "videoUrl": v_url,
+            "keyPoints": lsn.key_points or [],
+            "quizQuestions": quiz_data,
+            "completed": False,
+            "createdAt": "now",
+            "updatedAt": "now",
+        })
+        inserted_lessons.append(lesson_record)
+
+    if payload.quiz_questions and not has_quiz:
+        quiz_data = [q.model_dump() if hasattr(q, "model_dump") else dict(q) for q in payload.quiz_questions]
+        quiz_record = db.insert("educational_lessons", {
+            "id": f"LSN-{mod_id}-QZ",
+            "moduleId": mod_id,
+            "title": f"Kuis Pemahaman: {payload.title}",
+            "duration": f"{max(3, len(quiz_data) * 2)} min",
+            "kind": "Quiz",
+            "content": "Jawab seluruh pertanyaan pilihan ganda berikut untuk menguji dan memvalidasi pemahaman materi ekspor Anda.",
+            "keyPoints": ["Kuis pilihan ganda interaktif", "Ketahui skor evaluasi dan pembahasan kunci jawaban"],
+            "quizQuestions": quiz_data,
+            "completed": False,
+            "createdAt": "now",
+            "updatedAt": "now",
+        })
+        inserted_lessons.append(quiz_record)
+
+    module_record["lessons"] = len(inserted_lessons)
+    module_record["lessonCount"] = len(inserted_lessons)
+    module_record["quizCount"] = sum(1 for l in inserted_lessons if l.get("kind") == "Quiz")
+    db.save(module_record)
+
+    out = dict(module_record)
+    out["lessons"] = inserted_lessons
+    return _one(out)
+
 
 
 @router.get("/educational/modules/{module_id}/")
@@ -4753,9 +4815,35 @@ def get_educational_module(module_id: str):
     if not record:
         raise HTTPException(404, "Module not found")
     out = dict(record)
-    out["articles"] = db.find("educational_articles", moduleId=module_id)
-    out["articleCount"] = len(out["articles"])
-    out["lessonsList"] = db.find("educational_lessons", moduleId=module_id)
+    lessons = db.find("educational_lessons", moduleId=module_id)
+    articles = db.find("educational_articles", moduleId=module_id)
+
+    topic_videos = {
+        "EDU-START": "https://www.youtube.com/watch?v=C7VLuiVPIQM",
+        "EDU-COMPLIANCE": "https://www.youtube.com/watch?v=-I2EJ5MUVkY",
+        "EDU-COSTING": "https://www.youtube.com/watch?v=7g7IC4IzjDM",
+        "EDU-TARIFFS-2026": "https://www.youtube.com/watch?v=S0T09u1T8kY",
+        "EDU-DES-PANEN-01": "https://www.youtube.com/watch?v=JnMtuZTjV6Q",
+        "EDU-DES-HALAL-02": "https://www.youtube.com/watch?v=UaPPWKAYj7E",
+        "EDU-DES-KEMAS-03": "https://www.youtube.com/watch?v=tK-V0wXk-V0",
+        "EDU-DES-NIB-04": "https://www.youtube.com/watch?v=3-1hUZ6EZn0",
+        "EDU-DES-DOC-05": "https://www.youtube.com/watch?v=C7VLuiVPIQM",
+        "EDU-DES-KARANTINA-06": "https://www.youtube.com/watch?v=JnMtuZTjV6Q",
+        "EDU-DES-CITES-07": "https://www.youtube.com/watch?v=tK-V0wXk-V0",
+    }
+
+    for lsn in lessons:
+        if lsn.get("kind") == "Video" and not (lsn.get("videoUrl") or lsn.get("video_url")):
+            assigned_url = topic_videos.get(module_id) or "https://www.youtube.com/watch?v=C7VLuiVPIQM"
+            lsn["videoUrl"] = assigned_url
+            lsn["video_url"] = assigned_url
+
+    out["lessons"] = len(lessons)
+    out["lessonsList"] = lessons
+    out["articles"] = articles
+    out["lessonCount"] = len(lessons)
+    out["quizCount"] = sum(1 for l in lessons if l.get("kind") == "Quiz" or l.get("quiz_questions") or l.get("quizQuestions"))
+    out["articleCount"] = len(articles)
     return {"data": _serialize(out), "meta": {}}
 
 
@@ -4780,6 +4868,28 @@ def delete_educational_module(module_id: str):
     for article in db.find("educational_articles", moduleId=module_id):
         db.delete("educational_articles", article.get("id"))
     return {"data": {"status": "deleted"}, "meta": {}}
+
+
+@router.post("/educational/modules/{module_id}/lessons/")
+def add_lesson_to_module(module_id: str, payload: sc.LessonPayload):
+    module = db.get("educational_modules", module_id)
+    if not module:
+        raise HTTPException(404, "Module not found")
+    lesson = db.insert("educational_lessons", {
+        "id": db.gen_id("educational_lessons", "LSN"),
+        "moduleId": module_id,
+        "title": payload.title,
+        "duration": payload.duration or "5 min",
+        "kind": payload.kind or "Reading",
+        "content": payload.content or "",
+        "videoUrl": payload.video_url or "",
+        "keyPoints": payload.key_points or [],
+        "quizQuestions": [q.model_dump() for q in payload.quiz_questions],
+        "completed": False,
+    })
+    module["lessons"] = len(db.find("educational_lessons", moduleId=module_id))
+    db.save(module)
+    return _one(lesson)
 
 
 @router.post("/educational/modules/{module_id}/publish/")
@@ -5957,7 +6067,7 @@ def create_analysis(payload: sc.CreateExportAnalysisPayload):
         "summary": result["recommendations"][:300] if result["recommendations"] else "Analysis complete.",
         # Provenance & tingkat kepercayaan (PRD §5.4/§5.12): tandai advisory +
         # wajib review manusia agar UI tidak menyajikan sebagai kebenaran final.
-        "trust": compliance_svc.prov.analysis_trust(False),
+        "trust": prov.analysis_trust(False),
         "requiredDocuments": doc_types.required_documents(
             result.get("commodityGroup", "pertanian"), product.get("incoterm")
         ),
@@ -6097,7 +6207,7 @@ def reanalyze_analysis(analysis_id: str):
     record["productChanged"] = False
     record["status"] = "Ready"
     record["commodityGroup"] = result.get("commodityGroup", record.get("commodityGroup", "pertanian"))
-    record["trust"] = compliance_svc.prov.analysis_trust(False)
+    record["trust"] = prov.analysis_trust(False)
     record["requiredDocuments"] = doc_types.required_documents(
         record["commodityGroup"], product.get("incoterm")
     )
@@ -6138,10 +6248,10 @@ def get_regulation_recommendations(analysis_id: str, request: Request, language:
     if cached:
         cached["fromCache"] = True
         if not cached.get("trust"):
-            cached["trust"] = compliance_svc.prov.analysis_trust(True)
+            cached["trust"] = prov.analysis_trust(True)
         if not cached.get("sources"):
             cached["sources"] = [
-                compliance_svc.prov.source_block(
+                prov.source_block(
                     publisher="Indonesia National Single Window (INSW)",
                     url="https://www.insw.go.id/",
                     jurisdiction="ID",

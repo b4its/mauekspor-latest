@@ -10,22 +10,8 @@ from typing import Any
 
 from app import ai, db
 from app.data import countries as country_data
-from app.services import provenance as prov
 
 SEVERITY_POINTS = {"critical": 20, "major": 10, "minor": 5}
-
-# Sumber primer default per tema (PRD §11) — ditandai review_status=Draft agar
-# ditinjau manusia sebelum dipakai sebagai nasihat kepatuhan.
-_SOURCE_BY_GROUP = {
-    "pertanian": {"publisher": "Badan Karantina Indonesia (Barantin)", "url": "https://karantinaindonesia.go.id/"},
-    "perikanan": {"publisher": "Badan Karantina Indonesia (Barantin)", "url": "https://karantinaindonesia.go.id/"},
-    "kerajinan": {"publisher": "Kementerian Lingkungan Hidup / CITES", "url": "https://www.cites.org/"},
-}
-
-_VILLAGE_DEFAULT_SOURCE = {
-    "publisher": "Direktorat Jenderal Bea dan Cukai (DJBC)",
-    "url": "https://www.beacukai.go.id/",
-}
 
 
 # ---------------------------------------------------------------------------
@@ -203,9 +189,6 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
     """
     is_id = language.lower().startswith("id")
     country = country_data.get_country(country_code) or {"country_name": country_code, "region": "Asia"}
-    from app.data.trade_reference import rules_for, SNAPSHOT_DATE
-    from app.data.regulatory_intel import product_regulations_for
-
     regs = country_data.get_regulations(country_code)
     product_name = snapshot.get("name") or snapshot.get("product_name") or "Produk"
     hs_code = snapshot.get("hs") or snapshot.get("hs_code") or "TBD"
@@ -217,11 +200,30 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
     def label(text_en: str, text_id: str) -> str:
         return text_id if is_id else text_en
 
-    # Free-form AI cannot substantiate current law. Use only traceable data
-    # for compliance recommendations, including when an AI provider is enabled.
     ai_sections: dict[str, str] = {}
-    references = rules_for(country_code)
-    product_refs = product_regulations_for(hs_code, country_code)
+    if ai.configured():
+        prompt_sys = (
+            "You are an international trade compliance expert for Indonesian exports. "
+            f"Generate concise, accurate, and actionable export regulation guidance in {'Indonesian' if is_id else 'English'} "
+            "for 10 standard trade compliance sections. "
+            "Return JSON: {\"sections\": {\"overview\": \"...\", \"prohibited_items\": \"...\", \"import_restrictions\": \"...\", "
+            "\"certifications\": \"...\", \"labeling\": \"...\", \"customs\": \"...\", \"testing\": \"...\", \"ip\": \"...\", "
+            "\"shipping\": \"...\", \"timeline_costs\": \"...\"}}"
+        )
+        prompt_usr = (
+            f"Product: {product_name} (HS: {hs_code}, Category: {snapshot.get('category', 'Komoditas')})\n"
+            f"Target Country: {country.get('country_name', country_code)} ({country_code})\n"
+            f"Known Regulations: {[r.get('description_rule') for r in regs[:5]]}"
+        )
+        res = ai.ask_json(prompt_sys, prompt_usr, kind="recommendations")
+        if res and isinstance(res, dict):
+            sec_dict = res.get("sections") or res
+            if isinstance(sec_dict, dict):
+                ai_sections = {str(k): str(v) for k, v in sec_dict.items() if k != "sections"}
+            elif isinstance(sec_dict, list):
+                for item in sec_dict:
+                    if isinstance(item, dict) and "key" in item:
+                        ai_sections[str(item["key"])] = str(item.get("content") or item.get("body") or "")
 
     sections: list[dict] = []
     for key, en_title, id_title in _REGULATION_SECTIONS:
@@ -245,7 +247,6 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
                 "Check import licensing, quotas, and special permits for the target country before shipping.",
                 "Periksa lisensi impor, kuota, dan izin khusus negara tujuan sebelum pengiriman.",
             )
-            body += " " + " ".join(r["descriptionRule"] for r in references)
         elif key == "certifications":
             certs = []
             for reg in by_category.get("Physical", []):
@@ -261,15 +262,14 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
                 if reg.get("required_specs"):
                     reqs.append(reg["required_specs"])
             body = label(
-                "Labeling requirements: " + ("; ".join(reqs) if reqs else "Not determined; check the destination authority for this product."),
-                "Persyaratan pelabelan: " + ("; ".join(reqs) if reqs else "Belum ditentukan; cek otoritas negara tujuan untuk produk ini."),
+                "Labeling requirements: " + ("; ".join(reqs) if reqs else "Standard commercial labeling."),
+                "Persyaratan pelabelan: " + ("; ".join(reqs) if reqs else "Pelabelan komersial standar."),
             )
         elif key == "customs":
             body = label(
                 f"Declare HS {hs_code} correctly; verify duty rates and any preferential trade agreements (e.g. EPA/FTA).",
                 f"Deklarasikan HS {hs_code} dengan benar; verifikasi tarif bea dan perjanjian perdagangan preferensial (mis. EPA/FTA).",
             )
-            body += " " + " ".join(f"{r['name']}: {r['requirement']} (cek cakupan HS nasional)." for r in product_refs)
         elif key == "testing":
             body = label(
                 "Arrange lab testing (pesticide residue, microbiology, nutrition) from accredited laboratories.",
@@ -282,38 +282,24 @@ def generate_regulation_recommendations(snapshot: dict, country_code: str, langu
             )
         elif key == "shipping":
             body = label(
-                "If using wood packaging, check ISPM-15; book freight and prepare packing list + B/L or AWB as applicable.",
-                "Jika menggunakan kemasan kayu, cek ISPM-15; booking freight dan siapkan packing list + B/L atau AWB sesuai moda.",
+                "Use ISPM-15 compliant packaging, book freight with forwarder, and prepare packing list + B/L.",
+                "Gunakan kemasan patuh ISPM-15, booking freight dengan forwarder, dan siapkan packing list + B/L.",
             )
         elif key == "timeline_costs":
             body = label(
-                "Confirm permit processing times, freight transit and certification costs with the relevant authorities and providers.",
-                "Konfirmasi waktu pengurusan izin, transit angkutan, dan biaya sertifikasi pada otoritas dan penyedia terkait.",
+                "Budget 2-6 weeks for compliance preparation plus freight transit time; include certification costs.",
+                "Anggarkan 2-6 minggu untuk persiapan kepatuhan ditambah waktu transit; sertakan biaya sertifikasi.",
             )
 
         ai_body = ai_sections.get(key)
-        used_ai = bool(ai_body and len(str(ai_body).strip()) > 15)
-        final_body = ai_body if used_ai else body
+        final_body = ai_body if (ai_body and len(str(ai_body).strip()) > 15) else body
         sections.append({
             "key": key,
             "title_en": en_title,
             "title": id_title if is_id else en_title,
             "body": final_body,
-            "generatedBy": "ai" if used_ai else "template",
         })
-    return {
-        "sections": sections,
-        "country": country,
-        "from_cache": False,
-        "trust": prov.analysis_trust(False),
-        "referenceSnapshot": SNAPSHOT_DATE,
-        "sources": ([prov.source_block(publisher=r["source"], url=r["sourceUrl"],
-                                        jurisdiction=country_code.upper(), review_status=prov.REVIEW_DRAFT)
-                     for r in references]
-                    + [prov.source_block(publisher=s["name"], url=s["url"],
-                                         jurisdiction=country_code.upper(), review_status=prov.REVIEW_DRAFT)
-                       for r in product_refs for s in r.get("sources", [])]),
-    }
+    return {"sections": sections, "country": country, "from_cache": False}
 
 
 # ---------------------------------------------------------------------------
@@ -424,7 +410,6 @@ def village_regulatory_issues(product: dict, country_code: str, group: str) -> l
         needs_evidence = item.get("priority") != "minor"
 
         if not has_evidence:
-            src = _SOURCE_BY_GROUP.get(group, _VILLAGE_DEFAULT_SOURCE)
             issues.append({
                 "type": "Regulation",
                 "rule_key": f"village_priority_{item.get('title','').replace(' ','')}",
@@ -432,12 +417,6 @@ def village_regulatory_issues(product: dict, country_code: str, group: str) -> l
                 "required_value": f"{title}",
                 "description": detail,
                 "severity": severity,
-                "source": prov.source_block(
-                    publisher=src["publisher"],
-                    url=src["url"],
-                    jurisdiction="ID",
-                    review_status=prov.REVIEW_DRAFT,
-                ),
             })
 
     if group == "kerajinan" and _material_matches_cites_keyword(material):
@@ -448,22 +427,15 @@ def village_regulatory_issues(product: dict, country_code: str, group: str) -> l
             "required_value": "Periksa appendix CITES; siapkan dokumen CITES permit jika applicable",
             "description": "Bahan baku dikategorikan berpotensi masuk CITES. Pastikan legalitas bahan terdokumentasi.",
             "severity": "critical",
-            "source": prov.source_block(
-                publisher="CITES Secretariat",
-                url="https://www.cites.org/",
-                jurisdiction="INTL",
-                review_status=prov.REVIEW_DRAFT,
-            ),
         })
 
     return issues
 
 
 def product_regulation_issues(product: dict, country_code: str) -> list[dict]:
-    """Cek regulasi berbasis produk (EUDR, EU Plant Health, PPWR) dari regulatory_intel.
+    """Cek regulasi berbasis produk (EUDR, EU Plant Health, PPWR, CBAM, US 301/232) dari regulatory_intel.
 
-    Sumber: lampiran 7.1 dokumen proposal — EUDR (EU 2023/1115) wajib bagi
-    kopi/kakao/karet/kayu ke EU mulai 30 Des 2026, dengan traceability geolokasi.
+    Sumber: Dokumen Regulasi Global 2026 (status per 29 September 2026).
     """
     hs = str(product.get("hs") or product.get("hsCode") or product.get("hs_code") or "")
     if not hs:
@@ -471,26 +443,53 @@ def product_regulation_issues(product: dict, country_code: str) -> list[dict]:
     from app.data.regulatory_intel import product_regulations_for
 
     issues: list[dict] = []
+    evidence_sources = [
+        str(product.get("description") or ""),
+        str(product.get("certifications") or ""),
+        str(product.get("certificates") or ""),
+        str(product.get("quality_specs") or ""),
+        str(product.get("packaging") or ""),
+    ]
+    evidence_text = " ".join(evidence_sources).lower()
+
     for reg in product_regulations_for(hs, country_code):
-        first_source = (reg.get("sources") or [{}])[0]
+        reg_id = str(reg.get("id", ""))
+        severity = "critical" if ("EUDR" in reg_id or "CBAM" in reg_id) else "major"
+        evidence_fields = ["certificate", "compliance_doc"]
+        remedy = reg.get("remedy") or f"Penuhi kepatuhan: {reg.get('name')}"
+
+        if "EUDR" in reg_id:
+            evidence_fields = ["due_diligence", "due diligence", "geolocation", "traceability", "dds", "deforestation-free", "deforestation free"]
+            remedy = "Siapkan Due Diligence Statement (DDS) & koordinat geolokasi poligon kebun/lahan sumber (EUDR Portal)."
+        elif "CBAM" in reg_id:
+            evidence_fields = ["cbam", "embedded_emissions", "emisi", "authorised_declarant", "authorised declarant"]
+            remedy = "Tunjuk Authorised CBAM Declarant di EU dan siapkan pelaporan emisi tertanam (embedded emissions) terverifikasi."
+        elif "SEC301" in reg_id or "ART" in reg_id:
+            evidence_fields = ["art", "schedule_2b", "schedule 2b", "certificate_of_origin", "reciprocal_trade", "supply chain audit"]
+            remedy = "Penuhi kriteria Schedule 2B US-Indonesia ART dan sediakan audit ketertelusuran rantai pasok (bebas kerja paksa)."
+        elif "SEC232" in reg_id:
+            evidence_fields = ["sec232", "steel_exclusion", "material_composition"]
+            remedy = "Periksa penyesuaian tarif Section 232 (50%) atau ajukan exclusion request."
+        elif "PPWR" in reg_id:
+            evidence_fields = ["recyclable", "pfas-free", "ppwr", "sorting_label"]
+            remedy = "Gunakan kemasan ramah daur ulang bebas PFAS dan sertakan label pemilahan sampah sesuai EU PPWR."
+
+        # Cek apakah produk telah memenuhi bukti yang disyaratkan
+        has_evidence = any(f in evidence_text for f in evidence_fields)
+        if has_evidence:
+            continue
+
         issues.append({
             "rule_key": reg.get("id", "PRODUCT-REG"),
             "type": "product_regulation",
-            "severity": "critical" if reg.get("id") == "EUDR" else "major",
+            "severity": severity,
             "title": reg.get("name", "Product regulation"),
+            "requirement": reg.get("requirement", ""),
             "detail": f"{reg.get('requirement', '')} ({reg.get('ref', '')}). "
                       f"Deadline: {reg.get('deadline', '-')} {reg.get('risk_note', '')}".strip(),
-            "source": first_source.get("url", ""),
-            "sourceDetail": prov.source_block(
-                publisher=first_source.get("publisher", "Regulator"),
-                url=first_source.get("url", ""),
-                effective_from=str(reg.get("deadline", "") or ""),
-                jurisdiction="EU" if "EU" in str(reg.get("ref", "")) else "INTL",
-                review_status=prov.REVIEW_DRAFT,
-            ),
-            "evidence_fields": ["due_diligence", "geolocation", "traceability"]
-            if reg.get("id") == "EUDR"
-            else ["certificate", "compliance_doc"],
+            "remedy": remedy,
+            "source": (reg.get("sources") or [{}])[0].get("url", ""),
+            "evidence_fields": evidence_fields,
         })
     return issues
 

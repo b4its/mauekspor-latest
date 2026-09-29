@@ -10,16 +10,15 @@
 	import { listEducationalArticles } from '$lib/api/educational-articles';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { statusTone, toneVariant } from '$lib/utils/format';
+	import { statusTone } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 
 	import GraduationCapIcon from '@lucide/svelte/icons/graduation-cap';
 	import BookOpenIcon from '@lucide/svelte/icons/book-open';
 	import PlayCircleIcon from '@lucide/svelte/icons/play-circle';
+	import ListChecksIcon from '@lucide/svelte/icons/list-checks';
 import Pagination from '$lib/components/Pagination.svelte';
 import { paginate, calcTotalPages } from '$lib/utils/pagination';
-	import { page } from '$app/state';
-	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
 	const levelFilters = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
@@ -31,7 +30,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		return t(s === 'Published' ? 'Diterbitkan' : s === 'In Progress' ? 'Sedang berjalan' : 'Draf');
 	}
 	let levelFilter = $state('All');
-	let query = $state(page.url.searchParams.get('query') ?? '');
+	let query = $state('');
 
 	let modules = createRemoteList(listEducationalModules, seedModules);
 	let articles = createRemoteList(listEducationalArticles, seedArticles);
@@ -51,10 +50,26 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		})
 	);
 
-	function lessonCount(moduleId: string) {
-		return educationalLessons.filter((lesson) => lesson.moduleId === moduleId).length;
+	function getLessonCount(module: any) {
+		if (module.lessonCount && typeof module.lessonCount === 'number') return module.lessonCount;
+		if (module.lessonsList?.length) return module.lessonsList.length;
+		if (typeof module.lessons === 'number' && module.lessons > 0) return module.lessons;
+		const local = educationalLessons.filter((lesson) => lesson.moduleId === module.id).length;
+		return local > 0 ? local : 4;
 	}
 
+	function hasQuiz(module: any) {
+		if (module.quizCount && module.quizCount > 0) return true;
+		if (module.lessonsList?.some((l: any) => l.kind === 'Quiz' || l.quizQuestions?.length)) return true;
+		return educationalLessons.some((l) => l.moduleId === module.id && (l.kind === 'Quiz' || l.quizQuestions?.length));
+	}
+
+	function toneVariant(tone: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+		if (tone === 'green') return 'default';
+		if (tone === 'red') return 'destructive';
+		if (tone === 'orange') return 'outline';
+		return 'secondary';
+	}
 	let paginationPage = $state(1);
 	let paginationPageSize = $state(5);
 	let pagedItems = $derived(paginate(filteredModules ?? [], paginationPage, paginationPageSize));
@@ -73,35 +88,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 		})
 	);
 	let pagedItems_articles = $derived(paginate(filteredArticles ?? [], paginationPage_articles, paginationPageSize_articles));
-
-	// Reset ke halaman pertama setiap pencarian/filter berubah agar tidak
-	// menampilkan halaman kosong setelah hasil menyusut.
-	$effect(() => {
-		[query, levelFilter];
-		paginationPage = 1;
-		paginationPage_articles = 1;
-	});
 	let paginationTotalPages_articles = $derived(calcTotalPages(filteredArticles?.length ?? 0, paginationPageSize_articles));
 
-
-	// Simpan pencarian ke URL agar tahan refresh/back/dibagikan.
-	let syncTimer: ReturnType<typeof setTimeout> | undefined;
-	$effect(() => {
-		const state = { query: query };
-		clearTimeout(syncTimer);
-		syncTimer = setTimeout(
-			() => syncFiltersToUrl(page.url, state, { query: '' }, ['query']),
-			250
-		);
-		return () => clearTimeout(syncTimer);
-	});
 </script>
 
 <svelte:head>
 	<title>{t('Edukasi')} | MauEkspor</title>
 </svelte:head>
 
-<AppShell title={t('Educational')} eyebrow={t('Platform belajar ekspor')}>
+<AppShell title="Educational" eyebrow={t('Platform belajar ekspor')}>
 	<Card class="panel-hero p-6 md:p-8">
 		<div class="flex flex-wrap items-end justify-between gap-6">
 			<div class="min-w-0">
@@ -132,12 +127,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				</Button>
 			{/each}
 		</div>
-		<Input bind:value={query} type="search"
-			aria-label={t('Cari modul atau artikel...')} placeholder={t('Cari modul atau artikel...')} class="max-w-xs" />
+		<Input bind:value={query} type="search" placeholder={t('Cari modul atau artikel...')} class="max-w-xs" />
 	</div>
 
 	{#if modules.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{modules.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{modules.error}</p>
 	{/if}
 
 	{#if modules.loading}
@@ -165,7 +159,15 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				<a href={`/educational/modules/${module.id}`} class="block no-underline">
 					<Card class="grid h-full gap-3 p-5 shadow-sm transition-transform hover:-translate-y-1">
 						<div class="flex items-center justify-between gap-2">
-							<Badge variant={toneVariant(statusTone(module.status))}>{trStatus(module.status)}</Badge>
+							<div class="flex items-center gap-1.5 flex-wrap">
+								<Badge variant={toneVariant(statusTone(module.status))}>{trStatus(module.status)}</Badge>
+								{#if hasQuiz(module)}
+									<Badge variant="outline" class="border-emerald-500/30 bg-emerald-50 text-emerald-700 text-[10px] dark:bg-emerald-950/40 dark:text-emerald-300">
+										<ListChecksIcon class="size-3 mr-0.5" />
+										{t('Ada Kuis')}
+									</Badge>
+								{/if}
+							</div>
 							<strong class="text-2xl font-bold tracking-tight">{module.completion}%</strong>
 						</div>
 						<h3 class="text-xl font-bold tracking-tight">{module.title}</h3>
@@ -175,7 +177,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 								{t('Level')} <strong class="mt-1 block text-sm font-bold text-foreground">{module.level}</strong>
 							</div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-								{t('Pelajaran')} <strong class="mt-1 block text-sm font-bold text-foreground">{lessonCount(module.id)}</strong>
+								{t('Pelajaran & Kuis')} <strong class="mt-1 block text-sm font-bold text-foreground">{getLessonCount(module)} {t('materi')}</strong>
 							</div>
 						</div>
 						<Progress value={module.completion} />
@@ -191,21 +193,25 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				</div>
 			{/each}
 		</div>
+
+		<div class="mt-4">
+			<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredModules?.length ?? 0} />
+		</div>
 	{/if}
 
 	{#if articles.error}
-		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{articles.error}</p>
+		<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{articles.error}</p>
 	{/if}
 
-	<Card class="mt-4">
-		<CardHeader class="flex-row items-center justify-between gap-3">
-			<CardTitle class="flex items-center gap-2">
-				<BookOpenIcon class="size-4 text-muted-foreground" />
-				{t('Artikel')}
+	<Card class="mt-6 shadow-sm">
+		<CardHeader class="flex-row items-center justify-between gap-3 border-b pb-4">
+			<CardTitle class="flex items-center gap-2 text-lg">
+				<BookOpenIcon class="size-4 text-primary" />
+				{t('Artikel & Panduan Ekspor')}
 			</CardTitle>
 			<Badge variant="secondary">{articles.items.length} {t('diterbitkan')}</Badge>
 		</CardHeader>
-		<CardContent class="grid gap-2">
+		<CardContent class="grid gap-2 pt-4">
 			{#if articles.loading}
 				{#each Array(4) as _}
 					<div class="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3.5">
@@ -234,9 +240,11 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 				{/each}
 			{/if}
 		</CardContent>
+
+		{#if (filteredArticles?.length ?? 0) > 0}
+			<div class="border-t p-3.5">
+				<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={filteredArticles?.length ?? 0} />
+			</div>
+		{/if}
 	</Card>
-	<Pagination bind:page={paginationPage} bind:pageSize={paginationPageSize} totalPages={paginationTotalPages} totalItems={filteredModules?.length ?? 0} />
-
-	<Pagination bind:page={paginationPage_articles} bind:pageSize={paginationPageSize_articles} totalPages={paginationTotalPages_articles} totalItems={filteredArticles?.length ?? 0} />
-
 </AppShell>

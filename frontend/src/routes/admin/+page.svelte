@@ -25,10 +25,7 @@
 		type AiTestResult
 	} from '$lib/api/admin';
 	import { t } from '$lib/i18n.svelte';
-	import { formatNumber } from '$lib/utils/format';
-	import { label } from '$lib/utils/labels';
 	import { getStatus, getUser } from '$lib/stores/session.svelte';
-	import { canViewPath } from '$lib/roleAccess';
 
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
 	import DatabaseIcon from '@lucide/svelte/icons/database';
@@ -57,6 +54,7 @@
 	import TruckIcon from '@lucide/svelte/icons/truck';
 	import PackageIcon from '@lucide/svelte/icons/package';
 	import ClockIcon from '@lucide/svelte/icons/clock';
+	import GraduationCapIcon from '@lucide/svelte/icons/graduation-cap';
 
 	// Tab navigation
 	type AdminTab = 'dashboard' | 'crud' | 'diagnostics' | 'audit';
@@ -112,9 +110,7 @@
 	let auditActionFilter = $state('all');
 
 	let totalPages = $derived(Math.max(1, Math.ceil(total / pageSize)));
-	// Akses mengikuti roleAccess (sumber kebenaran menu) agar tidak pernah
-	// bertentangan dengan sidebar.
-	let isAdmin = $derived(getStatus() === 'authenticated' && canViewPath(getUser()?.role, '/admin'));
+	let isAdmin = $derived(getStatus() === 'authenticated' && getUser()?.role === 'Admin');
 
 	// Computed overall metrics
 	let totalRecordsCount = $derived(tables.reduce((acc, t) => acc + (t.count || 0), 0));
@@ -337,19 +333,6 @@
 		} finally {
 			aiLoading = false;
 		}
-	}
-
-	// Pemetaan status kesehatan AI → label ramah + varian badge.
-	// Backend memakai 'not_checked' saat health belum di-probe (mis. mode mock),
-	// bukan error; jangan tampilkan mentah atau beri warna destructive.
-	function aiHealthLabel(value?: string | null): string {
-		return label(value ?? '') || '—';
-	}
-	function aiHealthVariant(value?: string | null): 'default' | 'destructive' | 'secondary' {
-		const key = (value ?? '').toLowerCase();
-		if (key === 'healthy') return 'default';
-		if (key === 'degraded' || key === 'unhealthy') return 'destructive';
-		return 'secondary';
 	}
 
 	async function handleTestAi() {
@@ -680,8 +663,8 @@
 					<div class="flex flex-wrap items-center gap-2">
 						<h2 class="text-base font-bold text-foreground">{t('Admin Panel')}</h2>
 						{#if aiStatus}
-							<Badge variant={aiHealthVariant(aiStatus.health)} class="text-xs">
-								{aiHealthLabel(aiStatus.health)}
+							<Badge variant={aiStatus.health === 'healthy' ? 'default' : 'destructive'} class="text-xs">
+								{aiStatus.health}
 							</Badge>
 							<Badge variant="outline" class="text-xs font-medium">
 								{t('Mode AI')}: {aiStatus.mode}
@@ -706,32 +689,28 @@
 
 		<!-- Feedback Alerts -->
 		{#if error}
-			<div class="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive" role="alert">
+			<div class="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
 				<div class="flex items-center gap-2">
 					<AlertCircleIcon class="size-4" />
 					<span>{error}</span>
 				</div>
-				<button onclick={() => (error = '')} class="text-destructive hover:opacity-80" aria-label={t('Tutup pesan error')}><XIcon class="size-4" /></button>
+				<button onclick={() => (error = '')} class="text-destructive hover:opacity-80"><XIcon class="size-4" /></button>
 			</div>
 		{/if}
 
 		{#if successMessage}
-			<div class="mb-4 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300" role="status">
+			<div class="mb-4 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
 				<div class="flex items-center gap-2">
 					<CheckCircle2Icon class="size-4" />
 					<span>{successMessage}</span>
 				</div>
-				<button onclick={() => (successMessage = '')} class="hover:opacity-80" aria-label={t('Tutup pesan sukses')}><XIcon class="size-4" /></button>
+				<button onclick={() => (successMessage = '')} class="hover:opacity-80"><XIcon class="size-4" /></button>
 			</div>
 		{/if}
 
 		<!-- Navigation Tabs -->
-		<div class="mb-6 flex flex-wrap items-center gap-2 border-b pb-3" role="tablist" aria-label={t('Tab admin')}>
+		<div class="mb-6 flex flex-wrap items-center gap-2 border-b pb-3">
 			<button
-				id="admin-tab-dashboard"
-				role="tab"
-				aria-selected={activeTab === 'dashboard'}
-				aria-controls="admin-panel-dashboard"
 				onclick={() => switchTab('dashboard')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'dashboard' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
@@ -740,10 +719,6 @@
 			</button>
 
 			<button
-				id="admin-tab-crud"
-				role="tab"
-				aria-selected={activeTab === 'crud'}
-				aria-controls="admin-panel-crud"
 				onclick={() => switchTab('crud')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'crud' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
@@ -755,10 +730,6 @@
 			</button>
 
 			<button
-				id="admin-tab-diagnostics"
-				role="tab"
-				aria-selected={activeTab === 'diagnostics'}
-				aria-controls="admin-panel-diagnostics"
 				onclick={() => switchTab('diagnostics')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'diagnostics' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
@@ -767,10 +738,6 @@
 			</button>
 
 			<button
-				id="admin-tab-audit"
-				role="tab"
-				aria-selected={activeTab === 'audit'}
-				aria-controls="admin-panel-audit"
 				onclick={() => switchTab('audit')}
 				class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all {activeTab === 'audit' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 			>
@@ -783,7 +750,7 @@
 		<!-- TAB 1: EXECUTIVE DASHBOARD                                           -->
 		<!-- ==================================================================== -->
 		{#if activeTab === 'dashboard'}
-			<div id="admin-panel-dashboard" role="tabpanel" aria-labelledby="admin-tab-dashboard" tabindex="0" class="space-y-6">
+			<div class="space-y-6">
 				<!-- High Level KPI Cards -->
 				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					<Card>
@@ -795,7 +762,7 @@
 								</div>
 							</div>
 							<div class="mt-3">
-								<h3 class="text-2xl font-bold tracking-tight text-foreground">{formatNumber(totalRecordsCount)}</h3>
+								<h3 class="text-2xl font-bold tracking-tight text-foreground">{totalRecordsCount.toLocaleString()}</h3>
 								<p class="mt-1 text-xs text-muted-foreground">{t('Di seluruh tabel database')}</p>
 							</div>
 						</CardContent>
@@ -805,7 +772,7 @@
 						<CardContent class="p-5">
 							<div class="flex items-center justify-between">
 								<p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t('Total Tabel Aktif')}</p>
-								<div class="rounded-lg bg-emerald-500/10 p-2 text-emerald-700 dark:text-emerald-400" role="status">
+								<div class="rounded-lg bg-emerald-500/10 p-2 text-emerald-700 dark:text-emerald-400">
 									<DatabaseIcon class="size-4" />
 								</div>
 							</div>
@@ -840,8 +807,8 @@
 								</div>
 							</div>
 							<div class="mt-3 flex items-baseline gap-2">
-								<h3 class="text-2xl font-bold capitalize tracking-tight text-foreground">{aiHealthLabel(aiStatus?.health ?? 'healthy')}</h3>
-								<Badge variant={aiHealthVariant(aiStatus?.health ?? 'healthy')} class="text-[10px]">
+								<h3 class="text-2xl font-bold capitalize tracking-tight text-foreground">{aiStatus?.health ?? 'Healthy'}</h3>
+								<Badge variant={aiStatus?.health === 'healthy' ? 'default' : 'destructive'} class="text-[10px]">
 									{aiStatus?.mode ?? 'mock'}
 								</Badge>
 							</div>
@@ -872,6 +839,10 @@
 							<Button size="sm" variant="outline" href="/admin/countries">
 								<GlobeIcon class="size-3.5" />
 								<span class="ms-1.5">{t('Kelola Regulasi Ekspor')}</span>
+							</Button>
+							<Button size="sm" variant="outline" href="/educational/admin/modules">
+								<GraduationCapIcon class="size-3.5" />
+								<span class="ms-1.5">{t('Kelola Modul Edukasi & Kuis')}</span>
 							</Button>
 							<Button
 								size="sm"
@@ -940,7 +911,7 @@
 								</div>
 								<div class="rounded-lg border bg-muted/30 p-3">
 									<p class="text-xs font-semibold text-muted-foreground">{t('Total Baris Data')}</p>
-									<p class="mt-1 text-base font-bold text-foreground">{formatNumber(totalRecordsCount)} {t('record')}</p>
+									<p class="mt-1 text-base font-bold text-foreground">{totalRecordsCount.toLocaleString()} {t('record')}</p>
 								</div>
 							</div>
 							<div class="mt-4 flex items-center justify-between border-t pt-3">
@@ -1036,7 +1007,7 @@
 		<!-- TAB 2: DATABASE CRUD STUDIO                                          -->
 		<!-- ==================================================================== -->
 		{#if activeTab === 'crud'}
-			<div id="admin-panel-crud" role="tabpanel" aria-labelledby="admin-tab-crud" tabindex="0" class="space-y-4">
+			<div class="space-y-4">
 				<!-- Category Filter Pills -->
 				<div class="flex flex-wrap items-center gap-1.5 rounded-xl border bg-card p-2 shadow-sm">
 					{#each TABLE_CATEGORIES as cat}
@@ -1067,12 +1038,12 @@
 							<SearchIcon class="size-3.5 text-muted-foreground" />
 							<input
 								type="text"
-								aria-label={t('Cari nama tabel')} placeholder={t('Cari nama tabel...')}
+								placeholder={t('Cari nama tabel...')}
 								bind:value={tableSearch}
 								class="w-40 bg-transparent text-xs outline-none sm:w-56"
 							/>
 							{#if tableSearch}
-								<button onclick={() => (tableSearch = '')} class="text-muted-foreground hover:text-foreground" aria-label={t('Bersihkan pencarian tabel')}>
+								<button onclick={() => (tableSearch = '')} class="text-muted-foreground hover:text-foreground">
 									<XIcon class="size-3" />
 								</button>
 							{/if}
@@ -1122,13 +1093,13 @@
 									<SearchIcon class="size-3.5 text-muted-foreground" />
 									<input
 										type="text"
-										aria-label={t('Cari data di tabel ini')} placeholder={t('Cari data di tabel ini...')}
+										placeholder={t('Cari data di tabel ini...')}
 										bind:value={search}
 										oninput={() => (page = 1)}
 										class="w-32 bg-transparent text-xs outline-none sm:w-44"
 									/>
 									{#if search}
-										<button onclick={() => { search = ''; page = 1; }} class="text-muted-foreground hover:text-foreground" aria-label={t('Bersihkan pencarian data')}>
+										<button onclick={() => { search = ''; page = 1; }} class="text-muted-foreground hover:text-foreground">
 											<XIcon class="size-3" />
 										</button>
 									{/if}
@@ -1137,7 +1108,6 @@
 								<div class="flex items-center gap-1 text-xs text-muted-foreground">
 									<span>{t('Baris per halaman:')}</span>
 									<NativeSelect
-										aria-label={t('Baris per halaman')}
 										value={String(pageSize)}
 										onchange={(e) => {
 											pageSize = Number((e.target as HTMLSelectElement).value);
@@ -1159,7 +1129,7 @@
 									<span class="ms-1">{t('Buat Record')}</span>
 								</Button>
 
-								<Button size="sm" variant="outline" onclick={loadRecords} title={t('Segarkan')} aria-label={t('Segarkan')}>
+								<Button size="sm" variant="outline" onclick={loadRecords} title={t('Segarkan')}>
 									<RefreshCwIcon class="size-3.5 {recordsLoading ? 'animate-spin' : ''}" />
 								</Button>
 							</div>
@@ -1214,7 +1184,6 @@
 																onclick={() => openInspect(record)}
 																class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 																title={t('Lihat Detail')}
-																aria-label={`${t('Lihat Detail')}`}
 															>
 																<EyeIcon class="size-3.5" />
 															</button>
@@ -1222,7 +1191,6 @@
 																onclick={() => cloneRecord(record)}
 																class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 																title={t('Klon Record')}
-							aria-label={`${t('Klon Record')}`}
 															>
 																<CopyIcon class="size-3.5" />
 															</button>
@@ -1230,7 +1198,6 @@
 																onclick={() => openEdit(record)}
 																class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 																title={t('Edit Record')}
-							aria-label={`${t('Edit Record')}`}
 															>
 																<PencilIcon class="size-3.5" />
 															</button>
@@ -1238,7 +1205,6 @@
 																onclick={() => openDelete(record)}
 																class="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
 																title={t('Hapus Record')}
-							aria-label={`${t('Hapus Record')}`}
 															>
 																<Trash2Icon class="size-3.5" />
 															</button>
@@ -1264,7 +1230,7 @@
 		<!-- TAB 3: DIAGNOSTICS & SYSTEM STATUS                                   -->
 		<!-- ==================================================================== -->
 		{#if activeTab === 'diagnostics'}
-			<div id="admin-panel-diagnostics" role="tabpanel" aria-labelledby="admin-tab-diagnostics" tabindex="0" class="space-y-6">
+			<div class="space-y-6">
 				<div class="grid gap-6 lg:grid-cols-2">
 					<!-- AI Copilot Diagnostic Card -->
 					<Card>
@@ -1284,8 +1250,8 @@
 								<div class="rounded-lg border bg-muted/20 p-3">
 									<p class="text-xs text-muted-foreground">{t('Status Kesehatan')}</p>
 									<div class="mt-1 flex items-center gap-2">
-										<Badge variant={aiHealthVariant(aiStatus?.health ?? 'healthy')} class="text-xs">
-											{aiHealthLabel(aiStatus?.health ?? 'healthy')}
+										<Badge variant={aiStatus?.health === 'healthy' ? 'default' : 'destructive'} class="text-xs">
+											{aiStatus?.health ?? 'Healthy'}
 										</Badge>
 									</div>
 								</div>
@@ -1297,13 +1263,13 @@
 
 								<div class="rounded-lg border bg-muted/20 p-3">
 									<p class="text-xs text-muted-foreground">{t('Penyedia Model')}</p>
-									<p class="mt-1 text-sm font-semibold text-foreground">{aiStatus?.model || 'Mock / Fallback'}</p>
+									<p class="mt-1 text-sm font-semibold text-foreground">{aiStatus?.configured_provider || (aiStatus?.model ? ('DeepSeek (' + aiStatus.model + ')') : 'Mock / Fallback')}</p>
 								</div>
 
 								<div class="rounded-lg border bg-muted/20 p-3">
 									<p class="text-xs text-muted-foreground">{t('Tipe Lingkungan')}</p>
 									<p class="mt-1 text-sm font-semibold text-foreground">
-										{aiStatus?.configured ? 'Remote Cloud' : 'Local Sandbox'}
+										{aiStatus?.using_remote ? 'Remote Endpoint' : (aiStatus?.mode === 'remote' ? 'Remote Endpoint' : 'Local Sandbox')}
 									</p>
 								</div>
 							</div>
@@ -1328,7 +1294,7 @@
 								{/if}
 
 								{#if aiTestResult}
-									<div class="mt-3 rounded-lg border p-3 {aiTestResult.success ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-destructive/30 bg-destructive/10'}" role={aiTestResult.success ? 'status' : 'alert'}>
+									<div class="mt-3 rounded-lg border p-3 {aiTestResult.success ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-destructive/30 bg-destructive/10'}">
 										<div class="flex items-center gap-2">
 											{#if aiTestResult.success}
 												<CheckCircle2Icon class="size-4 text-emerald-600 dark:text-emerald-400" />
@@ -1374,7 +1340,7 @@
 								</div>
 								<div class="flex items-center justify-between border-b pb-2 text-xs">
 									<span class="text-muted-foreground">{t('Total Baris Data')}</span>
-									<span class="font-semibold text-foreground">{formatNumber(totalRecordsCount)}</span>
+									<span class="font-semibold text-foreground">{totalRecordsCount.toLocaleString()}</span>
 								</div>
 							</div>
 
@@ -1398,7 +1364,7 @@
 		<!-- TAB 4: AUDIT ACTIVITY LOG                                            -->
 		<!-- ==================================================================== -->
 		{#if activeTab === 'audit'}
-			<Card id="admin-panel-audit" role="tabpanel" aria-labelledby="admin-tab-audit" tabindex={0}>
+			<Card>
 				<CardHeader class="flex-row flex-wrap items-center justify-between gap-3 p-4">
 					<div>
 						<CardTitle class="text-base font-semibold">{t('Log Aktivitas Audit')}</CardTitle>
@@ -1410,19 +1376,18 @@
 							<SearchIcon class="size-3.5 text-muted-foreground" />
 							<input
 								type="text"
-								aria-label={t('Cari audit log')} placeholder={t('Cari audit log...')}
+								placeholder={t('Cari audit log...')}
 								bind:value={auditSearch}
 								class="w-32 bg-transparent text-xs outline-none sm:w-44"
 							/>
 							{#if auditSearch}
-								<button onclick={() => (auditSearch = '')} class="text-muted-foreground hover:text-foreground" aria-label={t('Bersihkan pencarian audit')}>
+								<button onclick={() => (auditSearch = '')} class="text-muted-foreground hover:text-foreground">
 									<XIcon class="size-3" />
 								</button>
 							{/if}
 						</div>
 
 						<NativeSelect
-							aria-label={t('Filter aksi audit')}
 							value={auditActionFilter}
 							onchange={(e) => {
 								auditActionFilter = (e.target as HTMLSelectElement).value;
@@ -1437,7 +1402,7 @@
 							<NativeSelectOption value="export">EXPORT</NativeSelectOption>
 						</NativeSelect>
 
-						<Button size="sm" variant="outline" onclick={loadAuditEvents} title={t('Segarkan')} aria-label={t('Segarkan')}>
+						<Button size="sm" variant="outline" onclick={loadAuditEvents} title={t('Segarkan')}>
 							<RefreshCwIcon class="size-3.5 {auditLoading ? 'animate-spin' : ''}" />
 						</Button>
 					</div>
@@ -1490,7 +1455,6 @@
 													onclick={() => openInspect(ev)}
 													class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 													title={t('Lihat Detail')}
-													aria-label={`${t('Lihat Detail')}`}
 												>
 													<EyeIcon class="size-3.5" />
 												</button>
@@ -1599,7 +1563,7 @@
 				{/if}
 
 				{#if editError}
-					<div class="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" role="alert">
+					<div class="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
 						<AlertCircleIcon class="size-4 shrink-0" />
 						<span>{editError}</span>
 					</div>

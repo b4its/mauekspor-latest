@@ -489,10 +489,10 @@ def seed_village_education() -> None:
         if article["id"] not in existing_articles:
             db.insert("educational_articles", dict(article))
 
-    # Pelajaran (termasuk lesson kuis) per modul desa. Diimpor lokal untuk
-    # menghindari impor sirkular (seed ↔ seed_village_commodities).
-    from app.seed import _seed_educational_lessons
-    _seed_educational_lessons()
+    # Seeder katalog terkini bersifat insert-if-missing; materi hasil suntingan
+    # pengguna dan progres belajar tetap utuh saat dipanggil berulang.
+    from app.seed import _seed_educational_catalog_if_missing
+    _seed_educational_catalog_if_missing()
 
 
 def seed_kepala_desa_user() -> None:
