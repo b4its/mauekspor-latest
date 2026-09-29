@@ -269,11 +269,31 @@ STAGES = ["Scoping", "Compliance Review", "Quotation", "Documents", "Booked", "I
 RISKS = ["Low", "Medium", "High"]
 CITIES = ["Jakarta", "Surabaya", "Bandung", "Medan", "Semarang", "Makassar", "Palembang", "Yogyakarta", "Denpasar", "Malang"]
 
-def _pick(seq, n):
-    return seq[n % len(seq)]
+# RNG deterministik (seed tetap) untuk sebaran yang sehat.
+#
+# Sebelumnya `_pick` memakai indeks `n % len(seq)` dari counter yang naik
+# konstan tiap iterasi, sehingga satu status bisa selalu jatuh ke indeks yang
+# sama — mis. 100 pembeli semuanya "Qualified", 100 supplier "Pending", 100
+# pembayaran "Received", 100 analisis "Needs Review". Akibatnya UI menampilkan
+# angka yang saling bertentangan (mis. "Active buyers 102" vs "Pembeli aktif 0")
+# dan demo jadi tidak realistis. Seed tetap agar hasil reproducible untuk tes.
+_RNG = __import__("random").Random(20260815)
 
-def _pick_n(seq, n, seed):
-    return [seq[(seed + i) % len(seq)] for i in range(n % max(len(seq), 1))]
+
+def _pick(seq, n=None):
+    """Pilih elemen acak (deterministik). `n` diabaikan — dipertahankan agar
+    pemanggil lama `_pick(seq, n())` tetap kompatibel."""
+    if not seq:
+        return None
+    return seq[_RNG.randrange(len(seq))]
+
+
+def _pick_n(seq, n, seed=None):
+    """Ambil `n % len(seq)` elemen unik acak dari `seq`."""
+    if not seq:
+        return []
+    count = min(max(n % max(len(seq), 1), 0), len(seq))
+    return _RNG.sample(list(seq), count)
 
 
 def seed_100_records():

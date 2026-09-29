@@ -92,3 +92,29 @@ def test_compliance_requirements_have_confidence():
             f"compliance_requirements {req.get('id')} tanpa confidence"
         )
         assert 0 <= int(req["confidence"]) <= 100
+
+
+def test_status_fields_have_healthy_distribution():
+    """Regresi bug sebaran: `_pick` lama memakai `n % len` dari counter konstan
+    sehingga status kolaps ke satu nilai (mis. 100 pembeli 'Qualified', 100
+    supplier 'Pending'). Pastikan tiap tabel memakai lebih dari satu status."""
+    _seed()
+    checks = {
+        "buyers": "status",
+        "suppliers": "status",
+        "payments": "status",
+        "compliance_requirements": "status",
+        "export_analyses": "status",
+        "shipments": "status",
+        "documents": "status",
+        "quotations": "status",
+        "rfqs": "status",
+        "tasks": "status",
+    }
+    for table, field in checks.items():
+        values = {str(r.get(field)) for r in db.all(table) if r.get(field)}
+        assert len(values) >= 2, (
+            f"{table}.{field} kolaps ke satu nilai: {values} "
+            "(sebaran `_pick` tidak sehat)"
+        )
+
