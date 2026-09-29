@@ -47,6 +47,8 @@ export const HREF_MODULE: Record<string, string> = {
 	'/export-analysis': 'export-analysis',
 	'/compliance': 'compliance',
 	'/markets': 'markets',
+	'/countries': 'countries',
+	'/hs-codes': 'hs-codes',
 	'/catalogs': 'catalogs',
 	'/catalogs/public': 'catalogs',
 	'/buyers': 'buyers',
@@ -77,7 +79,7 @@ export const HREF_MODULE: Record<string, string> = {
 	'/knowledge': 'knowledge',
 	'/educational': 'educational',
 	'/chat': 'chat',
-	'/marketing': 'products',
+	'/marketing': 'marketing',
 	'/calendar': 'calendar',
 	'/files': 'files',
 	'/messages': 'messages',
@@ -94,35 +96,43 @@ const ROLE_READ_MODULES: Record<UserRole, Set<string>> = {
 		'suppliers', 'forwarders', 'rfqs', 'quotations', 'costing', 'orders', 'payments',
 		'tasks', 'documents', 'shipments', 'analytics', 'reports', 'team', 'notifications',
 		'integrations', 'templates', 'automations', 'knowledge', 'educational', 'chat',
-		'calendar', 'files', 'messages', 'billing', 'support'
+		'calendar', 'files', 'messages', 'billing', 'support', 'marketing'
 	]),
 	Buyer: new Set([
 		'products', 'catalogs', 'buyers/portal', 'buyer-requests', 'quotations', 'orders',
-		'analytics', 'reports', 'messages', 'notifications', 'support', 'knowledge', 'educational'
+		'analytics', 'reports', 'messages', 'notifications', 'support', 'knowledge', 'educational',
+		'chat', 'calendar', 'files'
 	]),
 	Forwarder: new Set([
 		'trade-projects', 'catalogs', 'shipments', 'documents', 'forwarders',
-		'analytics', 'reports', 'messages', 'notifications', 'support', 'calendar', 'files'
+		'analytics', 'reports', 'messages', 'notifications', 'support', 'knowledge',
+		'educational', 'chat', 'calendar', 'files'
 	]),
 	CustomsBroker: new Set([
 		'trade-projects', 'compliance', 'documents', 'shipments', 'payments', 'analytics',
-		'reports', 'messages', 'notifications', 'support', 'files'
+		'reports', 'messages', 'notifications', 'support', 'knowledge', 'educational',
+		'chat', 'calendar', 'files'
 	]),
 	Finance: new Set([
 		'orders', 'quotations', 'payments', 'billing', 'costing', 'analytics', 'reports',
-		'messages', 'notifications', 'support'
+		'messages', 'notifications', 'support', 'knowledge', 'educational', 'chat',
+		'calendar', 'files'
 	]),
 	KepalaDesa: new Set([
 		'products', 'villages', 'compliance', 'documents', 'analytics', 'reports',
-		'messages', 'notifications', 'support', 'knowledge', 'educational'
+		'messages', 'notifications', 'support', 'knowledge', 'educational', 'chat',
+		'calendar', 'files'
 	])
 };
 
-/** Href yang selalu boleh dilihat semua peran (dashboard, about, halaman publik). */
+/** Href yang selalu boleh dilihat semua peran (dashboard, about, data referensi publik). */
 const ALWAYS_ALLOWED = new Set([
 	'/dashboard',
 	'/about',
-	'/catalogs/public'
+	'/catalogs/public',
+	// Data referensi publik (dibaca backend tanpa auth): negara & kode HS.
+	'/countries',
+	'/hs-codes'
 ]);
 
 /**
@@ -160,4 +170,23 @@ export function canViewPath(role: UserRole | string | null | undefined, path: st
 		}
 	}
 	return match.length > 0;
+}
+
+type NavGroupLike<T> = { label: string; items: T[] };
+
+/**
+ * Saring grup navigasi agar hanya memuat item yang boleh dilihat peran.
+ * Dipakai bersama oleh AppSidebar dan test agar menu yang TAMPIL selalu
+ * konsisten dengan yang boleh DIBUKA (mencegah "menu tampil tapi ditolak").
+ * Grup yang tersisa tanpa item akan dibuang.
+ */
+export function visibleNavGroups<T extends { href: string }>(
+	role: UserRole | string | null | undefined,
+	groups: NavGroupLike<T>[]
+): NavGroupLike<T>[] {
+	const allowed = allowedHrefs(role);
+	if (allowed === '*') return groups;
+	return groups
+		.map((group) => ({ ...group, items: group.items.filter((item) => allowed.has(item.href)) }))
+		.filter((group) => group.items.length > 0);
 }

@@ -9,7 +9,7 @@
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import Logo from '$lib/components/Logo.svelte';
 	import { navGroups, projects } from '$lib/data/trade';
-	import { allowedHrefs, canViewPath } from '$lib/roleAccess';
+	import { canViewPath, visibleNavGroups } from '$lib/roleAccess';
 	import { t } from '$lib/i18n.svelte';
 	import { openAiAssistant } from '$lib/stores/aiAssistant.svelte';
 
@@ -73,16 +73,7 @@
 	// Filter menu sesuai peran pengguna yang login. Admin melihat semua.
 	const userRole = $derived(currentUser?.role ?? '');
 	const canOpen = (href: string) => canViewPath(userRole, href);
-	const visibleNavGroups = $derived.by(() => {
-		const allowed = allowedHrefs(userRole);
-		if (allowed === '*') return navGroups;
-		return navGroups
-			.map((group) => ({
-				...group,
-				items: group.items.filter((item) => allowed.has(item.href))
-			}))
-			.filter((group) => group.items.length > 0);
-	});
+	const visibleGroups = $derived(visibleNavGroups(userRole, navGroups));
 
 	const groupIconFor: Record<string, typeof RouteIcon> = {
 		Overview: LayoutDashboardIcon,
@@ -183,7 +174,7 @@
 	</Sidebar.Header>
 
 	<Sidebar.Content>
-		{#each visibleNavGroups as group (group.label)}
+		{#each visibleGroups as group (group.label)}
 			{@const GroupIcon = groupIconFor[group.label] ?? InfoIcon}
 			{#if group.label === 'Overview'}
 				<Sidebar.Group>
