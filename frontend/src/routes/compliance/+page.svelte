@@ -294,7 +294,7 @@ import { page } from '$app/state';
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Category')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.category}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Owner')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.owner}</strong></div>
 							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Due')} <strong class="mt-1 block text-sm font-bold text-foreground">{formatDate(item.due)}</strong></div>
-							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Confidence')} <strong class="mt-1 block text-sm font-bold text-foreground">{(item.confidence ?? item.confidenceScore) != null ? `${item.confidence ?? item.confidenceScore}%` : '—'}</strong></div>
+							<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Confidence')} <strong class="mt-1 block text-sm font-bold text-foreground">{item.confidence != null ? `${item.confidence}%` : '—'}</strong></div>
 						</div>
 						<p class="mt-4 text-xs font-semibold text-muted-foreground">{t('Source:')} {item.source}</p>
 					</a>

@@ -186,7 +186,7 @@
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('AI confidence')}</span>
-				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{(data.requirement.confidence ?? data.requirement.confidenceScore) != null ? `${data.requirement.confidence ?? data.requirement.confidenceScore}%` : '—'}</strong>
+				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{data.requirement.confidence != null ? `${data.requirement.confidence}%` : '—'}</strong>
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
