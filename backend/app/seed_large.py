@@ -135,7 +135,7 @@ PRODUCTS = [
     "Minyak Atsiri Cengkih", "Kapur Barus", "Sirup Gula Merah",
     "Bumbu Rendang Instan", "Bumbu Nasi Goreng", "Jagung Pipil",
     "Kacang Tanah Kupas", "Tepung Beras", "Lele Filet", "Biskuit Jahe",
-    "Stroopwafel印尼", "Kemasan Vakum 250g", "Kontainer 20ft",
+    "Stroopwafel", "Kemasan Vakum 250g", "Kontainer 20ft",
     "Palet Kayu Premium", "Box 5kg Ekspor", "Cokelat Premium",
     "Cumi-Cumi Beku", "Rumput Laut Kering", "Minyak Sawit",
     "Kayu Mahoni Furniture", "Keranjang Bambu", "Anyaman Mendong",
@@ -308,9 +308,14 @@ def seed_100_records():
     # -- CATALOGS (100) + IMAGES + VARIANTS --
     for i in range(1, 101):
         cid = f"CAT-{i:03d}"
-        db.insert("catalogs", {"id": cid, "productId": _pick(product_ids, n()),
+        # Ambil produk yang benar-benar dirujuk catalog agar title/description
+        # konsisten dengan productId (sebelumnya masing-masing mengundi produk
+        # berbeda → judul "Kopi Instant Premium" dengan deskripsi "sirup gula merah").
+        product_id = _pick(product_ids, n())
+        product_name = (db.get("products", product_id) or {}).get("name", product_id)
+        db.insert("catalogs", {"id": cid, "productId": product_id,
             "projectId": _pick(proj_ids, n()),
-            "title": f"{_pick(PRODUCTS, n())} - Export",
+            "title": f"{product_name} - Export",
             "status": _pick(["Draft","Published","Needs Review"], n()),
             "targetMarket": _pick(ALL_REGIONS, n()),
             "moq": f"{n()%5000+100} {_pick(['kg','pcs','unit'], n())}",
@@ -318,7 +323,7 @@ def seed_100_records():
             "priceRange": f"FOB USD {n()%100+10}-{n()%200+50}",
             "incoterms": _pick_n(INCOTERMS, n()%3+1, n()),
             "readiness": n()%100,
-            "description": f"High-quality {_pick(PRODUCTS, n()).lower()}.",
+            "description": f"High-quality {product_name.lower()}.",
             "highlights": _pick_n(["Premium quality","Direct from producer","Export ready"], n()%2+1, n()),
             "images": n()%10, "variants": [], "updatedAt": "now"})
         db.insert("catalog_images", {"id": f"IMG-{i:03d}", "catalogId": cid,
