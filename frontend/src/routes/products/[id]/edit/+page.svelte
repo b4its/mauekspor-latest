@@ -64,7 +64,7 @@
 	<Card class="panel-hero p-6 md:p-8">
 		<CardHeader class="p-0">
 			<Badge variant="secondary">{t('Product master data')}</Badge>
-			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Produk diperbarui.')} — {data.product.name}</CardTitle>
+			<CardTitle class="mt-3 font-display text-4xl font-black tracking-tight text-[#0b1d3a] md:text-5xl dark:text-white">{t('Perbarui')} {data.product.name}</CardTitle>
 			<CardDescription class="mt-2 max-w-2xl leading-relaxed">
 				{t('Setiap kolom di sini memberi masukan ke klasifikasi HS, kepatuhan, katalog, dan kutipan.')}
 			</CardDescription>
