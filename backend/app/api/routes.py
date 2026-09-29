@@ -3043,9 +3043,39 @@ def delete_market(market_id: str):
 # ----------------------------------------------------------------------------
 # RFQ
 # ----------------------------------------------------------------------------
+def _rfq_out(record: dict) -> dict:
+    """Normalisasi output RFQ agar kontrak frontend konsisten.
+
+    Data seed maupun payload lama menyimpan `buyerName`/`productId`, sementara
+    UI (`RFQ` type di frontend) membaca `buyer`/`product`. Sebelumnya field itu
+    kosong sehingga halaman /rfq dan /rfq/[id] menampilkan pembeli/produk blank.
+    Di sini kita ekspos alias `buyer` (dari `buyerName`) dan `product` (nama
+    produk dari `productId`, fallback ke nilai `product` mentah) tanpa menghapus
+    field aslinya, sehingga kedua kontrak tetap terpenuhi.
+    """
+    out = _serialize(record)
+    out.setdefault("buyer", "")
+    out.setdefault("product", "")
+    if not out.get("buyer") and out.get("buyerName"):
+        out["buyer"] = out["buyerName"]
+    if not out.get("product"):
+        product_id = str(out.get("productId") or "")
+        product = db.get("products", product_id) if product_id else None
+        out["product"] = (product or {}).get("name", "") or product_id
+    return out
+
+
+def _rfq_list_out(result: dict) -> dict:
+    result["data"] = [_rfq_out(r) for r in result.get("data", [])]
+    return result
+
+
 @router.get("/rfqs/")
 def list_rfqs(search: str = "", status: str = "", limit: int = 0, offset: int = 0, sort_by: str = "", sort_dir: str = "asc"):
-    return _filtered_query("rfqs", search=search, search_fields=("id", "title", "product", "destination", "buyer",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
+    result = _filtered_query("rfqs", search=search, search_fields=("id", "title", "buyer", "buyerName", "product", "destination",), status=status, status_field="status", limit=limit, offset=offset, sort_by=sort_by, sort_dir=sort_dir)
+    # Pencarian/`sort` tetap di atas record mentah agar tidak bergantung pada alias;
+    # alias hanya diterapkan pada payload akhir.
+    return _rfq_list_out(result)
 
 
 @router.get("/rfqs/{rfq_id}/")
@@ -3053,7 +3083,7 @@ def get_rfq(rfq_id: str):
     record = db.get("rfqs", rfq_id)
     if not record:
         raise HTTPException(404, "RFQ not found")
-    return _one(record)
+    return {"data": _rfq_out(record), "meta": {}}
 
 
 @router.post("/rfqs/")
@@ -3067,7 +3097,7 @@ def create_rfq(payload: sc.CreateRFQPayload):
         "matches": [],
         "updatedAt": "now",
     })
-    return _one(db.insert("rfqs", data))
+    return {"data": _rfq_out(db.insert("rfqs", data)), "meta": {}}
 
 
 @router.post("/rfqs/{rfq_id}/shortlist/")
@@ -3078,7 +3108,8 @@ def shortlist_rfq(rfq_id: str, payload: dict):
     record.setdefault("matches", [])
     record["matches"].append({"supplier": payload.get("supplier", ""), "score": 50, "reason": "Shortlisted"})
     record["status"] = "Matching"
-    return _save_one(record)
+    db.save(record)
+    return {"data": _rfq_out(record), "meta": {}}
 
 
 @router.patch("/rfqs/{rfq_id}/")
@@ -3086,12 +3117,14 @@ def update_rfq(rfq_id: str, payload: dict):
     record = db.get("rfqs", rfq_id)
     if not record:
         raise HTTPException(404, "RFQ not found")
-    for field in ("buyer", "product", "destination", "quantity", "incoterm",
-                  "deadline", "status", "matchScore", "requirements", "notes"):
+    for field in ("buyer", "buyerName", "product", "productId", "destination",
+                  "quantity", "incoterm", "deadline", "status", "matchScore",
+                  "requirements", "notes"):
         if field in payload:
             record[field] = payload[field]
     record["updatedAt"] = "now"
-    return _save_one(record)
+    db.save(record)
+    return {"data": _rfq_out(record), "meta": {}}
 
 
 @router.delete("/rfqs/{rfq_id}/")
