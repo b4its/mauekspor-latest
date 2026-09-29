@@ -1,5 +1,12 @@
 import { apiFetch } from '$lib/api/client';
 
+export type VillageBusinessProfile = {
+	id: string;
+	companyName: string;
+	status: string;
+	certifications: string[];
+};
+
 export type Village = {
 	id: string;
 	name: string;
@@ -9,11 +16,18 @@ export type Village = {
 	commodityGroup: 'pertanian' | 'perikanan' | 'kerajinan' | string;
 	production: string;
 	organization: string;
+	/** Skor kesiapan dihitung dari profil bisnis pengelola, bukan input manual. */
 	readiness: number;
 	status: 'Siap Ekspor' | 'Butuh Pendampingan' | string;
+	/** "profile" bila tertaut profil pengelola, "unlinked" bila belum. */
+	readinessSource?: 'profile' | 'unlinked' | string;
+	businessProfileId?: string | null;
+	businessProfile?: VillageBusinessProfile | null;
 	/** Koordinat opsional untuk peta potensi desa. */
 	lat?: number;
 	lng?: number;
+	/** Alamat lokasi desa (terisi otomatis dari pemilih peta). */
+	address?: string;
 	createdAt?: string;
 	products?: Array<Record<string, unknown>>;
 };
@@ -59,6 +73,8 @@ export type VillageMapPoint = {
 	production: string;
 	readiness: number;
 	status: string;
+	readinessSource?: 'profile' | 'unlinked' | string;
+	businessProfileId?: string | null;
 	lat: number;
 	lng: number;
 };

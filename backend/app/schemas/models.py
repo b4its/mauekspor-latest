@@ -57,6 +57,9 @@ class CreateBusinessProfilePayload(BaseModel):
     status: str = "Draft"
     owner: str = ""
     readiness: int = 20
+    # Koordinat lokasi (dari pemilih peta). Opsional.
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 class UpdateCertificationsPayload(BaseModel):

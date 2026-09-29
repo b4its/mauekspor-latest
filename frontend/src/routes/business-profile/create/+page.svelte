@@ -7,12 +7,15 @@
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { createBusinessProfile } from '$lib/api/business-profile';
+	import LocationMapPicker from '$lib/components/LocationMapPicker.svelte';
 	import { t } from '$lib/i18n.svelte';
 
 	const certOptions = ['Halal', 'ISO 22000', 'HACCP', 'SVLK'];
 
 	let companyName = $state('');
 	let address = $state('');
+	let latitude = $state<number | null>(null);
+	let longitude = $state<number | null>(null);
 	let productionCapacity = $state('');
 	let yearEstablished = $state('');
 	let selectedCerts = $state(['Halal']);
@@ -35,6 +38,8 @@
 			await createBusinessProfile({
 				companyName,
 				address,
+				latitude,
+				longitude,
 				productionCapacity,
 				yearEstablished: Number(yearEstablished),
 				certifications: selectedCerts
@@ -82,9 +87,15 @@
 					<Label for="bp-company">{t('Nama perusahaan')}</Label>
 					<Input id="bp-company" bind:value={companyName} placeholder="PT Kopi Gayo Nusantara" />
 				</div>
-				<div class="grid gap-2">
+				<div class="grid gap-2 sm:col-span-2">
 					<Label for="bp-address">{t('Alamat')}</Label>
-					<Input id="bp-address" bind:value={address} placeholder="Takengon, Aceh, Indonesia" />
+					<Input id="bp-address" bind:value={address} placeholder={t('Klik titik pada peta atau isi alamat manual')} />
+					<p class="text-xs text-muted-foreground">
+						{t('Pilih lokasi pada peta di bawah — alamat, lintang, dan bujur terisi otomatis.')}
+					</p>
+				</div>
+				<div class="sm:col-span-2">
+					<LocationMapPicker bind:latitude bind:longitude bind:address />
 				</div>
 				<div class="grid gap-2">
 					<Label for="bp-capacity">{t('Kapasitas produksi per bulan')}</Label>

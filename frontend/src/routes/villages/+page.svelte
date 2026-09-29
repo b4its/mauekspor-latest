@@ -16,6 +16,7 @@
 	} from '$lib/api/villages';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
+	import LocationMapPicker from '$lib/components/LocationMapPicker.svelte';
 	import { t } from '$lib/i18n.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { paginate, calcTotalPages } from '$lib/utils/pagination';
@@ -34,7 +35,9 @@
 	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
 	import GlobeIcon from '@lucide/svelte/icons/globe';
 
-	// Initial seed fallback if backend is offline during hydration
+	// Initial seed fallback if backend is offline during hydration. Readiness is
+	// left unset/0 because it is computed from the linked business profile; the
+	// offline placeholder must not invent a score.
 	const seedVillages: Village[] = [
 		{
 			id: 'DES-GAYO',
@@ -45,8 +48,9 @@
 			commodityGroup: 'pertanian',
 			production: '8 ton green beans / bulan',
 			organization: 'BUMDes Kopi Gayo Sejahtera',
-			readiness: 86,
-			status: 'Siap Ekspor'
+			readiness: 0,
+			status: 'Butuh Pendampingan',
+			readinessSource: 'unlinked'
 		},
 		{
 			id: 'DES-VANILI-BALI',
@@ -57,8 +61,9 @@
 			commodityGroup: 'pertanian',
 			production: '50 kg curing / bulan',
 			organization: 'Koperasi Vanili Bali Sejahtera',
-			readiness: 77,
-			status: 'Butuh Pendampingan'
+			readiness: 0,
+			status: 'Butuh Pendampingan',
+			readinessSource: 'unlinked'
 		},
 		{
 			id: 'DES-SITUBONDO',
@@ -69,8 +74,9 @@
 			commodityGroup: 'pertanian',
 			production: '600 kg / musim panen',
 			organization: 'Gapoktan Manggis Lestari',
-			readiness: 68,
-			status: 'Butuh Pendampingan'
+			readiness: 0,
+			status: 'Butuh Pendampingan',
+			readinessSource: 'unlinked'
 		},
 		{
 			id: 'DES-TORAJA',
@@ -81,8 +87,9 @@
 			commodityGroup: 'pertanian',
 			production: '3 ton / bulan',
 			organization: 'Koperasi Desa Kakao Toraja',
-			readiness: 81,
-			status: 'Siap Ekspor'
+			readiness: 0,
+			status: 'Butuh Pendampingan',
+			readinessSource: 'unlinked'
 		}
 	];
 
@@ -110,9 +117,12 @@
 	let fCommodityGroup = $state<'pertanian' | 'perikanan' | 'kerajinan'>('pertanian');
 	let fProduction = $state('');
 	let fOrganization = $state('');
-	let fReadiness = $state(75);
-	let fLat = $state('');
-	let fLng = $state('');
+	// Kesiapan tidak lagi diinput manual: skor dihitung backend dari profil
+	// bisnis pengelola (lihat `businessProfileId` pada desa).
+	// Koordinat lokasi desa (diisi via pemilih peta, bukan lagi input manual).
+	let fLatNum = $state<number | null>(null);
+	let fLngNum = $state<number | null>(null);
+	let fAddress = $state('');
 
 	let deleteOpen = $state(false);
 	let deleteTarget = $state<Village | null>(null);
@@ -160,9 +170,9 @@
 		fCommodityGroup = 'pertanian';
 		fProduction = '';
 		fOrganization = '';
-		fReadiness = 75;
-		fLat = '';
-		fLng = '';
+		fLatNum = null;
+		fLngNum = null;
+		fAddress = '';
 		error = '';
 		formOpen = true;
 	}
@@ -177,9 +187,9 @@
 		fCommodityGroup = (v.commodityGroup as 'pertanian' | 'perikanan' | 'kerajinan') || 'pertanian';
 		fProduction = v.production;
 		fOrganization = v.organization;
-		fReadiness = v.readiness ?? 75;
-		fLat = v.lat != null ? String(v.lat) : '';
-		fLng = v.lng != null ? String(v.lng) : '';
+		fLatNum = Number.isFinite(v.lat as number) ? (v.lat as number) : null;
+		fLngNum = Number.isFinite(v.lng as number) ? (v.lng as number) : null;
+		fAddress = v.address ?? '';
 		error = '';
 		formOpen = true;
 	}
@@ -199,15 +209,13 @@
 				flagshipCommodity: fFlagshipCommodity.trim(),
 				commodityGroup: fCommodityGroup,
 				production: fProduction.trim(),
-				organization: fOrganization.trim(),
-				readiness: Number(fReadiness)
+				organization: fOrganization.trim()
 			};
 			// Koordinat opsional: hanya dikirim bila diisi & valid, agar peta
 			// potensi desa ikut memperbarui titiknya.
-			const lat = Number(fLat);
-			const lng = Number(fLng);
-			if (fLat.trim() !== '' && Number.isFinite(lat) && Math.abs(lat) <= 90) payload.lat = lat;
-			if (fLng.trim() !== '' && Number.isFinite(lng) && Math.abs(lng) <= 180) payload.lng = lng;
+			if (fLatNum != null && Number.isFinite(fLatNum) && Math.abs(fLatNum) <= 90) payload.lat = fLatNum;
+			if (fLngNum != null && Number.isFinite(fLngNum) && Math.abs(fLngNum) <= 180) payload.lng = fLngNum;
+			if (fAddress.trim()) payload.address = fAddress.trim();
 
 			if (isEdit && editingId) {
 				const res = await updateVillage(editingId, payload);
@@ -454,13 +462,20 @@
 								<span class="text-2xl font-black {isReady ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}">
 									{village.readiness}%
 								</span>
-								<span class="block text-[10px] text-muted-foreground uppercase">{t('Skor Kesiapan Ekspor')}</span>
+								<span class="block text-[10px] text-muted-foreground uppercase">{t('Skor Kesiapan (otomatis)')}</span>
 							</div>
 						</div>
 
 						<div class="mt-3">
 							<Progress value={village.readiness ?? 0} class="h-2" />
 						</div>
+
+						{#if village.readinessSource === 'unlinked'}
+							<p class="mt-2 flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+								<AlertCircleIcon class="size-3 shrink-0" />
+								<span>{t('Belum tertaut profil pengelola — skor 0%. Lengkapi profil bisnis pengelola.')}</span>
+							</p>
+						{/if}
 
 						<div class="mt-4 space-y-2 rounded-lg border bg-muted/20 p-3 text-xs">
 							<div class="flex items-center justify-between">
@@ -580,24 +595,33 @@
 					<Input id="village-organization" bind:value={fOrganization} placeholder="Contoh: BUMDes Kopi Gayo Sejahtera" class="text-xs" />
 				</div>
 
-				<div>
-					<label for="village-readiness" class="mb-1 block font-semibold text-foreground">{t('Nilai Kesiapan Ekspor (0-100)')}</label>
-					<Input id="village-readiness" type="number" min="0" max="100" bind:value={fReadiness} class="text-xs" />
+				<div class="rounded-lg border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+					<p class="font-semibold text-foreground">{t('Skor Kesiapan dihitung otomatis')}</p>
+					<p class="mt-1">
+						{t('Kesiapan desa diturunkan dari kelengkapan profil bisnis pengelola (BUMDes/koperasi): nama & alamat, kapasitas produksi, tahun berdiri, penanggung jawab, status, dan sertifikasi. Lengkapi profil pengelola untuk menaikkan skor ini.')}
+					</p>
+					<Button size="sm" variant="outline" class="mt-2 h-7 text-[11px]" href="/business-profile">
+						{t('Kelola profil pengelola')}
+					</Button>
 				</div>
 
-				<div class="grid grid-cols-2 gap-3">
-					<div>
-						<label for="village-lat" class="mb-1 block font-semibold text-foreground">{t('Latitude (peta)')}</label>
-						<Input id="village-lat" type="number" step="0.0001" min="-90" max="90" bind:value={fLat} placeholder="-6.2000" class="text-xs" />
-					</div>
-					<div>
-						<label for="village-lng" class="mb-1 block font-semibold text-foreground">{t('Longitude (peta)')}</label>
-						<Input id="village-lng" type="number" step="0.0001" min="-180" max="180" bind:value={fLng} placeholder="106.8000" class="text-xs" />
-					</div>
+				<div>
+					<label for="village-address" class="mb-1 block font-semibold text-foreground">{t('Lokasi desa (kecamatan, kabupaten, provinsi)')}</label>
+					<Input id="village-address" bind:value={fAddress} placeholder={t('Contoh: Bebesen, Aceh Tengah, Aceh')} class="text-xs" />
 				</div>
-				<p class="text-xs text-muted-foreground">
-					{t('Koordinat opsional. Isi agar desa muncul di peta potensi desa pada dasbor.')}
-				</p>
+
+				<div>
+					<span class="mb-1 block font-semibold text-foreground">{t('Pilih titik lokasi pada peta')}</span>
+					<LocationMapPicker
+						bind:latitude={fLatNum}
+						bind:longitude={fLngNum}
+						bind:address={fAddress}
+						height="300px"
+					/>
+					<p class="mt-1 text-xs text-muted-foreground">
+						{t('Klik titik di peta — lintang & bujur terisi otomatis dan desa muncul di peta potensi desa.')}
+					</p>
+				</div>
 			</div>
 
 			<Dialog.Footer>

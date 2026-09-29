@@ -269,7 +269,7 @@ import { page } from '$app/state';
 								<Checkbox checked={selected.includes(scenario.id)} onCheckedChange={() => toggleSelect(scenario.id)} />
 								<Badge variant={toneVariant(statusTone(scenario.status))}>{label(scenario.status)}</Badge>
 							</div>
-							<strong class="text-2xl font-bold tracking-tight">{scenario.confidence}%</strong>
+							<strong class="text-2xl font-bold tracking-tight">{scenario.confidence != null ? `${scenario.confidence}%` : '—'}</strong>
 						</div>
 						<a href={`/costing/${scenario.id}`} class="no-underline">
 							<h3 class="mt-3 text-2xl font-bold tracking-tight">{scenario.title}</h3>

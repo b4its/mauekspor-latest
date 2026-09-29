@@ -2969,7 +2969,20 @@ const dictionary: Record<string, Entry> = {
 	// Input negara (search + select)
 	'Pilih negara...': { id: 'Pilih negara...', en: 'Select a country...' },
 	'Tambah negara...': { id: 'Tambah negara...', en: 'Add a country...' },
-	'Memuat daftar negara...': { id: 'Memuat daftar negara...', en: 'Loading country list...' }
+	'Memuat daftar negara...': { id: 'Memuat daftar negara...', en: 'Loading country list...' },
+	// Pemilih lokasi (peta Leaflet)
+	'Cari tempat, jalan, atau kota...': { id: 'Cari tempat, jalan, atau kota...', en: 'Search a place, street, or city...' },
+	'Cari tempat': { id: 'Cari tempat', en: 'Search place' },
+	'Gunakan lokasi saya': { id: 'Gunakan lokasi saya', en: 'Use my location' },
+	'Mendeteksi alamat dari titik...': { id: 'Mendeteksi alamat dari titik...', en: 'Detecting address from point...' },
+	'Klik peta untuk memilih titik.': { id: 'Klik peta untuk memilih titik.', en: 'Click the map to pick a point.' },
+	'Peta pemilih lokasi': { id: 'Peta pemilih lokasi', en: 'Location picker map' },
+	'Peta gagal dimuat.': { id: 'Peta gagal dimuat.', en: 'Failed to load the map.' },
+	'Perangkat tidak mendukung lokasi otomatis.': { id: 'Perangkat tidak mendukung lokasi otomatis.', en: 'Device does not support automatic location.' },
+	'Tidak dapat mengakses lokasi Anda.': { id: 'Tidak dapat mengakses lokasi Anda.', en: 'Cannot access your location.' },
+	'Alamat tidak dapat ditemukan otomatis. Isi manual bila perlu.': { id: 'Alamat tidak dapat ditemukan otomatis. Isi manual bila perlu.', en: 'Address could not be detected automatically. Fill it in manually if needed.' },
+	'Klik titik pada peta atau isi alamat manual': { id: 'Klik titik pada peta atau isi alamat manual', en: 'Click a point on the map or enter the address manually' },
+	'Pilih lokasi pada peta di bawah — alamat, lintang, dan bujur terisi otomatis.': { id: 'Pilih lokasi pada peta di bawah — alamat, lintang, dan bujur terisi otomatis.', en: 'Pick a location on the map below — address, latitude, and longitude fill in automatically.' }
 };
 
 let initial: Locale = 'id';

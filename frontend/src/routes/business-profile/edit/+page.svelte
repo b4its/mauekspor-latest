@@ -8,6 +8,7 @@
 	import { businessProfiles as seedProfiles } from '$lib/data/trade';
 	import { listBusinessProfiles, updateBusinessProfile } from '$lib/api/business-profile';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
+	import LocationMapPicker from '$lib/components/LocationMapPicker.svelte';
 	import { t } from '$lib/i18n.svelte';
 
 	let profiles = createRemoteList(listBusinessProfiles, seedProfiles);
@@ -18,6 +19,8 @@
 	let loaded = $state(false);
 	let companyName = $state(seedProfiles[0].companyName);
 	let address = $state(seedProfiles[0].address);
+	let latitude = $state<number | null>(null);
+	let longitude = $state<number | null>(null);
 	let productionCapacity = $state(seedProfiles[0].productionCapacity);
 	let yearEstablished = $state(String(seedProfiles[0].yearEstablished));
 	let saved = $state(false);
@@ -31,6 +34,8 @@
 		if (!loaded) {
 			companyName = p.companyName;
 			address = p.address;
+			latitude = Number.isFinite(p.latitude as number) ? (p.latitude as number) : null;
+			longitude = Number.isFinite(p.longitude as number) ? (p.longitude as number) : null;
 			productionCapacity = p.productionCapacity;
 			yearEstablished = String(p.yearEstablished);
 			loaded = true;
@@ -51,6 +56,8 @@
 			await updateBusinessProfile(profile.id, {
 				companyName,
 				address,
+				latitude,
+				longitude,
 				productionCapacity,
 				yearEstablished: Number(yearEstablished)
 			});
@@ -101,6 +108,9 @@
 				<div class="grid gap-2">
 					<Label for="bpe-address">{t('Alamat')}</Label>
 					<Input id="bpe-address" bind:value={address} />
+				</div>
+				<div class="sm:col-span-2">
+					<LocationMapPicker bind:latitude bind:longitude bind:address />
 				</div>
 				<div class="grid gap-2">
 					<Label for="bpe-capacity">{t('Kapasitas produksi per bulan')}</Label>

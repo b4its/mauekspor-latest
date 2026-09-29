@@ -45,23 +45,23 @@ describe('villages API client contract', () => {
 		expect(res.data.name).toBe('Desa Kopi Gayo');
 	});
 
-	it('createVillage -> POST /villages/', async () => {
-		const fetchMock = mockApi({ id: 'DES-NEW', name: 'Desa Kakao Baru' });
-		const res = await createVillage({ name: 'Desa Kakao Baru', readiness: 85 });
+	it('createVillage -> POST /villages/ (tanpa readiness manual)', async () => {
+		const fetchMock = mockApi({ id: 'DES-NEW', name: 'Desa Kakao Baru', readiness: 0, readinessSource: 'unlinked' });
+		const res = await createVillage({ name: 'Desa Kakao Baru', organization: 'BUMDes Baru' });
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/villages\/$/);
 		const init = fetchMock.mock.calls[0][1] as RequestInit;
 		expect(init.method).toBe('POST');
-		expect(JSON.parse(String(init.body))).toEqual({ name: 'Desa Kakao Baru', readiness: 85 });
+		expect(JSON.parse(String(init.body))).toEqual({ name: 'Desa Kakao Baru', organization: 'BUMDes Baru' });
 		expect(res.data.id).toBe('DES-NEW');
 	});
 
-	it('updateVillage -> PUT /villages/{id}/', async () => {
-		const fetchMock = mockApi({ id: 'DES-GAYO', readiness: 95 });
-		const res = await updateVillage('DES-GAYO', { readiness: 95 });
+	it('updateVillage -> PUT /villages/{id}/ (kesiapan dihitung backend)', async () => {
+		const fetchMock = mockApi({ id: 'DES-GAYO', readiness: 95, readinessSource: 'profile' });
+		const res = await updateVillage('DES-GAYO', { production: '15 ton / bulan' });
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/villages\/DES-GAYO\/$/);
 		const init = fetchMock.mock.calls[0][1] as RequestInit;
 		expect(init.method).toBe('PUT');
-		expect(JSON.parse(String(init.body))).toEqual({ readiness: 95 });
+		expect(JSON.parse(String(init.body))).toEqual({ production: '15 ton / bulan' });
 		expect(res.data.readiness).toBe(95);
 	});
 

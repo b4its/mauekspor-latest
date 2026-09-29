@@ -524,6 +524,9 @@ export type BusinessProfile = {
 	status: 'Complete' | 'Needs Review' | 'Draft';
 	owner: string;
 	readiness: number;
+	/** Koordinat lokasi (dari pemilih peta); opsional. */
+	latitude?: number | null;
+	longitude?: number | null;
 };
 
 export type UserAccount = {
