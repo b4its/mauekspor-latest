@@ -6187,6 +6187,13 @@ def get_country_detail(country_code: str):
     country["data_note"] = profile.get("note", "")
     country["sanctions_warning"] = profile.get("sanctions_warning", "")
     country["_is_template"] = profile.get("_is_template", False)
+    # Referensi riset terkurasi (timeline & HS 2028) — bukan tarif/clearance.
+    from app.data.trade_reference import REGULATORY_TIMELINE, HS_2028_FACTS, SNAPSHOT_DATE as _SNAP
+    country["reference_timeline"] = [
+        {"date": d, "event": e, "scope": s} for (d, e, s) in REGULATORY_TIMELINE
+    ]
+    country["hs_2028_facts"] = HS_2028_FACTS
+    country["reference_snapshot_date"] = _SNAP
     return {"data": country, "meta": {}}
 
 

@@ -685,6 +685,30 @@ CROSS_PRODUCT_REGULATIONS: list[dict[str, Any]] = [
         "risk_note": "Kemasan plastik/kertas bergrafik PFAS tinggi berisiko ditolak.",
         "sources": [{"name": "EU PPWR", "url": "https://environment.ec.europa.eu/topics/waste-and-recycling/packaging-waste_en"}],
     },
+    {
+        "id": "EU-GPSR",
+        "name": "EU General Product Safety Regulation (GPSR)",
+        "ref": "Regulation (EU) 2023/988",
+        "scope": "Produk konsumen non-pangan",
+        "requirement": "Wajib ada responsible person di UE, informasi produsen/importir, dan "
+                       "penilaian risiko produk; pelacakan & penarikan produk bila perlu.",
+        "deadline": "Berlaku sejak 13 Desember 2024.",
+        "destinations": ["EU"],
+        "risk_note": "Produk tanpa responsible person di UE dapat diblokir di perbatasan.",
+        "sources": [{"name": "EU GPSR", "url": "https://commission.europa.eu/business-economy-euro/doing-business-eu/consumer-protection/general-product-safety-regulation_en"}],
+    },
+    {
+        "id": "EU-FORCED-LABOUR",
+        "name": "EU Forced Labour Regulation",
+        "ref": "Regulation (EU) 2024/3015",
+        "scope": "Semua produk yang masuk pasar UE",
+        "requirement": "Larangan produk yang dibuat dengan kerja paksa; otoritas UE dapat melakukan "
+                       "investigasi dan menarik produk dari pasar tanpa melewati pengadilan.",
+        "deadline": "Berlaku (aplikasi utama) mulai 2027.",
+        "destinations": ["EU"],
+        "risk_note": "Lakukan uji tuntas rantai pasok (due diligence) untuk membuktikan bebas kerja paksa.",
+        "sources": [{"name": "EU Forced Labour Regulation", "url": "https://ec.europa.eu/"}],
+    },
 ]
 
 
@@ -712,9 +736,9 @@ def product_regulations_for(hs_code: str, destination: str = "") -> list[dict[st
     if len(digits) >= 4 and digits.startswith(cbam_prefixes):
         regs.append({
             "id": "EU-CBAM", "name": "CBAM — EU Carbon Border Adjustment Mechanism",
-            "ref": "Regulation (EU) 2023/956", "scope": "Kandidat kode CN sektor CBAM",
-            "requirement": "Cek Annex I/kode CN, status authorised CBAM declarant dan data emisi tertanam; hanya importir dalam cakupan yang wajib.",
-            "deadline": "Periode definitif mulai 1 Januari 2026; cek jadwal deklarasi/sertifikat terbaru.",
+            "ref": "Regulation (EU) 2023/956", "scope": "Kandidat kode CN sektor CBAM (besi & baja, aluminium, semen, pupuk, hidrogen, listrik)",
+            "requirement": "Periode definitif sejak 1 Jan 2026; ambang de minimis 50 ton/importir/tahun; importir wajib Authorised CBAM Declarant. Cek Annex I/kode CN dan siapkan data emisi tertanam (embedded emissions) terverifikasi.",
+            "deadline": "Definitif 1 Jan 2026; penjualan sertifikat 1 Feb 2027; deklarasi & penyerahan pertama 30 Sep 2027.",
             "destinations": ["EU"], "applicability": "candidate_check_annex_i",
             "snapshotDate": "2026-09-29",
             "sources": [{"name": "European Commission CBAM", "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en"}],
