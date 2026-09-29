@@ -69,6 +69,13 @@ def test_get_recommendations_by_country_name():
     assert any(f["id"] == "FWD-ID" for f in recs)
 
 
+def test_get_recommendations_accepts_full_country_name():
+    """Nama negara lengkap ("Japan") harus di-resolve ke ISO ("JP"), bukan "JA"."""
+    _seed_forwarders()
+    recs = forwarders.get_recommendations("Japan")
+    assert any(f["id"] == "FWD-1" for f in recs), recs
+
+
 def test_get_recommendations_limit():
     _seed_forwarders()
     recs = forwarders.get_recommendations("JP", limit=1)

@@ -32,9 +32,13 @@ def recalculate_rating(forwarder: dict, persist: bool = True) -> dict:
 
 def get_recommendations(destination_country: str, limit: int = 5) -> list[dict]:
     """Top forwarder untuk rute `ID-<destination>` (urut rating, lalu jumlah review)."""
-    code = destination_country.strip().upper()[:2]
+    from app.data.countries import get_country, resolve_country
+
+    raw = (destination_country or "").strip()
+    # Terima kode ISO ("JP") maupun nama negara ("Japan"): resolve dulu agar
+    # pemotongan 2 huruf tak menghasilkan kode tak valid ("JA") → nol hasil.
+    code = resolve_country(raw) or raw.upper()[:2]
     route = f"ID-{code}"
-    from app.data.countries import get_country
     country = get_country(code)
     country_name = (country or {}).get("country_name", "").lower()
     candidates = []
