@@ -26,6 +26,7 @@
 	} from '$lib/api/admin-countries';
 	import { t } from '$lib/i18n.svelte';
 	import { getStatus, getUser } from '$lib/stores/session.svelte';
+	import { canViewPath } from '$lib/roleAccess';
 
 	import GlobeIcon from '@lucide/svelte/icons/globe';
 	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
@@ -42,7 +43,8 @@
 	import FileTextIcon from '@lucide/svelte/icons/file-text';
 	import CheckCircle2Icon from '@lucide/svelte/icons/check-circle-2';
 
-	let isAdmin = $derived(getStatus() === 'authenticated' && getUser()?.role === 'Admin');
+	// Akses mengikuti roleAccess agar konsisten dengan sidebar.
+	let isAdmin = $derived(getStatus() === 'authenticated' && canViewPath(getUser()?.role, '/admin/countries'));
 
 	// Countries list state
 	let countries = $state<AdminCountry[]>([]);

@@ -28,6 +28,7 @@
 	import { formatNumber } from '$lib/utils/format';
 	import { label } from '$lib/utils/labels';
 	import { getStatus, getUser } from '$lib/stores/session.svelte';
+	import { canViewPath } from '$lib/roleAccess';
 
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
 	import DatabaseIcon from '@lucide/svelte/icons/database';
@@ -111,7 +112,9 @@
 	let auditActionFilter = $state('all');
 
 	let totalPages = $derived(Math.max(1, Math.ceil(total / pageSize)));
-	let isAdmin = $derived(getStatus() === 'authenticated' && getUser()?.role === 'Admin');
+	// Akses mengikuti roleAccess (sumber kebenaran menu) agar tidak pernah
+	// bertentangan dengan sidebar.
+	let isAdmin = $derived(getStatus() === 'authenticated' && canViewPath(getUser()?.role, '/admin'));
 
 	// Computed overall metrics
 	let totalRecordsCount = $derived(tables.reduce((acc, t) => acc + (t.count || 0), 0));

@@ -13,13 +13,17 @@
 	import { listCountries, getCountry, type Country } from '$lib/api/export-analysis';
 	import { seedCountries } from '$lib/data/trade';
 	import { fetchSession, getStatus, getUser } from '$lib/stores/session.svelte';
+	import { canViewPath } from '$lib/roleAccess';
 	import { t } from '$lib/i18n.svelte';
 	import { label } from '$lib/utils/labels';
 	import { page } from '$app/state';
 	import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 
+	// Akses mengikuti satu sumber kebenaran (roleAccess) agar menu yang tampil
+	// di sidebar TIDAK pernah bertentangan dengan halaman ini. Admin, Exporter,
+	// dan Buyer boleh membuka Portal Pembeli (lihat ROLE_READ_MODULES).
 	let allowed = $derived(
-		getStatus() === 'authenticated' && (getUser()?.role === 'Admin' || getUser()?.role === 'Buyer')
+		getStatus() === 'authenticated' && canViewPath(getUser()?.role, '/buyers/portal')
 	);
 	$effect(() => {
 		if (getStatus() === 'loading') fetchSession();
