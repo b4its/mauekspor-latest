@@ -85,6 +85,12 @@ export type ComplianceRequirement = {
 	requiredEvidence: string;
 	currentEvidence: string;
 	confidence: number;
+	/** Bukti berkas yang diunggah (diisi backend setelah upload). */
+	evidenceFile?: string;
+	evidenceFileId?: string;
+	evidenceFileUrl?: string;
+	evidenceUploadedAt?: string;
+	evidenceUploadedBy?: string;
 };
 
 export type TradeDocument = {
@@ -513,9 +519,22 @@ export type BusinessProfile = {
 	id: string;
 	companyName: string;
 	address: string;
+	/** Koordinat lokasi (dari pemilih peta); opsional. */
+	latitude?: number | null;
+	longitude?: number | null;
 	productionCapacity: string;
 	yearEstablished: number;
 	certifications: string[];
+	/** Klaim sertifikasi + bukti berkas (verified = ada dokumen terunggah). */
+	certificationItems?: {
+		name: string;
+		verified?: boolean;
+		evidenceFileId?: string;
+		evidenceFile?: string;
+		evidenceFileUrl?: string;
+	}[];
+	/** Jumlah sertifikasi yang punya bukti berkas (dihitung backend). */
+	certifiedCount?: number;
 	status: 'Complete' | 'Needs Review' | 'Draft';
 	owner: string;
 	readiness: number;
