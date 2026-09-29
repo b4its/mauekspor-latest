@@ -87,7 +87,12 @@ const LABELS: Record<string, [string, string]> = {
 	Buyer: ['Pembeli', 'Buyer'],
 	Forwarder: ['Forwarder', 'Forwarder'],
 	CustomsBroker: ['Bea Cukai', 'Customs Broker'],
-	KepalaDesa: ['Kepala Desa', 'Village Head']
+	KepalaDesa: ['Kepala Desa', 'Village Head'],
+	// Kesehatan layanan AI (hasilkan 'not_checked' saat belum di-probe)
+	healthy: ['Sehat', 'Healthy'],
+	degraded: ['Menurun', 'Degraded'],
+	unhealthy: ['Bermasalah', 'Unhealthy'],
+	not_checked: ['Belum Diperiksa', 'Not checked']
 };
 
 /** Terjemahkan label domain; nilai tak dikenal dikembalikan apa adanya. */

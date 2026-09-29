@@ -26,6 +26,7 @@
 	} from '$lib/api/admin';
 	import { t } from '$lib/i18n.svelte';
 	import { formatNumber } from '$lib/utils/format';
+	import { label } from '$lib/utils/labels';
 	import { getStatus, getUser } from '$lib/stores/session.svelte';
 
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
@@ -333,6 +334,19 @@
 		} finally {
 			aiLoading = false;
 		}
+	}
+
+	// Pemetaan status kesehatan AI → label ramah + varian badge.
+	// Backend memakai 'not_checked' saat health belum di-probe (mis. mode mock),
+	// bukan error; jangan tampilkan mentah atau beri warna destructive.
+	function aiHealthLabel(value?: string | null): string {
+		return label(value ?? '') || '—';
+	}
+	function aiHealthVariant(value?: string | null): 'default' | 'destructive' | 'secondary' {
+		const key = (value ?? '').toLowerCase();
+		if (key === 'healthy') return 'default';
+		if (key === 'degraded' || key === 'unhealthy') return 'destructive';
+		return 'secondary';
 	}
 
 	async function handleTestAi() {
@@ -663,8 +677,8 @@
 					<div class="flex flex-wrap items-center gap-2">
 						<h2 class="text-base font-bold text-foreground">{t('Admin Panel')}</h2>
 						{#if aiStatus}
-							<Badge variant={aiStatus.health === 'healthy' ? 'default' : 'destructive'} class="text-xs">
-								{aiStatus.health}
+							<Badge variant={aiHealthVariant(aiStatus.health)} class="text-xs">
+								{aiHealthLabel(aiStatus.health)}
 							</Badge>
 							<Badge variant="outline" class="text-xs font-medium">
 								{t('Mode AI')}: {aiStatus.mode}
@@ -823,8 +837,8 @@
 								</div>
 							</div>
 							<div class="mt-3 flex items-baseline gap-2">
-								<h3 class="text-2xl font-bold capitalize tracking-tight text-foreground">{aiStatus?.health ?? 'Healthy'}</h3>
-								<Badge variant={aiStatus?.health === 'healthy' ? 'default' : 'destructive'} class="text-[10px]">
+								<h3 class="text-2xl font-bold capitalize tracking-tight text-foreground">{aiHealthLabel(aiStatus?.health ?? 'healthy')}</h3>
+								<Badge variant={aiHealthVariant(aiStatus?.health ?? 'healthy')} class="text-[10px]">
 									{aiStatus?.mode ?? 'mock'}
 								</Badge>
 							</div>
@@ -1267,8 +1281,8 @@
 								<div class="rounded-lg border bg-muted/20 p-3">
 									<p class="text-xs text-muted-foreground">{t('Status Kesehatan')}</p>
 									<div class="mt-1 flex items-center gap-2">
-										<Badge variant={aiStatus?.health === 'healthy' ? 'default' : 'destructive'} class="text-xs">
-											{aiStatus?.health ?? 'Healthy'}
+										<Badge variant={aiHealthVariant(aiStatus?.health ?? 'healthy')} class="text-xs">
+											{aiHealthLabel(aiStatus?.health ?? 'healthy')}
 										</Badge>
 									</div>
 								</div>
