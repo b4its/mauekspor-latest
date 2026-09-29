@@ -201,5 +201,260 @@
 				</Card>
 			</div>
 		</div>
+
+		<!-- Incoterms® 2020 -->
+		{#if ref.incoterms?.length}
+			<Card class="mt-4">
+				<CardHeader class="p-4 pb-2">
+					<CardTitle class="flex items-center gap-2 text-base">
+						<HandshakeIcon class="size-4 text-primary" />
+						{t('Incoterms® 2020 (ICC)')}
+					</CardTitle>
+				</CardHeader>
+				<CardContent class="p-4 pt-2">
+					<div class="overflow-x-auto">
+						<table class="w-full text-left text-[13px]">
+							<thead>
+								<tr class="border-b text-muted-foreground">
+									<th class="py-1.5 pe-3">{t('Kode')}</th>
+									<th class="py-1.5 pe-3">{t('Nama')}</th>
+									<th class="py-1.5 pe-3">{t('Risiko berpindah')}</th>
+									<th class="py-1.5">{t('Moda')}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each ref.incoterms as inc}
+									<tr class="border-b last:border-0">
+										<td class="py-1.5 pe-3 font-mono font-bold text-primary">{inc.code}</td>
+										<td class="py-1.5 pe-3 font-semibold">{inc.name}</td>
+										<td class="py-1.5 pe-3">{inc.risk}</td>
+										<td class="py-1.5">{inc.mode}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+					<ul class="mt-3 grid gap-1 text-xs text-muted-foreground">
+						{#each ref.incotermsNotes ?? [] as note}
+							<li>• {note}</li>
+						{/each}
+					</ul>
+				</CardContent>
+			</Card>
+		{/if}
+
+		<div class="mt-4 grid gap-4 lg:grid-cols-2">
+			<!-- HS: panjang digit + KUMHS -->
+			{#if ref.hsDigitLengths?.length}
+				<Card>
+					<CardHeader class="p-4 pb-2">
+						<CardTitle class="flex items-center gap-2 text-base">
+							<PackageSearchIcon class="size-4 text-primary" />
+							{t('Panjang digit HS per negara/kawasan')}
+						</CardTitle>
+					</CardHeader>
+					<CardContent class="grid gap-1.5 p-4 pt-2 text-[13px]">
+						{#each ref.hsDigitLengths as row}
+							<div class="flex items-center justify-between gap-2 rounded-lg border px-3 py-1.5">
+								<span class="font-semibold">{row.name}</span>
+								<span class="text-muted-foreground">{row.system} · <b class="text-foreground">{row.digits}</b> {t('digit')}</span>
+							</div>
+						{/each}
+					</CardContent>
+				</Card>
+			{/if}
+
+			{#if ref.kumhs?.length}
+				<Card>
+					<CardHeader class="p-4 pb-2">
+						<CardTitle class="text-base">{t('KUMHS — Ketentuan Umum Menginterpretasi HS')}</CardTitle>
+					</CardHeader>
+					<CardContent class="grid gap-2 p-4 pt-2">
+						{#each ref.kumhs as rule}
+							<div class="text-[13px]">
+								<span class="font-bold text-primary">{rule.rule}.</span>
+								<span class="text-muted-foreground"> {rule.detail}</span>
+							</div>
+						{/each}
+					</CardContent>
+				</Card>
+			{/if}
+		</div>
+
+		<!-- Indonesia -->
+		{#if ref.indonesia}
+			<Card class="mt-4">
+				<CardHeader class="p-4 pb-2">
+					<CardTitle class="flex items-center gap-2 text-base">
+						<LandmarkIcon class="size-4 text-primary" />
+						{t('Regulasi Ekspor-Impor Indonesia')}
+					</CardTitle>
+				</CardHeader>
+				<CardContent class="grid gap-4 p-4 pt-2 lg:grid-cols-2">
+					<div>
+						<h4 class="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Dasar hukum utama')}</h4>
+						<ul class="grid gap-1 text-[13px]">
+							{#each ref.indonesia.legalBasis as item}
+								<li><b class="font-semibold">{item.regulation}</b> — {item.material}</li>
+							{/each}
+						</ul>
+					</div>
+					<div class="grid content-start gap-4">
+						<div>
+							<h4 class="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Pungutan impor')}</h4>
+							<ul class="grid gap-1 text-[13px]">
+								{#each ref.indonesia.importLevies as l}
+									<li><b class="font-semibold">{l.levy}</b> — {l.rate}</li>
+								{/each}
+							</ul>
+						</div>
+						<div>
+							<h4 class="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Perizinan & identitas')}</h4>
+							<ul class="grid gap-1 text-[13px]">
+								{#each ref.indonesia.licenses as l}
+									<li><b class="font-semibold">{l.document}</b> — {l.note}</li>
+								{/each}
+							</ul>
+						</div>
+						<div class="rounded-lg border border-primary/30 bg-primary/5 p-3 text-[13px]">
+							<h4 class="mb-1 text-xs font-bold uppercase tracking-wide text-primary">{t('DHE SDA')} · {ref.indonesia.dhe.regulation}</h4>
+							<p>{t('Berlaku')} {ref.indonesia.dhe.effective} · {t('repatriasi')} <b>{ref.indonesia.dhe.repatriation}</b></p>
+							<p class="text-muted-foreground">{t('Nonmigas')}: {ref.indonesia.dhe.nonmigas_placement}; {t('Migas')}: {ref.indonesia.dhe.migas_placement}</p>
+							<p class="text-muted-foreground">{ref.indonesia.dhe.bank}</p>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+		{/if}
+
+		<div class="mt-4 grid gap-4 lg:grid-cols-2">
+			<!-- Amerika Serikat -->
+			{#if ref.unitedStates}
+				<Card>
+					<CardHeader class="p-4 pb-2">
+						<CardTitle class="text-base">{t('Amerika Serikat — rezim tarif 2025–2026')}</CardTitle>
+					</CardHeader>
+					<CardContent class="p-4 pt-2">
+						<ol class="relative ms-3 grid max-h-72 gap-2.5 overflow-y-auto border-s border-border ps-4 text-[13px]">
+							{#each ref.unitedStates.timeline as item}
+								<li class="relative">
+									<span class="absolute -start-[19px] top-1.5 size-2 rounded-full bg-primary ring-2 ring-background"></span>
+									<span class="font-mono text-xs font-bold text-primary">{item.date}</span>
+									<p class="leading-snug">{item.event}</p>
+								</li>
+							{/each}
+						</ol>
+						<div class="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-[12px]">
+							<b>Section 301 Forced Labor</b> ({ref.unitedStates.section301ForcedLabor.effective}): 10%
+							→ {ref.unitedStates.section301ForcedLabor.standard_10pct.join(', ')}; 12,5%
+							→ {ref.unitedStates.section301ForcedLabor.standard_12_5pct.join(', ')}.
+						</div>
+					</CardContent>
+				</Card>
+			{/if}
+
+			<!-- Uni Eropa -->
+			{#if ref.europeanUnion}
+				<Card>
+					<CardHeader class="p-4 pb-2">
+						<CardTitle class="text-base">{t('Uni Eropa — CBAM, EUDR & reformasi kepabeanan')}</CardTitle>
+					</CardHeader>
+					<CardContent class="grid gap-3 p-4 pt-2 text-[13px]">
+						<div class="rounded-lg border p-2.5">
+							<b>{t('CBAM')}</b> ({ref.europeanUnion.cbam.regulation}) — {t('definitif')} {ref.europeanUnion.cbam.definitive_start};
+							{t('sektor')}: {(ref.europeanUnion.cbam.sectors as string[]).join(', ')};
+							{t('de minimis')}: {ref.europeanUnion.cbam.de_minimis}.
+							<p class="text-muted-foreground">{t('Dampak Indonesia')}: {ref.europeanUnion.cbam.indonesia_impact}</p>
+						</div>
+						<div class="rounded-lg border p-2.5">
+							<b>EUDR</b> ({ref.europeanUnion.eudr.regulation}) — {t('komoditas')}:
+							{(ref.europeanUnion.eudr.commodities as string[]).join(', ')}.
+							{t('Berlaku')} {ref.europeanUnion.eudr.large_operators} ({t('besar/menengah')}) &amp;
+							{ref.europeanUnion.eudr.micro_small} ({t('mikro/kecil')}).
+						</div>
+						<ul class="grid gap-1 text-xs text-muted-foreground">
+							{#each ref.europeanUnion.customsReform as line}
+								<li>• {line}</li>
+							{/each}
+						</ul>
+					</CardContent>
+				</Card>
+			{/if}
+		</div>
+
+		<!-- Dokumen & pembayaran -->
+		{#if ref.standardDocuments?.length}
+			<Card class="mt-4">
+				<CardHeader class="p-4 pb-2">
+					<CardTitle class="text-base">{t('Dokumen ekspor-impor standar')}</CardTitle>
+				</CardHeader>
+				<CardContent class="grid gap-2 p-4 pt-2 text-[13px] sm:grid-cols-2">
+					{#each ref.standardDocuments as doc}
+						<div class="rounded-lg border px-3 py-1.5">
+							<b class="font-semibold">{doc.document}</b>
+							<span class="text-muted-foreground"> — {doc.function}</span>
+						</div>
+					{/each}
+					{#if ref.paymentMethods}
+						<p class="text-xs text-muted-foreground sm:col-span-2"><b>{t('Metode pembayaran')}:</b> {ref.paymentMethods}</p>
+					{/if}
+				</CardContent>
+			</Card>
+		{/if}
+
+		<!-- Checklist kepatuhan -->
+		{#if ref.complianceChecklist?.length}
+			<Card class="mt-4">
+				<CardHeader class="p-4 pb-2">
+					<CardTitle class="text-base">{t('Checklist kepatuhan ekspor-impor')}</CardTitle>
+				</CardHeader>
+				<CardContent class="grid gap-4 p-4 pt-2 lg:grid-cols-2">
+					{#each ref.complianceChecklist as group}
+						<div>
+							<h4 class="mb-1.5 text-xs font-bold uppercase tracking-wide text-primary">{group.section}</h4>
+							<ul class="grid gap-1 text-[13px]">
+								{#each group.items as item}
+									<li class="flex gap-2"><span class="text-muted-foreground">☐</span><span>{item}</span></li>
+								{/each}
+							</ul>
+						</div>
+					{/each}
+				</CardContent>
+			</Card>
+		{/if}
+
+		<!-- Portal resmi -->
+		{#if ref.officialPortals?.length || ref.globalPortals?.length}
+			<Card class="mt-4">
+				<CardHeader class="p-4 pb-2">
+					<CardTitle class="text-base">{t('Portal resmi untuk verifikasi')}</CardTitle>
+				</CardHeader>
+				<CardContent class="grid gap-2 p-4 pt-2 text-[13px] sm:grid-cols-2 lg:grid-cols-3">
+					{#each ref.globalPortals ?? [] as p}
+						<div class="rounded-lg border p-2.5">
+							<b class="font-semibold">{p.need}</b>
+							<p class="text-xs text-muted-foreground">{p.portal}</p>
+						</div>
+					{/each}
+					{#each ref.officialPortals ?? [] as p}
+						<div class="rounded-lg border p-2.5">
+							<b class="font-semibold">{p.country}</b>
+							<p class="text-xs text-muted-foreground">{p.portals.join(' · ')}</p>
+						</div>
+					{/each}
+				</CardContent>
+			</Card>
+		{/if}
+
+		{#if ref.primarySources?.length}
+			<div class="mt-4 rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
+				<h4 class="mb-1.5 font-bold uppercase tracking-wide">{t('Sumber rujukan utama')}</h4>
+				<ul class="grid gap-1">
+					{#each ref.primarySources as src}
+						<li>• {src}</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
 	{/if}
 </AppShell>

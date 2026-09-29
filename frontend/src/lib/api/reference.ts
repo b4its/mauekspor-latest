@@ -32,6 +32,60 @@ export type ReferenceBundle = {
 		string,
 		{ label: string; nomenclature: string; tariffs: string; note: string }
 	>;
+	// ── Data lengkap dari panduan (full guide) ──
+	institutions?: { abbr: string; name: string; function: string; url: string }[];
+	wtoPrinciples?: { name: string; detail: string }[];
+	incoterms?: { code: string; name: string; risk: string; mode: string }[];
+	incotermsNotes?: string[];
+	hsDigitLengths?: { name: string; system: string; digits: number }[];
+	hs2022?: { sections: number; chapters: number; reserved_chapter: number; headings: number; subheadings: number };
+	kumhs?: { rule: string; detail: string }[];
+	classificationTips?: string[];
+	indonesia?: {
+		legalBasis: { regulation: string; material: string }[];
+		btki: { effective: string; basis: string; lines: number; lines_previous: number; access: string };
+		importDereg2025: string[];
+		exportDereg2026: string[];
+		licenses: { document: string; note: string }[];
+		systems: { name: string; detail: string }[];
+		importLevies: { levy: string; rate: string }[];
+		importExample: Record<string, number | string>;
+		parcelRules: string[];
+		dhe: Record<string, string>;
+		hilirisasi: string[];
+		coo: { portal: string; forms: string[]; euGsp: string };
+	};
+	unitedStates?: {
+		timeline: { date: string; event: string }[];
+		section301ForcedLabor: {
+			effective: string;
+			standard_10pct: string[];
+			standard_12_5pct: string[];
+			mfn_capped: Record<string, string[]>;
+			exemptions: string[];
+			trq_textile: string[];
+			ftz: string;
+		};
+		section232: { product: string; tariff: string }[];
+		china: string[];
+		importCompliance: string[];
+	};
+	europeanUnion?: {
+		cbam: Record<string, string | string[]>;
+		eudr: Record<string, string | string[]>;
+		customsReform: string[];
+		tariff: string[];
+	};
+	otherCountries?: { name: string; authority: string; note: string }[];
+	globalFtas?: { name: string; note: string }[];
+	rulesOfOrigin?: { rule: string; detail: string }[];
+	standardDocuments?: { document: string; function: string }[];
+	paymentMethods?: string;
+	exportControls?: { scope: string; detail: string }[];
+	officialPortals?: { country: string; portals: string[] }[];
+	globalPortals?: { need: string; portal: string }[];
+	complianceChecklist?: { section: string; items: string[] }[];
+	primarySources?: string[];
 };
 
 /** Referensi riset faktual terkurasi (timeline, HS 2028, FTA, sistem kepabeanan). */

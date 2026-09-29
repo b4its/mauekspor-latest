@@ -192,3 +192,284 @@ def reference_bundle() -> dict:
             for key, v in CUSTOMS_SYSTEMS.items()
         },
     }
+
+
+def full_reference_bundle() -> dict:
+    """Bundle lengkap dari data panduan terstruktur (regulatory_guide).
+
+    Menyajikan seluruh isi panduan 2026 (Incoterms, HS, regulasi ID/US/EU,
+    FTA, dokumen, pengendalian ekspor, portal, checklist, timeline) dalam
+    bentuk terstruktur untuk halaman referensi.
+    """
+    from app.data import regulatory_guide as g
+
+    base = reference_bundle()
+    base.update({
+        "disclaimer": g.DISCLAIMER,
+        "institutions": [
+            {"abbr": a, "name": n, "function": f, "url": u} for a, n, f, u in g.INSTITUTIONS
+        ],
+        "wtoPrinciples": [{"name": n, "detail": d} for n, d in g.WTO_PRINCIPLES],
+        "wtoUpdates": [{"date": d, "event": e} for d, e in g.WTO_UPDATES],
+        "incoterms": [
+            {"code": c, "name": n, "risk": r, "mode": m} for c, n, r, m in g.INCOTERMS_2020
+        ],
+        "incotermsNotes": list(g.INCOTERMS_NOTES),
+        "hsDigitLengths": [
+            {"name": n, "system": s, "digits": d} for n, s, d in g.HS_DIGIT_LENGTHS
+        ],
+        "hs2022": g.HS_2022_STRUCTURE,
+        "kumhs": [{"rule": r, "detail": d} for r, d in g.KUMHS_RULES],
+        "classificationTips": list(g.HS_CLASSIFICATION_TIPS),
+        "indonesia": {
+            "legalBasis": [{"regulation": r, "material": m} for r, m in g.ID_LEGAL_BASIS],
+            "btki": g.ID_BTKI,
+            "importDereg2025": list(g.ID_IMPORT_DEREG_2025),
+            "exportDereg2026": list(g.ID_EXPORT_DEREG_2026),
+            "licenses": [{"document": d, "note": n} for d, n in g.ID_LICENSES],
+            "systems": [{"name": n, "detail": d} for n, d in g.ID_SYSTEMS],
+            "importLevies": [{"levy": l, "rate": r} for l, r in g.ID_IMPORT_LEVIES],
+            "importExample": g.ID_IMPORT_EXAMPLE,
+            "parcelRules": list(g.ID_PARCEL_RULES),
+            "dhe": g.ID_DHE_SDA,
+            "hilirisasi": list(g.ID_HILIRISASI),
+            "coo": {"portal": g.ID_COO["portal"], "forms": list(g.ID_COO["forms"]), "euGsp": g.ID_COO["eu_gsp"]},
+        },
+        "unitedStates": {
+            "timeline": [{"date": d, "event": e} for d, e in g.US_TIMELINE],
+            "section301ForcedLabor": g.US_SECTION_301_FORCED_LABOR,
+            "section232": [{"product": p, "tariff": r} for p, r in g.US_SECTION_232],
+            "china": list(g.US_CHINA),
+            "importCompliance": list(g.US_IMPORT_COMPLIANCE),
+        },
+        "europeanUnion": {
+            "cbam": g.EU_CBAM,
+            "eudr": g.EU_EUDR,
+            "customsReform": list(g.EU_CUSTOMS_REFORM),
+            "tariff": list(g.EU_TARIFF),
+        },
+        "otherCountries": [
+            {"name": n, "authority": a, "note": d} for n, a, d in g.OTHER_COUNTRIES
+        ],
+        "globalFtas": [{"name": n, "note": d} for n, d in g.GLOBAL_FTAS],
+        "rulesOfOrigin": [{"rule": r, "detail": d} for r, d in g.RULES_OF_ORIGIN],
+        "standardDocuments": [{"document": d, "function": f} for d, f in g.STANDARD_DOCUMENTS],
+        "paymentMethods": g.PAYMENT_METHODS,
+        "exportControls": [{"scope": s, "detail": d} for s, d in g.EXPORT_CONTROLS],
+        "officialPortals": [
+            {"country": c, "portals": list(p)} for c, p in g.OFFICIAL_PORTALS
+        ],
+        "globalPortals": [{"need": n, "portal": p} for n, p in g.GLOBAL_PORTALS],
+        "complianceChecklist": [
+            {"section": s, "items": list(items)} for s, items in g.COMPLIANCE_CHECKLIST
+        ],
+        "primarySources": list(g.PRIMARY_SOURCES),
+    })
+    return base
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SEEDER DATA RIIL DARI PANDUAN (regulations + knowledge_articles)
+# ─────────────────────────────────────────────────────────────────────────────
+# Setiap entri berasal langsung dari guideline/PANDUAN-REGULASI-EKSPOR-IMPOR-
+# 2026.md. Tidak ada data simulasi; baris legacy "Regulation for <CODE>."
+# dipensiunkan agar tabel `regulations` hanya berisi referensi faktual.
+
+def _reg(country: str, category: str, description: str, url: str, source: str, idx: int) -> dict:
+    return {
+        "id": f"REG-GUIDE-{country}-{idx:02d}",
+        "countryCode": country,
+        "ruleCategory": category,
+        "descriptionRule": description,
+        "source": source,
+        "sourceUrl": url,
+        "snapshotDate": SNAPSHOT_DATE,
+        "reviewStatus": "research_only",
+        "guide": GUIDE,
+        "requiredSpecs": [],
+        "forbiddenKeywords": [],
+    }
+
+
+def _guide_regulations() -> list[dict]:
+    """Bangun baris `regulations` faktual dari data panduan terstruktur."""
+    from app.data import regulatory_guide as g
+
+    rows: list[dict] = []
+
+    # ── Indonesia ────────────────────────────────────────────────────────────
+    id_url = "https://jdih.kemendag.go.id/"
+    for i, (reg, material) in enumerate(g.ID_LEGAL_BASIS, 1):
+        rows.append(_reg("ID", "Legal Basis", f"{reg}: {material}.", id_url, reg, i))
+    n = len(g.ID_LEGAL_BASIS)
+    rows.append(_reg("ID", "Documentation",
+                     f"BTKI 2022 berbasis HS 2022/AHTN 2022, berlaku {g.ID_BTKI['effective']}, "
+                     f"{g.ID_BTKI['lines']} pos tarif (naik dari {g.ID_BTKI['lines_previous']}). Akses: {g.ID_BTKI['access']}.",
+                     "https://www.insw.go.id/", "PMK 26/PMK.010/2022 (BTKI 2022)", n + 1))
+    dhe = g.ID_DHE_SDA
+    rows.append(_reg("ID", "Documentation",
+                     f"DHE SDA {dhe['regulation']} (berlaku {dhe['effective']}): repatriasi {dhe['repatriation']}; "
+                     f"nonmigas {dhe['nonmigas_placement']}; migas {dhe['migas_placement']}; {dhe['bank']}; "
+                     f"insentif {dhe['tax_incentive']}; sektor {dhe['sectors']}.",
+                     "https://peraturan.bpk.go.id/", dhe["regulation"], n + 2))
+    rows.append(_reg("ID", "Documentation",
+                     "Barang kiriman (e-commerce/kurir) PMK 96/2023 jo. PMK 4/2025: " + " ".join(g.ID_PARCEL_RULES),
+                     "https://jdih.kemenkeu.go.id/", "PMK 96/2023; PMK 4/2025", n + 3))
+    rows.append(_reg("ID", "Restriction",
+                     "Hilirisasi & bea keluar: " + " ".join(g.ID_HILIRISASI),
+                     "https://jdih.esdm.go.id/", "Kebijakan hilirisasi minerba", n + 4))
+    rows.append(_reg("ID", "Documentation",
+                     "Surat Keterangan Asal via " + g.ID_COO["portal"] + ". Form: " + "; ".join(g.ID_COO["forms"]) + ". " + g.ID_COO["eu_gsp"],
+                     "https://e-ska.kemendag.go.id/", "e-SKA Kemendag", n + 5))
+
+    # ── Amerika Serikat ──────────────────────────────────────────────────────
+    us_url = "https://hts.usitc.gov/"
+    for i, (date, event) in enumerate(g.US_TIMELINE, 1):
+        rows.append(_reg("US", "Tariff Regime", f"{date}: {event}.", us_url, f"US tariff timeline ({date})", i))
+    n = len(g.US_TIMELINE)
+    s301 = g.US_SECTION_301_FORCED_LABOR
+    rows.append(_reg("US", "Tariff Regime",
+                     f"Section 301 'Forced Labor' (berlaku {s301['effective']}) menambah di atas MFN. "
+                     f"10%: {', '.join(s301['standard_10pct'])}. 12,5%: {', '.join(s301['standard_12_5pct'])}. "
+                     f"Batas MFN: 10% ({', '.join(s301['mfn_capped']['10%'])}), 12,5% ({', '.join(s301['mfn_capped']['12.5%'])}). "
+                     f"Pengecualian: {', '.join(s301['exemptions'])}. TRQ tekstil: {', '.join(s301['trq_textile'])}.",
+                     "https://www.cbp.gov/trade/automated/csms", "CBP CSMS / Federal Register", n + 1))
+    for i, (product, rate) in enumerate(g.US_SECTION_232, 1):
+        rows.append(_reg("US", "Tariff Regime", f"Section 232 — {product}: {rate}.", us_url, "Section 232 / HTSUS Ch.99", n + 1 + i))
+    n = n + 1 + len(g.US_SECTION_232)
+    rows.append(_reg("US", "Documentation", "AS–Tiongkok: " + " ".join(g.US_CHINA),
+                     "https://www.cbp.gov/trade/automated/csms", "CBP CSMS", n + 1))
+    rows.append(_reg("US", "Documentation", "Kepatuhan impor AS: " + " ".join(g.US_IMPORT_COMPLIANCE),
+                     "https://www.cbp.gov/", "CBP / FDA / UFLPA", n + 2))
+
+    # ── Uni Eropa (berlaku untuk semua anggota EU) ───────────────────────────
+    eu_url = "https://trade.ec.europa.eu/access-to-markets/en/home"
+    cbam = g.EU_CBAM
+    rows.append(_reg("EU", "Sustainability",
+                     f"CBAM ({cbam['regulation']}): definitif sejak {cbam['definitive_start']}; sektor "
+                     f"{', '.join(cbam['sectors'])}; de minimis {cbam['de_minimis']}; {cbam['declarant']} "
+                     f"Penjualan sertifikat {cbam['certificate_sale']}; deklarasi pertama {cbam['first_declaration']}. "
+                     f"Dampak Indonesia: {cbam['indonesia_impact']}",
+                     "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en",
+                     cbam["regulation"], 1))
+    eudr = g.EU_EUDR
+    rows.append(_reg("EU", "Sustainability",
+                     f"EUDR ({eudr['regulation']}): komoditas {', '.join(eudr['commodities'])}. Berlaku "
+                     f"{eudr['large_operators']} (operator besar/menengah) dan {eudr['micro_small']} (mikro/kecil). "
+                     f"Delegated Act {eudr['delegated_act']}. Kewajiban: {', '.join(eudr['obligations'])}. "
+                     f"{eudr['indonesia_relevance']}",
+                     "https://environment.ec.europa.eu/topics/forests/deforestation-regulation_en",
+                     eudr["regulation"], 2))
+    rows.append(_reg("EU", "Documentation", "Reformasi kepabeanan & e-commerce UE: " + " ".join(g.EU_CUSTOMS_REFORM),
+                     eu_url, "EU customs reform", 3))
+    rows.append(_reg("EU", "Tariff", "Tarif UE: " + " ".join(g.EU_TARIFF), eu_url, "TARIC / Access2Markets", 4))
+
+    # ── Negara & kawasan utama lainnya ───────────────────────────────────────
+    cc_url = {
+        "CN": "https://english.customs.gov.cn/", "GB": "https://www.trade-tariff.service.gov.uk/",
+        "JP": "https://www.customs.go.jp/english/", "IN": "https://www.dgft.gov.in/",
+        "KR": "https://unipass.customs.go.kr/", "AU": "https://www.abf.gov.au/",
+        "CA": "https://www.cbsa-asfc.gc.ca/", "MX": "https://www.sat.gob.mx/",
+        "SA": "https://zatca.gov.sa/", "AE": "https://www.mof.gov.ae/",
+        "RU": "https://customs.gov.ru/", "BR": "https://www.gov.br/receitafederal/",
+        "ASEAN": "https://asean.org/",
+    }
+    name_to_code = {
+        "Tiongkok": "CN", "Inggris": "GB", "Jepang": "JP", "India": "IN", "Korea Selatan": "KR",
+        "Australia": "AU", "Kanada": "CA", "Meksiko": "MX", "Arab Saudi": "SA", "UEA": "AE",
+        "Rusia/EAEU": "RU", "Brasil/Mercosur": "BR", "ASEAN": "ASEAN",
+    }
+    for i, (name, auth, detail) in enumerate(g.OTHER_COUNTRIES, 1):
+        code = name_to_code.get(name, "XX")
+        rows.append(_reg(code, "Documentation", f"{name} ({auth}): {detail}.",
+                         cc_url.get(code, "https://www.wto.org/"), f"{name} — {auth}", i))
+
+    return rows
+
+
+def _guide_knowledge_articles() -> list[dict]:
+    """Bangun knowledge_articles faktual dari data panduan terstruktur."""
+    from app.data import regulatory_guide as g
+
+    arts: list[dict] = []
+
+    def add(slug: str, title: str, category: str, summary: str, steps: list[str]) -> None:
+        arts.append({
+            "id": f"KB-GUIDE-{slug}",
+            "title": title,
+            "category": category,
+            "status": "Published",
+            "readTime": f"{max(3, len(steps) + 2)} min",
+            "summary": summary,
+            "steps": steps,
+            "updatedAt": SNAPSHOT_DATE,
+        })
+
+    add("HS-CODE", "Sistem HS Code & KUMHS 1–6", "HS Code",
+        "Struktur HS, panjang digit per negara, dan Ketentuan Umum Menginterpretasi.",
+        [f"{name}: {system} ({digits} digit)" for name, system, digits in g.HS_DIGIT_LENGTHS]
+        + [f"{rule}: {text}" for rule, text in g.KUMHS_RULES])
+    add("HS-2028", "HS 2028: perubahan besar 1 Jan 2028", "HS Code",
+        "Angka kunci dan perubahan utama nomenklatur HS edisi ke-8 (WCO).",
+        [f"Total pos {g.HS_2028['headings_total']}; subpos {g.HS_2028['subheadings_total']} "
+         f"(+{g.HS_2028['subheadings_new']}/-{g.HS_2028['subheadings_deleted']})"]
+        + list(g.HS_2028["changes"]) + list(g.HS_2028["preparation"]))
+    add("INCOTERMS", "Incoterms® 2020", "Incoterms",
+        "Sebelas Incoterms 2020, titik perpindahan risiko, dan moda.",
+        [f"{code} — {name}: risiko {risk} ({mode})" for code, name, risk, mode in g.INCOTERMS_2020]
+        + list(g.INCOTERMS_NOTES))
+    add("ID-REG", "Regulasi Ekspor-Impor Indonesia", "Indonesia",
+        "Dasar hukum, BTKI 2022, deregulasi 2025–2026, perizinan, dan pungutan.",
+        list(g.ID_IMPORT_DEREG_2025) + list(g.ID_EXPORT_DEREG_2026)
+        + [f"{n}: {d}" for n, d in g.ID_LICENSES] + [f"{n}: {d}" for n, d in g.ID_IMPORT_LEVIES])
+    add("ID-DHE", "DHE SDA (PP 21/2026)", "Indonesia",
+        "Kewajiban penempatan Devisa Hasil Ekspor SDA dan insentifnya.",
+        [f"{k}: {v}" for k, v in g.ID_DHE_SDA.items()])
+    add("US-TARIFF", "Rezim tarif AS 2025–2026", "Amerika Serikat",
+        "Kronologi IEEPA/Section 301/232 dan kepatuhan impor.",
+        [f"{d}: {e}" for d, e in g.US_TIMELINE]
+        + [f"{p}: {r}" for p, r in g.US_SECTION_232])
+    add("EU-CBAM-EUDR", "UE: CBAM, EUDR & reformasi kepabeanan", "Uni Eropa",
+        "CBAM fase definitif, EUDR, dan aturan e-commerce/kepabeanan UE.",
+        list(g.EU_CUSTOMS_REFORM) + list(g.EU_TARIFF))
+    add("FTA", "Perjanjian perdagangan (FTA/CEPA) & aturan asal", "FTA",
+        "Status FTA Indonesia, FTA global, dan aturan asal barang.",
+        [f"{n} [{st}] — {note}" for n, st, note in g.ID_FTAS]
+        + [f"{n}: {d}" for n, d in g.GLOBAL_FTAS]
+        + [f"{r}: {d}" for r, d in g.RULES_OF_ORIGIN])
+    add("DOCUMENTS", "Dokumen ekspor-impor standar", "Documentation",
+        "Daftar dokumen standar dan metode pembayaran internasional.",
+        [f"{name}: {fn}" for name, fn in g.STANDARD_DOCUMENTS] + [g.PAYMENT_METHODS])
+    add("EXPORT-CONTROL", "Pengendalian ekspor & sanksi", "Export Control",
+        "Rezim multilateral dan kontrol ekspor utama per yurisdiksi.",
+        [f"{scope}: {detail}" for scope, detail in g.EXPORT_CONTROLS])
+    add("CHECKLIST", "Checklist kepatuhan ekspor-impor", "Compliance",
+        "Checklist bertahap sebelum transaksi hingga monitoring rutin.",
+        [f"【{section}】" for section, _ in g.COMPLIANCE_CHECKLIST]
+        + [f"{section}: {item}" for section, items in g.COMPLIANCE_CHECKLIST for item in items])
+    add("PORTALS", "Portal resmi untuk verifikasi", "Reference",
+        "Portal global & nasional untuk verifikasi tarif, HS, dan regulasi.",
+        [f"{need}: {portal}" for need, portal in g.GLOBAL_PORTALS]
+        + [f"{country}: {', '.join(portals)}" for country, portals in g.OFFICIAL_PORTALS])
+
+    return arts
+
+
+def seed_regulatory_guide(db) -> None:
+    """Seed data RIIL dari panduan (regulations + knowledge_articles).
+
+    Idempoten: tidak menimpa record yang sudah ada. Memensiunkan baris demo
+    legacy agar tabel hanya memuat referensi faktual.
+    """
+    # Pensiunkan aturan demo legacy ("Regulation for <CODE>.").
+    for record in db.all("regulations"):
+        if str(record.get("descriptionRule", "")).startswith("Regulation for "):
+            db.delete("regulations", record["id"])
+
+    for record in _guide_regulations():
+        if not db.get("regulations", record["id"]):
+            db.insert("regulations", record)
+
+    for article in _guide_knowledge_articles():
+        if not db.get("knowledge_articles", article["id"]):
+            db.insert("knowledge_articles", article)

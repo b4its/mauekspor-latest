@@ -20,9 +20,11 @@ def seed_master_data() -> None:
     ``seed_demo_data`` aktif maupun nonaktif, sehingga instance produksi tetap
     punya referensi regulasi tanpa data simulasi.
     """
-    from app.data.trade_reference import seed_trade_reference
+    from app.data.trade_reference import seed_trade_reference, seed_regulatory_guide
 
     seed_trade_reference(db)
+    # Data RIIL dari panduan 2026: regulations + knowledge_articles faktual.
+    seed_regulatory_guide(db)
     if not db.loaded_records("countries"):
         for c in country_data.get_countries():
             db.insert("countries", {

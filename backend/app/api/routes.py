@@ -6260,8 +6260,8 @@ def get_reference():
     Publik (read). Dipakai halaman referensi & konteks asisten AI agar mengutip
     data terverifikasi, bukan mengarang.
     """
-    from app.data.trade_reference import reference_bundle
-    return {"data": reference_bundle(), "meta": {}}
+    from app.data.trade_reference import full_reference_bundle
+    return {"data": full_reference_bundle(), "meta": {}}
 
 
 # ----------------------------------------------------------------------------

@@ -3010,7 +3010,31 @@ const dictionary: Record<string, Entry> = {
 	'Berlaku': { id: 'Berlaku', en: 'In force' },
 	'Ditandatangani / ratifikasi': { id: 'Ditandatangani / ratifikasi', en: 'Signed / ratifying' },
 	'Selesai dirundingkan': { id: 'Selesai dirundingkan', en: 'Concluded' },
-	'Sedang dirundingkan': { id: 'Sedang dirundingkan', en: 'Negotiating' }
+	'Sedang dirundingkan': { id: 'Sedang dirundingkan', en: 'Negotiating' },
+	// Halaman referensi: data lengkap panduan
+	'Incoterms® 2020 (ICC)': { id: 'Incoterms® 2020 (ICC)', en: 'Incoterms® 2020 (ICC)' },
+	'Risiko berpindah': { id: 'Risiko berpindah', en: 'Risk transfers' },
+	'Panjang digit HS per negara/kawasan': { id: 'Panjang digit HS per negara/kawasan', en: 'HS digit length per country/region' },
+	'KUMHS — Ketentuan Umum Menginterpretasi HS': { id: 'KUMHS — Ketentuan Umum Menginterpretasi HS', en: 'GIRs — General Interpretative Rules for HS' },
+	'Dasar hukum utama': { id: 'Dasar hukum utama', en: 'Key legal basis' },
+	'Pungutan impor': { id: 'Pungutan impor', en: 'Import levies' },
+	'Perizinan & identitas': { id: 'Perizinan & identitas', en: 'Licensing & identity' },
+	'DHE SDA': { id: 'DHE SDA', en: 'FX export proceeds (SDA)' },
+	'Amerika Serikat — rezim tarif 2025–2026': { id: 'Amerika Serikat — rezim tarif 2025–2026', en: 'United States — 2025–2026 tariff regime' },
+	'Uni Eropa — CBAM, EUDR & reformasi kepabeanan': { id: 'Uni Eropa — CBAM, EUDR & reformasi kepabeanan', en: 'European Union — CBAM, EUDR & customs reform' },
+	'Checklist kepatuhan ekspor-impor': { id: 'Checklist kepatuhan ekspor-impor', en: 'Export-import compliance checklist' },
+	'Portal resmi untuk verifikasi': { id: 'Portal resmi untuk verifikasi', en: 'Official portals for verification' },
+	'Sumber rujukan utama': { id: 'Sumber rujukan utama', en: 'Primary sources' },
+	'Metode pembayaran': { id: 'Metode pembayaran', en: 'Payment methods' },
+	'besar/menengah': { id: 'besar/menengah', en: 'large/medium' },
+	'mikro/kecil': { id: 'mikro/kecil', en: 'micro/small' },
+	'sektor': { id: 'sektor', en: 'sectors' },
+	'definitif': { id: 'definitif', en: 'definitive' },
+	'de minimis': { id: 'de minimis', en: 'de minimis' },
+	'Dampak Indonesia': { id: 'Dampak Indonesia', en: 'Impact on Indonesia' },
+	'repatriasi': { id: 'repatriasi', en: 'repatriation' },
+	'Nonmigas': { id: 'Nonmigas', en: 'Non-oil & gas' },
+	'Migas': { id: 'Migas', en: 'Oil & gas' }
 };
 
 let initial: Locale = 'id';
