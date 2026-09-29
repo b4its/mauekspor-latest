@@ -4,6 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { buyers as seedBuyers } from '$lib/data/trade';
 import { listBuyers, createBuyer, batchDeleteBuyers } from '$lib/api/buyers';
 	import { downloadFile, exportPath } from '$lib/api/client';
@@ -204,7 +205,7 @@ import { createConfirmController } from '$lib/utils/confirm.svelte';
 					</label>
 					<label class="grid gap-1 text-sm font-semibold">
 						{t('Negara')}
-						<Input bind:value={fCountry} placeholder="Japan" />
+						<CountrySelect bind:value={fCountry} label={t('Negara')} />
 					</label>
 				</div>
 				<div class="grid gap-2 sm:grid-cols-2">

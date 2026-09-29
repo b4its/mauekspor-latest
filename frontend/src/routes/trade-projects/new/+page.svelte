@@ -6,6 +6,7 @@
 	import { Card } from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import SearchableSelect from '$lib/components/SearchableSelect.svelte';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
 	
 	import { Progress } from '$lib/components/ui/progress/index.js';
@@ -168,7 +169,7 @@
 						</div>
 						<div class="field grid gap-2">
 							<Label for="tp-destination">{t('Negara tujuan')}</Label>
-							<Input id="tp-destination" bind:value={destination} placeholder="Japan" />
+							<CountrySelect id="tp-destination" bind:value={destination} />
 						</div>
 					{:else if step === 1}
 						<div class="field grid gap-2">

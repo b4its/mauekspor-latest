@@ -3,6 +3,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { getSettings, updateSettings } from '$lib/api/settings';
@@ -125,7 +126,7 @@
 						</div>
 						<div class="grid gap-2">
 							<Label for="s-country">{t('Negara')}</Label>
-							<Input id="s-country" bind:value={country} />
+							<CountrySelect id="s-country" bind:value={country} />
 						</div>
 					</div>
 					<div class="grid gap-4 sm:grid-cols-2">

@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { projects as seedProjects } from '$lib/data/trade';
 	import { listTradeProjects, createTradeProject } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
@@ -147,7 +148,7 @@ import { paginate, calcTotalPages } from '$lib/utils/pagination';
 					</label>
 					<label class="grid gap-1 text-sm font-semibold">
 						{t('Negara')}
-						<Input bind:value={fCountry} placeholder="Japan" />
+						<CountrySelect bind:value={fCountry} label={t('Negara')} />
 					</label>
 				</div>
 				<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

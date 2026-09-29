@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import PackageIcon from '@lucide/svelte/icons/package';
 	import { products as seedProducts } from '$lib/data/trade';
@@ -392,18 +393,7 @@
 							</label>
 							<label class="grid gap-1.5 text-xs font-bold text-muted-foreground">
 								{t('Negara tujuan')}
-								<select class="h-10 rounded-md border bg-background px-3 text-sm" bind:value={country}>
-									<option value="JP">{t('Jepang')}</option>
-									<option value="US">{t('Amerika Serikat')}</option>
-									<option value="DE">{t('Jerman')}</option>
-									<option value="SG">{t('Singapura')}</option>
-									<option value="AU">{t('Australia')}</option>
-									<option value="CN">{t('Tiongkok')}</option>
-									<option value="KR">{t('Korea Selatan')}</option>
-									<option value="GB">{t('Inggris')}</option>
-									<option value="NL">{t('Belanda')}</option>
-									<option value="AE">{t('UEA')}</option>
-								</select>
+								<CountrySelect bind:value={country} valueMode="code" />
 							</label>
 						</div>
 						<Button onclick={() => openPricing(selectedProduct!)} disabled={pricingLoading}>

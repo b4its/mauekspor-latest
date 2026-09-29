@@ -6,6 +6,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { updateBuyerRequest } from '$lib/api/buyer-requests';
@@ -85,7 +86,7 @@
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
 						<Label for="br-dest">{t('Tujuan')}</Label>
-						<Input id="br-dest" bind:value={destination} />
+						<CountrySelect id="br-dest" bind:value={destination} />
 					</div>
 					<div class="grid gap-2">
 						<Label for="br-deadline">{t('Batas waktu')}</Label>

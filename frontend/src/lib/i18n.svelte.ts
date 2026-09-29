@@ -2965,7 +2965,11 @@ const dictionary: Record<string, Entry> = {
 	'dijawab': { id: 'dijawab', en: 'answered' },
 	'Kirim jawaban': { id: 'Kirim jawaban', en: 'Submit answers' },
 	'Menilai...': { id: 'Menilai...', en: 'Grading...' },
-	'Pelajaran kuis ditandai selesai.': { id: 'Pelajaran kuis ditandai selesai.', en: 'Quiz lesson marked complete.' }
+	'Pelajaran kuis ditandai selesai.': { id: 'Pelajaran kuis ditandai selesai.', en: 'Quiz lesson marked complete.' },
+	// Input negara (search + select)
+	'Pilih negara...': { id: 'Pilih negara...', en: 'Select a country...' },
+	'Tambah negara...': { id: 'Tambah negara...', en: 'Add a country...' },
+	'Memuat daftar negara...': { id: 'Memuat daftar negara...', en: 'Loading country list...' }
 };
 
 let initial: Locale = 'id';

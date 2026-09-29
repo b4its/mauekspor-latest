@@ -24,7 +24,8 @@
 		class: className = '',
 		id = undefined,
 		labelledby = undefined,
-		label = undefined
+		label = undefined,
+		onchange = undefined
 	}: {
 		options?: Option[];
 		value?: string;
@@ -39,6 +40,8 @@
 		labelledby?: string;
 		/** Label aksesibel langsung (dipakai bila tidak ada elemen label). */
 		label?: string;
+		/** Callback dipanggil setelah memilih opsi (nilai baru). */
+		onchange?: (value: string) => void;
 	} = $props();
 
 	let open = $state(false);
@@ -87,6 +90,7 @@
 		query = '';
 		expandedGroup = null;
 		activeIndex = -1;
+		onchange?.(val);
 	}
 
 	function toggleGroup(label: string) {

@@ -6,6 +6,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import SearchableSelect from '$lib/components/SearchableSelect.svelte';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { products as seedProducts, projects as seedProjects } from '$lib/data/trade';
 	import { listProducts } from '$lib/api/products';
@@ -124,7 +125,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
 						<Label for="cost-destination">{t('Tujuan')}</Label>
-						<Input id="cost-destination" bind:value={destination} placeholder="Japan" />
+						<CountrySelect id="cost-destination" bind:value={destination} />
 					</div>
 					<div class="grid gap-2">
 						<Label for="cost-incoterm" id="cost-incoterm-label">{t('Incoterm')}</Label>

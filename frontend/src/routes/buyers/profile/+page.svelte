@@ -6,6 +6,7 @@
 	import { Card, CardContent } from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { createBuyerProfile, updateBuyerProfile, getMyBuyerProfile } from '$lib/api/buyers';
 	import type { BuyerProfile } from '$lib/api/buyers';
@@ -123,7 +124,7 @@
 				</div>
 				<div class="grid gap-2">
 					<Label for="b-country">{t('Source countries (pisahkan dengan koma)')}</Label>
-					<Input id="b-country" bind:value={sourceCountries} placeholder="Indonesia, Vietnam" />
+					<CountrySelect id="b-country" bind:value={sourceCountries} multiple />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">

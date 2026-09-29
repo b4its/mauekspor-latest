@@ -5,6 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { NativeSelect } from '$lib/components/ui/native-select/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { updateCostingScenario } from '$lib/api/costing';
@@ -85,7 +86,7 @@
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
 						<Label for="cs-dest">{t('Tujuan')}</Label>
-						<Input id="cs-dest" bind:value={destination} />
+						<CountrySelect id="cs-dest" bind:value={destination} />
 					</div>
 					<div class="grid gap-2">
 						<Label for="cs-inc">{t('Incoterm')}</Label>

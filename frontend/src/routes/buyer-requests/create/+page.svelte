@@ -5,6 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import SearchableSelect from '$lib/components/SearchableSelect.svelte';
+	import CountrySelect from '$lib/components/CountrySelect.svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
 	
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
@@ -122,7 +123,7 @@
 				</div>
 				<div class="grid gap-2">
 					<Label for="br-dest">{t('Tujuan')}</Label>
-					<Input id="br-dest" bind:value={destination} placeholder="Japan" />
+					<CountrySelect id="br-dest" bind:value={destination} />
 				</div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="grid gap-2">
