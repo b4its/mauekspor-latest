@@ -23,6 +23,9 @@ uploads/
 !/guideline/PANDUAN-REGULASI-EKSPOR-IMPOR-2026.md
 !/guideline/plana/
 !/guideline/plana/**
+# Dokumentasi fitur per halaman (dilacak).
+!/guideline/features/
+!/guideline/features/**
 
 # Env & secrets
 .env
