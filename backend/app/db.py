@@ -29,6 +29,8 @@ _TABLES = [
     "settings", "suppliers",
     # --- Progres belajar (course progress per user) ---
     "lesson_progress",
+    # --- Hasil percobaan kuis edukasi per user ---
+    "quiz_attempts",
     # --- Modul desa (komoditas unggulan & peta potensi desa) ---
     "villages",
     # --- Permintaan kuotasi freight (alur forwarder → quotation) ---

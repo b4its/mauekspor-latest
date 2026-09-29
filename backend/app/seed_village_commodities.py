@@ -442,6 +442,11 @@ def seed_village_education() -> None:
     for article in VILLAGE_EDU_ARTICLES:
         db.insert("educational_articles", dict(article))
 
+    # Pelajaran (termasuk lesson kuis) per modul desa. Diimpor lokal untuk
+    # menghindari impor sirkular (seed ↔ seed_village_commodities).
+    from app.seed import _seed_educational_lessons
+    _seed_educational_lessons()
+
 
 def seed_kepala_desa_user() -> None:
     """User demo peran KepalaDesa untuk menu sederhana (RBAC)."""

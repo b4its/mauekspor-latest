@@ -34,6 +34,7 @@ from app.core.security import (
 from app.core.permissions import can_read_module, can_read_path, module_for_data_table
 from app.services import document_types as doc_types
 from app.services import file_content
+from app.services import quiz
 from app.services import uploads
 from app.schemas import models as sc
 
@@ -4670,6 +4671,7 @@ def get_educational_module(module_id: str):
     out = dict(record)
     out["articles"] = db.find("educational_articles", moduleId=module_id)
     out["articleCount"] = len(out["articles"])
+    out["lessonsList"] = db.find("educational_lessons", moduleId=module_id)
     return {"data": _serialize(out), "meta": {}}
 
 
@@ -4743,6 +4745,123 @@ def complete_lesson(
             "updatedAt": "now",
         })
     return _one(row)
+
+
+# ── Kuis edukasi per modul (soal menyesuaikan topik & materi modul) ─────────
+def _module_lessons(module_id: str) -> list[dict]:
+    """Pelajaran modul: dari educational_lessons bila ada, else dari artikel."""
+    lessons = db.find("educational_lessons", moduleId=module_id)
+    if lessons:
+        return lessons
+    return db.find("educational_articles", moduleId=module_id)
+
+
+def _quiz_for_module(module: dict) -> list[dict]:
+    return quiz.build_quiz(module, _module_lessons(str(module.get("id", ""))))
+
+
+@router.get("/educational/modules/{module_id}/quiz/")
+def get_module_quiz(module_id: str, current_user: dict = Depends(get_current_user)):
+    """Soal kuis modul (tanpa kunci jawaban) + hasil percobaan terakhir user."""
+    record = db.get("educational_modules", module_id)
+    if not record:
+        raise HTTPException(404, "Module not found")
+    questions = _quiz_for_module(record)
+    user_id = str(current_user["id"])
+    attempts = db.find("quiz_attempts", userId=user_id, moduleId=module_id)
+    last = None
+    if attempts:
+        best = max(attempts, key=lambda a: int(a.get("score", 0)))
+        latest = max(attempts, key=lambda a: str(a.get("createdAt", "")))
+        last = {
+            "bestScore": int(best.get("score", 0)),
+            "lastScore": int(latest.get("score", 0)),
+            "passed": bool(latest.get("passed", False)),
+            "attemptCount": len(attempts),
+        }
+    return {
+        "data": {
+            "moduleId": module_id,
+            "title": record.get("title", ""),
+            "questions": quiz.public_quiz(questions),
+            "questionCount": len(questions),
+            "lastAttempt": last,
+        },
+        "meta": {},
+    }
+
+
+@router.post("/educational/modules/{module_id}/quiz/submit/")
+def submit_module_quiz(
+    module_id: str,
+    payload: dict | None = None,
+    current_user: dict = Depends(get_current_user),
+):
+    """Nilai jawaban kuis, simpan percobaan, dan kembalikan umpan balik."""
+    record = db.get("educational_modules", module_id)
+    if not record:
+        raise HTTPException(404, "Module not found")
+    payload = payload or {}
+    raw_answers = payload.get("answers") or {}
+    if not isinstance(raw_answers, dict):
+        raise HTTPException(422, "answers must be an object of questionId -> option index")
+
+    # Normalisasi indeks jawaban ke int (abaikan nilai tak valid).
+    answers: dict[str, int] = {}
+    for key, value in raw_answers.items():
+        try:
+            answers[str(key)] = int(value)
+        except (TypeError, ValueError):
+            continue
+
+    questions = _quiz_for_module(record)
+    result = quiz.grade_quiz(questions, answers)
+    user_id = str(current_user["id"])
+
+    attempt = db.insert("quiz_attempts", {
+        "id": db.gen_id("quiz_attempts", "QZ"),
+        "userId": user_id,
+        "moduleId": module_id,
+        "score": result["score"],
+        "correctCount": result["correctCount"],
+        "total": result["total"],
+        "passed": result["passed"],
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+    })
+
+    # Bila lulus, tandai lesson kuis terkait sebagai selesai agar progres sinkron.
+    if result["passed"]:
+        quiz_lessons = [l for l in _module_lessons(module_id) if str(l.get("kind", "")).lower() == "quiz"]
+        for lesson in quiz_lessons:
+            lesson_id = str(lesson.get("id"))
+            rows = db.find("lesson_progress", userId=user_id, moduleId=module_id, lessonId=lesson_id)
+            if rows:
+                row = rows[0]
+                row["completed"] = True
+                row["updatedAt"] = "now"
+                db.save(row)
+            else:
+                db.insert("lesson_progress", {
+                    "id": db.gen_id("lesson_progress", "LPR"),
+                    "userId": user_id,
+                    "moduleId": module_id,
+                    "lessonId": lesson_id,
+                    "completed": True,
+                    "updatedAt": "now",
+                })
+
+    return {
+        "data": {
+            "moduleId": module_id,
+            "attemptId": attempt["id"],
+            "score": result["score"],
+            "correctCount": result["correctCount"],
+            "total": result["total"],
+            "passed": result["passed"],
+            "details": result["details"],
+        },
+        "meta": {},
+    }
 
 
 @router.get("/educational/articles/")

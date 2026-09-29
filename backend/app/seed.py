@@ -471,3 +471,90 @@ def seed_if_empty():
         seed_village_commodities()
     except ImportError:
         logger.info("seed_village_commodities.py tidak ditemukan — skipping village commodities seed")
+
+
+def _seed_educational_lessons():
+    """Seed pelajaran edukasi (termasuk lesson kuis) per modul desa.
+
+    Dipanggil dari seed_village_commodities setelah modul desa dibuat. Materi
+    tiap lesson memuat istilah kunci topik modul sehingga bank soal kuis
+    (`app.services.quiz`) dapat memilih soal yang relevan.
+    """
+    if db.loaded_records("educational_lessons") > 0:
+        return
+    lessons = [
+        # EDU-DES-PANEN-01 — karantina / phytosanitary
+        {"id": "LSN-DES-PANEN-01", "moduleId": "EDU-DES-PANEN-01", "title": "Kenali komoditas & hama karantina",
+         "kind": "Video", "duration": "5 min",
+         "content": "Hasil panen segar wajib melewati karantina pertanian. Kenali media pembawa, hama penyakit, dan syarat phytosanitary negara tujuan.",
+         "keyPoints": ["Identifikasi jenis komoditas & hama", "Karantina pertanian menerbitkan phytosanitary", "Sampel & pemeriksaan lapangan"]},
+        {"id": "LSN-DES-PANEN-02", "moduleId": "EDU-DES-PANEN-01", "title": "Mengurus Sertifikat Kesehatan Tumbuhan",
+         "kind": "Reading", "duration": "6 min",
+         "content": "Alur permohonan sertifikat kesehatan tumbuhan: surat permohonan, data komoditas, negara tujuan, jadwal pemeriksaan sebelum kontainer ditutup.",
+         "keyPoints": ["Ajukan ke Badan Karantina Pertanian", "Lampirkan sertifikat ke dokumen ekspor"]},
+        {"id": "LSN-DES-PANEN-07", "moduleId": "EDU-DES-PANEN-01", "title": "Kuis: karantina hasil panen",
+         "kind": "Quiz", "duration": "4 min",
+         "content": "Kuis singkat seputar karantina pertanian, phytosanitary, dan dokumen hasil panen segar.",
+         "keyPoints": ["Ulangi jenis dokumen karantina", "Ulangi alur pemeriksaan"]},
+        # EDU-DES-HALAL-02 — sertifikasi halal
+        {"id": "LSN-DES-HALAL-01", "moduleId": "EDU-DES-HALAL-02", "title": "Bahan & proses produksi halal",
+         "kind": "Video", "duration": "5 min",
+         "content": "Sertifikasi halal menilai bahan, pemasok, dan proses produksi (PPH). Pahami requirement negara tujuan seperti GAC/SMAS di Timur Tengah.",
+         "keyPoints": ["Kumpulkan daftar bahan & pemasok", "Amankan proses produksi halal", "Cek requirement negara tujuan"]},
+        {"id": "LSN-DES-HALAL-06", "moduleId": "EDU-DES-HALAL-02", "title": "Kuis: sertifikasi halal",
+         "kind": "Quiz", "duration": "4 min",
+         "content": "Kuis singkat seputar sertifikasi halal, label, dan persyaratan pasar Timur Tengah.",
+         "keyPoints": ["Ulangi alur SIHALAL", "Ulangi label halal"]},
+        # EDU-DES-KEMAS-03 — pengemasan
+        {"id": "LSN-DES-KEMAS-01", "moduleId": "EDU-DES-KEMAS-03", "title": "Hitung dimensi & container loading",
+         "kind": "Reading", "duration": "6 min",
+         "content": "Teknik packing kriya rotan, kayu, dan tekstil agar selamat perjalanan laut. Hitung dimensi karton, dunnage, stacking limit, dan moisture barrier.",
+         "keyPoints": ["Hitung dimensi karton & loading", "Gunakan silica gel & wrapping", "Foto kondisi packing sebagai bukti"]},
+        {"id": "LSN-DES-KEMAS-05", "moduleId": "EDU-DES-KEMAS-03", "title": "Kuis: standar pengemasan ekspor",
+         "kind": "Quiz", "duration": "4 min",
+         "content": "Kuis singkat seputar standar pengemasan (packaging) kriya untuk pengiriman laut.",
+         "keyPoints": ["Ulangi standar packaging", "Ulangi bukti klaim asuransi"]},
+        # EDU-DES-NIB-04 — legalitas NIB/IUMK
+        {"id": "LSN-DES-NIB-01", "moduleId": "EDU-DES-NIB-04", "title": "Registrasi OSS-RBA & KBLI",
+         "kind": "Video", "duration": "5 min",
+         "content": "Urusan legalitas dasar: Nomor Induk Berusaha (NIB) dan IUMK lewat OSS-RBA, isi KBLI sesuai komoditas, dan fasilitas kepabeanan bagi UMK.",
+         "keyPoints": ["Siapkan akta & NPWP", "Isi KBLI 5 digit", "Unduh NIB & IUMK"]},
+        {"id": "LSN-DES-NIB-06", "moduleId": "EDU-DES-NIB-04", "title": "Kuis: legalitas & dokumen usaha",
+         "kind": "Quiz", "duration": "4 min",
+         "content": "Kuis singkat seputar NIB, IUMK, dan dokumen legalitas ekspor.",
+         "keyPoints": ["Ulangi NIB vs IUMK", "Ulangi fasilitas bea cukai UMK"]},
+        # EDU-DES-DOC-05 — dokumen wajib per negara
+        {"id": "LSN-DES-DOC-01", "moduleId": "EDU-DES-DOC-05", "title": "Checklist dokumen per negara",
+         "kind": "Reading", "duration": "7 min",
+         "content": "Dokumen wajib ekspor ke Singapura dan Jepang: commercial invoice, packing list, COO Form D/AI, phytosanitary, health certificate, dan label Jepang.",
+         "keyPoints": ["Dokumen dasar semua negara", "COO Form D & SFA untuk Singapura", "Label Bahasa Jepang & JEPA untuk Jepang"]},
+        {"id": "LSN-DES-DOC-08", "moduleId": "EDU-DES-DOC-05", "title": "Kuis: dokumen ekspor",
+         "kind": "Quiz", "duration": "4 min",
+         "content": "Kuis singkat seputar dokumen (invoice, packing list, COO, sertifikat) untuk ekspor.",
+         "keyPoints": ["Ulangi rekonsiliasi invoice & packing list", "Ulangi sertifikat asal"]},
+        # EDU-DES-KARANTINA-06 — regulasi karantina
+        {"id": "LSN-DES-KARANTINA-01", "moduleId": "EDU-DES-KARANTINA-06", "title": "PP 28/2024 & tindakan karantina",
+         "kind": "Video", "duration": "5 min",
+         "content": "Memahami PP 28/2024 tentang karantina hewan, ikan, dan tumbuhan: penggolongan media pembawa, wilayah karantina, dan tindakan P4/PK/PKHP.",
+         "keyPoints": ["Golongan MHK/MKH/TIK", "Tindakan karantina P4/PK/PKHP", "Biaya & layanan cepat karantina"]},
+        {"id": "LSN-DES-KARANTINA-05", "moduleId": "EDU-DES-KARANTINA-06", "title": "Kuis: regulasi karantina",
+         "kind": "Quiz", "duration": "4 min",
+         "content": "Kuis singkat seputar regulasi karantina (compliance) PP 28/2024.",
+         "keyPoints": ["Ulangi golongan media pembawa", "Ulangi tindakan karantina"]},
+        # EDU-DES-CITES-07 — CITES & legalitas bahan
+        {"id": "LSN-DES-CITES-01", "moduleId": "EDU-DES-CITES-07", "title": "CITES & legalitas bahan baku",
+         "kind": "Reading", "duration": "6 min",
+         "content": "Untuk kriya dari kayu, rotan, dan bahan alam: pastikan bahan bukan spesies dilindungi CITES (cek appendix) dan siapkan legalitas bahan (SVLK).",
+         "keyPoints": ["Cek appendix CITES", "Legalitas bahan baku SVLK", "Dokumen asal-usul bahan"]},
+        {"id": "LSN-DES-CITES-06", "moduleId": "EDU-DES-CITES-07", "title": "Kuis: CITES & dokumen asal bahan",
+         "kind": "Quiz", "duration": "4 min",
+         "content": "Kuis singkat seputar CITES, legalitas kayu, dan sertifikat asal bahan baku.",
+         "keyPoints": ["Ulangi CITES appendix", "Ulangi legalitas bahan"]},
+    ]
+    for lesson in lessons:
+        db.insert("educational_lessons", {
+            **lesson,
+            "orderIndex": 0,
+            "createdAt": "now",
+            "updatedAt": "now",
+        })
