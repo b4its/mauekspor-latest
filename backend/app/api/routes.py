@@ -5267,7 +5267,7 @@ def delete_api_key(key_id: str):
     if not record:
         raise HTTPException(404, "API key not found")
     db.delete("api_keys", key_id)
-    return {"data": {"deleted": True}}
+    return {"data": {"deleted": True}, "meta": {}}
 
 
 
@@ -5463,7 +5463,7 @@ def send_session_message(
     record["messageCount"] = len(record["messages"])
     # Persist agar riwayat percakapan tidak hilang saat proses restart.
     db.save(record)
-    return {"data": record, "meta": meta}
+    return {"data": _serialize(record), "meta": meta}
 
 
 @router.get("/chat/suggestions/")
@@ -5483,10 +5483,10 @@ def ai_status():
     """Check AI service availability and mode.
     
     Returns information about AI configuration:
-    - mode: remote/localhost/mock
-    - health: healthy/unhealthy
-    - using_remote: true/false
-    - using_mock: true/false
+    - mode: remote/mock
+    - health: healthy/unhealthy/not_checked/circuit_open
+    - configured: apakah mode != mock
+    - circuit_breaker, consecutive_failures, endpoint, model
     """
     return {"data": ai.get_ai_status(), "meta": {}}
 
@@ -6010,7 +6010,17 @@ def list_villages(search: str = "", province: str = "", readiness: str = "", wit
     if province:
         items = [v for v in items if v.get("province", "").lower() == province.lower()]
     if readiness:
-        items = [v for v in items if v.get("status", "").lower() == readiness.lower()]
+        # `readiness` adalah skor numerik (0-100) pada record desa, bukan field
+        # `status` (label "Siap Ekspor"/"Butuh Pendampingan"). Sebelumnya filter
+        # membandingkan ke `status`, sehingga ?readiness=86 tidak pernah cocok.
+        # Terima nilai numerik (mis. "80"); jika bukan angka, fallback ke
+        # pencocokan label status agar tetap kompatibel.
+        r = readiness.strip()
+        if r.isdigit():
+            target = int(r)
+            items = [v for v in items if int(v.get("readiness", 0) or 0) == target]
+        else:
+            items = [v for v in items if str(v.get("status", "")).lower() == r.lower()]
     if search:
         q = search.lower()
         items = [v for v in items if q in json.dumps(v, ensure_ascii=False).lower()]

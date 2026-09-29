@@ -142,6 +142,25 @@ def test_villages_list_with_coords_filter():
         assert "DES-C1" in ids and "DES-C2" not in ids
 
 
+def test_villages_readiness_filter_matches_numeric_score():
+    """?readiness=<angka> harus menyaring skor kesiapan numerik, bukan label status."""
+    with TestClient(app) as c:
+        t = _login(c)
+        # Nilai readiness unik agar tidak bentrok dengan data seed demo.
+        db.insert("villages", {"id": "DES-R93", "name": "Ready", "readiness": 93,
+                               "status": "Siap Ekspor"})
+        db.insert("villages", {"id": "DES-R61", "name": "Assist", "readiness": 61,
+                               "status": "Butuh Pendampingan"})
+        res = c.get("/api/v1/villages/?readiness=93", headers=_auth(t))
+        assert res.status_code == 200
+        ids = {v["id"] for v in res.json()["data"]}
+        assert ids == {"DES-R93"}
+        # Fallback label status tetap didukung.
+        res2 = c.get("/api/v1/villages/?readiness=Butuh%20Pendampingan", headers=_auth(t))
+        ids2 = {v["id"] for v in res2.json()["data"]}
+        assert "DES-R61" in ids2
+
+
 def test_village_coordinate_validation_422():
     with TestClient(app) as c:
         t = _login(c)
