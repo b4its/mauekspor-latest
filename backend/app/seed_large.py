@@ -584,6 +584,9 @@ def seed_100_records():
             "status": _pick(["Open","Evidence Uploaded","Verified"], n()),
             "owner": _pick(user_ids, n()),
             "due": f"2026-{n()%12+1:02d}-{n()%28+1:02d}",
+            # `confidence` dipakai UI (daftar & detail). Tanpa ini halaman
+            # menampilkan "KEYAKINAN AI %" (nilai kosong).
+            "confidence": n()%60+40,
             "source": _pick(["Regulation","Buyer requirement","Internal policy"], n()),
             "updatedAt": "now"})
         db.insert("documents", {"id": f"DOC-{i:03d}", "projectId": eid,

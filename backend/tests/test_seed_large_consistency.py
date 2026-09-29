@@ -82,3 +82,13 @@ def test_export_analysis_name_matches_product():
                 f"analysis {analysis.get('id')} nama produk tidak cocok productId "
                 f"({analysis.get('productName')!r} != {expected!r})"
             )
+
+
+def test_compliance_requirements_have_confidence():
+    # UI menampilkan `confidence` di daftar & detail; tanpa ini muncul "%" kosong.
+    _seed()
+    for req in db.all("compliance_requirements"):
+        assert req.get("confidence") is not None, (
+            f"compliance_requirements {req.get('id')} tanpa confidence"
+        )
+        assert 0 <= int(req["confidence"]) <= 100
