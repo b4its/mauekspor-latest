@@ -18,9 +18,14 @@ pekerjaan terkelola (tasks), dokumen lengkap (documents), dan barang sampai
   - Buat requirement (judul, kategori, keparahan, owner, sumber, bukti wajib,
     project).
   - Hapus terpusat; tanggal diformat; nilai enum diterjemahkan.
+  - **Gate bukti server-side:** `PATCH` tidak bisa men-set `Verified` tanpa
+    `evidenceFileId` (422) — tombol dari halaman daftar mengarahkan ke detail
+    untuk mengunggah bukti lebih dulu.
 - **Terhubung ke:** `$lib/api/compliance.ts` → `/compliance/requirements/`.
   Requirement ditaut ke proyek/produk; sinyal keparahan muncul di dashboard & sidebar.
-- **Manfaat:** Mencegah barang ditahan saat pengapalan; kesiapan terukur.
+- **Manfaat:** Mencegah barang ditahan saat pengapalan; **"Verified" hanya sah
+  bila ada bukti berkas** (klaim tanpa bukti ditolak), sehingga kesiapan terukur
+  dan dapat diaudit.
 
 ### `/compliance/[id]`
 - **Peran:** Exporter, CustomsBroker, KepalaDesa

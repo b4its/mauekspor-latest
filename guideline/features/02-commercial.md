@@ -12,16 +12,20 @@ pembayaran. Ini "mesin penjualan" platform.
 - **Peran:** Exporter
 - **Guna:** CRM buyer ekspor (calon pembeli luar negeri).
 - **Fitur:** daftar buyer + status (Negotiating/At Risk/Confirmed), **fit score**,
-  nilai tahunan estimasi, tandai **qualified**, catat kontak, cari/filter, hapus.
+  nilai tahunan estimasi, tandai **qualified (dengan bukti berkas)**, catat kontak,
+  cari/filter, hapus.
 - **Terhubung ke:** `$lib/api/buyers.ts` → `GET/POST/PATCH/DELETE /buyers/`,
-  `POST /buyers/{id}/qualify/`, `POST /buyers/{id}/contacts/`.
-- **Manfaat:** Pipeline pembeli terkelola; prioritas follow-up berbasis skor.
+  `POST /buyers/{id}/qualify/` (body `{fileId, note}`, **wajib**),
+  `POST /buyers/{id}/contacts/`.
+- **Manfaat:** Pipeline pembeli terkelola; "Qualified" hanya bila ada dokumen
+  pendukung (KYC/referensi), mencegah kualifikasi tanpa bukti.
 
 ### `/buyers/[id]`
 - **Peran:** Exporter
 - **Guna:** Detail buyer: kontak, minat produk, proyek terkait, sinyal, catatan.
-- **Terhubung ke:** `getBuyer`, `updateBuyer`, `logBuyerContact`.
-- **Manfaat:** Konteks lengkap sebelum negosiasi.
+- **Terhubung ke:** `getBuyer`, `updateBuyer`, `logBuyerContact`, `qualifyBuyer`
+  (dialog unggah bukti kualifikasi).
+- **Manfaat:** Konteks lengkap sebelum negosiasi; jejak bukti kualifikasi tersimpan.
 
 ### `/buyers/portal`
 - **Peran:** Buyer (dan Exporter untuk pratinjau)
@@ -74,10 +78,13 @@ pembayaran. Ini "mesin penjualan" platform.
 - **Peran:** Exporter
 - **Guna:** Jaringan pemasok/unit pengolahan hasil desa.
 - **Fitur:** daftar + skor kapabilitas/kualitas/kepatuhan, status, **verifikasi
-  pemasok**, **minta bukti**, buat/ubah/hapus, detail dengan produk terkait.
+  pemasok dengan bukti berkas** (dialog unggah dokumen/gambar wajib), **minta
+  bukti**, buat/ubah/hapus, detail dengan produk terkait.
 - **Terhubung ke:** `$lib/api/suppliers.ts` → `/suppliers/`,
-  `POST /suppliers/{id}/verify/`, `POST /suppliers/{id}/request-evidence/`.
-- **Manfaat:** Jaminan pasokan & mutu; dasar klaim ke buyer.
+  `POST /suppliers/{id}/verify/` (body `{fileId, note}`, **wajib**),
+  `POST /suppliers/{id}/request-evidence/`.
+- **Manfaat:** Jaminan pasokan & mutu; skor "Verified" hanya diberikan bila ada
+  dokumen pendukung (menutup klaim tanpa bukti). Dasar klaim ke buyer.
 
 ---
 

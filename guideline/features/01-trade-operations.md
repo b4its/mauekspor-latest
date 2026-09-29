@@ -37,10 +37,18 @@ Ini fondasi yang harus lengkap sebelum modul komersial berjalan.
 
 ### `/business-profile/certifications`
 - **Peran:** Exporter
-- **Guna:** Fokus mengelola klaim sertifikasi berbukti (Halal, ISO, HACCP, SVLK, …).
-- **Fitur:** checkbox sertifikasi → `POST /business-profiles/{id}/certifications/`.
-- **Terhubung ke:** `updateCertifications`.
-- **Manfaat:** Menaikkan skor kesiapan & kredibilitas di mata buyer.
+- **Guna:** Mengelola klaim sertifikasi **beserta bukti berkas** (dokumen/gambar).
+- **Fitur:**
+  - Centang sertifikasi (Halal, ISO, HACCP, SVLK, …) **lalu unggah bukti**
+    (dokumen/gambar) per sertifikasi → `POST /files/upload/` → `fileId`.
+  - Badge "Berbukti" vs "Tanpa bukti" per sertifikasi; tombol lihat/hapus bukti.
+  - Simpan ke `POST /business-profiles/{id}/certifications/` (body `items: [{name, fileId}]`).
+- **Terhubung ke:** `updateCertifications` (mengirim `items`), `uploadFileBinary`.
+  Backend menyimpan `certificationItems` + `certifiedCount`.
+- **Manfaat:** **Hanya sertifikasi BERBUKTI yang menambah skor kesiapan** (lihat
+  `app/services/readiness.py` → `evidenced_certification_count`); klaim tanpa
+  dokumen tetap tersimpan sebagai klaim tetapi tidak menaikkan skor. Mencegah
+  "klaim kosong" menggelembungkan kesiapan desa/UMKM.
 
 ---
 

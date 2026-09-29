@@ -63,12 +63,17 @@ layak dipakai harian, bukan sekadar pencatat transaksi.
 ### `/files`
 - **Peran:** semua peran dengan modul files
 - **Guna:** Menyimpan berkas bukti & aset ekspor.
-- **Fitur:** daftar berkas (nama, tipe, status, project, ukuran, tag); unggah,
-  **verifikasi**, ubah, hapus; **pratinjau** (`previewFileAsset`) dan **analisa
-  berkas** (`analyzeFileAsset`) via `FileViewerDialog`; unduh.
-- **Terhubung ke:** `$lib/api/files.ts` → `/files/`, `POST /files/{id}/verify/`,
+- **Fitur:** daftar berkas (nama, tipe, status, project, ukuran, tag); unggah
+  (`uploadFileBinary` → `POST /files/upload/`), **verifikasi dengan pencatatan
+  peninjau** (dialog `reviewedBy` + catatan), ubah, hapus; **pratinjau**
+  (`previewFileAsset`) dan **analisa berkas** (`analyzeFileAsset`) via
+  `FileViewerDialog`; unduh.
+- **Terhubung ke:** `$lib/api/files.ts` → `/files/`, `POST /files/upload/`,
+  `POST /files/{id}/verify/` (body `{reviewedBy, note}`, **wajib**),
   `/files/{id}/preview/`, `/files/{id}/analyze/`.
-- **Manfaat:** Bukti siap audit; analisis dokumen dibantu AI.
+- **Manfaat:** Berkas adalah **sumber bukti** untuk sertifikasi, verifikasi
+  supplier, kualifikasi buyer, dan kepatuhan. Verifikasi mencatat siapa
+  memeriksa (jejak audit), bukan sekadar tombol status.
 
 ---
 
