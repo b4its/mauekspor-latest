@@ -45,9 +45,11 @@ export function deleteAdminRecord(table: string, id: string) {
 export type AiStatus = {
 	mode: string;
 	health: string;
-	using_remote: boolean;
-	using_mock: boolean;
-	configured_provider?: string;
+	configured: boolean;
+	circuit_breaker: string;
+	consecutive_failures: number;
+	endpoint: string;
+	model: string;
 };
 
 export type AiTestResult = {

@@ -87,8 +87,11 @@ describe('admin API client contract', () => {
 		const fetchMock = mockApi({
 			mode: 'mock',
 			health: 'healthy',
-			using_remote: false,
-			using_mock: true
+			configured: false,
+			circuit_breaker: 'closed',
+			consecutive_failures: 0,
+			endpoint: 'http://localhost:20128/v1',
+			model: 'hk/deepseek-4.1-flash'
 		});
 		const res = await getAiStatus();
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/ai\/status\/$/);

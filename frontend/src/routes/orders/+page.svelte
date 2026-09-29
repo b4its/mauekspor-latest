@@ -149,7 +149,7 @@ import { page } from '$app/state';
 			} else {
 				await orders.load();
 			}
-			message = `Order "${res.data.id}" dibuat.`;
+			message = res.data ? `Order "${res.data.id}" dibuat.` : t('Order dibuat.');
 			showForm = false;
 			fBuyer = '';
 			fSupplier = '';

@@ -1280,13 +1280,13 @@
 
 								<div class="rounded-lg border bg-muted/20 p-3">
 									<p class="text-xs text-muted-foreground">{t('Penyedia Model')}</p>
-									<p class="mt-1 text-sm font-semibold text-foreground">{aiStatus?.configured_provider || 'Mock / Fallback'}</p>
+									<p class="mt-1 text-sm font-semibold text-foreground">{aiStatus?.model || 'Mock / Fallback'}</p>
 								</div>
 
 								<div class="rounded-lg border bg-muted/20 p-3">
 									<p class="text-xs text-muted-foreground">{t('Tipe Lingkungan')}</p>
 									<p class="mt-1 text-sm font-semibold text-foreground">
-										{aiStatus?.using_remote ? 'Remote Cloud' : 'Local Sandbox'}
+										{aiStatus?.configured ? 'Remote Cloud' : 'Local Sandbox'}
 									</p>
 								</div>
 							</div>
