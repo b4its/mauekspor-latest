@@ -284,10 +284,10 @@
 		<Card>
 			<CardHeader class="p-0"><CardTitle>{t('Required Evidence')}</CardTitle></CardHeader>
 			<CardContent class="grid gap-3 p-0 pt-4">
-				<p class="text-muted-foreground">{data.requirement.requiredEvidence}</p>
+				<p class="text-muted-foreground">{data.requirement.requiredEvidence || '—'}</p>
 				<div class="rounded-lg border bg-muted/30 p-3.5">
 					<span class="block text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('Status saat ini')}</span>
-					<strong class="mt-1 block text-sm font-bold">{uploaded ? evidenceNote : data.requirement.currentEvidence}</strong>
+					<strong class="mt-1 block text-sm font-bold">{uploaded ? evidenceNote : (data.requirement.currentEvidence || '—')}</strong>
 					{#if fileName}
 						<small class="mt-1 block text-sm text-muted-foreground">{t('File terlampir:')} {fileName}</small>
 					{/if}

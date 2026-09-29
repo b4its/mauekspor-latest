@@ -94,6 +94,18 @@ def test_compliance_requirements_have_confidence():
         assert 0 <= int(req["confidence"]) <= 100
 
 
+def test_compliance_requirements_have_evidence_fields():
+    # Kartu "Bukti yang Diperlukan" merender requiredEvidence/currentEvidence.
+    _seed()
+    for req in db.all("compliance_requirements"):
+        assert req.get("requiredEvidence"), (
+            f"compliance_requirements {req.get('id')} tanpa requiredEvidence"
+        )
+        assert req.get("currentEvidence"), (
+            f"compliance_requirements {req.get('id')} tanpa currentEvidence"
+        )
+
+
 def test_status_fields_have_healthy_distribution():
     """Regresi bug sebaran: `_pick` lama memakai `n % len` dari counter konstan
     sehingga status kolaps ke satu nilai (mis. 100 pembeli 'Qualified', 100

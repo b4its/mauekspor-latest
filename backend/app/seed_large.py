@@ -607,6 +607,21 @@ def seed_100_records():
             # `confidence` dipakai UI (daftar & detail). Tanpa ini halaman
             # menampilkan "KEYAKINAN AI %" (nilai kosong).
             "confidence": n()%60+40,
+            # `requiredEvidence`/`currentEvidence` dirender di kartu
+            # "Bukti yang Diperlukan"; tanpa ini bagian tersebut kosong.
+            "requiredEvidence": _pick([
+                "Certificate of origin + lab report",
+                "Signed label artwork and importer approval",
+                "Phytosanitary certificate",
+                "Halal certificate and packaging spec sheet",
+                "Health certificate and packing list",
+            ], n()),
+            "currentEvidence": _pick([
+                "Draft uploaded, awaiting review",
+                "Evidence pending from supplier",
+                "Verified by compliance team",
+                "In progress — lab test booked",
+            ], n()),
             "source": _pick(["Regulation","Buyer requirement","Internal policy"], n()),
             "updatedAt": "now"})
         db.insert("documents", {"id": f"DOC-{i:03d}", "projectId": eid,
