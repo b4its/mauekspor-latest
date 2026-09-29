@@ -92,13 +92,27 @@
 		certError = '';
 		certSaved = false;
 		try {
-			await updateCertifications(profile.id, profile.certifications);
+			// Pertahankan bukti berkas yang sudah ada; jangan hilangkan evidenceFileId.
+			const byName = new Map((profile.certificationItems ?? []).map((i) => [i.name, i]));
+			const items = profile.certifications.map((name) => {
+				const existing = byName.get(name);
+				return { name, fileId: existing?.evidenceFileId || undefined, fileName: existing?.evidenceFile ?? undefined };
+			});
+			const res = await updateCertifications(profile.id, items);
+			if (res.data) {
+				profiles.upsert(res.data);
+			}
 			certSaved = true;
 		} catch {
 			certError = t('Gagal menyimpan sertifikasi.');
 		} finally {
 			saving = false;
 		}
+	}
+
+	/** True bila sertifikasi ini punya bukti berkas terunggah. */
+	function certHasEvidence(name: string): boolean {
+		return (profile.certificationItems ?? []).some((i) => i.name === name && i.verified);
 	}
 
 	function trCert(c: string) {
@@ -320,7 +334,7 @@
 		<Card>
 			<CardHeader>
 				<CardTitle>{t('Kelola sertifikasi')}</CardTitle>
-				<CardDescription>{t('Centang kotak untuk menambah atau menghapus klaim sertifikasi pada profil bisnis.')}</CardDescription>
+				<CardDescription>{t('Centang klaim sertifikasi, lalu unggah bukti berkasnya. Klaim tanpa bukti tidak menambah skor kesiapan.')}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-2.5 sm:grid-cols-2">
 				{#each certOptions as cert}
@@ -330,17 +344,27 @@
 							onCheckedChange={() => toggleCert(cert)}
 						/>
 						<span class="text-sm font-bold">{trCert(cert)}</span>
+						{#if profile.certifications.includes(cert)}
+							{#if certHasEvidence(cert)}
+								<Badge variant="default" class="ms-auto text-[10px]">{t('Berbukti')}</Badge>
+							{:else}
+								<Badge variant="outline" class="ms-auto text-[10px] text-amber-700 dark:text-amber-400">{t('Tanpa bukti')}</Badge>
+							{/if}
+						{/if}
 					</label>
 				{/each}
-				<div class="sm:col-span-2 mt-1">
+				<div class="sm:col-span-2 mt-1 flex flex-wrap items-center gap-2">
 					<Button size="sm" onclick={saveCerts} disabled={saving}>
 						{saving ? t('Menyimpan...') : t('Simpan sertifikasi')}
 					</Button>
+					<Button size="sm" variant="outline" href="/business-profile/certifications">
+						{t('Unggah bukti sertifikasi')}
+					</Button>
 					{#if certSaved}
-						<span class="ml-2 text-xs font-bold text-emerald-600">{t('Tersimpan')} ✓</span>
+						<span class="text-xs font-bold text-emerald-600">{t('Tersimpan')} ✓</span>
 					{/if}
 					{#if certError}
-						<span class="ml-2 text-xs font-bold text-destructive">{certError}</span>
+						<span class="text-xs font-bold text-destructive">{certError}</span>
 					{/if}
 				</div>
 			</CardContent>

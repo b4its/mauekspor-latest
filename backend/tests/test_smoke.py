@@ -4,6 +4,24 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app import db  # noqa: F401  (pastikan modul db termuat sebelum TestClient)
 
+# PNG 1x1 minimal yang valid (magic bytes benar) untuk bukti/berkas.
+_PNG_BYTES = (
+    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06"
+    b"\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00"
+    b"\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+)
+
+
+def _upload_evidence(c: TestClient) -> str:
+    """Unggah berkas bukti nyata dan kembalikan fileId (untuk gate verifikasi)."""
+    res = c.post(
+        "/api/v1/files/upload/",
+        files={"file": ("evidence.png", _PNG_BYTES, "image/png")},
+        data={"type_": "Certificate", "project_id": "", "tags": "evidence,test"},
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["data"]["id"]
+
 
 def test_all_collections_listable():
     with TestClient(app) as c:
@@ -56,9 +74,11 @@ def test_posts_do_not_crash():
 def test_action_endpoints():
     with TestClient(app) as c:
         c.post("/api/v1/auth/login/", json={"email": "admin@mauekspor.example", "password": "admin123"})
+        evidence_id = _upload_evidence(c)
         asserts = [
             ("/api/v1/products/PRD-COF-001/enrich/", None),
-            ("/api/v1/buyers/BUY-HIKARI-JP/qualify/", None),
+            # qualify/verify kini WAJIB bukti berkas → kirim fileId yang diunggah.
+            ("/api/v1/buyers/BUY-HIKARI-JP/qualify/", {"fileId": evidence_id}),
             ("/api/v1/catalogs/CAT-COF-JP-001/publish/", None),
             ("/api/v1/catalogs/CAT-COF-JP-001/generate-description/", None),
             ("/api/v1/costing/CST-JP-017/recalculate/", None),
@@ -71,7 +91,8 @@ def test_action_endpoints():
             ("/api/v1/notifications/NTF-001/read/", None),
             ("/api/v1/messages/MSG-HIKARI-LABEL/resolve/", None),
             ("/api/v1/support/SUPPORT-1041/resolve/", None),
-            ("/api/v1/files/FIL-CI-JP/verify/", None),
+            # verify berkas wajib mencatat peninjau.
+            ("/api/v1/files/FIL-CI-JP/verify/", {"reviewedBy": "QA Bot", "note": "ok"}),
             ("/api/v1/api-keys/KEY-LOG-001/revoke/", None),
             ("/api/v1/export-analysis/ANL-COF-001/regulation-recommendations/", None),
         ]

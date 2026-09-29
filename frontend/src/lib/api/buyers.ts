@@ -23,8 +23,12 @@ export function createBuyer(payload: CreateBuyerPayload) {
 	});
 }
 
-export function qualifyBuyer(id: string) {
-	return apiFetch<Buyer>(`/buyers/${id}/qualify/`, { method: 'POST' });
+/** Kualifikasi buyer wajib menyertakan bukti berkas (`fileId`). */
+export function qualifyBuyer(id: string, evidence: { fileId: string; note?: string }) {
+	return apiFetch<Buyer>(`/buyers/${id}/qualify/`, {
+		method: 'POST',
+		body: JSON.stringify({ fileId: evidence.fileId, note: evidence.note ?? '' })
+	});
 }
 
 export function logBuyerContact(id: string, note: string) {

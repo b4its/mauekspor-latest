@@ -7,6 +7,7 @@
 	import { fileAssets, projects as seedProjects } from '$lib/data/trade';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { uploadFileAsset, uploadFileBinary, verifyFileAsset, listFiles, fileDownloadUrl, updateFileAsset, deleteFileAsset } from '$lib/api/files';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { listTradeProjects } from '$lib/api/trade-projects';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -93,18 +94,38 @@ import { page } from '$app/state';
 		}
 	}
 
-	async function handleVerify(fileId: string) {
+	// Verifikasi berkas wajib mencatat peninjau (jejak audit).
+	let verifyOpen = $state(false);
+	let verifyTargetId = $state('');
+	let verifyReviewedBy = $state('');
+	let verifyNote = $state('');
+
+	function openVerify(fileId: string) {
 		error = '';
-		busyId = fileId;
+		verifyTargetId = fileId;
+		verifyReviewedBy = '';
+		verifyNote = '';
+		verifyOpen = true;
+	}
+
+	async function handleVerify() {
+		if (!verifyTargetId) return;
+		if (!verifyReviewedBy.trim()) {
+			error = t('Nama peninjau wajib diisi.');
+			return;
+		}
+		error = '';
+		busyId = verifyTargetId;
 		try {
-			const res = await verifyFileAsset(fileId);
+			const res = await verifyFileAsset(verifyTargetId, { reviewedBy: verifyReviewedBy.trim(), note: verifyNote.trim() });
 			if (res.data) {
 				files.upsert(res.data);
 			} else {
-				const cur = files.items.find((f) => f.id === fileId);
+				const cur = files.items.find((f) => f.id === verifyTargetId);
 				if (cur) files.upsert({ ...cur, status: 'Verified' });
 			}
 			message = t('File terverifikasi.');
+			verifyOpen = false;
 		} catch {
 			error = t('Gagal memverifikasi file.');
 		} finally {
@@ -309,7 +330,7 @@ import { page } from '$app/state';
 						<a href={fileDownloadUrl(file.id)} target="_blank" rel="noopener" class="text-sm font-bold text-primary no-underline hover:underline">{t('Unduh')}</a>
 					{/if}
 					{#if file.status !== 'Verified'}
-						<Button variant="outline" size="sm" disabled={busyId === file.id} onclick={() => handleVerify(file.id)}>
+						<Button variant="outline" 						size="sm" disabled={busyId === file.id} onclick={() => openVerify(file.id)}>
 							{busyId === file.id ? '...' : t('Verifikasi file')}
 						</Button>
 					{/if}
@@ -358,4 +379,34 @@ import { page } from '$app/state';
 	/>
 
 	<FileViewerDialog bind:open={viewerOpen} fileId={viewerFileId} />
+
+	<Dialog.Root bind:open={verifyOpen}>
+		<Dialog.Content class="sm:max-w-md">
+			<Dialog.Header>
+				<Dialog.Title>{t('Verifikasi berkas')}</Dialog.Title>
+				<Dialog.Description class="text-xs">
+					{t('Verifikasi berarti berkas sudah diperiksa manusia. Catat siapa peninjau dan (opsional) catatan agar ada jejak audit.')}
+				</Dialog.Description>
+			</Dialog.Header>
+			<div class="grid gap-3 py-2 text-xs">
+				<label class="grid gap-1 font-semibold">
+					{t('Nama peninjau')}
+					<input class="rounded-md border bg-background px-3 py-2 text-sm font-normal" bind:value={verifyReviewedBy} placeholder={t('Nama Anda / peran')} />
+				</label>
+				<label class="grid gap-1 font-semibold">
+					{t('Catatan (opsional)')}
+					<input class="rounded-md border bg-background px-3 py-2 text-sm font-normal" bind:value={verifyNote} placeholder={t('Mis. sesuai dengan packing list')} />
+				</label>
+				{#if error}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 font-bold text-destructive" role="alert">{error}</p>
+				{/if}
+			</div>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => (verifyOpen = false)}>{t('Batal')}</Button>
+				<Button disabled={!verifyReviewedBy.trim() || busyId === verifyTargetId} onclick={handleVerify}>
+					{busyId === verifyTargetId ? t('Memverifikasi...') : t('Verifikasi')}
+				</Button>
+			</Dialog.Footer>
+		</Dialog.Content>
+	</Dialog.Root>
 </AppShell>

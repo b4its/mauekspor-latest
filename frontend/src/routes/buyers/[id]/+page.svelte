@@ -6,6 +6,8 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { currency, statusTone, toneVariant } from '$lib/utils/format';
 	import { qualifyBuyer, logBuyerContact, updateBuyer, deleteBuyer } from '$lib/api/buyers';
+	import { uploadFileBinary } from '$lib/api/files';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 	import { formatDate } from '$lib/utils/date';
@@ -44,18 +46,52 @@
 	const confirm = createConfirmController();
 
 
+	// Kualifikasi wajib disertai bukti berkas (mis. bukti registrasi importer).
+	let qualifyOpen = $state(false);
+	let evidenceFileId = $state('');
+	let evidenceFileName = $state('');
+	let evidenceNote = $state('');
+	let uploadingEvidence = $state(false);
+
+	function openQualify() {
+		error = '';
+		evidenceFileId = '';
+		evidenceFileName = '';
+		evidenceNote = '';
+		qualifyOpen = true;
+	}
+
+	async function onEvidencePick(file: File) {
+		error = '';
+		uploadingEvidence = true;
+		try {
+			const res = await uploadFileBinary(file, 'Buyer Evidence', '', ['buyer', 'evidence']);
+			evidenceFileId = res.data?.id ?? '';
+			evidenceFileName = res.data?.name ?? file.name;
+		} catch {
+			error = t('Gagal mengunggah bukti kualifikasi.');
+		} finally {
+			uploadingEvidence = false;
+		}
+	}
+
 	async function handleQualify() {
 		if (qualifying) return;
+		if (!evidenceFileId) {
+			error = t('Unggah bukti berkas sebelum mengkualifikasi buyer.');
+			return;
+		}
 		error = '';
 		qualifying = true;
 		try {
-			const res = await qualifyBuyer(data.buyer.id);
+			const res = await qualifyBuyer(data.buyer.id, { fileId: evidenceFileId, note: evidenceNote });
 			qualified = true;
 			if (res.data) {
 				serverStatus = res.data.status;
 				if (typeof res.data.fitScore === 'number') serverScore = res.data.fitScore;
 			}
 			message = t('Buyer berhasil dikualifikasi.');
+			qualifyOpen = false;
 		} catch {
 			error = t('Gagal mengkualifikasi buyer.');
 		}
@@ -212,7 +248,7 @@
 						company={localName}
 					/>
 					<Button variant="outline" disabled={loggingContact} onclick={handleLogContact}>{logged ? t('Logged') : t('Log contact')}</Button>
-					<Button disabled={qualifying} onclick={handleQualify}>{qualified ? t('Qualified') : t('Qualify buyer')}</Button>
+					<Button disabled={qualifying} onclick={openQualify}>{qualified ? t('Qualified') : t('Qualify buyer')}</Button>
 				</div>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
@@ -312,4 +348,45 @@
 		loading={confirm.loading}
 		onconfirm={confirm.run}
 	/>
+
+	<Dialog.Root bind:open={qualifyOpen}>
+		<Dialog.Content class="sm:max-w-md">
+			<Dialog.Header>
+				<Dialog.Title>{t('Kualifikasi buyer dengan bukti')}</Dialog.Title>
+				<Dialog.Description class="text-xs">
+					{t('Unggah dokumen pendukung (mis. bukti registrasi importer, referensi bank). Kualifikasi tidak dapat dilakukan tanpa bukti berkas.')}
+				</Dialog.Description>
+			</Dialog.Header>
+			<div class="grid gap-3 py-2 text-xs">
+				<label class="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-3 py-6 text-sm font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground">
+					<input
+						type="file"
+						class="sr-only"
+						accept="image/*,application/pdf"
+						disabled={uploadingEvidence}
+						onchange={(e) => {
+							const input = e.currentTarget as HTMLInputElement;
+							const file = input.files?.[0];
+							if (file) onEvidencePick(file);
+							input.value = '';
+						}}
+					/>
+					{uploadingEvidence ? t('Mengunggah...') : evidenceFileId ? evidenceFileName : t('Pilih berkas bukti (dokumen/gambar)')}
+				</label>
+				<label class="grid gap-1 font-semibold">
+					{t('Catatan (opsional)')}
+					<input class="rounded-md border bg-background px-3 py-2 text-sm font-normal" bind:value={evidenceNote} placeholder={t('Mis. reference check OK')} />
+				</label>
+				{#if error}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 font-bold text-destructive" role="alert">{error}</p>
+				{/if}
+			</div>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => (qualifyOpen = false)}>{t('Batal')}</Button>
+				<Button disabled={!evidenceFileId || qualifying} onclick={handleQualify}>
+					{qualifying ? t('Memproses...') : t('Qualify buyer')}
+				</Button>
+			</Dialog.Footer>
+		</Dialog.Content>
+	</Dialog.Root>
 </AppShell>

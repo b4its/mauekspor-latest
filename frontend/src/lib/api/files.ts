@@ -11,8 +11,12 @@ export function uploadFileAsset(payload: Pick<FileAsset, 'name' | 'type' | 'proj
 	return apiFetch<FileAsset>('/files/', { method: 'POST', body: JSON.stringify(payload) });
 }
 
-export function verifyFileAsset(id: string) {
-	return apiFetch<FileAsset>(`/files/${id}/verify/`, { method: 'POST' });
+/** Verifikasi berkas wajib mencatat peninjau (dan opsional catatan). */
+export function verifyFileAsset(id: string, review: { reviewedBy: string; note?: string }) {
+	return apiFetch<FileAsset>(`/files/${id}/verify/`, {
+		method: 'POST',
+		body: JSON.stringify({ reviewedBy: review.reviewedBy, note: review.note ?? '' })
+	});
 }
 
 export function updateFileAsset(id: string, payload: Partial<Pick<FileAsset, 'name' | 'type' | 'projectId' | 'status' | 'tags'>>) {

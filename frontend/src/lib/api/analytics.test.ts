@@ -138,11 +138,13 @@ describe('files & chat API contract', () => {
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/files\/$/);
 	});
 
-	it('verifyFileAsset -> POST /files/{id}/verify/', async () => {
+	it('verifyFileAsset -> POST /files/{id}/verify/ dengan peninjau', async () => {
 		const fetchMock = mockApi();
-		await verifyFileAsset('F-1');
+		await verifyFileAsset('F-1', { reviewedBy: 'QA', note: 'ok' });
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/files\/F-1\/verify\/$/);
-		expect((fetchMock.mock.calls[0][1] as RequestInit).method).toBe('POST');
+		const init = fetchMock.mock.calls[0][1] as RequestInit;
+		expect(init.method).toBe('POST');
+		expect(JSON.parse(String(init.body))).toEqual({ reviewedBy: 'QA', note: 'ok' });
 	});
 
 	it('fileDownloadUrl -> URL absolut download', () => {

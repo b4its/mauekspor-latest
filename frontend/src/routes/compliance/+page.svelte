@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
+	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -136,8 +137,15 @@ import { page } from '$app/state';
 			if (res.data) complianceRequirements.upsert(res.data);
 			else complianceRequirements.upsert({ ...item, status: 'Verified' });
 			message = `Persyaratan "${item.title}" diverifikasi.`;
-		} catch {
-			error = t('Gagal memverifikasi persyaratan.');
+		} catch (e) {
+			// Backend menolak "Verified" tanpa bukti → arahkan unggah bukti.
+			const status = (e as { status?: number })?.status;
+			if (status === 422) {
+				error = t('Unggah bukti berkas dahulu di halaman detail sebelum menandai terverifikasi.');
+				goto(`/compliance/${item.id}`);
+			} else {
+				error = t('Gagal memverifikasi persyaratan.');
+			}
 		} finally {
 			busyId = '';
 		}

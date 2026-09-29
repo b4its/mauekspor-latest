@@ -64,11 +64,13 @@ describe('buyers API contract', () => {
 		expect(JSON.parse(String(init.body)).segment).toBe('Retail');
 	});
 
-	it('qualifyBuyer -> POST /buyers/{id}/qualify/', async () => {
+	it('qualifyBuyer -> POST /buyers/{id}/qualify/ dengan bukti fileId', async () => {
 		const fetchMock = mockApi();
-		await qualifyBuyer('B-1');
+		await qualifyBuyer('B-1', { fileId: 'FIL-1', note: 'KYC ok' });
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/buyers\/B-1\/qualify\/$/);
-		expect((fetchMock.mock.calls[0][1] as RequestInit).method).toBe('POST');
+		const init = fetchMock.mock.calls[0][1] as RequestInit;
+		expect(init.method).toBe('POST');
+		expect(JSON.parse(String(init.body))).toEqual({ fileId: 'FIL-1', note: 'KYC ok' });
 	});
 
 	it('logBuyerContact -> POST /buyers/{id}/contacts/ dengan {note}', async () => {

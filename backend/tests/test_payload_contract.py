@@ -4,6 +4,13 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app import db  # noqa: F401
 
+# PNG 1x1 valid untuk bukti berkas.
+_PNG_BYTES = (
+    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06"
+    b"\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00"
+    b"\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+)
+
 
 def _login(c) -> None:
     res = c.post("/api/v1/auth/login/", json={"email": "admin@mauekspor.example", "password": "admin123"})
@@ -269,13 +276,26 @@ def test_mark_payment_received_zero_amount_not_settled():
         assert res.json()["data"]["status"] == "Deposit Paid"
 
 
-def test_verify_supplier_bumps_capability_score():
+def test_verify_supplier_requires_evidence_and_bumps_score():
     with TestClient(app) as c:
         _login(c)
         sid = c.get("/api/v1/suppliers/").json()["data"][0]["id"]
-        res = c.post(f"/api/v1/suppliers/{sid}/verify/")
+        # Tanpa bukti → ditolak.
+        blocked = c.post(f"/api/v1/suppliers/{sid}/verify/")
+        assert blocked.status_code == 422, blocked.text
+        # Dengan bukti berkas → skor naik & bukti tercatat.
+        up = c.post(
+            "/api/v1/files/upload/",
+            files={"file": ("sup.png", _PNG_BYTES, "image/png")},
+            data={"type_": "Certificate", "project_id": "", "tags": "evidence"},
+        )
+        assert up.status_code == 200, up.text
+        file_id = up.json()["data"]["id"]
+        res = c.post(f"/api/v1/suppliers/{sid}/verify/", json={"fileId": file_id})
         assert res.status_code == 200, res.text
-        assert res.json()["data"]["capabilityScore"] >= 90
+        data = res.json()["data"]
+        assert data["capabilityScore"] >= 90
+        assert data["evidenceFileId"] == file_id
 
 
 def test_buyer_request_selected_catalog_id_alias():

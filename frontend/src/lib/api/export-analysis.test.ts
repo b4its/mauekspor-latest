@@ -165,12 +165,12 @@ describe('buyer-requests, trade-projects, business-profile API contract', () => 
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/business-profiles\/BP-1\/$/);
 	});
 
-	it('updateCertifications -> PUT /business-profiles/{id}/certifications/ dengan array', async () => {
+	it('updateCertifications -> POST sertifikasi dengan bukti berkas (items)', async () => {
 		const fetchMock = mockApi();
-		await updateCertifications('BP-1', ['Halal', 'HACCP']);
+		await updateCertifications('BP-1', [{ name: 'Halal', fileId: 'FIL-1' }, { name: 'HACCP' }]);
 		const init = fetchMock.mock.calls[0][1] as RequestInit;
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/business-profiles\/BP-1\/certifications\/$/);
-		expect(JSON.parse(String(init.body)).certifications).toEqual(['Halal', 'HACCP']);
+		expect(JSON.parse(String(init.body)).items).toEqual([{ name: 'Halal', fileId: 'FIL-1' }, { name: 'HACCP' }]);
 	});
 
 	it('getDashboardSummary -> GET /business-profiles/dashboard/summary/', async () => {

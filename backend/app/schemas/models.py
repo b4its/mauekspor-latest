@@ -51,19 +51,38 @@ class CreateTradeProjectPayload(BaseModel):
 class CreateBusinessProfilePayload(BaseModel):
     companyName: str
     address: str = ""
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
     productionCapacity: Optional[str] = None
     yearEstablished: Optional[int] = None
     certifications: list[str] = Field(default_factory=list)
     status: str = "Draft"
     owner: str = ""
     readiness: int = 20
-    # Koordinat lokasi (dari pemilih peta). Opsional.
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+
+
+class CertificationItem(BaseModel):
+    """Satu klaim sertifikasi beserta bukti berkas pengunggahnya.
+
+    `fileId` menunjuk berkas nyata di tabel `files` (hasil `POST /files/upload/`).
+    Klaim tanpa `fileId` tetap disimpan tetapi tidak dihitung sebagai bukti.
+    """
+    name: str
+    fileId: Optional[str] = None
+    fileName: Optional[str] = None
 
 
 class UpdateCertificationsPayload(BaseModel):
-    certifications: list[str]
+    # Dipertahankan untuk kompatibilitas: daftar nama sertifikasi (tanpa bukti).
+    certifications: list[str] = Field(default_factory=list)
+    # Bentuk baru: nama + bukti berkas. Bila diisi, ini yang dipakai backend.
+    items: Optional[list[CertificationItem]] = None
+
+
+class VerifyEvidencePayload(BaseModel):
+    """Bukti wajib untuk menandai sesuatu 'Verified'/'Qualified'."""
+    fileId: str
+    note: str = ""
 
 
 # ---------- Buyers ----------
@@ -410,14 +429,46 @@ class UpdateForwarderReviewPayload(CreateForwarderReviewPayload):
 
 
 # ---------- Educational ----------
+class QuizQuestionPayload(BaseModel):
+    id: str = ""
+    question: str
+    options: list[str] = []
+    correct_index: int = 0
+    explanation: str = ""
+
+
+class LessonPayload(BaseModel):
+    id: str = ""
+    title: str
+    duration: str = "5 min"
+    kind: str = "Reading"  # Reading, Video, Quiz
+    content: str = ""
+    video_url: str = ""
+    videoUrl: str = ""
+    key_points: list[str] = []
+    quiz_questions: list[QuizQuestionPayload] = []
+
+
 class CreateEducationalModulePayload(BaseModel):
     title: str
     description: str = ""
+    level: str = "Beginner"  # Beginner, Intermediate, Advanced
+    summary: str = ""
+    status: str = "Published"  # Published, Draft
     order_index: int = 0
+    lessons: list[LessonPayload] = []
+    quiz_questions: list[QuizQuestionPayload] = []
 
 
-class UpdateEducationalModulePayload(CreateEducationalModulePayload):
-    pass
+class UpdateEducationalModulePayload(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    level: str | None = None
+    summary: str | None = None
+    status: str | None = None
+    order_index: int | None = None
+    lessons: list[LessonPayload] | None = None
+    quiz_questions: list[QuizQuestionPayload] | None = None
 
 
 class CreateEducationalArticlePayload(BaseModel):

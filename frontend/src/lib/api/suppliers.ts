@@ -23,8 +23,12 @@ export function createSupplier(payload: CreateSupplierPayload) {
 	return apiFetch<Supplier>('/suppliers/', { method: 'POST', body: JSON.stringify(payload) });
 }
 
-export function verifySupplier(id: string) {
-	return apiFetch<Supplier>(`/suppliers/${id}/verify/`, { method: 'POST' });
+/** Verifikasi supplier wajib menyertakan bukti berkas (`fileId`). */
+export function verifySupplier(id: string, evidence: { fileId: string; note?: string }) {
+	return apiFetch<Supplier>(`/suppliers/${id}/verify/`, {
+		method: 'POST',
+		body: JSON.stringify({ fileId: evidence.fileId, note: evidence.note ?? '' })
+	});
 }
 
 export function requestSupplierEvidence(id: string) {

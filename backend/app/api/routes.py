@@ -168,6 +168,33 @@ def _profile_one(record, *, persist: bool = True) -> dict:
     return {"data": out, "meta": {}}
 
 
+def _resolve_evidence_file(file_id: str | None, *, required: bool = False) -> dict | None:
+    """Ambil berkas bukti dari tabel `files` berdasarkan id.
+
+    Pola bersama untuk klaim berbukti (sertifikasi, verifikasi supplier/buyer,
+    verifikasi berkas): bukti harus menunjuk berkas nyata yang bisa diunduh.
+    - `required=True`: 422 bila tidak ada `fileId`; 404 bila berkas tak ditemukan.
+    - `required=False`: kembalikan None bila `fileId` kosong.
+    """
+    if not file_id:
+        if required:
+            raise HTTPException(422, "Bukti berkas wajib diunggah (fileId).")
+        return None
+    linked = db.get("files", str(file_id))
+    if not linked:
+        raise HTTPException(404, "File bukti tidak ditemukan; unggah berkas terlebih dahulu.")
+    return linked
+
+
+def _evidence_block(linked: dict) -> dict:
+    """Field bukti seragam yang disimpan di record (dapat diunduh)."""
+    return {
+        "evidenceFileId": linked.get("id"),
+        "evidenceFile": linked.get("name", ""),
+        "evidenceFileUrl": f"/api/v1/files/{linked.get('id')}/download/",
+    }
+
+
 def _notify(title: str, description: str, module: str, severity: str = "Info", href: str = "", owner_id: str | None = None) -> None:
     """Buat notifikasi internal (dipanggil pada aksi penting).
     
@@ -1456,7 +1483,24 @@ def update_certifications(profile_id: str, payload: sc.UpdateCertificationsPaylo
     record = db.get("business_profiles", profile_id)
     if not record:
         raise HTTPException(404, "Business profile not found")
-    record["certifications"] = payload.certifications
+    if payload.items is not None:
+        items: list[dict] = []
+        for item in payload.items:
+            linked = _resolve_evidence_file(item.fileId) if item.fileId else None
+            entry = {"name": item.name, "verified": bool(linked)}
+            if linked:
+                entry.update(_evidence_block(linked))
+            elif item.fileName:
+                entry["fileName"] = item.fileName
+            items.append(entry)
+        record["certificationItems"] = items
+        record["certifications"] = [i["name"] for i in items]
+    else:
+        names = list(payload.certifications)
+        existing = {i.get("name"): i for i in (record.get("certificationItems") or []) if isinstance(i, dict)}
+        record["certificationItems"] = [existing.get(n) or {"name": n, "verified": False} for n in names]
+        record["certifications"] = names
+    record["certifiedCount"] = sum(1 for i in record["certificationItems"] if i.get("verified"))
     record["readiness"] = readiness_svc.profile_readiness(record)
     record["updatedAt"] = "now"
     return _save_one(record)
@@ -1731,11 +1775,21 @@ def create_buyer(payload: sc.CreateBuyerPayload):
 
 
 @router.post("/buyers/{buyer_id}/qualify/")
-def qualify_buyer(buyer_id: str):
+def qualify_buyer(buyer_id: str, payload: sc.VerifyEvidencePayload | None = None):
+    """Kualifikasi buyer **wajib disertai bukti berkas**.
+
+    Status "Qualified" mengubah penilaian kelayakan mitra; kini butuh dokumen
+    pendukung (mis. bukti registrasi importer, referensi bank).
+    """
     record = db.get("buyers", buyer_id)
     if not record:
         raise HTTPException(404, "Buyer not found")
+    body = payload or sc.VerifyEvidencePayload(fileId="")
+    linked = _resolve_evidence_file(body.fileId, required=True)
     record["status"] = "Qualified"
+    record.update(_evidence_block(linked))
+    record["qualificationNote"] = body.note
+    record["qualifiedAt"] = datetime.now(timezone.utc).isoformat()
     record["fitScore"] = max(record.get("fitScore", 50), 60)
     record["updatedAt"] = "now"
     return _save_one(record)
@@ -3424,6 +3478,11 @@ def update_compliance(req_id: str, payload: dict):
     record = db.get("compliance_requirements", req_id)
     if not record:
         raise HTTPException(404, "Compliance requirement not found")
+    # Status "Verified" hanya boleh bila sudah ada bukti berkas nyata — menutup
+    # jalur pintas (mis. dari halaman daftar) yang bisa menandai terverifikasi
+    # tanpa mengunggah apa pun.
+    if str(payload.get("status", "")).strip().lower() == "verified" and not record.get("evidenceFileId"):
+        raise HTTPException(422, "Unggah bukti berkas sebelum menandai requirement terverifikasi.")
     for field in ("title", "source", "status", "severity", "owner", "dueDate",
                   "projectId", "description", "currentEvidence", "requirement"):
         if field in payload:
@@ -3947,10 +4006,20 @@ def create_supplier(payload: dict):
 
 
 @router.post("/suppliers/{supplier_id}/verify/")
-def verify_supplier(supplier_id: str):
+def verify_supplier(supplier_id: str, payload: sc.VerifyEvidencePayload | None = None):
+    """Verifikasi supplier **wajib disertai bukti berkas**.
+
+    Sebelumnya status "Verified" + skor 90 bisa di-set tanpa dokumen apa pun.
+    Kini `fileId` wajib menunjuk berkas nyata; tanpa itu → 422.
+    """
     record = db.get("suppliers", supplier_id)
     if not record:
         raise HTTPException(404, "Supplier not found")
+    body = payload or sc.VerifyEvidencePayload(fileId="")
+    linked = _resolve_evidence_file(body.fileId, required=True)
+    record.update(_evidence_block(linked))
+    record["verificationNote"] = body.note
+    record["verifiedAt"] = datetime.now(timezone.utc).isoformat()
     record["status"] = "Verified"
     # Naikkan kedua skor: capabilityScore adalah skor utama yang ditampilkan UI,
     # complianceScore untuk kepatuhan. Sebelumnya hanya complianceScore yang di-set.
@@ -5107,11 +5176,24 @@ def download_file(file_id: str):
 
 
 @router.post("/files/{file_id}/verify/")
-def verify_file(file_id: str):
+def verify_file(file_id: str, payload: dict | None = None):
+    """Tandai berkas 'Verified' — wajib mencatat peninjau & catatan.
+
+    Verifikasi = pernyataan manusia bahwa isi berkas sudah diperiksa. Tanpa
+    jejak peninjau, status "Verified" tidak bermakna; kini ditolak (422).
+    """
     record = db.get("files", file_id)
     if not record:
         raise HTTPException(404, "File not found")
+    body = payload or {}
+    reviewed_by = str(body.get("reviewedBy") or body.get("reviewed_by") or "").strip()
+    note = str(body.get("note") or "").strip()
+    if not reviewed_by:
+        raise HTTPException(422, "reviewedBy wajib diisi saat memverifikasi berkas.")
     record["status"] = "Verified"
+    record["verifiedBy"] = reviewed_by
+    record["verificationNote"] = note
+    record["verifiedAt"] = datetime.now(timezone.utc).isoformat()
     record["updatedAt"] = "now"
     return _save_one(record)
 

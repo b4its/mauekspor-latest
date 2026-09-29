@@ -51,10 +51,30 @@ def profile_readiness(profile: dict[str, Any] | None) -> int:
         score += _OWNER
     if _has(profile.get("status")) and _text(profile.get("status")).lower() not in {"draft", ""}:
         score += _STATUS
-    certs = profile.get("certifications") or []
-    if isinstance(certs, list) and certs:
-        score += min(len(certs) * 5, _CERT_MAX)
+    # Sertifikasi hanya menambah skor bila ADA BUKTI berkasnya. Klaim tanpa
+    # dokumen/gambar tidak dipercaya (klaim kosong tidak mengangkat kesiapan).
+    certified = evidenced_certification_count(profile)
+    if certified:
+        score += min(certified * 5, _CERT_MAX)
     return max(0, min(100, score))
+
+
+def evidenced_certification_count(profile: dict[str, Any] | None) -> int:
+    """Jumlah sertifikasi yang punya bukti berkas nyata.
+
+    - Bentuk baru: `certificationItems` dengan `verified` True / ada `evidenceFileId`.
+    - Bentuk lama: `certifications` dianggap **tanpa bukti** (0), agar tidak ada
+      klaim terhitung tanpa dokumen.
+    """
+    if not profile:
+        return 0
+    items = profile.get("certificationItems")
+    if isinstance(items, list) and items:
+        return sum(
+            1 for i in items
+            if isinstance(i, dict) and (i.get("verified") or i.get("evidenceFileId"))
+        )
+    return 0
 
 
 def product_readiness(product: dict[str, Any] | None) -> int:

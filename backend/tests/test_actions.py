@@ -14,6 +14,24 @@ def _headers(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
+_PNG_BYTES = (
+    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06"
+    b"\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00"
+    b"\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+)
+
+
+def _upload_evidence(c: TestClient, token: str) -> str:
+    res = c.post(
+        "/api/v1/files/upload/",
+        files={"file": ("evidence.png", _PNG_BYTES, "image/png")},
+        data={"type_": "Certificate", "project_id": "", "tags": "evidence,test"},
+        headers=_headers(token),
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["data"]["id"]
+
+
 def test_katalog_publish_unpublish():
     with TestClient(app) as c:
         token = _login(c)
@@ -43,8 +61,14 @@ def test_buyer_qualify_dan_log_contact():
         token = _login(c)
         buyers = c.get("/api/v1/buyers/", headers=_headers(token)).json()["data"]
         bid = buyers[0]["id"]
-        q = c.post(f"/api/v1/buyers/{bid}/qualify/", headers=_headers(token))
-        assert q.status_code == 200
+        # Kualifikasi tanpa bukti harus ditolak.
+        blocked = c.post(f"/api/v1/buyers/{bid}/qualify/", headers=_headers(token))
+        assert blocked.status_code == 422
+        # Dengan bukti berkas → berhasil dan bukti tercatat.
+        evidence_id = _upload_evidence(c, token)
+        q = c.post(f"/api/v1/buyers/{bid}/qualify/", json={"fileId": evidence_id, "note": "KYC ok"}, headers=_headers(token))
+        assert q.status_code == 200, q.text
+        assert q.json()["data"]["evidenceFileId"] == evidence_id
         contact = c.post(f"/api/v1/buyers/{bid}/contacts/", json={"note": "Follow-up"}, headers=_headers(token))
         assert contact.status_code == 200
 

@@ -20,9 +20,10 @@ os.environ.pop("MAUEKSPOR_AI_API_KEY", None)
 # secara langsung (unit) di test_security / test_audit_regressions.
 os.environ.setdefault("MAUEKSPOR_DISABLE_RATE_LIMIT", "1")
 
-# Pastikan upload dir menggunakan direktori lokal saat test berjalan di luar container
-if os.environ.get("MAUEKSPOR_UPLOAD_DIR", "").startswith("/app"):
-    os.environ["MAUEKSPOR_UPLOAD_DIR"] = os.path.join(os.getcwd(), "uploads")
+# Pastikan upload dir selalu direktori lokal yang bisa ditulis saat test.
+# `.env.local` sering menyetel MAUEKSPOR_UPLOAD_DIR=/app/uploads (path container)
+# yang tidak writable di host; paksa override SEBELUM app memuat dotenv.
+os.environ["MAUEKSPOR_UPLOAD_DIR"] = os.path.join(os.getcwd(), "uploads")
 
 
 @pytest.fixture(autouse=True)

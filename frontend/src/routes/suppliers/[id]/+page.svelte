@@ -6,6 +6,8 @@
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 	import { statusTone, toneVariant } from '$lib/utils/format';
 	import { verifySupplier, requestSupplierEvidence, updateSupplier, deleteSupplier } from '$lib/api/suppliers';
+	import { uploadFileBinary } from '$lib/api/files';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
 	import { formatDate } from '$lib/utils/date';
@@ -37,18 +39,52 @@
 	const confirm = createConfirmController();
 
 
+	// Verifikasi wajib disertai bukti berkas (dokumen/gambar).
+	let verifyOpen = $state(false);
+	let evidenceFileId = $state('');
+	let evidenceFileName = $state('');
+	let evidenceNote = $state('');
+	let uploadingEvidence = $state(false);
+
+	function openVerify() {
+		error = '';
+		evidenceFileId = '';
+		evidenceFileName = '';
+		evidenceNote = '';
+		verifyOpen = true;
+	}
+
+	async function onEvidencePick(file: File) {
+		error = '';
+		uploadingEvidence = true;
+		try {
+			const res = await uploadFileBinary(file, 'Supplier Evidence', '', ['supplier', 'evidence']);
+			evidenceFileId = res.data?.id ?? '';
+			evidenceFileName = res.data?.name ?? file.name;
+		} catch {
+			error = t('Gagal mengunggah bukti verifikasi.');
+		} finally {
+			uploadingEvidence = false;
+		}
+	}
+
 	async function handleVerify() {
 		if (verifying) return;
+		if (!evidenceFileId) {
+			error = t('Unggah bukti berkas sebelum memverifikasi supplier.');
+			return;
+		}
 		error = '';
 		verifying = true;
 		try {
-			const res = await verifySupplier(data.supplier.id);
+			const res = await verifySupplier(data.supplier.id, { fileId: evidenceFileId, note: evidenceNote });
 			verified = true;
 			if (res.data) {
 				serverStatus = res.data.status;
 				if (typeof res.data.capabilityScore === 'number') serverScore = res.data.capabilityScore;
 			}
 			message = t('Supplier diverifikasi.');
+			verifyOpen = false;
 		} catch {
 			error = t('Gagal memverifikasi supplier.');
 		}
@@ -198,7 +234,7 @@
 				</div>
 				<div class="flex flex-wrap gap-2.5">
 					<Button variant="outline" disabled={requestingEvidence || evidenceRequested} onclick={handleRequestEvidence}>{evidenceRequested ? t('Bukti diminta') : t('Minta bukti')}</Button>
-					<Button disabled={verifying || verified} onclick={handleVerify}>{verified ? t('Terverifikasi') : t('Verifikasi supplier')}</Button>
+					<Button disabled={verifying || verified} onclick={openVerify}>{verified ? t('Terverifikasi') : t('Verifikasi supplier')}</Button>
 				</div>
 				{#if error}
 					<p class="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive" role="alert">{error}</p>
@@ -286,4 +322,45 @@
 		loading={confirm.loading}
 		onconfirm={confirm.run}
 	/>
+
+	<Dialog.Root bind:open={verifyOpen}>
+		<Dialog.Content class="sm:max-w-md">
+			<Dialog.Header>
+				<Dialog.Title>{t('Verifikasi supplier dengan bukti')}</Dialog.Title>
+				<Dialog.Description class="text-xs">
+					{t('Unggah dokumen atau gambar pendukung (mis. sertifikat, hasil audit, izin usaha). Verifikasi tidak dapat dilakukan tanpa bukti berkas.')}
+				</Dialog.Description>
+			</Dialog.Header>
+			<div class="grid gap-3 py-2 text-xs">
+				<label class="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-3 py-6 text-sm font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground">
+					<input
+						type="file"
+						class="sr-only"
+						accept="image/*,application/pdf"
+						disabled={uploadingEvidence}
+						onchange={(e) => {
+							const input = e.currentTarget as HTMLInputElement;
+							const file = input.files?.[0];
+							if (file) onEvidencePick(file);
+							input.value = '';
+						}}
+					/>
+					{uploadingEvidence ? t('Mengunggah...') : evidenceFileId ? evidenceFileName : t('Pilih berkas bukti (dokumen/gambar)')}
+				</label>
+				<label class="grid gap-1 font-semibold">
+					{t('Catatan verifikasi (opsional)')}
+					<input class="rounded-md border bg-background px-3 py-2 text-sm font-normal" bind:value={evidenceNote} placeholder={t('Mis. hasil audit lapangan')} />
+				</label>
+				{#if error}
+					<p class="rounded-lg bg-destructive/10 px-3 py-2 font-bold text-destructive" role="alert">{error}</p>
+				{/if}
+			</div>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => (verifyOpen = false)}>{t('Batal')}</Button>
+				<Button disabled={!evidenceFileId || verifying} onclick={handleVerify}>
+					{verifying ? t('Memverifikasi...') : t('Verifikasi supplier')}
+				</Button>
+			</Dialog.Footer>
+		</Dialog.Content>
+	</Dialog.Root>
 </AppShell>

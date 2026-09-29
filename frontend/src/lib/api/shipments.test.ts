@@ -94,11 +94,13 @@ describe('suppliers API contract', () => {
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/suppliers\/SUP-1\/$/);
 	});
 
-	it('verifySupplier -> POST /suppliers/{id}/verify/', async () => {
+	it('verifySupplier -> POST /suppliers/{id}/verify/ dengan bukti fileId', async () => {
 		const fetchMock = mockApi();
-		await verifySupplier('SUP-1');
+		await verifySupplier('SUP-1', { fileId: 'FIL-1', note: 'audit' });
 		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/suppliers\/SUP-1\/verify\/$/);
-		expect((fetchMock.mock.calls[0][1] as RequestInit).method).toBe('POST');
+		const init = fetchMock.mock.calls[0][1] as RequestInit;
+		expect(init.method).toBe('POST');
+		expect(JSON.parse(String(init.body))).toEqual({ fileId: 'FIL-1', note: 'audit' });
 	});
 
 	it('requestSupplierEvidence -> POST /suppliers/{id}/request-evidence/', async () => {
