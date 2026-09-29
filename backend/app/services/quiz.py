@@ -463,6 +463,24 @@ def build_quiz(module: dict[str, Any], lessons: list[dict[str, Any]] | None = No
     selalu berada di indeks yang sama.
     """
     lessons = lessons or []
+    # Gunakan soal yang disusun pengelola materi jika tersedia. Bank soal umum
+    # hanya fallback untuk modul lama yang belum memiliki kuis tersendiri.
+    for lesson in lessons:
+        authored = lesson.get("quizQuestions") or lesson.get("quiz_questions") or []
+        if str(lesson.get("kind", "")).lower() != "quiz" or not authored:
+            continue
+        questions = []
+        for index, item in enumerate(authored, 1):
+            answer = item.get("correct_index", item.get("correctIndex", item.get("answer")))
+            options = item.get("options", [])
+            if not isinstance(answer, int) or isinstance(answer, bool) or not 0 <= answer < len(options):
+                raise ValueError(f"Kunci jawaban tidak valid pada soal {index} ({lesson.get('id', '')})")
+            questions.append({
+                "id": item.get("id") or f"{lesson['id']}-Q{index}",
+                "question": item["question"], "options": options,
+                "answer": answer, "explanation": item.get("explanation", ""),
+            })
+        return questions
     haystack_parts = [
         str(module.get("title", "")),
         str(module.get("summary", "")),

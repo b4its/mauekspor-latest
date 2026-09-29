@@ -479,16 +479,15 @@ def seed_village_products() -> None:
 
 
 def seed_village_education() -> None:
-    """Ganti konten edukasi generik dengan materi spesifik desa (5-7 modul)."""
-    for record in list(db.all("educational_modules")):
-        db.delete("educational_modules", record.get("id"))
-    for record in list(db.all("educational_articles")):
-        db.delete("educational_articles", record.get("id"))
-
+    """Tambahkan materi desa sekali saja tanpa menghapus hasil suntingan pengguna."""
+    existing_modules = {record["id"] for record in db.all("educational_modules")}
+    existing_articles = {record["id"] for record in db.all("educational_articles")}
     for module in VILLAGE_EDU_MODULES:
-        db.insert("educational_modules", dict(module))
+        if module["id"] not in existing_modules:
+            db.insert("educational_modules", dict(module))
     for article in VILLAGE_EDU_ARTICLES:
-        db.insert("educational_articles", dict(article))
+        if article["id"] not in existing_articles:
+            db.insert("educational_articles", dict(article))
 
     # Pelajaran (termasuk lesson kuis) per modul desa. Diimpor lokal untuk
     # menghindari impor sirkular (seed ↔ seed_village_commodities).
