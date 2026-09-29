@@ -707,14 +707,39 @@ def seed_100_records():
             "summary": f"Guide about {_pick(['export','compliance','logistics','payments'], n())}.",
             "steps": _pick_n(["Step 1: Prepare","Step 2: Check","Step 3: Submit"], n()%3+1, n()),
             "updatedAt": "now"})
+        # Agenda kalender: `type` & `status` wajib memakai kosakata yang dikenal
+        # UI (Compliance/Payment/Shipment/Buyer/Supplier dan
+        # Scheduled/Due Soon/Blocked/Done). Sebelumnya bulk seed memakai
+        # Task/Meeting/Deadline + Upcoming/Done sehingga filter tipe di halaman
+        # kalender tidak pernah cocok dan label status tampil mentah.
+        # Tanggal disebar di sekitar Agustus 2026 (jangkar data demo) agar
+        # kalender bulanan terisi; jam berada pada rentang kerja 08:00-17:30.
+        cal_month = 8 + (i % 3) - 1  # Juli, Agustus, September 2026
+        cal_month = max(1, min(12, cal_month))
+        cal_day = (i * 3) % 28 + 1
+        cal_type = ["Compliance", "Payment", "Shipment", "Buyer", "Supplier"][i % 5]
+        cal_status = ["Scheduled", "Scheduled", "Due Soon", "Done", "Blocked"][i % 5]
+        cal_title = {
+            "Compliance": f"Compliance review {i:03d}",
+            "Payment": f"Payment follow-up {i:03d}",
+            "Shipment": f"Shipment booking {i:03d}",
+            "Buyer": f"Buyer meeting {i:03d}",
+            "Supplier": f"Supplier evidence audit {i:03d}",
+        }[cal_type]
         db.insert("calendar_events", {"id": f"CAL-{i:03d}",
-            "title": f"Event {i}: {_pick(['Deadline','Meeting','Review','Payment'], n())}",
-            "date": f"2026-{n()%12+1:02d}-{n()%28+1:02d}",
-            "time": f"{n()%24:02d}:{n()%60:02d}",
-            "type": _pick(["Task","Meeting","Deadline"], n()),
-            "status": _pick(["Upcoming","Done"], n()),
+            "title": cal_title,
+            "date": f"2026-{cal_month:02d}-{cal_day:02d}",
+            "time": f"{n()%10+8:02d}:{(n()%2)*30:02d}",
+            "type": cal_type,
+            "status": cal_status,
             "projectId": _pick(proj_ids, n()),
             "owner": _pick(user_ids, n()),
+            "description": _pick([
+                "Koordinasi lintas tim sebelum tenggat.",
+                "Tindak lanjut dengan pihak terkait.",
+                "Verifikasi bukti dan dokumen pendukung.",
+                "Perbarui status dan kirim pembaruan ke pemangku kepentingan.",
+            ], n()),
             "updatedAt": "now"})
         db.insert("files", {"id": f"FIL-{i:03d}", "name": f"file_{i:03d}.pdf",
             "type": _pick(["Document","Image","Certificate","Report"], n()),

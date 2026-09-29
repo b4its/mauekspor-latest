@@ -12,6 +12,8 @@ from app.main import app  # noqa: F401
 from app.seed import seed_if_empty
 from app.seed_large import PRODUCTS, PRODUCT_HS
 
+import re
+
 
 def _seed():
     db.init_store()
@@ -128,5 +130,30 @@ def test_status_fields_have_healthy_distribution():
         assert len(values) >= 2, (
             f"{table}.{field} kolaps ke satu nilai: {values} "
             "(sebaran `_pick` tidak sehat)"
+        )
+
+
+def test_calendar_events_use_ui_vocabulary():
+    """Halaman kalender memfilter berdasarkan tipe agenda (Compliance/Payment/
+    Shipment/Buyer/Supplier) & menampilkan status terjemahan
+    (Scheduled/Due Soon/Blocked/Done). Bulk seed sebelumnya memakai
+    Task/Meeting/Deadline + Upcoming/Done sehingga filter tak pernah cocok."""
+    _seed()
+    allowed_types = {"Compliance", "Payment", "Shipment", "Buyer", "Supplier"}
+    allowed_status = {"Scheduled", "Due Soon", "Blocked", "Done"}
+    events = db.all("calendar_events")
+    assert events, "calendar_events kosong"
+    for ev in events:
+        assert ev.get("type") in allowed_types, (
+            f"calendar {ev.get('id')} tipe tak dikenal: {ev.get('type')!r}"
+        )
+        assert ev.get("status") in allowed_status, (
+            f"calendar {ev.get('id')} status tak dikenal: {ev.get('status')!r}"
+        )
+        assert ev.get("description"), (
+            f"calendar {ev.get('id')} tanpa description (kartu agenda kosong)"
+        )
+        assert re.match(r"^\d{4}-\d{2}-\d{2}$", str(ev.get("date"))), (
+            f"calendar {ev.get('id')} tanggal tidak valid: {ev.get('date')!r}"
         )
 
