@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AppShell from '$lib/components/AppShell.svelte';
+	import CalendarGrid from '$lib/components/CalendarGrid.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -53,6 +54,16 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	let fType = $state<CalendarEvent['type']>('Buyer');
 	let fProjectId = $state('');
 	let paramProcessed = $state(false);
+	// Tanggal terpilih di kalender ('' = tanpa filter hari).
+	let selectedDay = $state('');
+
+	/** Kunci tanggal (YYYY-MM-DD) dari sebuah event. */
+	function dayKey(value: string): string {
+		const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(value ?? ''));
+		return m ? m[1] : '';
+	}
+	/** Event pada hari terpilih (0 = semua event/filter biasa). */
+	let dayEvents = $derived(selectedDay ? events.items.filter((e) => dayKey(e.date) === selectedDay) : []);
 
 	// Konfirmasi terpusat untuk hapus event (pengganti window.confirm).
 	const confirm = createConfirmController();
@@ -307,8 +318,25 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 			{/each}
 		</div>
 	{:else}
+		<!-- Kalender bulanan asli dengan penanda agenda per hari. -->
+		<CalendarGrid
+			events={filteredEvents.map((e) => ({ id: e.id, title: e.title, date: e.date, time: e.time, type: e.type }))}
+			selected={selectedDay}
+			onselect={(date) => (selectedDay = selectedDay === date ? '' : date)}
+		/>
+
+		{#if selectedDay}
+			<div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 px-4 py-2.5">
+				<strong class="text-sm font-bold">
+					{t('Agenda')} · {formatDate(selectedDay)}
+					<span class="ms-2 font-semibold text-muted-foreground">{dayEvents.length} {t('event')}</span>
+				</strong>
+				<Button variant="outline" size="sm" onclick={() => (selectedDay = '')}>{t('Hapus filter hari')}</Button>
+			</div>
+		{/if}
+
 		<div class="grid gap-4">
-			{#each filteredEvents as event}
+			{#each selectedDay ? dayEvents : filteredEvents as event}
 				<Card>
 					<CardContent class="flex flex-wrap items-start justify-between gap-4 p-5">
 						<div class="grid min-w-32 place-items-center gap-1 rounded-lg border bg-muted/40 p-3 text-center">
@@ -345,7 +373,7 @@ import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 				</Card>
 			{:else}
 				<div class="rounded-xl border border-dashed p-6 text-center font-semibold text-muted-foreground">
-					{t('No calendar event matched your search.')}
+					{selectedDay ? t('Tidak ada agenda pada tanggal ini.') : t('No calendar event matched your search.')}
 				</div>
 			{/each}
 		</div>
