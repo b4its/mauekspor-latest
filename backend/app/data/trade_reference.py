@@ -133,3 +133,62 @@ def seed_trade_reference(db) -> None:
         for record in rules_for(code):
             if not db.get("regulations", record["id"]):
                 db.insert("regulations", record)
+
+
+# ── Status FTA/CEPA Indonesia (terverifikasi per snapshot) ────────────────────
+# status: in_force | signed_ratifying | concluded | negotiating
+INDONESIA_FTAS = (
+    ("ATIGA (ASEAN)", "in_force", "Protokol Kedua (upgraded ATIGA) ditandatangani Okt/Des 2025."),
+    ("ACFTA (ASEAN–Tiongkok)", "in_force", "ACFTA 3.0 ditandatangani Okt 2025."),
+    ("AKFTA / AJCEP / AANZFTA / AIFTA / AHKFTA", "in_force", "Berlaku; cek Product Specific Rule per HS."),
+    ("RCEP", "in_force", "Berlaku untuk Indonesia sejak 2 Januari 2023."),
+    ("IJEPA (Jepang)", "in_force", "Berlaku (termasuk protokol amandemen)."),
+    ("IA-CEPA (Australia)", "in_force", "Berlaku sejak 2020; sebagian besar tarif 0%."),
+    ("IK-CEPA (Korea Selatan)", "in_force", "Berlaku sejak 2023."),
+    ("IEFTA CEPA (EFTA)", "in_force", "Berlaku sejak 1 November 2021."),
+    ("IUAE-CEPA (UEA)", "in_force", "Berlaku."),
+    ("IC-CEPA (Chili) / PTA Pakistan / PTA Mozambik", "in_force", "Berlaku."),
+    ("ICA-CEPA (Kanada)", "signed_ratifying", "Ditandatangani 24 Sep 2025; UU Kanada disahkan 6 Mei 2026 (SI/2026-30); berlaku setelah pertukaran nota diplomatik."),
+    ("IEU-CEPA (Uni Eropa)", "concluded", "Perundingan selesai 23 Sep 2025; target penandatanganan Okt 2026, implementasi awal 2027. Belum memberi tarif preferensi."),
+    ("Indonesia–EAEU FTA", "signed_ratifying", "Ditandatangani Des 2025; proses ratifikasi berjalan."),
+    ("ART Indonesia–AS", "in_force", "Agreement on Reciprocal Trade ditandatangani 19 Feb 2026 (tarif resiprokal 19%; produk tertentu 0% per Schedule 2B)."),
+    ("CPTPP (aksesi)", "negotiating", "Indonesia mengajukan aksesi; belum berlaku."),
+)
+
+# ── Prinsip & struktur HS (konteks klasifikasi) ───────────────────────────────
+HS_STRUCTURE_NOTE = (
+    "6 digit pertama HS seragam di seluruh dunia (dikelola WCO); digit ke-7 dst "
+    "adalah tambahan nasional/regional. Indonesia & ASEAN memakai AHTN 8 digit "
+    "(BTKI 2022, 11.414 pos tarif). KUMHS 1–6 mengatur interpretasi; baca Catatan "
+    "Bagian/Bab sebelum menetapkan pos. Salah klasifikasi berisiko kekurangan bayar, "
+    "denda, penahanan barang, dan hilangnya preferensi FTA."
+)
+
+
+def reference_bundle() -> dict:
+    """Kumpulan referensi riset terkurasi siap-API (bukan tarif/clearance).
+
+    Dipakai oleh endpoint /reference/ dan konteks AI agar asisten mengutip
+    data faktual bertanggal, bukan mengarang.
+    """
+    from app.data.regulatory_intel import CUSTOMS_SYSTEMS
+
+    return {
+        "snapshotDate": SNAPSHOT_DATE,
+        "guide": GUIDE,
+        "disclaimer": (
+            "Referensi riset bertanggal, bukan nasihat hukum/tarif. Verifikasi ke "
+            "sumber resmi sebelum bertransaksi."
+        ),
+        "timeline": [{"date": d, "event": e, "scope": s} for (d, e, s) in REGULATORY_TIMELINE],
+        "hs2028": HS_2028_FACTS,
+        "hsStructureNote": HS_STRUCTURE_NOTE,
+        "indonesiaFtas": [
+            {"name": n, "status": st, "note": note} for (n, st, note) in INDONESIA_FTAS
+        ],
+        "customsSystems": {
+            key: {"label": v.get("label", ""), "nomenclature": v.get("nomenclature", ""),
+                  "tariffs": v.get("tariffs", ""), "note": v.get("note", "")}
+            for key, v in CUSTOMS_SYSTEMS.items()
+        },
+    }

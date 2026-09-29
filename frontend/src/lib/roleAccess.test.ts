@@ -118,6 +118,7 @@ describe('roleAccess', () => {
 		for (const role of [...ROLES, 'Admin']) {
 			expect(canViewPath(role, '/countries'), role).toBe(true);
 			expect(canViewPath(role, '/hs-codes'), role).toBe(true);
+			expect(canViewPath(role, '/reference'), role).toBe(true);
 		}
 	});
 

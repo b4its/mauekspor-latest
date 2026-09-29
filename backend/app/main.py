@@ -19,6 +19,10 @@ from app.seed import seed_if_empty
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_store()
+    # Data master FAKTUAL (negara + regulasi) selalu dimuat, bahkan di instance
+    # tanpa demo data, agar referensi regulasi tetap tersedia di production.
+    from app.seed import seed_master_data
+    seed_master_data()
     if settings.seed_demo_data:
         seed_if_empty()
     # FR-ADMIN-1: muat HS code buatan admin ke indeks runtime agar ikut

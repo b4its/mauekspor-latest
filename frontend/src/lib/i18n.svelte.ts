@@ -2993,7 +2993,24 @@ const dictionary: Record<string, Entry> = {
 	'Subpos dihapus': { id: 'Subpos dihapus', en: 'Deleted subheadings' },
 	'Edisi': { id: 'Edisi', en: 'Edition' },
 	'Siklus review': { id: 'Siklus review', en: 'Review cycle' },
-	'Perubahan utama': { id: 'Perubahan utama', en: 'Main changes' }
+	'Perubahan utama': { id: 'Perubahan utama', en: 'Main changes' },
+	// Halaman referensi regulasi
+	'Referensi Regulasi': { id: 'Referensi Regulasi', en: 'Regulation Reference' },
+	'Regulation Reference': { id: 'Regulasi Referensi', en: 'Regulation Reference' },
+	'Riset faktual bertanggal': { id: 'Riset faktual bertanggal', en: 'Dated factual research' },
+	'Sumber resmi terkurasi': { id: 'Sumber resmi terkurasi', en: 'Curated official sources' },
+	'Regulasi ekspor-impor global & HS Code.': { id: 'Regulasi ekspor-impor global & HS Code.', en: 'Global export-import regulations & HS Code.' },
+	'Disusun dari WCO, WTO, Komisi Eropa, USTR, CBP, JDIH Kemendag/Kemenkeu, BPK RI, dan firma hukum internasional.': { id: 'Disusun dari WCO, WTO, Komisi Eropa, USTR, CBP, JDIH Kemendag/Kemenkeu, BPK RI, dan firma hukum internasional.', en: 'Compiled from WCO, WTO, European Commission, USTR, CBP, JDIH Kemendag/Kemenkeu, BPK RI, and international law firms.' },
+	'Gagal memuat referensi regulasi.': { id: 'Gagal memuat referensi regulasi.', en: 'Failed to load regulation reference.' },
+	'Timeline regulasi 2026–2028': { id: 'Timeline regulasi 2026–2028', en: 'Regulation timeline 2026–2028' },
+	'HS 2028 — berlaku': { id: 'HS 2028 — berlaku', en: 'HS 2028 — effective' },
+	'Struktur HS': { id: 'Struktur HS', en: 'HS structure' },
+	'Status FTA/CEPA Indonesia': { id: 'Status FTA/CEPA Indonesia', en: 'Indonesia FTA/CEPA status' },
+	'Sistem kepabeanan & nomenklatur': { id: 'Sistem kepabeanan & nomenklatur', en: 'Customs systems & nomenclature' },
+	'Berlaku': { id: 'Berlaku', en: 'In force' },
+	'Ditandatangani / ratifikasi': { id: 'Ditandatangani / ratifikasi', en: 'Signed / ratifying' },
+	'Selesai dirundingkan': { id: 'Selesai dirundingkan', en: 'Concluded' },
+	'Sedang dirundingkan': { id: 'Sedang dirundingkan', en: 'Negotiating' }
 };
 
 let initial: Locale = 'id';

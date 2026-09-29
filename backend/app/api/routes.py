@@ -5627,6 +5627,23 @@ def _build_workspace_context(owner_id: str | None = None, page_context: str | No
             )
         parts.append("- Analisis Kepatuhan & Regulasi Ekspor:\n" + "\n".join(anl_lines))
 
+    # Referensi riset faktual terkurasi (timeline + HS 2028 + FTA) agar asisten
+    # mengutip data bertanggal sumber resmi, bukan mengarang regulasi/tarif.
+    try:
+        from app.data.trade_reference import reference_bundle
+        ref = reference_bundle()
+        upcoming = ref["timeline"][-6:]
+        tl = "; ".join(f"{e['date']} {e['event']}" for e in upcoming)
+        facts = ref["hs2028"]
+        parts.append(
+            f"- Referensi Regulasi Terverifikasi (snapshot {ref['snapshotDate']}): {tl}. "
+            f"HS 2028 (berlaku {facts['effective']}): {facts['headings_total']} pos, "
+            f"{facts['subheadings_total']} subpos (+{facts['subheadings_new']}/-{facts['subheadings_deleted']}). "
+            "Gunakan sebagai konteks; verifikasi ke sumber resmi sebelum keputusan."
+        )
+    except Exception:  # pragma: no cover - referensi opsional, jangan gagalkan chat
+        pass
+
     if page_context:
         page_map = {
             "/products": "Halaman Katalog Produk & HS Code (pengguna sedang meninjau katalog produk atau klasifikasi kode HS)",
@@ -6195,6 +6212,20 @@ def get_country_detail(country_code: str):
     country["hs_2028_facts"] = HS_2028_FACTS
     country["reference_snapshot_date"] = _SNAP
     return {"data": country, "meta": {}}
+
+
+# ----------------------------------------------------------------------------
+# REFERENCE (riset faktual terkurasi — timeline, HS 2028, FTA, sistem kepabeanan)
+# ----------------------------------------------------------------------------
+@router.get("/reference/")
+def get_reference():
+    """Referensi riset faktual bertanggal (bukan tarif/clearance).
+
+    Publik (read). Dipakai halaman referensi & konteks asisten AI agar mengutip
+    data terverifikasi, bukan mengarang.
+    """
+    from app.data.trade_reference import reference_bundle
+    return {"data": reference_bundle(), "meta": {}}
 
 
 # ----------------------------------------------------------------------------

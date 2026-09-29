@@ -788,6 +788,7 @@ export const navGroups: NavGroup[] = [
 			{ label: 'Templates', href: '/templates' },
 			{ label: 'Knowledge Base', href: '/knowledge' },
 			{ label: 'Educational', href: '/educational' },
+			{ label: 'Regulation Reference', href: '/reference' },
 			{ label: 'Marketing', href: '/marketing' }
 		]
 	},

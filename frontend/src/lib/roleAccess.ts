@@ -77,6 +77,7 @@ export const HREF_MODULE: Record<string, string> = {
 	'/templates': 'templates',
 	'/automations': 'automations',
 	'/knowledge': 'knowledge',
+	'/reference': 'reference',
 	'/educational': 'educational',
 	'/chat': 'chat',
 	'/marketing': 'marketing',
@@ -132,7 +133,9 @@ const ALWAYS_ALLOWED = new Set([
 	'/catalogs/public',
 	// Data referensi publik (dibaca backend tanpa auth): negara & kode HS.
 	'/countries',
-	'/hs-codes'
+	'/hs-codes',
+	// Referensi regulasi terkurasi (read-only, berlaku semua peran).
+	'/reference'
 ]);
 
 /**

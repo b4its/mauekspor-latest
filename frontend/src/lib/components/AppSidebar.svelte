@@ -43,6 +43,7 @@
 	import WorkflowIcon from '@lucide/svelte/icons/workflow';
 	import BookIcon from '@lucide/svelte/icons/book';
 	import BookOpenCheckIcon from '@lucide/svelte/icons/book-open-check';
+	import ScaleIcon from '@lucide/svelte/icons/scale';
 	import MessageCircleIcon from '@lucide/svelte/icons/message-circle';
 	import MegaphoneIcon from '@lucide/svelte/icons/megaphone';
 	import CalendarIcon from '@lucide/svelte/icons/calendar';
@@ -123,6 +124,7 @@
 		Automations: WorkflowIcon,
 		'Knowledge Base': BookIcon,
 		Educational: BookOpenCheckIcon,
+		'Regulation Reference': ScaleIcon,
 		Chat: MessageCircleIcon,
 		Marketing: MegaphoneIcon,
 		Calendar: CalendarIcon,

@@ -9,6 +9,33 @@ from app.data import countries as country_data
 logger = logging.getLogger("mauekspor.seed")
 
 
+def seed_master_data() -> None:
+    """Seed data MASTER FAKTUAL (bukan demo) — aman dijalankan di production.
+
+    Hanya memuat data referensi yang bersumber dari otoritas resmi:
+    - direktori negara dunia (ISO 3166, world_countries.py);
+    - pointer regulasi terkurasi (trade_reference.py).
+
+    Tidak membuat user/produk/pembeli/pesanan karangan. Dipakai baik saat
+    ``seed_demo_data`` aktif maupun nonaktif, sehingga instance produksi tetap
+    punya referensi regulasi tanpa data simulasi.
+    """
+    from app.data.trade_reference import seed_trade_reference
+
+    seed_trade_reference(db)
+    if not db.loaded_records("countries"):
+        for c in country_data.get_countries():
+            db.insert("countries", {
+                "id": db.gen_id("countries", "CTY"),
+                "country_code": c["country_code"],
+                "country_name": c["country_name"],
+                "region": c["region"],
+                "createdAt": "2026-07-01",
+                "dataSource": "official_iso3166",
+            })
+    logger.info("Master data faktual (negara & regulasi) siap.")
+
+
 def seed_if_empty():
     from app.data.trade_reference import seed_trade_reference
     # Run even when demo data has already been seeded; clean up legacy fake rules.
@@ -17,22 +44,8 @@ def seed_if_empty():
     if user_count > 50:
         return  # sudah di-seed 100+
 
-    # ---------- MASTER DATA: negara & regulasi ----------
-    if not db.loaded_records("countries"):
-        for c in country_data.get_countries():
-            db.insert("countries", {
-            "id": db.gen_id("countries", "CTY"),
-            "country_code": c["country_code"],
-            "country_name": c["country_name"],
-            "region": c["region"],
-            "createdAt": "2026-07-01",
-        })
-
-    if not db.loaded_records("exchange_rates"):
-        db.insert("exchange_rates", {
-            "id": db.gen_id("exchange_rates", "FX"),
-            "rate": 15800, "source": "seed", "updatedAt": "2026-08-06 10:00",
-        })
+    # ---------- MASTER DATA: negara & regulasi (FAKTUAL, bukan demo) ----------
+    seed_master_data()
 
     # ---------- AUTH / user ----------
     # Seed-if-missing: db.insert memperbarui in-place saat id sudah ada, sehingga
