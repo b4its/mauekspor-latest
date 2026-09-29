@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currency, formatCurrency, formatNumber, setDisplayCurrency, statusTone, taskSummary } from './utils/format';
+import { currency, formatCurrency, formatNumber, outstandingAmount, setDisplayCurrency, statusTone, taskSummary, toFiniteNumber } from './utils/format';
 import type { ComplianceTask } from './data/trade';
 
 describe('currency formatter', () => {
@@ -38,6 +38,28 @@ describe('currency formatter', () => {
 		setDisplayCurrency('USD');
 		expect(currency.format(100)).toMatch(/\$/);
 		setDisplayCurrency('IDR'); // reset
+	});
+
+	it('tidak pernah menghasilkan NaN untuk input tidak valid', () => {
+		setDisplayCurrency('IDR');
+		for (const bad of [undefined, null, NaN, Infinity, -Infinity]) {
+			expect(currency.format(bad as unknown as number)).not.toMatch(/NaN/);
+		}
+	});
+
+	it('toFiniteNumber mengoersi non-finite jadi 0', () => {
+		expect(toFiniteNumber(undefined)).toBe(0);
+		expect(toFiniteNumber(null)).toBe(0);
+		expect(toFiniteNumber(NaN)).toBe(0);
+		expect(toFiniteNumber('42800')).toBe(42800);
+		expect(toFiniteNumber(42.5)).toBe(42.5);
+	});
+
+	it('outstandingAmount tidak pernah negatif (clamp overpay)', () => {
+		expect(outstandingAmount(1000, 400)).toBe(600);
+		expect(outstandingAmount(1000, 1000)).toBe(0);
+		expect(outstandingAmount(1000, 1200)).toBe(0); // overpay -> 0, bukan -200
+		expect(outstandingAmount(undefined, undefined)).toBe(0);
 	});
 });
 

@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { currency, statusTone, toneVariant } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant, outstandingAmount } from '$lib/utils/format';
 	import { markPaymentReceived, sendPaymentReminder, updatePayment, deletePayment } from '$lib/api/payments';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
@@ -233,7 +233,7 @@
 					{t('Paid')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(paidAmount)}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Outstanding')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(localAmount - paidAmount)}</strong>
+					{t('Outstanding')} <strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(outstandingAmount(localAmount, paidAmount))}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
 					{t('Risk')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.payment.risk}</strong>

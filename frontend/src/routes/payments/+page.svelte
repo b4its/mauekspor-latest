@@ -9,7 +9,7 @@
 	import { downloadFile, exportPath } from '$lib/api/client';
 	import { createRemoteList } from '$lib/api/remote-list.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { currency, statusTone, toneVariant } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant, outstandingAmount, toFiniteNumber } from '$lib/utils/format';
 	import { t } from '$lib/i18n.svelte';
 import Pagination from '$lib/components/Pagination.svelte';
 import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -103,7 +103,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 			sortDir
 		)
 	);
-	let receivable = $derived(payments.items.reduce((sum, payment) => sum + payment.amount - payment.paid, 0));
+	let receivable = $derived(payments.items.reduce((sum, payment) => sum + outstandingAmount(payment.amount, payment.paid), 0));
 	let collected = $derived(payments.items.reduce((sum, payment) => sum + payment.paid, 0));
 	let highRisk = $derived(payments.items.filter((payment) => payment.risk !== 'Low').length);
 
@@ -380,7 +380,7 @@ import { syncFiltersToUrl } from '$lib/utils/urlFilters';
 					<a href={`/payments/${payment.id}`} class="grid h-full gap-3 p-5 no-underline">
 						<div class="flex items-center justify-between gap-3 pr-6">
 							<Badge variant={toneVariant(statusTone(payment.status))}>{label(payment.status)}</Badge>
-							<strong class="text-2xl font-bold tracking-tight">{payment.amount ? Math.round((payment.paid / payment.amount) * 100) : 0}%</strong>
+							<strong class="text-2xl font-bold tracking-tight">{payment.amount ? Math.min(100, Math.round((toFiniteNumber(payment.paid) / toFiniteNumber(payment.amount)) * 100)) : 0}%</strong>
 						</div>
 						<h3 class="text-2xl font-bold tracking-tight">{payment.id}</h3>
 						<p class="text-sm text-muted-foreground">{payment.buyer} · {payment.orderId}</p>

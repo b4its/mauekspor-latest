@@ -36,18 +36,37 @@ export function getDisplayCurrency(): string {
 
 /** Format amount dengan display currency aktif. */
 export function formatCurrency(amount: number): string {
-	return _formatter.format(amount);
+	return _formatter.format(toFiniteNumber(amount));
 }
 
 /** Format amount dengan currency code spesifik. */
 export function formatCurrencyAs(amount: number, code: string): string {
-	return _makeFormatter(code).format(amount);
+	return _makeFormatter(code).format(toFiniteNumber(amount));
 }
 
 // Backward-compatible: object dengan .format() method (seperti Intl.NumberFormat)
 export const currency = {
 	format: formatCurrency,
 };
+
+/**
+ * Paksa nilai apa pun menjadi angka finite. `Intl.NumberFormat.format(undefined)`
+ * menghasilkan "NaN" (mis. "RpNaN"), yang bocor ke UI ketika sebuah field opsional
+ * (mis. `line.unitPrice`) tidak ada. Semua nilai non-finite → 0 agar formatter
+ * aman dipakai langsung pada data backend yang mungkin parsial.
+ */
+export function toFiniteNumber(value: unknown): number {
+	const n = typeof value === 'number' ? value : Number(value);
+	return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Outstanding = max(total - paid, 0). Piutang tak pernah negatif walau
+ * pembayaran melebihi total (overpay), yang sebelumnya tampil "-Rp 1".
+ */
+export function outstandingAmount(total: unknown, paid: unknown): number {
+	return Math.max(toFiniteNumber(total) - toFiniteNumber(paid), 0);
+}
 
 /** Format jumlah angka dengan pemisah ribuan sesuai locale aktif. */
 const _numberLocaleMap: Record<string, string> = {
@@ -58,7 +77,7 @@ const _numberLocaleMap: Record<string, string> = {
 
 export function formatNumber(value: number): string {
 	const locale = _numberLocaleMap[_displayCurrency] ?? 'id-ID';
-	return new Intl.NumberFormat(locale).format(value);
+	return new Intl.NumberFormat(locale).format(toFiniteNumber(value));
 }
 
 // ─── Status tone ─────────────────────────────────────────────────────────────
