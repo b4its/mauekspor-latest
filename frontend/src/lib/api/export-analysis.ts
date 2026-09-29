@@ -112,6 +112,24 @@ export type Country = {
 	verified?: string;
 	data_note?: string;
 	sanctions_warning?: string;
+	/** Referensi riset terkurasi: timeline peristiwa regulasi 2026–2028. */
+	reference_timeline?: { date: string; event: string; scope: string }[];
+	/** Angka kunci HS 2028 (edisi ke-8, berlaku 1 Jan 2028). */
+	hs_2028_facts?: {
+		effective: string;
+		edition: number;
+		review_cycle: string;
+		headings_total: number;
+		subheadings_total: number;
+		headings_new: number;
+		headings_deleted: number;
+		subheadings_new: number;
+		subheadings_deleted: number;
+		highlights: string;
+		preparation: string;
+		sources?: RegulatorySource[];
+	};
+	reference_snapshot_date?: string;
 };
 
 export function listExportAnalyses() {

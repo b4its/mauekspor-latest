@@ -2982,7 +2982,18 @@ const dictionary: Record<string, Entry> = {
 	'Tidak dapat mengakses lokasi Anda.': { id: 'Tidak dapat mengakses lokasi Anda.', en: 'Cannot access your location.' },
 	'Alamat tidak dapat ditemukan otomatis. Isi manual bila perlu.': { id: 'Alamat tidak dapat ditemukan otomatis. Isi manual bila perlu.', en: 'Address could not be detected automatically. Fill it in manually if needed.' },
 	'Klik titik pada peta atau isi alamat manual': { id: 'Klik titik pada peta atau isi alamat manual', en: 'Click a point on the map or enter the address manually' },
-	'Pilih lokasi pada peta di bawah — alamat, lintang, dan bujur terisi otomatis.': { id: 'Pilih lokasi pada peta di bawah — alamat, lintang, dan bujur terisi otomatis.', en: 'Pick a location on the map below — address, latitude, and longitude fill in automatically.' }
+	'Pilih lokasi pada peta di bawah — alamat, lintang, dan bujur terisi otomatis.': { id: 'Pilih lokasi pada peta di bawah — alamat, lintang, dan bujur terisi otomatis.', en: 'Pick a location on the map below — address, latitude, and longitude fill in automatically.' },
+	// Referensi regulasi (timeline & HS 2028)
+	'Timeline regulasi terverifikasi (2026–2028)': { id: 'Timeline regulasi terverifikasi (2026–2028)', en: 'Verified regulation timeline (2026–2028)' },
+	'sumber resmi; verifikasi sebelum bertransaksi.': { id: 'sumber resmi; verifikasi sebelum bertransaksi.', en: 'official sources; verify before transacting.' },
+	'HS 2028 — angka kunci (berlaku 1 Jan 2028)': { id: 'HS 2028 — angka kunci (berlaku 1 Jan 2028)', en: 'HS 2028 — key figures (effective 1 Jan 2028)' },
+	'Total pos (heading)': { id: 'Total pos (heading)', en: 'Total headings' },
+	'Total subpos': { id: 'Total subpos', en: 'Total subheadings' },
+	'Subpos baru': { id: 'Subpos baru', en: 'New subheadings' },
+	'Subpos dihapus': { id: 'Subpos dihapus', en: 'Deleted subheadings' },
+	'Edisi': { id: 'Edisi', en: 'Edition' },
+	'Siklus review': { id: 'Siklus review', en: 'Review cycle' },
+	'Perubahan utama': { id: 'Perubahan utama', en: 'Main changes' }
 };
 
 let initial: Locale = 'id';

@@ -18,6 +18,8 @@
 	import LandmarkIcon from '@lucide/svelte/icons/landmark';
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 	import AlertTriangleIcon from '@lucide/svelte/icons/alert-triangle';
+	import CalendarClockIcon from '@lucide/svelte/icons/calendar-clock';
+	import PackageSearchIcon from '@lucide/svelte/icons/package-search';
 
 	const code = $derived((page.params.code ?? 'ID').toUpperCase());
 
@@ -259,6 +261,75 @@
 										{/each}
 									</div>
 								{/each}
+							</CardContent>
+						</Card>
+					{/if}
+
+					{#if country.reference_timeline && country.reference_timeline.length > 0}
+						<Card class="mt-4">
+							<CardHeader class="p-4 pb-2">
+								<CardTitle class="flex items-center gap-2 text-base">
+									<CalendarClockIcon class="size-4 text-primary" />
+									{t('Timeline regulasi terverifikasi (2026–2028)')}
+								</CardTitle>
+								<p class="text-xs text-muted-foreground">
+									{t('Snapshot')} {country.reference_snapshot_date ?? '2026-09-29'} · {t('sumber resmi; verifikasi sebelum bertransaksi.')}
+								</p>
+							</CardHeader>
+							<CardContent class="p-4 pt-2">
+								<ol class="relative ms-3 grid gap-3 border-s border-border ps-4">
+									{#each country.reference_timeline as item}
+										<li class="relative">
+											<span class="absolute -start-[21px] top-1.5 size-2.5 rounded-full bg-primary ring-2 ring-background"></span>
+											<div class="flex flex-wrap items-center gap-2">
+												<span class="font-mono text-xs font-bold text-primary">{item.date}</span>
+												<Badge variant="secondary" class="text-[10px]">{item.scope}</Badge>
+											</div>
+											<p class="mt-0.5 text-[13px] leading-snug">{item.event}</p>
+										</li>
+									{/each}
+								</ol>
+							</CardContent>
+						</Card>
+					{/if}
+
+					{#if country.hs_2028_facts}
+						<Card class="mt-4">
+							<CardHeader class="p-4 pb-2">
+								<CardTitle class="flex items-center gap-2 text-base">
+									<PackageSearchIcon class="size-4 text-primary" />
+									{t('HS 2028 — angka kunci (berlaku 1 Jan 2028)')}
+								</CardTitle>
+							</CardHeader>
+							<CardContent class="grid gap-3 p-4 pt-2">
+								<div class="grid grid-cols-2 gap-2 text-[13px] sm:grid-cols-3">
+									<div class="rounded-lg border bg-muted/30 p-2">
+										<span class="block text-[11px] font-semibold text-muted-foreground">{t('Total pos (heading)')}</span>
+										<strong class="text-lg font-black">{country.hs_2028_facts.headings_total}</strong>
+									</div>
+									<div class="rounded-lg border bg-muted/30 p-2">
+										<span class="block text-[11px] font-semibold text-muted-foreground">{t('Total subpos')}</span>
+										<strong class="text-lg font-black">{country.hs_2028_facts.subheadings_total}</strong>
+									</div>
+									<div class="rounded-lg border bg-muted/30 p-2">
+										<span class="block text-[11px] font-semibold text-muted-foreground">{t('Subpos baru')}</span>
+										<strong class="text-lg font-black text-emerald-600 dark:text-emerald-400">+{country.hs_2028_facts.subheadings_new}</strong>
+									</div>
+									<div class="rounded-lg border bg-muted/30 p-2">
+										<span class="block text-[11px] font-semibold text-muted-foreground">{t('Subpos dihapus')}</span>
+										<strong class="text-lg font-black text-destructive">−{country.hs_2028_facts.subheadings_deleted}</strong>
+									</div>
+									<div class="rounded-lg border bg-muted/30 p-2">
+										<span class="block text-[11px] font-semibold text-muted-foreground">{t('Edisi')}</span>
+										<strong class="text-lg font-black">{country.hs_2028_facts.edition}</strong>
+									</div>
+									<div class="rounded-lg border bg-muted/30 p-2">
+										<span class="block text-[11px] font-semibold text-muted-foreground">{t('Siklus review')}</span>
+										<strong class="text-sm font-bold">{country.hs_2028_facts.review_cycle}</strong>
+									</div>
+								</div>
+								<p class="text-[13px] leading-snug"><strong>{t('Perubahan utama')}:</strong> {country.hs_2028_facts.highlights}</p>
+								<p class="text-[13px] leading-snug text-muted-foreground"><strong>{t('Persiapan')}:</strong> {country.hs_2028_facts.preparation}</p>
 							</CardContent>
 						</Card>
 					{/if}
