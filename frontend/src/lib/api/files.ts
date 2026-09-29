@@ -45,3 +45,43 @@ export async function uploadFileBinary(file: File, type: string, projectId: stri
 export function fileDownloadUrl(id: string) {
 	return `${API_BASE_URL}/files/${id}/download/`;
 }
+
+export type FilePreviewData = {
+	kind: 'spreadsheet' | 'document' | 'presentation' | 'pdf' | 'image' | 'archive' | 'text' | 'unknown';
+	summary: string;
+	text: string;
+	sheets: { name: string; rows: string[][] }[];
+	slides: string[];
+	paragraphs: string[];
+	metadata: Record<string, unknown>;
+	note: string;
+	truncated: boolean;
+};
+
+export type FilePreviewResponse = {
+	id: string;
+	name: string;
+	type: string;
+	contentType: string;
+	size: string;
+	storageAvailable: boolean;
+	preview: FilePreviewData;
+};
+
+/** Ambil & ekstrak isi berkas untuk pratinjau (spreadsheet/dokumen/ppt/pdf). */
+export function previewFileAsset(id: string) {
+	return apiFetch<FilePreviewResponse>(`/files/${id}/preview/`);
+}
+
+export type FileAnalysisResponse = {
+	id: string;
+	name: string;
+	kind: string;
+	summary: string;
+	analysis: string;
+};
+
+/** Minta asisten AI menganalisis isi berkas. */
+export function analyzeFileAsset(id: string) {
+	return apiFetch<FileAnalysisResponse>(`/files/${id}/analyze/`, { method: 'POST' });
+}
