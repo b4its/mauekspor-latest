@@ -167,6 +167,10 @@ ROLE_READ_MODULES: dict[str, set[str]] = {
         "business-profiles", "trade-projects", "products", "villages", "export-analysis",
         "compliance", "markets", "catalogs", "buyers", "buyer-requests", "suppliers",
         "forwarders", "rfqs", "quotations", "costing", "orders", "payments", "tasks",
+        # "documents" & "shipments" ikut disertakan: Exporter boleh MEMBUAT keduanya
+        # (ada di MUTATE_MODULES) dan UI menampilkannya — tanpa read, membuka halaman
+        # Documents/Shipments akan 403 (menu tampil tapi ditolak).
+        "documents", "shipments",
         "team", "integrations", "templates", "automations", "billing",
     },
     "Buyer": {
