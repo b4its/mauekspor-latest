@@ -217,7 +217,7 @@
 					{t('Kurs')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.exchangeRate ?? '—'}</strong>
 				</div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">
-					{t('Keyakinan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.confidence ?? '—'}%</strong>
+					{t('Keyakinan')} <strong class="mt-1 block text-sm font-bold text-foreground">{data.scenario.confidence != null ? `${data.scenario.confidence}%` : '—'}</strong>
 				</div>
 			</CardContent>
 		</Card>

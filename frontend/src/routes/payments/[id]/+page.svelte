@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
-	import { currency, statusTone, toneVariant, outstandingAmount } from '$lib/utils/format';
+	import { currency, statusTone, toneVariant, outstandingAmount, toFiniteNumber } from '$lib/utils/format';
 	import { markPaymentReceived, sendPaymentReminder, updatePayment, deletePayment } from '$lib/api/payments';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n.svelte';
@@ -34,6 +34,12 @@
 	let localAmount = $derived(savedAmount || data.payment.amount);
 	let localMethod = $derived(savedMethod || data.payment.method);
 	let paidAmount = $derived(received ? data.payment.amount : data.payment.paid);
+	// Persentase terbayar, aman dari pembagian nol (amount = 0) & overpay (>100%).
+	let collectedPercent = $derived(
+		toFiniteNumber(localAmount) > 0
+			? Math.min(100, Math.round((toFiniteNumber(paidAmount) / toFiniteNumber(localAmount)) * 100))
+			: 0
+	);
 	let displayStatus = $derived(serverStatus || (received ? 'Settled' : savedStatus || data.payment.status));
 	const confirm = createConfirmController();
 
@@ -151,7 +157,7 @@
 			</div>
 			<div class="shrink-0 rounded-xl border bg-muted/30 px-5 py-4 text-right">
 				<span class="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Collected')}</span>
-				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{Math.round((paidAmount / localAmount) * 100)}%</strong>
+				<strong class="mt-1 block font-display text-4xl font-black tracking-tight text-[#0b1d3a] dark:text-white">{collectedPercent}%</strong>
 			</div>
 		</div>
 		<div class="mt-5 flex flex-wrap gap-2.5">
