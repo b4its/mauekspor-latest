@@ -9,6 +9,7 @@
 	import { deleteEducationalModule, getLessonProgress, setLessonComplete } from '$lib/api/educational';
 	import { goto } from '$app/navigation';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ModuleQuiz from '$lib/components/ModuleQuiz.svelte';
 
 	import PlayCircleIcon from '@lucide/svelte/icons/play-circle';
 	import BookOpenIcon from '@lucide/svelte/icons/book-open';
@@ -80,6 +81,15 @@
 		persistProgress(lessons[activeIndex].id, true);
 		if (activeIndex < lessons.length - 1) {
 			activeIndex += 1;
+		}
+	}
+
+	// Dipanggil saat kuis modul lulus: tandai lesson kuis aktif sebagai selesai.
+	function markActiveQuizComplete() {
+		const lesson = lessons[activeIndex];
+		if (lesson && lesson.kind === 'Quiz' && !lesson.completed) {
+			lessons[activeIndex].completed = true;
+			persistProgress(lesson.id, true);
 		}
 	}
 
@@ -170,6 +180,10 @@
 							{/each}
 						</ul>
 					</div>
+
+					{#if activeLesson.kind === 'Quiz'}
+						<ModuleQuiz moduleId={data.module.id} onpass={markActiveQuizComplete} />
+					{/if}
 
 					<div class="flex flex-wrap items-center justify-between gap-3">
 						<Button

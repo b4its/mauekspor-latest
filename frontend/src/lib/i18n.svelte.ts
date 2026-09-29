@@ -2949,7 +2949,23 @@ const dictionary: Record<string, Entry> = {
 	'Pratinjau dipotong untuk kinerja. Unduh berkas untuk isi lengkap.': { id: 'Pratinjau dipotong untuk kinerja. Unduh berkas untuk isi lengkap.', en: 'Preview truncated for performance. Download the file for the full content.' },
 	'Spreadsheet': { id: 'Spreadsheet', en: 'Spreadsheet' },
 	'Presentasi': { id: 'Presentasi', en: 'Presentation' },
-	'Berkas': { id: 'Berkas', en: 'File' }
+	'Berkas': { id: 'Berkas', en: 'File' },
+	// Kuis edukasi
+	'Kuis modul': { id: 'Kuis modul', en: 'Module quiz' },
+	'soal': { id: 'soal', en: 'questions' },
+	'Gagal memuat kuis.': { id: 'Gagal memuat kuis.', en: 'Failed to load the quiz.' },
+	'Gagal mengirim jawaban kuis.': { id: 'Gagal mengirim jawaban kuis.', en: 'Failed to submit quiz answers.' },
+	'Belum ada soal untuk modul ini.': { id: 'Belum ada soal untuk modul ini.', en: 'No questions for this module yet.' },
+	'Skor terbaik': { id: 'Skor terbaik', en: 'Best score' },
+	'percobaan': { id: 'percobaan', en: 'attempts' },
+	'Lulus!': { id: 'Lulus!', en: 'Passed!' },
+	'Belum lulus': { id: 'Belum lulus', en: 'Not passed' },
+	'benar dari': { id: 'benar dari', en: 'correct out of' },
+	'Penjelasan': { id: 'Penjelasan', en: 'Explanation' },
+	'dijawab': { id: 'dijawab', en: 'answered' },
+	'Kirim jawaban': { id: 'Kirim jawaban', en: 'Submit answers' },
+	'Menilai...': { id: 'Menilai...', en: 'Grading...' },
+	'Pelajaran kuis ditandai selesai.': { id: 'Pelajaran kuis ditandai selesai.', en: 'Quiz lesson marked complete.' }
 };
 
 let initial: Locale = 'id';
