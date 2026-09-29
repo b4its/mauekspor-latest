@@ -213,7 +213,7 @@
 			<CardContent class="grid gap-2 p-5">
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Project pipeline')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(totalPipeline)}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Open receivable')}<strong class="mt-1 block text-sm font-bold text-foreground">{currency.format(receivable)}</strong></div>
-				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Active buyers')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyers.items.filter((buyer) => buyer.status === 'Active').length}</strong></div>
+				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Active buyers')}<strong class="mt-1 block text-sm font-bold text-foreground">{buyers.items.filter((buyer) => !['archived', 'lost', 'churned'].includes(String(buyer.status).toLowerCase())).length}</strong></div>
 				<div class="rounded-lg border bg-muted/40 p-3 text-xs font-bold text-muted-foreground">{t('Verified suppliers')}<strong class="mt-1 block text-sm font-bold text-foreground">{suppliers.items.filter((supplier) => supplier.status === 'Verified').length}</strong></div>
 			</CardContent>
 		</Card>

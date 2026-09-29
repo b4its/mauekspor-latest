@@ -149,3 +149,21 @@ def test_mutating_requests_write_audit_events():
         assert audit.status_code == 200
         events = audit.json()["data"]
         assert any(event["action"] == "POST /api/v1/products/" for event in events)
+
+
+def test_analytics_overview_values_are_well_formatted():
+    """Regresi: nilai metrik berupa angka bersih tanpa desimal mentah.
+
+    Sebelumnya 'Order value' memakai f"{total:,}" pada float → tampil
+    "2,686,439.0" (dengan ".0") tidak seperti metrik lain.
+    """
+    with TestClient(app) as c:
+        _login(c)
+        res = c.get("/api/v1/analytics/overview/")
+        assert res.status_code == 200
+        metrics = {m["label"]: m["value"] for m in res.json()["data"]}
+        assert metrics, "metrik analitik kosong"
+        for label, value in metrics.items():
+            assert "." not in value, f"{label} memuat desimal mentah: {value!r}"
+            assert not value.endswith(".0")
+
